@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { getProfile, runFullAnalysis, parseJDProfile } from '../services/api'
@@ -135,19 +135,40 @@ export default function AnalysisPage() {
     }
   }, [step, currentStepIndex])
 
-  const handleAnalyzeJD = async () => {
-    if (!targetJD.trim()) return
+  const handleAnalyzeJD = useCallback(async (jdText: string, role: string) => {
+    if (!jdText.trim() || jdText.trim().length < 50) return
     setIsParsingJD(true)
     setJdParseError(null)
     try {
-      const result = await parseJDProfile({ jd_text: targetJD, target_role: targetRole })
+      const result = await parseJDProfile({ jd_text: jdText, target_role: role })
       setJdProfile(result)
     } catch {
       setJdParseError('Could not analyze job description. You can still run the full analysis.')
     } finally {
       setIsParsingJD(false)
     }
-  }
+  }, [])
+
+  // Auto-analyze JD with debounce when text changes
+  const jdDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  useEffect(() => {
+    // Clear any previous parse when JD changes
+    if (jdProfile) setJdProfile(null)
+    if (jdParseError) setJdParseError(null)
+
+    if (jdDebounceRef.current) clearTimeout(jdDebounceRef.current)
+
+    if (targetJD.trim().length >= 50) {
+      jdDebounceRef.current = setTimeout(() => {
+        handleAnalyzeJD(targetJD, targetRole)
+      }, 1500)
+    }
+
+    return () => {
+      if (jdDebounceRef.current) clearTimeout(jdDebounceRef.current)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [targetJD])
 
   const handleStartAnalysis = () => {
     setStep('analyzing')
@@ -399,27 +420,12 @@ export default function AnalysisPage() {
                 <textarea
                   className="input min-h-[120px] bg-white"
                   value={targetJD}
-                  onChange={(e) => {
-                    setTargetJD(e.target.value)
-                    // Clear parsed profile when JD changes
-                    if (jdProfile) setJdProfile(null)
-                  }}
+                  onChange={(e) => setTargetJD(e.target.value)}
                   placeholder="Paste the full job description here. Include requirements, responsibilities, and qualifications."
                 />
-                <div className="flex items-center justify-between mt-1">
-                  <p className="text-xs text-gray-500">
-                    The more detailed the JD, the better the skill gap analysis.
-                  </p>
-                  {targetJD.trim() && !jdProfile && !isParsingJD && (
-                    <button
-                      onClick={handleAnalyzeJD}
-                      className="text-xs text-primary-600 hover:text-primary-800 font-medium flex items-center gap-1"
-                    >
-                      <Sparkles className="h-3 w-3" />
-                      Preview Breakdown
-                    </button>
-                  )}
-                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  The more detailed the JD, the better the skill gap analysis.
+                </p>
               </div>
 
               {/* JD Parsing Loading State */}
