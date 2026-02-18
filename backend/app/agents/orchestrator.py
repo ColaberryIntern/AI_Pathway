@@ -1,6 +1,7 @@
 """Orchestrator Agent - Coordinates the multi-agent workflow."""
 import asyncio
 import json
+import logging
 from datetime import datetime
 from typing import Any
 import uuid
@@ -13,6 +14,9 @@ from app.agents.path_generator import PathGeneratorAgent
 from app.agents.content_curator import ContentCuratorAgent
 from app.services.path_generator import LearningPathGenerator
 from app.services.ontology import get_ontology_service
+
+
+logger = logging.getLogger(__name__)
 
 
 class Orchestrator(BaseAgent):
@@ -184,8 +188,22 @@ parse job descriptions, identify skill gaps, and generate personalized learning 
                     "avg_decay_factor": scaffold_result.get("avg_decay_factor"),
                 }
             )
+            # If LLM enrichment failed (no chapters), fall back to
+            # the deterministic scaffold so we never return 0 chapters.
+            if not path_result.get("chapters") and scaffold_result.get("chapters"):
+                logger.warning(
+                    "Path generation returned no chapters (error: %s). "
+                    "Falling back to deterministic scaffold.",
+                    path_result.get("error", "unknown"),
+                )
+                path_result = self.path_generator._scaffold_fallback(
+                    scaffold_result["chapters"]
+                )
+                results["steps"].append({"step": "path_generation", "status": "fallback"})
+            else:
+                results["steps"].append({"step": "path_generation", "status": "completed"})
+
             results["learning_path"] = path_result
-            results["steps"].append({"step": "path_generation", "status": "completed"})
 
             # Step 6: Optional Content Curation
             if task.get("include_resources", True):
@@ -233,6 +251,11 @@ parse job descriptions, identify skill gaps, and generate personalized learning 
             result = await agent.execute(task)
             return result
         except Exception as e:
+            logger.error(
+                "Step '%s' (%s) failed: %s",
+                step_name, agent.name, e,
+                exc_info=True,
+            )
             return {"error": str(e), "status": "failed"}
 
     def _generate_summary(self, results: dict) -> dict:

@@ -9,6 +9,10 @@ engine = create_async_engine(
     settings.database_url,
     echo=settings.debug,
     future=True,
+    # SQLite can only handle one writer at a time.  Give concurrent
+    # requests up to 30 seconds to acquire the lock instead of
+    # failing immediately with "database is locked".
+    connect_args={"timeout": 30},
 )
 
 AsyncSessionLocal = async_sessionmaker(
