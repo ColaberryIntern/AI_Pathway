@@ -1,8 +1,8 @@
-import { useState } from 'react'
+import { useState, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { getProfiles } from '../services/api'
-import { User, Upload, Briefcase, Target, ChevronRight, Clock, Sparkles, ChevronDown } from 'lucide-react'
+import { getProfiles, parseResume } from '../services/api'
+import { User, Upload, Briefcase, Target, ChevronRight, Clock, Sparkles, ChevronDown, FileText, X, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react'
 import type { Profile } from '../types'
 import ArchetypeBadge from '../components/ArchetypeBadge'
 import JourneyArrow from '../components/JourneyArrow'
@@ -19,8 +19,15 @@ export default function ProfileSelectionPage() {
     experience_years: '',
     ai_exposure_level: 'Basic',
     learning_intent: '',
+    current_jd: '',
   })
   const [targetJD, setTargetJD] = useState('')
+  const [resumeFile, setResumeFile] = useState<File | null>(null)
+  const [isParsingResume, setIsParsingResume] = useState(false)
+  const [resumeError, setResumeError] = useState<string | null>(null)
+  const [resumeParsed, setResumeParsed] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [isDragOver, setIsDragOver] = useState(false)
 
   const { data: profiles, isLoading } = useQuery({
     queryKey: ['profiles'],
@@ -36,8 +43,64 @@ export default function ProfileSelectionPage() {
     navigate(`/analysis/${profileId}`)
   }
 
+  const handleResumeUpload = useCallback(async (file: File) => {
+    const ext = file.name.split('.').pop()?.toLowerCase()
+    if (!ext || !['pdf', 'docx', 'doc'].includes(ext)) {
+      setResumeError('Please upload a PDF or DOCX file.')
+      return
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setResumeError('File too large. Maximum size is 10 MB.')
+      return
+    }
+    setResumeFile(file)
+    setIsParsingResume(true)
+    setResumeError(null)
+    setResumeParsed(false)
+    try {
+      const result = await parseResume(file)
+      setCustomProfile(prev => ({
+        ...prev,
+        ...(result.name && { name: result.name }),
+        ...(result.current_role && { current_role: result.current_role }),
+        ...(result.target_role && { target_role: result.target_role }),
+        ...(result.industry && { industry: result.industry }),
+        ...(result.experience_years && { experience_years: String(result.experience_years) }),
+        ...(result.ai_exposure_level && { ai_exposure_level: result.ai_exposure_level }),
+      }))
+      setResumeParsed(true)
+    } catch {
+      setResumeError('Could not parse resume. Please fill in the fields manually.')
+    } finally {
+      setIsParsingResume(false)
+    }
+  }, [])
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragOver(false)
+    const file = e.dataTransfer.files[0]
+    if (file) handleResumeUpload(file)
+  }, [handleResumeUpload])
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragOver(true)
+  }, [])
+
+  const handleDragLeave = useCallback(() => {
+    setIsDragOver(false)
+  }, [])
+
+  const clearResume = () => {
+    setResumeFile(null)
+    setResumeParsed(false)
+    setResumeError(null)
+    if (fileInputRef.current) fileInputRef.current.value = ''
+  }
+
   const handleCustomContinue = () => {
-    if (customProfile.name && targetJD) {
+    if (targetJD.trim()) {
       // Store custom profile in session storage for the analysis page
       sessionStorage.setItem('customProfile', JSON.stringify(customProfile))
       sessionStorage.setItem('targetJD', targetJD)
@@ -55,7 +118,7 @@ export default function ProfileSelectionPage() {
     document.getElementById('example-profiles')?.scrollIntoView({ behavior: 'smooth' })
   }
 
-  const isCustomValid = customProfile.name && customProfile.current_role && targetJD
+  const isCustomValid = targetJD.trim().length > 0
 
   return (
     <div className="max-w-6xl mx-auto space-y-12">
@@ -97,10 +160,86 @@ export default function ProfileSelectionPage() {
           </div>
         </div>
 
+        {/* Resume Upload Zone */}
+        <div
+          onDrop={handleDrop}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          className={`relative border-2 border-dashed rounded-xl p-6 text-center transition-all ${
+            isDragOver
+              ? 'border-indigo-400 bg-indigo-50'
+              : resumeParsed
+                ? 'border-green-300 bg-green-50'
+                : resumeError
+                  ? 'border-red-300 bg-red-50'
+                  : 'border-gray-200 bg-gray-50 hover:border-gray-300'
+          }`}
+        >
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".pdf,.docx,.doc"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0]
+              if (file) handleResumeUpload(file)
+            }}
+          />
+
+          {isParsingResume ? (
+            <div className="flex flex-col items-center gap-3">
+              <Loader2 className="h-8 w-8 text-indigo-500 animate-spin" />
+              <div>
+                <p className="text-sm font-medium text-gray-700">Analyzing {resumeFile?.name}...</p>
+                <p className="text-xs text-gray-500 mt-1">Extracting profile information from your resume</p>
+              </div>
+            </div>
+          ) : resumeParsed && resumeFile ? (
+            <div className="flex items-center justify-center gap-3">
+              <CheckCircle2 className="h-5 w-5 text-green-600 flex-shrink-0" />
+              <div className="text-left">
+                <p className="text-sm font-medium text-green-700">
+                  Extracted from {resumeFile.name}
+                </p>
+                <p className="text-xs text-gray-500 mt-0.5">Fields have been auto-filled. You can edit them below.</p>
+              </div>
+              <button
+                onClick={clearResume}
+                className="ml-2 p-1 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-200 transition-colors"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          ) : (
+            <div
+              className="flex flex-col items-center gap-3 cursor-pointer"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center">
+                <FileText className="h-6 w-6 text-indigo-500" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-700">
+                  Upload your resume to auto-fill
+                </p>
+                <p className="text-xs text-gray-500 mt-1">
+                  PDF or DOCX (max 10 MB) - drag & drop or click to browse
+                </p>
+              </div>
+              {resumeError && (
+                <div className="flex items-center gap-1.5 text-red-600 text-sm">
+                  <AlertCircle className="h-4 w-4" />
+                  {resumeError}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
         <div className="grid md:grid-cols-2 gap-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Your Name
+              Your Name <span className="text-gray-400 font-normal">(Optional)</span>
             </label>
             <input
               type="text"
@@ -114,7 +253,7 @@ export default function ProfileSelectionPage() {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Current Role
+              Current Role <span className="text-gray-400 font-normal">(Optional)</span>
             </label>
             <input
               type="text"
@@ -128,7 +267,7 @@ export default function ProfileSelectionPage() {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Target Role
+              Target Role <span className="text-gray-400 font-normal">(Optional)</span>
             </label>
             <input
               type="text"
@@ -142,7 +281,7 @@ export default function ProfileSelectionPage() {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Industry
+              Industry <span className="text-gray-400 font-normal">(Optional)</span>
             </label>
             <input
               type="text"
@@ -156,7 +295,7 @@ export default function ProfileSelectionPage() {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Years of Experience
+              Years of Experience <span className="text-gray-400 font-normal">(Optional)</span>
             </label>
             <input
               type="number"
@@ -173,7 +312,7 @@ export default function ProfileSelectionPage() {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              AI Exposure Level
+              AI Exposure Level <span className="text-gray-400 font-normal">(Optional)</span>
             </label>
             <select
               className="input"
@@ -194,7 +333,7 @@ export default function ProfileSelectionPage() {
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Learning Intent
+            Learning Intent <span className="text-gray-400 font-normal">(Optional)</span>
           </label>
           <textarea
             className="input min-h-[100px]"
@@ -207,6 +346,25 @@ export default function ProfileSelectionPage() {
             }
             placeholder="What do you want to achieve? What skills do you want to develop?"
           />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Current Job Description <span className="text-gray-400 font-normal">(Optional)</span>
+          </label>
+          <textarea
+            className="input min-h-[100px]"
+            value={customProfile.current_jd}
+            onChange={(e) =>
+              setCustomProfile({
+                ...customProfile,
+                current_jd: e.target.value,
+              })
+            }
+            placeholder="Paste your current job description to help us better understand your existing skills..."
+          />
+          <p className="text-xs text-gray-500 mt-1">
+            Helps us better assess your current skill level.
+          </p>
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">

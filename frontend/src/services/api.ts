@@ -24,6 +24,23 @@ export const uploadProfile = async (profile: Partial<Profile>): Promise<{ id: st
   return data
 }
 
+// Resume parsing
+export const parseResume = async (file: File): Promise<{
+  name?: string
+  current_role?: string
+  target_role?: string
+  industry?: string
+  experience_years?: number
+  ai_exposure_level?: string
+}> => {
+  const formData = new FormData()
+  formData.append('file', file)
+  const { data } = await api.post('/profiles/parse-resume', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
+  return data
+}
+
 // Analysis
 export const runFullAnalysis = async (params: {
   profile_id?: string

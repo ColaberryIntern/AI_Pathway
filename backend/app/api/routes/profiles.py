@@ -1,18 +1,46 @@
 """Profile API routes."""
 import json
+import logging
 from pathlib import Path
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from app.api.deps import get_database
 from app.models.profile import Profile
 from app.models.user import User
 from app.schemas.profile import ProfileCreate, ProfileResponse, ProfileUpload
+from app.services.resume_parser import parse_resume
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
 # Path to test profiles
 PROFILES_DIR = Path(__file__).parent.parent.parent / "data" / "profiles"
+
+
+@router.post("/parse-resume")
+async def parse_resume_endpoint(file: UploadFile = File(...)):
+    """Parse a resume PDF/DOCX and extract profile fields."""
+    if not file.filename:
+        raise HTTPException(status_code=400, detail="No file provided.")
+    ext = Path(file.filename).suffix.lower()
+    if ext not in (".pdf", ".docx", ".doc"):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unsupported file format: {ext}. Please upload a PDF or DOCX file.",
+        )
+    contents = await file.read()
+    if len(contents) > 10 * 1024 * 1024:  # 10 MB limit
+        raise HTTPException(status_code=400, detail="File too large. Maximum size is 10 MB.")
+    try:
+        result = await parse_resume(contents, file.filename)
+        return result
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
+    except Exception as e:
+        logger.error("Resume parsing failed: %s", e, exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to parse resume. Please try again.")
 
 
 @router.get("/", response_model=list[dict])

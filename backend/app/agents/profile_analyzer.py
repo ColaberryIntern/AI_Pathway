@@ -105,6 +105,10 @@ Focus on AI/GenAI related skills and their prerequisites."""
             if "technical_skills" in cp:
                 parts.append(f"Technical skills: {', '.join(cp['technical_skills'])}")
 
+        current_jd = profile.get("current_jd", "")
+        if current_jd:
+            parts.append(f"Current job description: {current_jd}")
+
         return " | ".join(parts)
 
     def _build_analysis_prompt(self, profile: dict, relevant_skills: list) -> str:
@@ -113,6 +117,11 @@ Focus on AI/GenAI related skills and their prerequisites."""
             f"- {s['skill_id']}: {s['skill_name']} (Domain: {s['domain_label']}, Base Level: {s['level']})"
             for s in relevant_skills[:30]
         ])
+
+        current_jd_section = ""
+        current_jd = profile.get("current_jd", "")
+        if current_jd:
+            current_jd_section = f"\nCurrent Job Description:\n{current_jd}\n"
 
         return f"""Analyze this professional profile and assess their current skill levels.
 
@@ -125,7 +134,7 @@ AI Exposure: {profile.get('ai_exposure_level', 'Unknown')}
 
 Background:
 {json.dumps(profile.get('current_profile', {}), indent=2)}
-
+{current_jd_section}
 Learning Intent:
 {profile.get('learning_intent', 'Not specified')}
 
