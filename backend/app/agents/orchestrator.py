@@ -206,22 +206,26 @@ parse job descriptions, identify skill gaps, and generate personalized learning 
             # The LLM gap analyzer and the deterministic gap engine use
             # different prioritization, so the displayed gaps should
             # reflect the actual chapters that will be generated.
+            # NOTE: scaffold chapters use "primary_skill_id" / "primary_skill_name"
+            # (from LearningPathGenerator._build_chapter), not "skill_id".
             scaffold_chapters = scaffold_result.get("chapters", [])
             if scaffold_chapters:
-                scaffold_skill_ids = {
-                    ch["skill_id"] for ch in scaffold_chapters if "skill_id" in ch
-                }
                 # Build aligned gaps list from scaffold chapters
                 aligned_gaps = []
                 for ch in scaffold_chapters:
-                    sid = ch.get("skill_id", "")
+                    sid = ch.get("primary_skill_id", ch.get("skill_id", ""))
+                    skill_obj = ontology.get_skill(sid)
+                    domain = skill_obj["domain"] if skill_obj else ""
+                    skill_name = ch.get("primary_skill_name", ch.get("skill_name", sid))
+                    current = ch.get("current_level", 0)
+                    target = ch.get("target_level", 1)
                     aligned_gaps.append({
                         "skill_id": sid,
-                        "skill_name": ch.get("skill_name", sid),
-                        "domain": ch.get("domain", ""),
-                        "current_level": ch.get("current_level", 0),
-                        "target_level": ch.get("target_level", 1),
-                        "gap": ch.get("target_level", 1) - ch.get("current_level", 0),
+                        "skill_name": skill_name,
+                        "domain": domain,
+                        "current_level": current,
+                        "target_level": target,
+                        "gap": target - current,
                         "priority": ch.get("chapter_number", 0),
                         "priority_reason": "Selected by deterministic gap engine",
                     })
