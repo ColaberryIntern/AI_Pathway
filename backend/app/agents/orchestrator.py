@@ -141,15 +141,26 @@ parse job descriptions, identify skill gaps, and generate personalized learning 
             # Fallback: when RAG is unavailable the JD parser may return
             # entirely invented skill IDs (e.g. "SKL001"), leaving
             # valid_state_b empty.  In that case, derive state_b from
-            # the profile's expected_skill_gaps which contain curated
-            # ontology IDs.
+            # the profile's expected_skill_gaps.  We include ALL skills
+            # from the target domains (not just the specific listed
+            # subset) so the gap engine has enough candidates to fill
+            # 5 chapters even after per-skill floors eliminate some.
             profile_data = task.get("profile", {})
             if not valid_state_b and "expected_skill_gaps" in profile_data:
                 for gap_group in profile_data["expected_skill_gaps"]:
+                    # Add the specific listed skills first
                     for sid in gap_group.get("skills", []):
                         skill = ontology.get_skill(sid)
                         if skill:
                             valid_state_b[sid] = skill["level"]
+                    # Also add ALL skills from each target domain so
+                    # the gap engine sees the full domain landscape.
+                    domain_id = gap_group.get("domain")
+                    if domain_id:
+                        for skill in ontology.get_skills_by_domain(domain_id):
+                            sid = skill["id"]
+                            if sid not in valid_state_b:
+                                valid_state_b[sid] = skill["level"]
 
             # Build role_context for better gap prioritization
             role_context = None
