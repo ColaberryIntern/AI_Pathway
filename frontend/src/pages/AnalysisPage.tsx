@@ -623,7 +623,7 @@ export default function AnalysisPage() {
   const chapters = result?.result?.learning_path?.chapters || []
 
   // Compute robust display values from actual data arrays
-  const displayGaps = gaps.length || summary?.total_gaps_identified || 0
+  const displayGaps = chapters.length || gaps.length || summary?.total_gaps_identified || 0
   const displayChapters = chapters.length || summary?.total_chapters || 0
   const displayHours =
     result?.result?.learning_path?.total_estimated_hours
