@@ -141,17 +141,9 @@ export function useAnalysisAnimation(isRunning: boolean): UseAnalysisAnimationRe
   // Get current frame data
   const currentFrame = ANIMATION_SEQUENCE[frameIndex] || ANIMATION_SEQUENCE[0]
 
-  // Selected domains for path generation step (after 9s)
-  const selectedDomains: { domainId: string; chapterNum: number }[] =
-    frameIndex >= ANIMATION_SEQUENCE.length - 6
-      ? [
-          { domainId: 'D.PRM', chapterNum: 1 },
-          { domainId: 'D.TOOL', chapterNum: 2 },
-          { domainId: 'D.EVL', chapterNum: 3 },
-          { domainId: 'D.RAG', chapterNum: 4 },
-          { domainId: 'D.GOV', chapterNum: 5 },
-        ]
-      : []
+  // No chapter badges during animation — actual chapter-to-domain
+  // mapping is shown on the completion page using real API data.
+  const selectedDomains: { domainId: string; chapterNum: number }[] = []
 
   return {
     highlightedDomains: currentFrame.highlightedDomains,

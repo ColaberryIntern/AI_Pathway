@@ -450,6 +450,17 @@ export default function AnalysisPage() {
   const summary = result?.result.summary
   const gaps = result?.result.gap_analysis.gaps || []
 
+  // Derive actual chapter-to-domain mapping from learning path
+  const chapters = result?.result?.learning_path?.chapters || []
+  const actualSelectedDomains = chapters
+    .map((ch: { skill_id?: string; primary_skill_id?: string; chapter_number?: number }) => {
+      const sid = ch.skill_id || ch.primary_skill_id || ''
+      const parts = sid.split('.')
+      const domainId = parts.length >= 3 ? `D.${parts[1]}` : null
+      return domainId ? { domainId, chapterNum: ch.chapter_number || 0 } : null
+    })
+    .filter((x: { domainId: string; chapterNum: number } | null): x is { domainId: string; chapterNum: number } => x !== null)
+
   return (
     <div className="max-w-4xl mx-auto space-y-8">
       <div className="text-center">
@@ -463,6 +474,21 @@ export default function AnalysisPage() {
           Your personalized learning path is ready.
         </p>
       </div>
+
+      {/* Domain Grid — actual chapter-to-domain mapping */}
+      {actualSelectedDomains.length > 0 && (
+        <div>
+          <h2 className="text-lg font-semibold text-gray-700 mb-3 text-center">
+            Your Learning Path Across the AI Skills Ontology
+          </h2>
+          <DomainGrid
+            highlightedDomains={[]}
+            activeDomain={null}
+            completedDomains={actualSelectedDomains.map((d: { domainId: string }) => d.domainId)}
+            selectedDomains={actualSelectedDomains}
+          />
+        </div>
+      )}
 
       {/* Summary Cards */}
       <div className="grid md:grid-cols-3 gap-4">
