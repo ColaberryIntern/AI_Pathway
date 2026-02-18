@@ -542,28 +542,28 @@ export default function AnalysisPage() {
         </div>
       </div>
 
-      {/* Top Gaps */}
+      {/* Learning Path Chapters — matches the domain grid badges */}
       <div className="card">
         <h2 className="text-xl font-bold text-gray-900 mb-4">
-          Top Skill Gaps to Address
+          Your Learning Path
         </h2>
         <div className="space-y-3">
-          {gaps.slice(0, 5).map((gap, i) => (
+          {chapters.map((ch: { chapter_number?: number; skill_id?: string; skill_name?: string; title?: string; current_level?: number; target_level?: number; estimated_time_hours?: number }) => (
             <div
-              key={gap.skill_id}
+              key={ch.chapter_number}
               className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
             >
-              <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 font-bold">
-                {i + 1}
+              <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 font-bold text-sm">
+                {ch.chapter_number}
               </div>
-              <div className="flex-1">
-                <div className="font-medium text-gray-900">{gap.skill_name}</div>
-                <div className="text-sm text-gray-500">{gap.domain}</div>
+              <div className="flex-1 min-w-0">
+                <div className="font-medium text-gray-900">{ch.title || ch.skill_name}</div>
+                <div className="text-sm text-gray-500">{ch.skill_name}</div>
               </div>
-              <div className="text-sm flex items-center gap-1">
-                <span className="px-2 py-0.5 bg-red-100 text-red-700 rounded font-medium">L{gap.current_level}</span>
+              <div className="text-sm flex items-center gap-1 flex-shrink-0">
+                <span className="px-2 py-0.5 bg-red-100 text-red-700 rounded font-medium">L{ch.current_level}</span>
                 <ArrowRight className="h-3 w-3 text-gray-400" />
-                <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded font-medium">L{gap.target_level}</span>
+                <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded font-medium">L{ch.target_level}</span>
               </div>
             </div>
           ))}
