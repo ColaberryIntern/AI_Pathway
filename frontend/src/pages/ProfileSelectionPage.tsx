@@ -20,6 +20,13 @@ export default function ProfileSelectionPage() {
     ai_exposure_level: 'Basic',
     learning_intent: '',
     current_jd: '',
+    archetype: '' as string,
+    current_profile: {
+      technical_skills: [] as string[],
+      soft_skills: [] as string[],
+      ai_experience: '',
+      summary: '',
+    },
   })
   const [targetJD, setTargetJD] = useState('')
   const [resumeFile, setResumeFile] = useState<File | null>(null)
@@ -67,6 +74,13 @@ export default function ProfileSelectionPage() {
         ...(result.industry && { industry: result.industry }),
         ...(result.experience_years && { experience_years: String(result.experience_years) }),
         ...(result.ai_exposure_level && { ai_exposure_level: result.ai_exposure_level }),
+        ...(result.archetype && { archetype: result.archetype }),
+        current_profile: {
+          technical_skills: result.technical_skills || prev.current_profile.technical_skills,
+          soft_skills: result.soft_skills || prev.current_profile.soft_skills,
+          ai_experience: result.ai_experience || prev.current_profile.ai_experience,
+          summary: result.summary || prev.current_profile.summary,
+        },
       }))
       setResumeParsed(true)
     } catch {

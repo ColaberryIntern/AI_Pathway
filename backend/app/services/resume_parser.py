@@ -94,8 +94,17 @@ async def parse_resume(file_bytes: bytes, filename: str) -> dict:
    - "Basic": Uses AI tools (ChatGPT, Copilot) or mentions AI awareness
    - "Intermediate": Works with AI/ML models, data science, or AI product management
    - "Advanced": Builds/deploys AI systems, ML engineering, AI research
+7. "technical_skills" — Array of 3-8 key technical skills/tools mentioned (e.g. ["Python", "SQL", "Tableau", "AWS"]). Extract the most prominent ones.
+8. "soft_skills" — Array of 2-5 soft/leadership skills evident from the resume (e.g. ["Team leadership", "Strategic planning", "Stakeholder management"]).
+9. "ai_experience" — One sentence describing their AI/ML experience. If none, use null. (e.g. "Uses ChatGPT for content drafting and has experimented with AI analytics tools")
+10. "summary" — A 2-3 sentence professional summary based on the resume. Write in third person. (e.g. "Senior marketing professional with 10 years in healthcare. Leads a team of 5 and manages digital campaigns across multiple channels. Has basic exposure to AI tools for content optimization.")
+11. "archetype" — Classify into exactly one of: "Career Switcher", "Domain Upskiller", "Executive", "Technical Pivot", or null.
+   - "Career Switcher": Changing careers entirely (e.g. teacher to tech)
+   - "Domain Upskiller": Staying in their domain, adding AI skills
+   - "Executive": Senior/management role, needs AI strategy knowledge
+   - "Technical Pivot": Technical background, moving toward AI/ML engineering
 
-Return ONLY a JSON object with these 6 keys. No additional text.
+Return ONLY a JSON object with these 11 keys. No additional text.
 
 RESUME TEXT:
 {text}"""
@@ -104,7 +113,7 @@ RESUME TEXT:
         prompt=prompt,
         system_prompt=system_prompt,
         temperature=0.1,
-        max_tokens=1024,
+        max_tokens=2048,
         json_mode=True,
     )
 
@@ -122,6 +131,11 @@ RESUME TEXT:
         "industry": result.get("industry") or None,
         "experience_years": _parse_int(result.get("experience_years")),
         "ai_exposure_level": _validate_ai_level(result.get("ai_exposure_level")),
+        "technical_skills": _validate_list(result.get("technical_skills")),
+        "soft_skills": _validate_list(result.get("soft_skills")),
+        "ai_experience": result.get("ai_experience") or None,
+        "summary": result.get("summary") or None,
+        "archetype": _validate_archetype(result.get("archetype")),
     }
 
 
@@ -138,6 +152,21 @@ def _parse_int(value) -> int | None:
 def _validate_ai_level(value) -> str | None:
     """Validate AI exposure level."""
     valid = {"None", "Basic", "Intermediate", "Advanced"}
+    if value in valid:
+        return value
+    return None
+
+
+def _validate_list(value) -> list[str]:
+    """Validate and normalize a list of strings."""
+    if not isinstance(value, list):
+        return []
+    return [str(item).strip() for item in value if item and str(item).strip()]
+
+
+def _validate_archetype(value) -> str | None:
+    """Validate archetype classification."""
+    valid = {"Career Switcher", "Domain Upskiller", "Executive", "Technical Pivot"}
     if value in valid:
         return value
     return None
