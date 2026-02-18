@@ -202,6 +202,39 @@ parse job descriptions, identify skill gaps, and generate personalized learning 
                 "step": "deterministic_scaffold", "status": "completed",
             })
 
+            # Reconcile gap_analysis to match the deterministic scaffold.
+            # The LLM gap analyzer and the deterministic gap engine use
+            # different prioritization, so the displayed gaps should
+            # reflect the actual chapters that will be generated.
+            scaffold_chapters = scaffold_result.get("chapters", [])
+            if scaffold_chapters:
+                scaffold_skill_ids = {
+                    ch["skill_id"] for ch in scaffold_chapters if "skill_id" in ch
+                }
+                # Build aligned gaps list from scaffold chapters
+                aligned_gaps = []
+                for ch in scaffold_chapters:
+                    sid = ch.get("skill_id", "")
+                    aligned_gaps.append({
+                        "skill_id": sid,
+                        "skill_name": ch.get("skill_name", sid),
+                        "domain": ch.get("domain", ""),
+                        "current_level": ch.get("current_level", 0),
+                        "target_level": ch.get("target_level", 1),
+                        "gap": ch.get("target_level", 1) - ch.get("current_level", 0),
+                        "priority": ch.get("chapter_number", 0),
+                        "priority_reason": "Selected by deterministic gap engine",
+                    })
+                gap_result["gaps"] = aligned_gaps
+                gap_result["summary"] = {
+                    "total_gaps": len(aligned_gaps),
+                    "critical_gaps": len([g for g in aligned_gaps if g["gap"] >= 2]),
+                    "primary_domains": list({
+                        g["domain"] for g in aligned_gaps if g.get("domain")
+                    }),
+                }
+                results["gap_analysis"] = gap_result
+
             # Step 5: Generate Learning Path (scaffold-enrichment mode)
             path_result = await self._execute_step(
                 "path_generation",
