@@ -10,6 +10,7 @@ from app.models.profile import Profile
 from app.models.user import User
 from app.schemas.profile import ProfileCreate, ProfileResponse, ProfileUpload
 from app.services.resume_parser import parse_resume
+from app.services.jd_profile_parser import parse_jd_profile
 
 logger = logging.getLogger(__name__)
 
@@ -41,6 +42,23 @@ async def parse_resume_endpoint(file: UploadFile = File(...)):
     except Exception as e:
         logger.error("Resume parsing failed: %s", e, exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to parse resume. Please try again.")
+
+
+@router.post("/parse-jd-profile")
+async def parse_jd_profile_endpoint(body: dict):
+    """Parse a job description and extract a structured target profile."""
+    jd_text = body.get("jd_text", "")
+    target_role = body.get("target_role", "")
+    if not jd_text.strip():
+        raise HTTPException(status_code=400, detail="No job description text provided.")
+    try:
+        result = await parse_jd_profile(jd_text, target_role)
+        return result
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
+    except Exception as e:
+        logger.error("JD profile parsing failed: %s", e, exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to parse job description. Please try again.")
 
 
 @router.get("/", response_model=list[dict])

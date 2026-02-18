@@ -46,6 +46,22 @@ export const parseResume = async (file: File): Promise<{
   return data
 }
 
+// JD profile parsing
+export const parseJDProfile = async (params: {
+  jd_text: string
+  target_role?: string
+}): Promise<{
+  technical_skills: string[]
+  soft_skills: string[]
+  ai_requirements?: string
+  summary?: string
+  seniority_level?: string
+  key_tools: string[]
+}> => {
+  const { data } = await api.post('/profiles/parse-jd-profile', params)
+  return data
+}
+
 // Analysis
 export const runFullAnalysis = async (params: {
   profile_id?: string

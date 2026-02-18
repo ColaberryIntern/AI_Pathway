@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation } from '@tanstack/react-query'
-import { getProfile, runFullAnalysis } from '../services/api'
+import { getProfile, runFullAnalysis, parseJDProfile } from '../services/api'
 import SkillsGapChart from '../components/SkillsGapChart'
 import {
   Loader2,
@@ -20,6 +20,8 @@ import {
   Users,
   Brain,
   FileText,
+  Wrench,
+  Award,
 } from 'lucide-react'
 import type { AnalysisResult, Profile } from '../types'
 import ArchetypeBadge from '../components/ArchetypeBadge'
@@ -39,6 +41,17 @@ export default function AnalysisPage() {
   const [targetRole, setTargetRole] = useState('')
   const [result, setResult] = useState<AnalysisResult | null>(null)
   const [currentStepIndex, setCurrentStepIndex] = useState(0)
+
+  const [jdProfile, setJdProfile] = useState<{
+    technical_skills: string[]
+    soft_skills: string[]
+    ai_requirements?: string
+    summary?: string
+    seniority_level?: string
+    key_tools: string[]
+  } | null>(null)
+  const [isParsingJD, setIsParsingJD] = useState(false)
+  const [jdParseError, setJdParseError] = useState<string | null>(null)
 
   const isCustom = profileId === 'custom'
 
@@ -121,6 +134,20 @@ export default function AnalysisPage() {
       return () => clearTimeout(timer)
     }
   }, [step, currentStepIndex])
+
+  const handleAnalyzeJD = async () => {
+    if (!targetJD.trim()) return
+    setIsParsingJD(true)
+    setJdParseError(null)
+    try {
+      const result = await parseJDProfile({ jd_text: targetJD, target_role: targetRole })
+      setJdProfile(result)
+    } catch {
+      setJdParseError('Could not analyze job description. You can still run the full analysis.')
+    } finally {
+      setIsParsingJD(false)
+    }
+  }
 
   const handleStartAnalysis = () => {
     setStep('analyzing')
@@ -348,7 +375,7 @@ export default function AnalysisPage() {
               </div>
 
               {/* Target Requirements (from profile) */}
-              {profile?.target_jd?.requirements && profile.target_jd.requirements.length > 0 && (
+              {profile?.target_jd?.requirements && profile.target_jd.requirements.length > 0 && !jdProfile && (
                 <div>
                   <h4 className="text-sm font-medium text-gray-700 mb-2">
                     Target Requirements
@@ -370,15 +397,146 @@ export default function AnalysisPage() {
                   Target Job Description
                 </label>
                 <textarea
-                  className="input min-h-[200px] bg-white"
+                  className="input min-h-[120px] bg-white"
                   value={targetJD}
-                  onChange={(e) => setTargetJD(e.target.value)}
+                  onChange={(e) => {
+                    setTargetJD(e.target.value)
+                    // Clear parsed profile when JD changes
+                    if (jdProfile) setJdProfile(null)
+                  }}
                   placeholder="Paste the full job description here. Include requirements, responsibilities, and qualifications."
                 />
-                <p className="text-xs text-gray-500 mt-1">
-                  The more detailed the JD, the better the skill gap analysis.
-                </p>
+                <div className="flex items-center justify-between mt-1">
+                  <p className="text-xs text-gray-500">
+                    The more detailed the JD, the better the skill gap analysis.
+                  </p>
+                  {targetJD.trim() && !jdProfile && !isParsingJD && (
+                    <button
+                      onClick={handleAnalyzeJD}
+                      className="text-xs text-primary-600 hover:text-primary-800 font-medium flex items-center gap-1"
+                    >
+                      <Sparkles className="h-3 w-3" />
+                      Preview Breakdown
+                    </button>
+                  )}
+                </div>
               </div>
+
+              {/* JD Parsing Loading State */}
+              {isParsingJD && (
+                <div className="flex items-center justify-center gap-2 py-4 bg-white rounded-md border border-primary-200">
+                  <Loader2 className="h-4 w-4 text-primary-500 animate-spin" />
+                  <span className="text-sm text-gray-600">Analyzing job description...</span>
+                </div>
+              )}
+
+              {/* JD Parse Error */}
+              {jdParseError && (
+                <p className="text-xs text-amber-600 bg-amber-50 p-2 rounded-md">
+                  {jdParseError}
+                </p>
+              )}
+
+              {/* Rich JD Breakdown */}
+              {jdProfile && (
+                <div className="space-y-3 pt-1">
+                  {/* Seniority Badge */}
+                  {jdProfile.seniority_level && (
+                    <div className="flex items-center gap-2">
+                      <span className="flex items-center gap-1 text-sm font-medium text-primary-700 bg-white px-2.5 py-1 rounded-md border border-primary-200">
+                        <Award className="h-4 w-4" />
+                        {jdProfile.seniority_level}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Technical Skills */}
+                  {jdProfile.technical_skills.length > 0 && (
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-1">
+                        <Code className="h-4 w-4" />
+                        Technical Skills Required
+                      </h4>
+                      <div className="flex flex-wrap gap-2">
+                        {jdProfile.technical_skills.map((skill, i) => (
+                          <span
+                            key={i}
+                            className="text-sm bg-white text-gray-700 px-2.5 py-1 rounded-md border border-primary-200"
+                          >
+                            {skill}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Soft Skills */}
+                  {jdProfile.soft_skills.length > 0 && (
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-1">
+                        <Users className="h-4 w-4" />
+                        Soft Skills Required
+                      </h4>
+                      <div className="flex flex-wrap gap-2">
+                        {jdProfile.soft_skills.map((skill, i) => (
+                          <span
+                            key={i}
+                            className="text-sm bg-white text-gray-600 px-2.5 py-1 rounded-md border border-primary-200"
+                          >
+                            {skill}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Key Tools & Platforms */}
+                  {jdProfile.key_tools.length > 0 && (
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-1">
+                        <Wrench className="h-4 w-4" />
+                        Key Tools & Platforms
+                      </h4>
+                      <div className="flex flex-wrap gap-2">
+                        {jdProfile.key_tools.map((tool, i) => (
+                          <span
+                            key={i}
+                            className="text-sm bg-primary-100 text-primary-700 px-2.5 py-1 rounded-md border border-primary-200"
+                          >
+                            {tool}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* AI Requirements */}
+                  {jdProfile.ai_requirements && (
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-1">
+                        <Brain className="h-4 w-4" />
+                        AI/ML Requirements
+                      </h4>
+                      <p className="text-sm text-gray-600 bg-white p-2.5 rounded-md border border-primary-200">
+                        {jdProfile.ai_requirements}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Role Summary */}
+                  {jdProfile.summary && (
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-1">
+                        <FileText className="h-4 w-4" />
+                        Role Summary
+                      </h4>
+                      <p className="text-sm text-gray-600 bg-white p-2.5 rounded-md border border-primary-200 line-clamp-4">
+                        {jdProfile.summary}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>
