@@ -64,12 +64,14 @@ class SkillGapEngine:
             Skills present in *state_b* but absent here default to 0,
             but two floors apply:
 
-            * **Professional floor** — tiered by experience:
-              L3+ in anything → floor 2 (User);
-              L2+ in anything → floor 1 (Aware).
+            * **Professional floor** — if the learner has *any* skill
+              at level 2+, unknown skills start at 1 (Aware).
+            * **Skill-level floor** — experienced professionals (L3+
+              anywhere) start at 2 (User) for intermediate+ skills
+              (ontology level 3+), giving mixed starting levels.
             * **Domain floor** — if the learner knows any skill in a
               domain, other skills in that domain start at
-              ``max(1, domain_max − 2)``.
+              ``max(1, domain_max − 1)``.
         state_b : dict[str, int]
             Target/required profile — ``{skill_id: required_level}``.
         role_context : dict | None
@@ -117,19 +119,15 @@ class SkillGapEngine:
         if role_context:
             target_domains = set(role_context.get("target_domains") or [])
 
-        # Professional floor: working professionals don't start at L0.
-        #   L3+ in anything → floor 2 (User: "can apply with help")
-        #   L2+ in anything → floor 1 (Aware: "can explain basics")
-        # A 6-year data analyst isn't just "aware" of dashboards —
-        # she uses them daily.
+        # Professional floor: any working professional (L2+ in anything)
+        # is at least Aware (L1) of all skills.  Prevents L0 display.
         max_skill = max(state_a.values()) if state_a else 0
-        professional_floor = 2 if max_skill >= 3 else (1 if max_skill >= 2 else 0)
+        professional_floor = 1 if max_skill >= 2 else 0
 
         # Domain floor: if a learner has ANY skill in a domain, other
-        # skills in that domain start at least at level 1 (Aware)
-        # instead of 0 (Unaware).  A data analyst with advanced SQL
-        # (D.PRQ level 3) is not completely unaware of other D.PRQ
-        # skills.  Floor = max(1, domain_max - 2).
+        # skills in that domain start at max(1, domain_max - 1).
+        # A data analyst with SQL at L3 (D.PRQ) starts other D.PRQ
+        # skills at L2 — she can "apply with help" in her own domain.
         domain_max: dict[str, int] = {}
         for sid, level in state_a.items():
             skill_info = self._ontology.get_skill(sid)
@@ -143,11 +141,22 @@ class SkillGapEngine:
             skill = self._ontology.get_skill(skill_id)
             # skill is guaranteed non-None after validation
 
-            # Apply domain floor for skills in known domains
+            # Domain floor: known domains get a boost
             dm = domain_max.get(skill["domain"], 0)
-            domain_floor = max(1, dm - 2) if dm > 0 else 0
+            domain_floor = max(1, dm - 1) if dm > 0 else 0
+
+            # Skill-level floor: experienced professionals (L3+
+            # anywhere) start at L2 for intermediate+ skills
+            # (ontology level 3+).  A 6-year analyst isn't just
+            # "aware" of A/B testing — she's worked adjacent to it.
+            # But for foundational skills (level 1-2) she's just L1.
+            if max_skill >= 3 and skill["level"] >= 3:
+                skill_floor = 2
+            else:
+                skill_floor = professional_floor
+
             current_level = max(
-                state_a.get(skill_id, 0), domain_floor, professional_floor
+                state_a.get(skill_id, 0), domain_floor, skill_floor
             )
             delta = required_level - current_level
 
