@@ -1,0 +1,39 @@
+version: "3.8"
+
+services:
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env
+    environment:
+      - PORT=8080
+      - DATABASE_URL=sqlite+aiosqlite:///./data/ai_pathway.db
+      - CHROMA_PERSIST_DIRECTORY=./data/chroma_db
+      - CORS_ORIGINS=http://95.216.199.47,http://localhost
+    volumes:
+      - backend-data:/app/data
+    networks:
+      - app-network
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        - VITE_API_URL=/api
+    restart: unless-stopped
+    ports:
+      - "80:8080"
+    environment:
+      - BACKEND_URL=http://backend:8080
+    depends_on:
+      - backend
+    networks:
+      - app-network
+
+volumes:
+  backend-data:
+
+networks:
+  app-network:
+    driver: bridge

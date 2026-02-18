@@ -36,7 +36,7 @@ class Settings(BaseSettings):
     debug: bool = True
 
     # CORS - comma-separated string (parsed by main.py)
-    cors_origins: str = "http://localhost:5173,http://localhost:3000"
+    cors_origins: str = "http://localhost:5173,http://localhost:3000,http://95.216.199.47"
 
     def get_cors_origins_list(self) -> list[str]:
         """Get CORS origins as a list."""
