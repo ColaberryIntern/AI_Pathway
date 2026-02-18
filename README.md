@@ -4,6 +4,8 @@
 
 A multi-agent AI system that generates **personalized AI learning paths** based on your current skills and career goals. Built with a modern React frontend and FastAPI backend, powered by Claude/OpenAI and RAG (Retrieval Augmented Generation).
 
+![AI Pathway Tool - Architecting Personalized Learning Journeys](docs/images/AI%20Pathway%20Info.png)
+
 ## Features
 
 - **Personalized Learning Paths** - AI analyzes your profile and target job to create custom 5-chapter learning journeys
