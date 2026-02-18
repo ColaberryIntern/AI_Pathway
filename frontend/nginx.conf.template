@@ -2,6 +2,9 @@ server {
     listen 8080;
     server_name _;
 
+    # Prevent nginx from rewriting redirects to port 80
+    absolute_redirect off;
+
     root /usr/share/nginx/html;
     index index.html;
 
