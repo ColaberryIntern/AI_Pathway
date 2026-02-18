@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { getProfile, runFullAnalysis } from '../services/api'
+import SkillsGapChart from '../components/SkillsGapChart'
 import {
   Loader2,
   CheckCircle,
@@ -541,6 +542,9 @@ export default function AnalysisPage() {
           <div className="text-gray-600">Estimated Time</div>
         </div>
       </div>
+
+      {/* Skills Gap Visual */}
+      {chapters.length > 0 && <SkillsGapChart chapters={chapters} />}
 
       {/* Learning Path Chapters — matches the domain grid badges */}
       <div className="card">

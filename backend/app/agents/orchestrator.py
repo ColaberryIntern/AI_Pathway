@@ -285,8 +285,100 @@ parse job descriptions, identify skill gaps, and generate personalized learning 
             "total_chapters": len(path.get("chapters", [])),
             "estimated_learning_hours": path.get("total_estimated_hours", 0),
             "primary_domains": gaps.get("summary", {}).get("primary_domains", []),
-            "recommendations": gaps.get("recommendations", [])[:3],
+            "recommendations": self._build_recommendations(path),
         }
+
+    def _build_recommendations(self, path: dict) -> list[str]:
+        """Generate deterministic recommendations from actual chapter data.
+
+        Produces 3 actionable recommendations that reference the real
+        domains and skills in the learning path — not the broader gap
+        landscape that the LLM gap analyzer sees.
+        """
+        chapters = path.get("chapters", [])
+        if not chapters:
+            return []
+
+        LEVEL_LABELS = {
+            0: "Unaware", 1: "Aware", 2: "User",
+            3: "Practitioner", 4: "Builder", 5: "Architect",
+        }
+
+        ontology = get_ontology_service()
+
+        # Extract domain info per chapter
+        chapter_info: list[dict] = []
+        seen_domains: dict[str, str] = {}  # domain_id -> label
+        for ch in chapters:
+            sid = ch.get("skill_id") or ch.get("primary_skill_id", "")
+            parts = sid.split(".")
+            domain_id = f"D.{parts[1]}" if len(parts) >= 3 else None
+            domain_obj = ontology.get_domain(domain_id) if domain_id else None
+            domain_label = domain_obj["label"] if domain_obj else (domain_id or "Unknown")
+            skill_name = ch.get("skill_name") or ch.get("primary_skill_name", sid)
+            current = ch.get("current_level", 0)
+            target = ch.get("target_level", 1)
+
+            if domain_id and domain_id not in seen_domains:
+                seen_domains[domain_id] = domain_label
+
+            chapter_info.append({
+                "domain_label": domain_label,
+                "skill_name": skill_name,
+                "current_level": current,
+                "target_level": target,
+            })
+
+        foundational = [c for c in chapter_info if c["current_level"] <= 1]
+        advancing = [c for c in chapter_info if c["current_level"] >= 2]
+        unique_domains = list(seen_domains.values())
+
+        recs: list[str] = []
+
+        # Rec 1 — learning priority
+        if foundational:
+            names = " and ".join(
+                c["skill_name"] for c in foundational[:2]
+            )
+            recs.append(
+                f"Start with foundational skills like {names} "
+                f"to build core understanding before tackling advanced topics."
+            )
+        elif advancing:
+            names = " and ".join(
+                c["skill_name"] for c in advancing[:2]
+            )
+            recs.append(
+                f"Build on your existing knowledge by deepening "
+                f"expertise in {names}."
+            )
+
+        # Rec 2 — progression pattern
+        from_levels = [c["current_level"] for c in chapter_info]
+        dominant_from = max(set(from_levels), key=from_levels.count)
+        dominant_to = dominant_from + 1
+        recs.append(
+            f"Your path focuses on progressing from "
+            f"{LEVEL_LABELS.get(dominant_from, f'L{dominant_from}')} to "
+            f"{LEVEL_LABELS.get(dominant_to, f'L{dominant_to}')} proficiency "
+            f"across {len(chapters)} chapters. Complete them in order "
+            f"for best results."
+        )
+
+        # Rec 3 — domain coverage
+        if len(unique_domains) > 1:
+            recs.append(
+                f"Your path covers {len(unique_domains)} skill domains: "
+                f"{', '.join(unique_domains)}. This breadth ensures "
+                f"a well-rounded AI skill set for your target role."
+            )
+        elif unique_domains:
+            recs.append(
+                f"Your path focuses deeply on {unique_domains[0]}, "
+                f"building progressive mastery within this critical domain."
+            )
+
+        return recs[:3]
 
 
 # Singleton instance
