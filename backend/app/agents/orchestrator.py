@@ -12,6 +12,7 @@ from app.agents.gap_analyzer import GapAnalyzerAgent
 from app.agents.path_generator import PathGeneratorAgent
 from app.agents.content_curator import ContentCuratorAgent
 from app.services.path_generator import LearningPathGenerator
+from app.services.ontology import get_ontology_service
 
 
 class Orchestrator(BaseAgent):
@@ -118,10 +119,23 @@ parse job descriptions, identify skill gaps, and generate personalized learning 
             # Step 4b: Build deterministic scaffold from state_a/state_b
             # This ensures chapter structure is gap-driven with prerequisite
             # ordering and domain diversity — not left to LLM discretion.
+            #
+            # LLM agents may return skill IDs not in the ontology (e.g.
+            # "AI_Fundamentals" instead of "SK.FND.001").  The deterministic
+            # gap engine validates IDs strictly, so we filter first.
+            ontology = get_ontology_service()
+            valid_state_a = {
+                sid: lvl for sid, lvl in state_a_skills.items()
+                if ontology.get_skill(sid) is not None
+            }
             state_b_skills = jd_result.get("state_b_skills", {})
+            valid_state_b = {
+                sid: lvl for sid, lvl in state_b_skills.items()
+                if ontology.get_skill(sid) is not None
+            }
             deterministic = LearningPathGenerator()
             scaffold_result = deterministic.generate_path(
-                state_a_skills, state_b_skills,
+                valid_state_a, valid_state_b,
             )
             results["steps"].append({
                 "step": "deterministic_scaffold", "status": "completed",
