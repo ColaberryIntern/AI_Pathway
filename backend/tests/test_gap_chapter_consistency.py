@@ -300,12 +300,61 @@ def test_summary_domains_match_gap_domains():
     print("\nPASS: Summary domains match gap domains for all profiles.")
 
 
+def test_mandatory_category_coverage():
+    """Every profile's scaffold must cover all 4 mandatory categories.
+
+    Categories:
+    - Foundation: D.FND
+    - Applied AI:  D.PRM, D.RAG, D.AGT, D.MOD, D.MUL, D.OPS, D.TOOL
+    - Evaluation:  D.EVL
+    - Safety:      D.SEC, D.GOV
+    """
+    from app.services.path_generator import MANDATORY_CATEGORIES
+
+    ont = get_ontology_service()
+    gen = LearningPathGenerator(ontology_service=ont)
+
+    print("\n" + "=" * 80)
+    print("MANDATORY CATEGORY COVERAGE TEST")
+    print("=" * 80)
+
+    failures = []
+    for filename, name in PROFILE_FILES:
+        profile = load_profile(filename)
+        state_a, state_b, rc = build_inputs(profile, ont)
+        scaffold = gen.generate_path(state_a, state_b, role_context=rc)
+
+        chapter_domains = set()
+        for ch in scaffold["chapters"]:
+            skill = ont.get_skill(ch["primary_skill_id"])
+            if skill:
+                chapter_domains.add(skill["domain"])
+
+        missing = []
+        for cat in MANDATORY_CATEGORIES:
+            cat_domains = set(cat["domains"])
+            if not chapter_domains & cat_domains:
+                missing.append(cat["name"])
+
+        status = "OK" if not missing else "FAIL"
+        print(f"  {name}: domains={sorted(chapter_domains)}, missing={missing} [{status}]")
+        if missing:
+            failures.append(f"{name}: missing {missing}")
+
+    assert not failures, (
+        f"FAIL: Missing mandatory categories:\n"
+        + "\n".join(f"  - {f}" for f in failures)
+    )
+    print("\nPASS: All profiles cover all 4 mandatory categories.")
+
+
 if __name__ == "__main__":
     test_gap_chapter_skill_ids_match()
     test_gap_count_matches_chapter_count()
     test_gap_levels_match_chapter_levels()
     test_reconciled_gaps_have_valid_fields()
     test_summary_domains_match_gap_domains()
+    test_mandatory_category_coverage()
     print("\n" + "=" * 80)
     print("ALL GAP-CHAPTER CONSISTENCY TESTS PASSED")
     print("=" * 80)

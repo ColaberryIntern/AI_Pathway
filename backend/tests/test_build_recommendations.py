@@ -122,7 +122,7 @@ def test_recommendations_reference_actual_domains():
     scaffold = _scaffold_for_profile("profile_08_hank_thompson.json", ont, gen)
     recs = build_recommendations(scaffold, ont)
 
-    # Hank's chapters cover D.EVL, D.OPS, D.SEC
+    # Hank's chapters cover D.EVL, D.OPS, D.SEC, D.FND
     chapter_domains = set()
     for ch in scaffold["chapters"]:
         sid = ch["primary_skill_id"]

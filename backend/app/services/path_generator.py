@@ -1,4 +1,4 @@
-"""Deterministic Learning Path Generator — Phase 3.2
+"""Deterministic Learning Path Generator — Phase 3.3
 
 Produces a fixed-length, prerequisite-ordered learning path from a
 skill-gap analysis.  Every run with the same inputs yields the same
@@ -6,22 +6,22 @@ output — no randomness, no LLM calls.
 
 Key design rules
 ----------------
-1. **Two-phase selection** — Phase 1 picks the top-5 primary skills
-   from the ranked gap list.  Phase 2 resolves their prerequisites.
-   When a prerequisite would push the total beyond ``MAX_CHAPTERS``,
-   the *lowest-priority primary skill* is dropped — not the
-   prerequisite.  This guarantees that high-priority skills always
-   have their foundations in place.
-2. **Domain diversity** — no more than ``MAX_DOMAIN_CHAPTERS`` chapters
-   from the same domain.  When a domain is over-represented, the
-   lowest-priority primary in that domain is replaced with the
-   next-highest-ranked gap skill from a different domain, and
-   prerequisite validation is re-run.
-3. **Prerequisite ordering** — prerequisites appear before the skills
+1. **Mandatory category coverage** — every path must include at least
+   one skill from each of four categories: Foundation (D.FND),
+   Applied AI (RAG/Agents/Prompting/etc.), Evaluation (D.EVL), and
+   Safety (D.SEC or D.GOV).  Phase 0.5 ensures state_b has gaps in
+   each category; Phase 4 post-processes the final chapter list,
+   swapping in self-contained skills from missing categories.
+2. **Two-phase selection** — Phase 1 picks the top-5 primary skills
+   from the ranked gap list.  Phase 2 resolves prerequisites with
+   back-pressure.
+3. **Domain diversity** — no more than ``MAX_DOMAIN_CHAPTERS`` chapters
+   from the same domain.
+4. **Prerequisite ordering** — prerequisites appear before the skills
    that depend on them.  Only immediate (depth-1) prerequisites are
    resolved; transitive prerequisites are deferred to future path
    generations.
-4. **+1 progression** — each chapter advances the learner exactly one
+5. **+1 progression** — each chapter advances the learner exactly one
    proficiency level, regardless of how large the total gap is.
 """
 
@@ -35,6 +35,16 @@ from app.services.state_inference import expand_state_a
 
 MAX_CHAPTERS = 5
 MAX_DOMAIN_CHAPTERS = 2
+
+# Every learning path must include at least one skill from each
+# mandatory category.  Categories are checked in order; the first
+# domain in each category that yields a usable gap is used.
+MANDATORY_CATEGORIES: list[dict[str, Any]] = [
+    {"name": "foundation",  "domains": ["D.FND"]},
+    {"name": "applied_ai",  "domains": ["D.PRM", "D.RAG", "D.AGT", "D.MOD", "D.MUL", "D.OPS", "D.TOOL"]},
+    {"name": "evaluation",  "domains": ["D.EVL"]},
+    {"name": "safety",      "domains": ["D.SEC", "D.GOV"]},
+]
 
 
 class LearningPathGenerator:
@@ -122,6 +132,15 @@ class LearningPathGenerator:
             avg_decay_factor,
         ) = expand_state_a(state_a, self._ontology)
 
+        # ==============================================================
+        # Phase 0.5 — Ensure mandatory domains in state_b
+        # ==============================================================
+        # If state_b has no skills from a mandatory category, inject
+        # the lowest-level skill (L2+) so the gap engine produces at
+        # least one gap for that category.
+        state_b = dict(state_b)  # don't mutate caller's dict
+        self._ensure_mandatory_in_state_b(state_b)
+
         gaps = self._gap_engine.compute_gap(expanded_a, state_b, role_context)
 
         # ==============================================================
@@ -132,29 +151,28 @@ class LearningPathGenerator:
         # ==============================================================
         # Phase 2 — Prerequisite resolution with back-pressure
         # ==============================================================
-        # For each candidate, determine which direct prerequisites the
-        # learner still needs.  If adding those prereqs pushes the
-        # total count past MAX_CHAPTERS, drop the lowest-priority
-        # candidate (the last one in the list) and retry.
-
         planned: list[dict[str, Any]] = self._resolve_with_backpressure(
-            primary_candidates, state_a,
+            primary_candidates, expanded_a,
         )
 
         # ==============================================================
         # Phase 3 — Domain diversity enforcement
         # ==============================================================
-        # No more than MAX_DOMAIN_CHAPTERS chapters from the same domain.
-        # Over-represented domains trigger a swap: drop the lowest-
-        # priority primary in that domain, pull in the next-best gap
-        # skill from a different domain, then re-run back-pressure.
-
-        planned = self._enforce_domain_diversity(planned, gaps, state_a)
+        planned = self._enforce_domain_diversity(planned, gaps, expanded_a)
 
         # ==============================================================
         # Build chapter list — prereqs before their dependents
         # ==============================================================
-        chapters = self._build_ordered_chapters(planned, state_a)
+        chapters = self._build_ordered_chapters(planned, expanded_a)
+
+        # ==============================================================
+        # Phase 4 — Mandatory category enforcement (post-processing)
+        # ==============================================================
+        # After a valid chapter plan is built, swap in skills from
+        # missing mandatory categories.  This operates on the final
+        # chapter list rather than the candidate list, avoiding the
+        # cascading back-pressure problem.
+        chapters = self._post_enforce_mandatory(chapters, gaps, expanded_a)
 
         return {
             "total_chapters": len(chapters),
@@ -164,6 +182,211 @@ class LearningPathGenerator:
             "decay_applied": decay_applied,
             "avg_decay_factor": avg_decay_factor,
         }
+
+    # ------------------------------------------------------------------
+    # Mandatory category helpers
+    # ------------------------------------------------------------------
+
+    def _ensure_mandatory_in_state_b(
+        self,
+        state_b: dict[str, int],
+    ) -> None:
+        """Inject one skill per missing mandatory category into *state_b*.
+
+        For each mandatory category that has zero representation in
+        *state_b*, pick the lowest-level skill (level >= 2) from the
+        first domain in that category.  Level 2+ guarantees a positive
+        delta after the gap engine's professional floor (L1).
+
+        Mutates *state_b* in place.
+        """
+        state_b_domains = set()
+        for sid in state_b:
+            skill = self._ontology.get_skill(sid)
+            if skill:
+                state_b_domains.add(skill["domain"])
+
+        for cat in MANDATORY_CATEGORIES:
+            if state_b_domains & set(cat["domains"]):
+                continue  # category already represented
+
+            # Find the lowest-level L2+ skill with fewest prerequisites
+            # from the first viable domain.
+            for domain_id in cat["domains"]:
+                domain_skills = [
+                    s for s in self._ontology.get_skills_by_domain(domain_id)
+                    if s["level"] >= 2 and s["id"] not in state_b
+                ]
+                # Prefer: fewest prereqs, then lowest level, then stable ID
+                domain_skills.sort(key=lambda s: (
+                    len(s.get("prerequisites", [])),
+                    s["level"],
+                    s["id"],
+                ))
+                if domain_skills:
+                    best = domain_skills[0]
+                    state_b[best["id"]] = best["level"]
+                    state_b_domains.add(domain_id)
+                    break
+
+    def _post_enforce_mandatory(
+        self,
+        chapters: list[dict[str, Any]],
+        all_gaps: list[dict[str, Any]],
+        state_a: dict[str, int],
+    ) -> list[dict[str, Any]]:
+        """Swap chapters to ensure mandatory category coverage.
+
+        Operates on the final chapter list (after topological sort)
+        rather than the candidate list, avoiding cascading back-pressure.
+        For each missing mandatory category, the lowest-value chapter
+        from a non-mandatory (or already-covered) domain is replaced
+        with a single-chapter skill from the missing category.
+
+        The replacement skill is chosen to be self-contained: it must
+        not require unmet prerequisites, so that a 1-for-1 swap keeps
+        the chapter count at exactly ``MAX_CHAPTERS``.
+        """
+        if not chapters:
+            return chapters
+
+        chapters = list(chapters)
+        chapter_domains = [
+            self._ontology.get_skill(
+                ch.get("primary_skill_id", "")
+            )
+            for ch in chapters
+        ]
+
+        for cat in MANDATORY_CATEGORIES:
+            cat_domains = set(cat["domains"])
+
+            # Check if any chapter covers this category
+            covered = any(
+                s is not None and s["domain"] in cat_domains
+                for s in chapter_domains
+            )
+            if covered:
+                continue
+
+            # Find a replacement skill: must be from this category,
+            # must have all prereqs already met (self-contained swap).
+            replacement_skill = None
+            for gap in all_gaps:
+                if gap["domain"] not in cat_domains:
+                    continue
+                sid = gap["skill_id"]
+                # Already in the chapter list?
+                if any(
+                    ch.get("primary_skill_id") == sid for ch in chapters
+                ):
+                    continue
+                # Check all prereqs are met
+                prereqs_met = True
+                for prereq_id in gap["prerequisites"]:
+                    prereq_skill = self._ontology.get_skill(prereq_id)
+                    if prereq_skill is None:
+                        continue
+                    current = state_a.get(prereq_id, 0)
+                    # Also count as met if it's already a chapter
+                    if any(
+                        ch.get("primary_skill_id") == prereq_id
+                        for ch in chapters
+                    ):
+                        continue
+                    if current < prereq_skill["level"]:
+                        prereqs_met = False
+                        break
+                if prereqs_met:
+                    replacement_skill = gap
+                    break
+
+            if replacement_skill is None:
+                # Fallback: pick the cheapest gap (fewest prereqs)
+                for gap in all_gaps:
+                    if gap["domain"] not in cat_domains:
+                        continue
+                    if any(
+                        ch.get("primary_skill_id") == gap["skill_id"]
+                        for ch in chapters
+                    ):
+                        continue
+                    replacement_skill = gap
+                    break
+
+            if replacement_skill is None:
+                continue  # no gap at all — graceful skip
+
+            # Find the chapter to replace: lowest-priority chapter
+            # from a domain that either (a) isn't mandatory, or
+            # (b) has multiple chapters so removing one still leaves
+            # coverage.
+            swap_idx = self._find_swap_target(chapters, chapter_domains)
+            if swap_idx is None:
+                continue
+
+            # Build replacement chapter
+            skill = self._ontology.get_skill(replacement_skill["skill_id"])
+            if skill is None:
+                continue
+
+            new_chapter = self._build_chapter(
+                chapter_number=chapters[swap_idx]["chapter_number"],
+                skill=skill,
+                current_level=replacement_skill["current_level"],
+            )
+            chapters[swap_idx] = new_chapter
+            chapter_domains[swap_idx] = skill
+
+        # Re-number chapters sequentially
+        for i, ch in enumerate(chapters, start=1):
+            ch["chapter_number"] = i
+
+        return chapters
+
+    def _find_swap_target(
+        self,
+        chapters: list[dict[str, Any]],
+        chapter_domains: list[dict[str, Any] | None],
+    ) -> int | None:
+        """Find the best chapter to replace for mandatory coverage.
+
+        Prefers chapters from domains that have multiple chapters
+        (so removing one doesn't lose domain coverage).  Falls back
+        to the last chapter.  Never swaps the only representative
+        of a mandatory category.
+        """
+        # Count chapters per domain
+        domain_chapter_counts: dict[str, int] = {}
+        for skill in chapter_domains:
+            if skill:
+                d = skill["domain"]
+                domain_chapter_counts[d] = domain_chapter_counts.get(d, 0) + 1
+
+        # Identify which chapters are the sole mandatory representative
+        mandatory_sole: set[int] = set()
+        for cat in MANDATORY_CATEGORIES:
+            cat_domains = set(cat["domains"])
+            cat_indices = [
+                i for i, s in enumerate(chapter_domains)
+                if s and s["domain"] in cat_domains
+            ]
+            if len(cat_indices) == 1:
+                mandatory_sole.add(cat_indices[0])
+
+        # Prefer swapping a chapter from a domain with 2+ chapters,
+        # scanning from the end (lowest priority / last in topo order).
+        best_idx = None
+        for idx in reversed(range(len(chapters))):
+            if idx in mandatory_sole:
+                continue
+            skill = chapter_domains[idx]
+            if skill and domain_chapter_counts.get(skill["domain"], 0) >= 2:
+                return idx
+            if best_idx is None:
+                best_idx = idx  # first non-mandatory-sole from the end
+
+        return best_idx
 
     # ------------------------------------------------------------------
     # Internals
