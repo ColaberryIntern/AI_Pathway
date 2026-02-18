@@ -11,6 +11,7 @@ from app.agents.assessment_agent import AssessmentAgent
 from app.agents.gap_analyzer import GapAnalyzerAgent
 from app.agents.path_generator import PathGeneratorAgent
 from app.agents.content_curator import ContentCuratorAgent
+from app.services.path_generator import LearningPathGenerator
 
 
 class Orchestrator(BaseAgent):
@@ -114,16 +115,33 @@ parse job descriptions, identify skill gaps, and generate personalized learning 
             results["gap_analysis"] = gap_result
             results["steps"].append({"step": "gap_analysis", "status": "completed"})
 
-            # Step 5: Generate Learning Path
+            # Step 4b: Build deterministic scaffold from state_a/state_b
+            # This ensures chapter structure is gap-driven with prerequisite
+            # ordering and domain diversity — not left to LLM discretion.
+            state_b_skills = jd_result.get("state_b_skills", {})
+            deterministic = LearningPathGenerator()
+            scaffold_result = deterministic.generate_path(
+                state_a_skills, state_b_skills,
+            )
+            results["steps"].append({
+                "step": "deterministic_scaffold", "status": "completed",
+            })
+
+            # Step 5: Generate Learning Path (scaffold-enrichment mode)
             path_result = await self._execute_step(
                 "path_generation",
                 self.path_generator,
                 {
+                    "chapter_scaffold": scaffold_result["chapters"],
                     "prioritized_gaps": gap_result.get("gaps", []),
                     "industry": task.get("profile", {}).get("industry", ""),
                     "learning_intent": task.get("profile", {}).get("learning_intent", ""),
                     "profile_summary": profile_result.get("profile_summary", ""),
-                    "num_chapters": task.get("num_chapters", 5),
+                    "num_chapters": scaffold_result["total_chapters"],
+                    "inferred_skill_count": scaffold_result.get("inferred_skill_count"),
+                    "confidence_weighted": scaffold_result.get("confidence_weighted"),
+                    "decay_applied": scaffold_result.get("decay_applied"),
+                    "avg_decay_factor": scaffold_result.get("avg_decay_factor"),
                 }
             )
             results["learning_path"] = path_result
