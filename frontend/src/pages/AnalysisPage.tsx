@@ -395,39 +395,6 @@ export default function AnalysisPage() {
                 />
               </div>
 
-              {/* Target Requirements (from profile) */}
-              {profile?.target_jd?.requirements && profile.target_jd.requirements.length > 0 && !jdProfile && (
-                <div>
-                  <h4 className="text-sm font-medium text-gray-700 mb-2">
-                    Target Requirements
-                  </h4>
-                  <ul className="space-y-1.5 bg-white p-3 rounded-md border border-primary-200">
-                    {profile.target_jd.requirements.map((req, i) => (
-                      <li key={i} className="text-sm text-gray-600 flex items-start gap-2">
-                        <span className="text-primary-500 mt-0.5">•</span>
-                        {req}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {/* Target Job Description */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Target Job Description
-                </label>
-                <textarea
-                  className="input min-h-[120px] bg-white"
-                  value={targetJD}
-                  onChange={(e) => setTargetJD(e.target.value)}
-                  placeholder="Paste the full job description here. Include requirements, responsibilities, and qualifications."
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  The more detailed the JD, the better the skill gap analysis.
-                </p>
-              </div>
-
               {/* JD Parsing Loading State */}
               {isParsingJD && (
                 <div className="flex items-center justify-center gap-2 py-4 bg-white rounded-md border border-primary-200">
@@ -543,6 +510,22 @@ export default function AnalysisPage() {
                   )}
                 </div>
               )}
+
+              {/* Target Job Description — at bottom so skills align with left panel */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Target Job Description
+                </label>
+                <textarea
+                  className="input min-h-[120px] bg-white"
+                  value={targetJD}
+                  onChange={(e) => setTargetJD(e.target.value)}
+                  placeholder="Paste the full job description here. Include requirements, responsibilities, and qualifications."
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  The more detailed the JD, the better the skill gap analysis.
+                </p>
+              </div>
             </div>
           </div>
         </div>
