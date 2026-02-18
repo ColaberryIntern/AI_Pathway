@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 
 // All domain IDs for sweep animation
 const ALL_DOMAINS = [
@@ -7,8 +7,10 @@ const ALL_DOMAINS = [
   'D.PRQ', 'D.GOV', 'D.DOM', 'D.PRD', 'D.COM', 'D.LRN',
 ]
 
-// Animation sequence tied to analysis steps
-// Each step ~3 seconds, with animations within each step
+// Default domains when no profile data is available
+const DEFAULT_CURRENT_DOMAINS = ['D.DIG', 'D.CTIC', 'D.FND']
+const DEFAULT_TARGET_DOMAINS = ['D.PRM', 'D.EVL', 'D.GOV', 'D.PRD']
+
 interface AnimationFrame {
   highlightedDomains: string[]
   activeDomain: string | null
@@ -16,77 +18,109 @@ interface AnimationFrame {
   delay: number // ms from animation start
 }
 
-const ANIMATION_SEQUENCE: AnimationFrame[] = [
+export interface ProfileDomains {
+  currentDomains: string[] // domains the user already has skills in
+  targetDomains: string[]  // domains from expected skill gaps
+}
+
+/**
+ * Build a personalized animation sequence from profile domains.
+ *
+ * Step 0 (0-3s)  — Profile Analysis: highlights the user's current skill domains
+ * Step 1 (3-6s)  — JD Parsing: highlights the user's target gap domains
+ * Step 2 (6-9s)  — Gap Analysis: sweeps all 18 domains
+ * Step 3 (9-12s) — Path Generation: spotlights target domains one by one
+ */
+function buildSequence(profileDomains?: ProfileDomains): AnimationFrame[] {
+  const current = profileDomains?.currentDomains?.length
+    ? profileDomains.currentDomains
+    : DEFAULT_CURRENT_DOMAINS
+  const target = profileDomains?.targetDomains?.length
+    ? profileDomains.targetDomains
+    : DEFAULT_TARGET_DOMAINS
+
+  const frames: AnimationFrame[] = []
+
   // === Step 0: Profile Analysis (0-3s) ===
-  // Highlight foundation domains the user likely has
-  { highlightedDomains: [], activeDomain: 'D.DIG', completedDomains: [], delay: 0 },
-  { highlightedDomains: ['D.DIG'], activeDomain: 'D.CTIC', completedDomains: [], delay: 500 },
-  { highlightedDomains: ['D.DIG', 'D.CTIC'], activeDomain: 'D.FND', completedDomains: [], delay: 1000 },
-  { highlightedDomains: [], activeDomain: null, completedDomains: ['D.DIG', 'D.CTIC', 'D.FND'], delay: 2500 },
+  // Reveal current-skill domains one at a time
+  const step0Domains = current.slice(0, 5) // cap at 5 for timing
+  const step0Interval = Math.min(500, 2000 / Math.max(step0Domains.length, 1))
+  step0Domains.forEach((domain, i) => {
+    frames.push({
+      highlightedDomains: step0Domains.slice(0, i),
+      activeDomain: domain,
+      completedDomains: [],
+      delay: i * step0Interval,
+    })
+  })
+  // Settle: mark them as completed
+  frames.push({
+    highlightedDomains: [],
+    activeDomain: null,
+    completedDomains: [...step0Domains],
+    delay: 2500,
+  })
 
   // === Step 1: JD Parsing (3-6s) ===
-  // Highlight application domains from job requirements
-  { highlightedDomains: [], activeDomain: 'D.PRM', completedDomains: ['D.DIG', 'D.CTIC', 'D.FND'], delay: 3000 },
-  { highlightedDomains: ['D.PRM'], activeDomain: 'D.EVL', completedDomains: ['D.DIG', 'D.CTIC', 'D.FND'], delay: 3500 },
-  { highlightedDomains: ['D.PRM', 'D.EVL'], activeDomain: 'D.GOV', completedDomains: ['D.DIG', 'D.CTIC', 'D.FND'], delay: 4000 },
-  { highlightedDomains: ['D.PRM', 'D.EVL', 'D.GOV'], activeDomain: 'D.PRD', completedDomains: ['D.DIG', 'D.CTIC', 'D.FND'], delay: 4500 },
-  { highlightedDomains: [], activeDomain: null, completedDomains: ['D.DIG', 'D.CTIC', 'D.FND', 'D.PRM', 'D.EVL', 'D.GOV', 'D.PRD'], delay: 5500 },
+  // Reveal target gap domains one at a time
+  const step1Domains = target.slice(0, 5)
+  const step1Interval = Math.min(500, 2000 / Math.max(step1Domains.length, 1))
+  const completedAfterStep0 = [...step0Domains]
+  step1Domains.forEach((domain, i) => {
+    frames.push({
+      highlightedDomains: step1Domains.slice(0, i),
+      activeDomain: domain,
+      completedDomains: completedAfterStep0,
+      delay: 3000 + i * step1Interval,
+    })
+  })
+  // Settle: mark all as completed
+  const completedAfterStep1 = [...new Set([...completedAfterStep0, ...step1Domains])]
+  frames.push({
+    highlightedDomains: [],
+    activeDomain: null,
+    completedDomains: completedAfterStep1,
+    delay: 5500,
+  })
 
   // === Step 2: Gap Analysis (6-9s) ===
-  // Sweep through ALL domains quickly
-  ...ALL_DOMAINS.map((domain, i) => ({
-    highlightedDomains: ALL_DOMAINS.slice(0, i),
-    activeDomain: domain,
-    completedDomains: ['D.DIG', 'D.CTIC', 'D.FND', 'D.PRM', 'D.EVL', 'D.GOV', 'D.PRD'],
-    delay: 6000 + (i * 150), // 150ms per domain = 2.7s total
-  })),
-  {
+  // Fast sweep through ALL domains
+  ALL_DOMAINS.forEach((domain, i) => {
+    frames.push({
+      highlightedDomains: ALL_DOMAINS.slice(0, i),
+      activeDomain: domain,
+      completedDomains: completedAfterStep1,
+      delay: 6000 + i * 150,
+    })
+  })
+  frames.push({
     highlightedDomains: [],
     activeDomain: null,
     completedDomains: ALL_DOMAINS.slice(),
-    delay: 8700
-  },
+    delay: 8700,
+  })
 
   // === Step 3: Path Generation (9-12s) ===
-  // Show likely learning path chapters (animated selection)
-  {
-    highlightedDomains: [],
-    activeDomain: 'D.PRM',
-    completedDomains: ALL_DOMAINS.slice(),
-    delay: 9000
-  },
-  {
-    highlightedDomains: [],
-    activeDomain: 'D.TOOL',
-    completedDomains: ALL_DOMAINS.slice(),
-    delay: 9500
-  },
-  {
-    highlightedDomains: [],
-    activeDomain: 'D.EVL',
-    completedDomains: ALL_DOMAINS.slice(),
-    delay: 10000
-  },
-  {
-    highlightedDomains: [],
-    activeDomain: 'D.RAG',
-    completedDomains: ALL_DOMAINS.slice(),
-    delay: 10500
-  },
-  {
-    highlightedDomains: [],
-    activeDomain: 'D.GOV',
-    completedDomains: ALL_DOMAINS.slice(),
-    delay: 11000
-  },
-  // Final state: all complete, path domains selected
-  {
+  // Spotlight target domains one by one (these are likely in the path)
+  const step3Domains = target.slice(0, 5)
+  step3Domains.forEach((domain, i) => {
+    frames.push({
+      highlightedDomains: [],
+      activeDomain: domain,
+      completedDomains: ALL_DOMAINS.slice(),
+      delay: 9000 + i * 500,
+    })
+  })
+  // Final settle
+  frames.push({
     highlightedDomains: [],
     activeDomain: null,
     completedDomains: ALL_DOMAINS.slice(),
-    delay: 11500
-  },
-]
+    delay: 11500,
+  })
+
+  return frames
+}
 
 interface UseAnalysisAnimationResult {
   highlightedDomains: string[]
@@ -96,7 +130,12 @@ interface UseAnalysisAnimationResult {
   isAnimating: boolean
 }
 
-export function useAnalysisAnimation(isRunning: boolean): UseAnalysisAnimationResult {
+export function useAnalysisAnimation(
+  isRunning: boolean,
+  profileDomains?: ProfileDomains,
+): UseAnalysisAnimationResult {
+  const sequence = useMemo(() => buildSequence(profileDomains), [profileDomains])
+
   const [frameIndex, setFrameIndex] = useState(0)
   const [isAnimating, setIsAnimating] = useState(false)
   const [startTime, setStartTime] = useState<number | null>(null)
@@ -122,8 +161,8 @@ export function useAnalysisAnimation(isRunning: boolean): UseAnalysisAnimationRe
 
       // Find the current frame based on elapsed time
       let newFrameIndex = 0
-      for (let i = ANIMATION_SEQUENCE.length - 1; i >= 0; i--) {
-        if (elapsed >= ANIMATION_SEQUENCE[i].delay) {
+      for (let i = sequence.length - 1; i >= 0; i--) {
+        if (elapsed >= sequence[i].delay) {
           newFrameIndex = i
           break
         }
@@ -136,10 +175,10 @@ export function useAnalysisAnimation(isRunning: boolean): UseAnalysisAnimationRe
 
     const interval = setInterval(checkFrame, 50) // Check every 50ms for smooth updates
     return () => clearInterval(interval)
-  }, [isRunning, startTime, frameIndex])
+  }, [isRunning, startTime, frameIndex, sequence])
 
   // Get current frame data
-  const currentFrame = ANIMATION_SEQUENCE[frameIndex] || ANIMATION_SEQUENCE[0]
+  const currentFrame = sequence[frameIndex] || sequence[0]
 
   // No chapter badges during animation — actual chapter-to-domain
   // mapping is shown on the completion page using real API data.

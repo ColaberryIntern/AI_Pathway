@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { getProfile, runFullAnalysis } from '../services/api'
@@ -149,13 +149,34 @@ export default function AnalysisPage() {
   const activeProfile = isCustom ? customProfileData : profile
   const proficiencyLevel = getProficiencyLevel(activeProfile?.ai_exposure_level)
 
+  // Extract profile domains for personalized animation
+  const profileDomains = useMemo(() => {
+    if (!activeProfile) return undefined
+
+    // Current skill domains from estimated_current_skills
+    const currentDomains = [
+      ...new Set(
+        Object.keys(activeProfile.estimated_current_skills || {})
+          .map(sid => { const p = sid.split('.'); return p.length >= 3 ? `D.${p[1]}` : null })
+          .filter((d): d is string => d !== null)
+      ),
+    ]
+
+    // Target gap domains from expected_skill_gaps
+    const targetDomains = (activeProfile.expected_skill_gaps || [])
+      .map(g => g.domain)
+      .filter(Boolean)
+
+    return { currentDomains, targetDomains }
+  }, [activeProfile])
+
   // Animation state for domain grid - must be called before any early returns
   const {
     highlightedDomains,
     activeDomain,
     completedDomains,
     selectedDomains,
-  } = useAnalysisAnimation(step === 'analyzing')
+  } = useAnalysisAnimation(step === 'analyzing', profileDomains)
 
   if (step === 'input') {
     return (
@@ -452,6 +473,15 @@ export default function AnalysisPage() {
 
   // Derive actual chapter-to-domain mapping from learning path
   const chapters = result?.result?.learning_path?.chapters || []
+
+  // Compute robust display values from actual data arrays
+  const displayGaps = gaps.length || summary?.total_gaps_identified || 0
+  const displayChapters = chapters.length || summary?.total_chapters || 0
+  const displayHours =
+    result?.result?.learning_path?.total_estimated_hours
+    || chapters.reduce((sum: number, ch: { estimated_time_hours?: number }) => sum + (ch.estimated_time_hours || 0), 0)
+    || summary?.estimated_learning_hours
+    || 0
   const actualSelectedDomains = chapters
     .map((ch: { skill_id?: string; primary_skill_id?: string; chapter_number?: number }) => {
       const sid = ch.skill_id || ch.primary_skill_id || ''
@@ -494,19 +524,19 @@ export default function AnalysisPage() {
       <div className="grid md:grid-cols-3 gap-4">
         <div className="card text-center border-l-4 border-l-indigo-500">
           <div className="text-3xl font-bold text-indigo-600">
-            {summary?.total_gaps_identified || 0}
+            {displayGaps}
           </div>
           <div className="text-gray-600">Skill Gaps Identified</div>
         </div>
         <div className="card text-center border-l-4 border-l-sky-500">
           <div className="text-3xl font-bold text-sky-600">
-            {summary?.total_chapters || 0}
+            {displayChapters}
           </div>
           <div className="text-gray-600">Learning Chapters</div>
         </div>
         <div className="card text-center border-l-4 border-l-amber-500">
           <div className="text-3xl font-bold text-amber-600">
-            {summary?.estimated_learning_hours || 0}h
+            {Math.round(displayHours)}h
           </div>
           <div className="text-gray-600">Estimated Time</div>
         </div>

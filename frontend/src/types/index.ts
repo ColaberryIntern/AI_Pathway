@@ -19,6 +19,7 @@ export interface Profile {
     requirements: string[]
   }
   expected_skill_gaps?: SkillGapDomain[]
+  estimated_current_skills?: Record<string, number>
 }
 
 export interface SkillGapDomain {
