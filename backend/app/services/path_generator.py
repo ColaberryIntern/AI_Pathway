@@ -423,6 +423,13 @@ class LearningPathGenerator:
         same topological layer are broken by the original gap-engine
         priority (position in ``planned``).
         """
+        # Professional floor: mirror the gap engine's logic so that
+        # prerequisite skills also never start at L0 for experienced
+        # learners.
+        professional_floor = (
+            1 if any(v >= 2 for v in state_a.values()) else 0
+        )
+
         # -- Step 1: collect every skill that will become a chapter --------
         #    skill_id -> {"skill": dict, "current_level": int}
         to_schedule: dict[str, dict[str, Any]] = {}
@@ -442,7 +449,7 @@ class LearningPathGenerator:
                 prereq_skill = self._ontology.get_skill(prereq_id)
                 if prereq_skill is None:
                     continue
-                current = state_a.get(prereq_id, 0)
+                current = max(state_a.get(prereq_id, 0), professional_floor)
                 if current >= prereq_skill["level"]:
                     continue  # learner already meets this prereq
                 if prereq_id not in to_schedule:
