@@ -133,9 +133,35 @@ parse job descriptions, identify skill gaps, and generate personalized learning 
                 sid: lvl for sid, lvl in state_b_skills.items()
                 if ontology.get_skill(sid) is not None
             }
-            deterministic = LearningPathGenerator()
+
+            # Fallback: when RAG is unavailable the JD parser may return
+            # entirely invented skill IDs (e.g. "SKL001"), leaving
+            # valid_state_b empty.  In that case, derive state_b from
+            # the profile's expected_skill_gaps which contain curated
+            # ontology IDs.
+            profile_data = task.get("profile", {})
+            if not valid_state_b and "expected_skill_gaps" in profile_data:
+                for gap_group in profile_data["expected_skill_gaps"]:
+                    for sid in gap_group.get("skills", []):
+                        skill = ontology.get_skill(sid)
+                        if skill:
+                            valid_state_b[sid] = skill["level"]
+
+            # Build role_context for better gap prioritization
+            role_context = None
+            if profile_data.get("target_role") or profile_data.get("expected_skill_gaps"):
+                role_context = {
+                    "target_role": profile_data.get("target_role", ""),
+                    "target_domains": [
+                        g["domain"]
+                        for g in profile_data.get("expected_skill_gaps", [])
+                        if "domain" in g
+                    ],
+                }
+
+            deterministic = LearningPathGenerator(ontology_service=ontology)
             scaffold_result = deterministic.generate_path(
-                valid_state_a, valid_state_b,
+                valid_state_a, valid_state_b, role_context=role_context,
             )
             results["steps"].append({
                 "step": "deterministic_scaffold", "status": "completed",
