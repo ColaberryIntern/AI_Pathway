@@ -36,7 +36,12 @@ server {
     location / {
         try_files $uri $uri/ /index.html;
 
-        # Cache static assets
+        # Don't cache the SPA entry point so deploys take effect immediately
+        location = /index.html {
+            add_header Cache-Control "no-cache, no-store, must-revalidate";
+        }
+
+        # Cache hashed static assets
         location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2)$ {
             expires 1y;
             add_header Cache-Control "public, immutable";

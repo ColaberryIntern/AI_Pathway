@@ -180,9 +180,18 @@ export function useAnalysisAnimation(
   // Get current frame data
   const currentFrame = sequence[frameIndex] || sequence[0]
 
-  // No chapter badges during animation — actual chapter-to-domain
-  // mapping is shown on the completion page using real API data.
-  const selectedDomains: { domainId: string; chapterNum: number }[] = []
+  // Show preview chapter badges once animation reaches Step 3 (Path Generation).
+  // These use the profile's target gap domains — which are dramatically different
+  // per profile — creating visible differentiation during the animation.
+  // Real chapter-to-domain mapping replaces these on the completion page.
+  const inStep3 = isAnimating && currentFrame.delay >= 9000
+  const selectedDomains: { domainId: string; chapterNum: number }[] =
+    inStep3 && profileDomains?.targetDomains?.length
+      ? profileDomains.targetDomains.slice(0, 5).map((d, i) => ({
+          domainId: d,
+          chapterNum: i + 1,
+        }))
+      : []
 
   return {
     highlightedDomains: currentFrame.highlightedDomains,
