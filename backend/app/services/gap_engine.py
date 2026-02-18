@@ -61,8 +61,14 @@ class SkillGapEngine:
         ----------
         state_a : dict[str, int]
             Learner's current profile — ``{skill_id: current_level}``.
-            Skills present in *state_b* but absent here are treated as
-            level 0 (Unaware).
+            Skills present in *state_b* but absent here default to 0,
+            but two floors apply:
+
+            * **Professional floor** — if the learner has *any* skill
+              at level 2+, all unknown skills start at 1 (Aware).
+            * **Domain floor** — if the learner knows any skill in a
+              domain, other skills in that domain start at
+              ``max(1, domain_max − 2)``.
         state_b : dict[str, int]
             Target/required profile — ``{skill_id: required_level}``.
         role_context : dict | None
@@ -110,6 +116,14 @@ class SkillGapEngine:
         if role_context:
             target_domains = set(role_context.get("target_domains") or [])
 
+        # Professional floor: if the learner has ANY skill at level 2+
+        # they are a working professional and should never be "Unaware"
+        # (L0) of any skill.  A 6-year data analyst may not know RAG,
+        # but she *knows it exists* — that's L1 (Aware), not L0.
+        professional_floor = (
+            1 if any(level >= 2 for level in state_a.values()) else 0
+        )
+
         # Domain floor: if a learner has ANY skill in a domain, other
         # skills in that domain start at least at level 1 (Aware)
         # instead of 0 (Unaware).  A data analyst with advanced SQL
@@ -131,7 +145,9 @@ class SkillGapEngine:
             # Apply domain floor for skills in known domains
             dm = domain_max.get(skill["domain"], 0)
             domain_floor = max(1, dm - 2) if dm > 0 else 0
-            current_level = max(state_a.get(skill_id, 0), domain_floor)
+            current_level = max(
+                state_a.get(skill_id, 0), domain_floor, professional_floor
+            )
             delta = required_level - current_level
 
             if delta <= 0:
