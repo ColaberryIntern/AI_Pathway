@@ -64,8 +64,9 @@ class SkillGapEngine:
             Skills present in *state_b* but absent here default to 0,
             but two floors apply:
 
-            * **Professional floor** — if the learner has *any* skill
-              at level 2+, all unknown skills start at 1 (Aware).
+            * **Professional floor** — tiered by experience:
+              L3+ in anything → floor 2 (User);
+              L2+ in anything → floor 1 (Aware).
             * **Domain floor** — if the learner knows any skill in a
               domain, other skills in that domain start at
               ``max(1, domain_max − 2)``.
@@ -116,13 +117,13 @@ class SkillGapEngine:
         if role_context:
             target_domains = set(role_context.get("target_domains") or [])
 
-        # Professional floor: if the learner has ANY skill at level 2+
-        # they are a working professional and should never be "Unaware"
-        # (L0) of any skill.  A 6-year data analyst may not know RAG,
-        # but she *knows it exists* — that's L1 (Aware), not L0.
-        professional_floor = (
-            1 if any(level >= 2 for level in state_a.values()) else 0
-        )
+        # Professional floor: working professionals don't start at L0.
+        #   L3+ in anything → floor 2 (User: "can apply with help")
+        #   L2+ in anything → floor 1 (Aware: "can explain basics")
+        # A 6-year data analyst isn't just "aware" of dashboards —
+        # she uses them daily.
+        max_skill = max(state_a.values()) if state_a else 0
+        professional_floor = 2 if max_skill >= 3 else (1 if max_skill >= 2 else 0)
 
         # Domain floor: if a learner has ANY skill in a domain, other
         # skills in that domain start at least at level 1 (Aware)

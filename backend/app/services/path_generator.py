@@ -423,12 +423,10 @@ class LearningPathGenerator:
         same topological layer are broken by the original gap-engine
         priority (position in ``planned``).
         """
-        # Professional floor: mirror the gap engine's logic so that
-        # prerequisite skills also never start at L0 for experienced
-        # learners.
-        professional_floor = (
-            1 if any(v >= 2 for v in state_a.values()) else 0
-        )
+        # Professional floor: mirror the gap engine's tiered logic.
+        #   L3+ → floor 2 (User)    L2+ → floor 1 (Aware)
+        max_skill = max(state_a.values()) if state_a else 0
+        professional_floor = 2 if max_skill >= 3 else (1 if max_skill >= 2 else 0)
 
         # -- Step 1: collect every skill that will become a chapter --------
         #    skill_id -> {"skill": dict, "current_level": int}
