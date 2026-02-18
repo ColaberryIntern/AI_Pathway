@@ -162,16 +162,36 @@ parse job descriptions, identify skill gaps, and generate personalized learning 
                             if sid not in valid_state_b:
                                 valid_state_b[sid] = skill["level"]
 
+            # Fallback for custom profiles (no expected_skill_gaps):
+            # match LLM-returned skill names against ontology via text
+            # search, then try role-based domain matching.
+            if not valid_state_b:
+                valid_state_b = self._derive_state_b_from_jd(
+                    jd_result, profile_data, ontology,
+                )
+
             # Build role_context for better gap prioritization
+            target_domains = [
+                g["domain"]
+                for g in profile_data.get("expected_skill_gaps", [])
+                if "domain" in g
+            ]
             role_context = None
-            if profile_data.get("target_role") or profile_data.get("expected_skill_gaps"):
+            if profile_data.get("target_role") or target_domains:
+                # If no explicit target_domains, derive from the
+                # skills we just resolved in valid_state_b.
+                if not target_domains and valid_state_b:
+                    seen = set()
+                    for sid in valid_state_b:
+                        parts = sid.split(".")
+                        if len(parts) >= 3:
+                            did = f"D.{parts[1]}"
+                            if did not in seen:
+                                seen.add(did)
+                                target_domains.append(did)
                 role_context = {
                     "target_role": profile_data.get("target_role", ""),
-                    "target_domains": [
-                        g["domain"]
-                        for g in profile_data.get("expected_skill_gaps", [])
-                        if "domain" in g
-                    ],
+                    "target_domains": target_domains,
                 }
 
             deterministic = LearningPathGenerator(ontology_service=ontology)
@@ -287,6 +307,102 @@ parse job descriptions, identify skill gaps, and generate personalized learning 
             "primary_domains": gaps.get("summary", {}).get("primary_domains", []),
             "recommendations": self._build_recommendations(path),
         }
+
+    @staticmethod
+    def _derive_state_b_from_jd(
+        jd_result: dict,
+        profile_data: dict,
+        ontology,
+    ) -> dict[str, int]:
+        """Derive valid state_b when JD parser returns non-ontology IDs.
+
+        Strategy:
+        1. Match extracted_requirements skill names against ontology
+        2. Match target role text against ontology roles for focus domains
+        3. Final fallback: foundational AI domains
+        """
+        state_b: dict[str, int] = {}
+
+        # Strategy 1: match JD parser skill names to ontology
+        extracted_reqs = jd_result.get("extracted_requirements", [])
+        for req in extracted_reqs:
+            skill_name = req.get("skill_name", "")
+            if not skill_name:
+                continue
+            matches = ontology.search_skills(skill_name)
+            if matches:
+                best = matches[0]
+                state_b[best["id"]] = best["level"]
+
+        if len(state_b) >= 5:
+            logger.info(
+                "state_b derived from JD skill name matching: %d skills",
+                len(state_b),
+            )
+            return state_b
+
+        # Strategy 2: match target role against ontology roles
+        target_role = (
+            profile_data.get("target_role", "")
+            or jd_result.get("role_analysis", {}).get("primary_function", "")
+        )
+        if target_role:
+            target_lower = target_role.lower()
+            for role in ontology.roles:
+                role_label = role.get("label", "").lower()
+                # Check if any significant word from the target role
+                # appears in the ontology role label or vice versa.
+                target_words = {
+                    w for w in target_lower.split()
+                    if len(w) > 3 and w not in {"with", "from", "this", "that", "will", "have"}
+                }
+                role_words = {
+                    w for w in role_label.split()
+                    if len(w) > 3
+                }
+                if target_words & role_words:
+                    for domain_id in role.get("focus_domains", []):
+                        for skill in ontology.get_skills_by_domain(domain_id):
+                            if skill["id"] not in state_b:
+                                state_b[skill["id"]] = skill["level"]
+                    break
+
+        if state_b:
+            logger.info(
+                "state_b derived from role matching: %d skills",
+                len(state_b),
+            )
+            return state_b
+
+        # Strategy 3: match JD key_domains against ontology domain labels
+        key_domains = jd_result.get("role_analysis", {}).get("key_domains", [])
+        if key_domains:
+            for kd in key_domains:
+                kd_lower = kd.lower()
+                for domain in ontology.domains:
+                    if kd_lower in domain["label"].lower() or domain["label"].lower() in kd_lower:
+                        for skill in ontology.get_skills_by_domain(domain["id"]):
+                            if skill["id"] not in state_b:
+                                state_b[skill["id"]] = skill["level"]
+
+        if state_b:
+            logger.info(
+                "state_b derived from domain label matching: %d skills",
+                len(state_b),
+            )
+            return state_b
+
+        # Strategy 4: foundational AI domains as last resort
+        fallback_domains = ["D.FND", "D.PRM", "D.CTIC"]
+        for domain_id in fallback_domains:
+            for skill in ontology.get_skills_by_domain(domain_id):
+                state_b[skill["id"]] = skill["level"]
+
+        logger.warning(
+            "state_b using foundational fallback: %d skills from %s",
+            len(state_b), fallback_domains,
+        )
+        return state_b
 
     def _build_recommendations(self, path: dict) -> list[str]:
         """Generate deterministic recommendations from actual chapter data.
