@@ -1,0 +1,62 @@
+{
+  "id": "profile_09",
+  "name": "Irene Shah",
+  "current_role": "CIO",
+  "target_role": "AI-Fluent Executive Leader (Enterprise AI Governance)",
+  "industry": "Insurance",
+  "location": "U.S.",
+  "experience_years": 22,
+  "ai_exposure_level": "Intermediate",
+  "archetype": "Executive",
+  "current_profile": {
+    "summary": "CIO at a mid-size insurance company. Extensive experience with cloud migration, cybersecurity, and IT governance. Has sponsored ML pilots but wants deeper AI literacy to guide enterprise strategy and governance.",
+    "technical_skills": ["IT governance", "Cloud architecture", "Cybersecurity", "Enterprise systems"],
+    "soft_skills": ["Executive leadership", "Strategic planning", "Board communication", "Vendor management"],
+    "ai_experience": "Has sponsored ML pilots, wants deeper AI literacy"
+  },
+  "learning_intent": "Wants to operate like a 'Chief AI Officer' in practice: set AI strategy, governance, and capability building across the enterprise.",
+  "target_jd": {
+    "title": "Enterprise AI Leader (Strategy + Governance)",
+    "requirements": [
+      "Define and execute enterprise AI strategy aligned to business priorities",
+      "Implement responsible AI governance, risk management, and compliance controls",
+      "Stand up evaluation, monitoring, and model risk management practices",
+      "Build AI talent strategy and operating model (CoE vs embedded)"
+    ]
+  },
+  "expected_skill_gaps": [
+    {
+      "domain": "D.GOV",
+      "description": "AI risk framing, policy-to-controls mapping, and retention/minimization practices.",
+      "skills": ["SK.GOV.001", "SK.GOV.002", "SK.GOV.010", "SK.GOV.020", "SK.GOV.021"]
+    },
+    {
+      "domain": "D.EVL",
+      "description": "Monitoring, drift, logging, evaluation strategies, and release gates for AI systems.",
+      "skills": ["SK.EVL.001", "SK.EVL.010", "SK.EVL.011", "SK.EVL.021"]
+    },
+    {
+      "domain": "D.SEC",
+      "description": "Threat landscape, injection/data leakage risks, and secure deployment practices (oversight level).",
+      "skills": ["SK.SEC.000", "SK.SEC.001", "SK.SEC.002", "SK.SEC.010"]
+    },
+    {
+      "domain": "D.LRN",
+      "description": "Keeping up with AI developments and evaluating new tools/vendors.",
+      "skills": ["SK.LRN.001", "SK.LRN.002"]
+    },
+    {
+      "domain": "D.PRD",
+      "description": "AI enablement strategy and talent development.",
+      "skills": ["SK.PRD.020", "SK.PRD.021", "SK.PRD.022"]
+    }
+  ],
+  "estimated_current_skills": {
+    "SK.DIG.001": 3, "SK.DIG.002": 3, "SK.DIG.005": 3,
+    "SK.FND.000": 2, "SK.FND.001": 1, "SK.FND.002": 1,
+    "SK.GOV.000": 2,
+    "SK.PRQ.030": 3,
+    "SK.COM.001": 2, "SK.COM.002": 3,
+    "SK.PRD.001": 2, "SK.PRD.021": 4
+  }
+}

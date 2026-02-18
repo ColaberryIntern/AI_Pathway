@@ -1,0 +1,61 @@
+{
+  "id": "profile_03",
+  "name": "Charles Patel",
+  "current_role": "Legal Associate",
+  "target_role": "AI Governance / Compliance Data Scientist",
+  "industry": "Legal / RegTech",
+  "location": "U.S.",
+  "experience_years": 5,
+  "ai_exposure_level": "Basic",
+  "archetype": "Career Switcher",
+  "current_profile": {
+    "summary": "Junior litigation associate with 5 years experience; strong reasoning, writing, and compliance familiarity. Has used e-discovery tools (predictive coding) and understands legal risk frameworks. No formal programming; minimal ML knowledge.",
+    "technical_skills": ["E-discovery tools", "Predictive coding", "Legal research"],
+    "soft_skills": ["Legal reasoning", "Written communication", "Risk assessment"],
+    "ai_experience": "Used e-discovery tools with predictive coding"
+  },
+  "learning_intent": "Wants to work at the intersection of law and AI—helping organizations deploy AI safely and in compliance. Goal: gain enough data/ML and evaluation skill to audit models, interpret risks, and translate findings to legal stakeholders.",
+  "target_jd": {
+    "title": "Data Scientist (AI Governance / Model Risk) - Legal Domain",
+    "requirements": [
+      "Assess AI systems for legal/compliance risk; design monitoring and audit processes",
+      "Partner with engineers to implement controls for privacy, bias, and security",
+      "Develop evaluation plans and documentation for regulators and internal review",
+      "Communicate model limitations and risk tradeoffs to non-technical stakeholders"
+    ]
+  },
+  "expected_skill_gaps": [
+    {
+      "domain": "D.PRQ",
+      "description": "Python basics, data handling, and SQL fundamentals to work with datasets. REST/API concepts to understand deployed systems.",
+      "skills": ["SK.PRQ.010", "SK.PRQ.011", "SK.PRQ.013", "SK.PRQ.020"]
+    },
+    {
+      "domain": "D.EVL",
+      "description": "Eval types, tracing, prompt/model regression testing, and A/B testing basics.",
+      "skills": ["SK.EVL.001", "SK.EVL.010", "SK.EVL.020", "SK.EVL.022"]
+    },
+    {
+      "domain": "D.GOV",
+      "description": "Policy-to-controls mapping; PII handling and retention; data minimization.",
+      "skills": ["SK.GOV.002", "SK.GOV.020", "SK.GOV.021"]
+    },
+    {
+      "domain": "D.SEC",
+      "description": "Prompt injection and data leakage awareness (as relevant to LLM deployments).",
+      "skills": ["SK.SEC.000", "SK.SEC.001", "SK.SEC.002"]
+    },
+    {
+      "domain": "D.RAG",
+      "description": "Faithfulness evaluation and grounded citations for legal research assistants.",
+      "skills": ["SK.RAG.000", "SK.RAG.020", "SK.PRM.021"]
+    }
+  ],
+  "estimated_current_skills": {
+    "SK.DIG.001": 3, "SK.DIG.002": 3, "SK.DIG.004": 3,
+    "SK.CTIC.001": 3, "SK.CTIC.003": 3, "SK.CTIC.005": 3,
+    "SK.FND.000": 1,
+    "SK.GOV.000": 2, "SK.GOV.001": 2,
+    "SK.COM.001": 2
+  }
+}

@@ -1,0 +1,61 @@
+{
+  "id": "profile_08",
+  "name": "Hank Thompson",
+  "current_role": "VP Operations",
+  "target_role": "AI Transformation Leader (Operations)",
+  "industry": "Manufacturing / Supply Chain",
+  "location": "U.S.",
+  "experience_years": 18,
+  "ai_exposure_level": "Basic",
+  "archetype": "Executive",
+  "current_profile": {
+    "summary": "VP of Operations with industrial engineering background. Leads lean/Six Sigma programs, ERP rollouts, and process improvements. Familiar with IoT/automation concepts but limited ML knowledge.",
+    "technical_skills": ["Lean/Six Sigma", "ERP systems", "Process improvement", "Industrial engineering"],
+    "soft_skills": ["Operations leadership", "Change management", "Cross-functional collaboration"],
+    "ai_experience": "Familiar with IoT/automation concepts, limited ML knowledge"
+  },
+  "learning_intent": "Wants to lead AI transformation (predictive maintenance, demand forecasting, quality inspection). Goal: become AI-literate enough to scope projects, partner with technical teams, and drive change management.",
+  "target_jd": {
+    "title": "AI Strategy Leader (Operations / Smart Factory)",
+    "requirements": [
+      "Identify high-ROI AI use cases in operations; prioritize roadmap and pilots",
+      "Ensure data readiness and integration across OT/IT systems",
+      "Define KPIs and governance for AI deployments; scale successful pilots",
+      "Communicate benefits and manage workforce impacts of AI adoption"
+    ]
+  },
+  "expected_skill_gaps": [
+    {
+      "domain": "D.FND",
+      "description": "Understand ML concepts, model limitations, and how AI differs from deterministic automation.",
+      "skills": ["SK.FND.000", "SK.FND.001", "SK.FND.002", "SK.FND.004"]
+    },
+    {
+      "domain": "D.PRQ",
+      "description": "High-level data pipeline and cloud primitives; basics of APIs and system integration.",
+      "skills": ["SK.PRQ.020", "SK.PRQ.022", "SK.PRQ.030"]
+    },
+    {
+      "domain": "D.OPS",
+      "description": "Monitoring, incident response concepts, and deployment gates (at a leadership level).",
+      "skills": ["SK.OPS.000", "SK.OPS.020", "SK.OPS.022"]
+    },
+    {
+      "domain": "D.COM",
+      "description": "Facilitate AI workshops and align cross-functional teams on AI roadmaps.",
+      "skills": ["SK.COM.001", "SK.COM.002", "SK.COM.003"]
+    },
+    {
+      "domain": "D.PRD",
+      "description": "AI use case selection and ROI measurement.",
+      "skills": ["SK.PRD.001", "SK.PRD.022"]
+    }
+  ],
+  "estimated_current_skills": {
+    "SK.DIG.001": 3, "SK.DIG.002": 3, "SK.DIG.003": 3,
+    "SK.FND.000": 1,
+    "SK.PRD.002": 3,
+    "SK.COM.003": 3, "SK.COM.005": 3,
+    "SK.PRD.020": 2, "SK.PRD.021": 3
+  }
+}

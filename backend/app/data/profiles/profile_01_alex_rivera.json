@@ -1,0 +1,61 @@
+{
+  "id": "profile_01",
+  "name": "Alex Rivera",
+  "current_role": "Marketing Manager",
+  "target_role": "AI Product Manager",
+  "industry": "Consumer Goods / Retail Marketing",
+  "location": "U.S.",
+  "experience_years": 10,
+  "ai_exposure_level": "Basic",
+  "archetype": "Career Switcher",
+  "current_profile": {
+    "summary": "Marketing Manager with 10 years in consumer goods. Leads digital campaigns, lifecycle marketing, and experimentation. Strong stakeholder management; comfortable with analytics dashboards, basic SQL queries, and A/B testing. Hands-on GenAI exposure: uses ChatGPT for copy variants and ideation; has not built AI systems or worked with model evaluation.",
+    "technical_skills": ["SQL (basic)", "Analytics dashboards", "A/B testing"],
+    "soft_skills": ["Stakeholder management", "Digital campaign leadership"],
+    "ai_experience": "Uses ChatGPT for copy variants and ideation"
+  },
+  "learning_intent": "Wants to pivot into AI product work to future-proof her career and build products that combine customer insight with AI capabilities. Goal: become fluent enough in AI fundamentals to scope use cases, partner effectively with engineering/data science, and ship AI features responsibly.",
+  "target_jd": {
+    "title": "AI Product Manager (GenAI features)",
+    "requirements": [
+      "Own AI product roadmap: define vision, requirements, and success metrics",
+      "Translate user needs into AI/ML features; collaborate with engineering and data science",
+      "Define evaluation criteria, launch experiments, and iterate based on performance",
+      "Partner with legal/compliance on privacy, IP, and responsible AI practices"
+    ]
+  },
+  "expected_skill_gaps": [
+    {
+      "domain": "D.FND",
+      "description": "Move from general awareness to practical understanding of LLM fundamentals, limitations, and model selection. Understand privacy/IP/bias basics for GenAI products.",
+      "skills": ["SK.FND.001", "SK.FND.002", "SK.FND.003", "SK.FND.020", "SK.FND.021", "SK.FND.022"]
+    },
+    {
+      "domain": "D.PRD",
+      "description": "AI product workflow mapping and feedback-loop design for model improvements. Explainability UX and communicating uncertainty to users.",
+      "skills": ["SK.PRD.002", "SK.PRD.010", "SK.PRD.011"]
+    },
+    {
+      "domain": "D.PRM",
+      "description": "Structured prompting, prompt debugging, and establishing human-in-the-loop review where needed.",
+      "skills": ["SK.PRM.001", "SK.PRM.003", "SK.PRM.010"]
+    },
+    {
+      "domain": "D.EVL",
+      "description": "Define offline/online evals and release gates; interpret quality dashboards.",
+      "skills": ["SK.EVL.001", "SK.EVL.011", "SK.EVL.021"]
+    },
+    {
+      "domain": "D.GOV",
+      "description": "Map policies to controls; data retention and minimization in AI features.",
+      "skills": ["SK.GOV.002", "SK.GOV.020", "SK.GOV.021"]
+    }
+  ],
+  "estimated_current_skills": {
+    "SK.DIG.001": 3, "SK.DIG.002": 3, "SK.DIG.003": 3, "SK.DIG.004": 3,
+    "SK.FND.000": 1, "SK.FND.001": 1,
+    "SK.PRM.000": 2,
+    "SK.PRQ.013": 2,
+    "SK.COM.001": 2, "SK.COM.004": 2
+  }
+}

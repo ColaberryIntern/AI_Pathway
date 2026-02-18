@@ -1,0 +1,53 @@
+server {
+    listen 8080;
+    server_name _;
+
+    root /usr/share/nginx/html;
+    index index.html;
+
+    # Gzip compression
+    gzip on;
+    gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript;
+    gzip_min_length 1000;
+
+    # API proxy to backend Cloud Run service
+    location /api/ {
+        # Use Google's DNS resolver for Cloud Run
+        resolver 8.8.8.8 valid=30s;
+
+        # Proxy to backend (keep /api/ prefix)
+        proxy_pass ${BACKEND_URL}/api/;
+
+        proxy_http_version 1.1;
+        proxy_ssl_server_name on;
+
+        # Pass the backend's host, not the frontend's
+        proxy_set_header Host ai-pathway-backend-761055070184.us-central1.run.app;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto https;
+
+        # Timeout settings for long-running LLM requests
+        proxy_connect_timeout 60s;
+        proxy_send_timeout 300s;
+        proxy_read_timeout 300s;
+    }
+
+    # Serve static files and handle SPA routing
+    location / {
+        try_files $uri $uri/ /index.html;
+
+        # Cache static assets
+        location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2)$ {
+            expires 1y;
+            add_header Cache-Control "public, immutable";
+        }
+    }
+
+    # Health check endpoint
+    location /health {
+        access_log off;
+        return 200 "healthy\n";
+        add_header Content-Type text/plain;
+    }
+}

@@ -1,0 +1,60 @@
+{
+  "id": "profile_12",
+  "name": "Kevin Park",
+  "current_role": "Automation Engineer",
+  "target_role": "AI Automation / Robotics AI Engineer",
+  "industry": "Manufacturing / Robotics",
+  "location": "U.S.",
+  "experience_years": 4,
+  "ai_exposure_level": "Basic",
+  "archetype": "Technical Pivot",
+  "current_profile": {
+    "summary": "Mechanical/automation engineer (4 years) working with PLCs, robotics, sensors, and control systems. Some C/C++ for embedded work; new to Python. Has participated in a predictive maintenance pilot and is curious about ML.",
+    "technical_skills": ["PLCs", "Robotics", "Sensors", "Control systems", "C/C++ (embedded)"],
+    "soft_skills": ["Systems thinking", "Technical documentation", "Cross-team collaboration"],
+    "ai_experience": "Participated in predictive maintenance pilot"
+  },
+  "learning_intent": "Wants to build intelligent automation systems (predictive maintenance, computer vision inspection, adaptive robotics). Goal: merge domain expertise with ML skills and safe deployment practices in industrial environments.",
+  "target_jd": {
+    "title": "AI Automation Engineer / Robotics AI Specialist",
+    "requirements": [
+      "Develop ML solutions for industrial systems (predictive maintenance, vision-based QC)",
+      "Integrate models into real-time/edge environments; ensure reliability and safety",
+      "Work with data pipelines from sensors and OT systems to training/inference workloads",
+      "Monitor performance, handle failures, and iterate models over time"
+    ]
+  },
+  "expected_skill_gaps": [
+    {
+      "domain": "D.PRQ",
+      "description": "Python basics and data handling; backend service fundamentals for integrations.",
+      "skills": ["SK.PRQ.010", "SK.PRQ.011", "SK.PRQ.020", "SK.PRQ.022"]
+    },
+    {
+      "domain": "D.FND",
+      "description": "Embeddings and multimodal basics; model limitations and reliability tradeoffs.",
+      "skills": ["SK.FND.001", "SK.FND.002", "SK.FND.012", "SK.FND.013"]
+    },
+    {
+      "domain": "D.OPS",
+      "description": "Latency optimization, deployment gates, versioning, and incident response concepts.",
+      "skills": ["SK.OPS.000", "SK.OPS.001", "SK.OPS.020", "SK.OPS.022"]
+    },
+    {
+      "domain": "D.SEC",
+      "description": "Secure tool integration and safe handling of outputs in systems that affect physical processes.",
+      "skills": ["SK.SEC.000", "SK.SEC.003", "SK.SEC.010"]
+    },
+    {
+      "domain": "D.MUL",
+      "description": "Computer vision basics for quality inspection.",
+      "skills": ["SK.MUL.000", "SK.MUL.001"]
+    }
+  ],
+  "estimated_current_skills": {
+    "SK.DIG.001": 3, "SK.DIG.002": 3,
+    "SK.PRQ.000": 3,
+    "SK.FND.000": 1,
+    "SK.COM.001": 2, "SK.COM.006": 2
+  }
+}

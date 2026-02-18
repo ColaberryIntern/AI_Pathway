@@ -1,0 +1,60 @@
+{
+  "id": "profile_11",
+  "name": "Kelly Johnson",
+  "current_role": "Content Specialist",
+  "target_role": "Prompt Engineer / AI Content Strategist",
+  "industry": "Marketing / Media",
+  "location": "U.S.",
+  "experience_years": 3,
+  "ai_exposure_level": "Basic",
+  "archetype": "Career Switcher",
+  "current_profile": {
+    "summary": "Content writer at a marketing agency (3 years). Strong writing/editing; uses GenAI tools for brainstorming and drafts. No coding; prompt work is intuitive and ad hoc.",
+    "technical_skills": ["Content writing", "Copyediting", "SEO basics", "CMS tools"],
+    "soft_skills": ["Creative writing", "Brand voice", "Client communication"],
+    "ai_experience": "Uses GenAI tools for brainstorming and drafts"
+  },
+  "learning_intent": "Wants to future-proof by becoming a prompt/AI workflow specialist who designs repeatable, high-quality content pipelines with GenAI.",
+  "target_jd": {
+    "title": "Prompt Engineer / AI Content Strategist",
+    "requirements": [
+      "Design prompt templates and workflows for consistent, high-quality AI-generated content",
+      "Iterate prompts using feedback and evaluation criteria; maintain prompt libraries",
+      "Collaborate with product/engineering to integrate prompts into tools",
+      "Ensure ethical and brand-safe content generation; manage hallucination risks"
+    ]
+  },
+  "expected_skill_gaps": [
+    {
+      "domain": "D.FND",
+      "description": "Understand model limitations (hallucinations), knowledge cutoffs, and IP/copyright basics.",
+      "skills": ["SK.FND.001", "SK.FND.002", "SK.FND.005", "SK.FND.021"]
+    },
+    {
+      "domain": "D.PRM",
+      "description": "Few-shot prompting, constraints/format control, prompt debugging, structured outputs.",
+      "skills": ["SK.PRM.001", "SK.PRM.002", "SK.PRM.003", "SK.PRM.004", "SK.PRM.010"]
+    },
+    {
+      "domain": "D.EVL",
+      "description": "Rubric-based evaluation and simple A/B tests for prompt variants.",
+      "skills": ["SK.EVL.000", "SK.EVL.001", "SK.EVL.002", "SK.EVL.022"]
+    },
+    {
+      "domain": "D.SEC",
+      "description": "Safety basics, privacy considerations, and brand-risk guardrails.",
+      "skills": ["SK.SEC.000", "SK.SEC.002"]
+    },
+    {
+      "domain": "D.GOV",
+      "description": "Basic governance for content generation.",
+      "skills": ["SK.GOV.000", "SK.FND.022"]
+    }
+  ],
+  "estimated_current_skills": {
+    "SK.DIG.001": 3, "SK.DIG.002": 3, "SK.DIG.004": 3,
+    "SK.FND.000": 1, "SK.FND.001": 1,
+    "SK.PRM.000": 2,
+    "SK.COM.001": 2
+  }
+}

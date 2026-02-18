@@ -1,0 +1,61 @@
+{
+  "id": "profile_04",
+  "name": "Dana Morales",
+  "current_role": "Healthcare Data Analyst",
+  "target_role": "Healthcare Data Scientist",
+  "industry": "Healthcare",
+  "location": "U.S.",
+  "experience_years": 6,
+  "ai_exposure_level": "Basic",
+  "archetype": "Domain Upskiller",
+  "current_profile": {
+    "summary": "Healthcare analyst at a hospital system (6 years). Strong SQL and BI skills; builds dashboards and operational reports. Understands HIPAA and clinical workflow basics. Limited ML exposure (has used outputs of an existing readmission risk model).",
+    "technical_skills": ["SQL (advanced)", "BI tools", "Dashboard development", "HIPAA compliance"],
+    "soft_skills": ["Healthcare domain knowledge", "Stakeholder communication", "Report writing"],
+    "ai_experience": "Has used outputs of existing ML models"
+  },
+  "learning_intent": "Wants to apply ML to improve patient outcomes and operations (readmission, length-of-stay, staffing). Goal: move from descriptive analytics to predictive modeling and responsible deployment in regulated settings.",
+  "target_jd": {
+    "title": "Healthcare Data Scientist",
+    "requirements": [
+      "Build predictive models on EHR and operations data; validate and monitor performance",
+      "Develop feature engineering strategies and evaluate model bias and drift",
+      "Collaborate with clinicians and IT to deploy models into workflow",
+      "Document and communicate insights for clinical and operational stakeholders"
+    ]
+  },
+  "expected_skill_gaps": [
+    {
+      "domain": "D.PRQ",
+      "description": "Python data stack (pandas/NumPy) and backend/data pipeline basics.",
+      "skills": ["SK.PRQ.010", "SK.PRQ.011", "SK.PRQ.022"]
+    },
+    {
+      "domain": "D.FND",
+      "description": "Embeddings, model limitations, and privacy basics for GenAI/ML tools.",
+      "skills": ["SK.FND.001", "SK.FND.002", "SK.FND.012", "SK.FND.020"]
+    },
+    {
+      "domain": "D.EVL",
+      "description": "Model eval concepts, monitoring, dashboards, and release gates.",
+      "skills": ["SK.EVL.001", "SK.EVL.010", "SK.EVL.011", "SK.EVL.021"]
+    },
+    {
+      "domain": "D.GOV",
+      "description": "PII/PHI handling, retention, and minimization (healthcare-specific constraints).",
+      "skills": ["SK.GOV.020", "SK.GOV.021"]
+    },
+    {
+      "domain": "D.DOM",
+      "description": "Clinical risk awareness and evidence synthesis (for AI-assisted clinical decision support).",
+      "skills": ["SK.DOM.HC.001", "SK.DOM.HC.002"]
+    }
+  ],
+  "estimated_current_skills": {
+    "SK.DIG.001": 3, "SK.DIG.002": 3, "SK.DIG.003": 3,
+    "SK.PRQ.013": 3,
+    "SK.FND.000": 1,
+    "SK.GOV.020": 2,
+    "SK.COM.001": 2
+  }
+}

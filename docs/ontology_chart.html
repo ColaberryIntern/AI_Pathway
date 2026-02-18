@@ -1,0 +1,1661 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GenAI Skills Ontology</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+    <style>
+        :root {
+            --bg-color: #0a0a0f;
+            --bg-secondary: #111118;
+            --bg-tertiary: #1a1a24;
+            --text-color: #ffffff;
+            --text-muted: #9ca3af;
+            --text-dim: #6b7280;
+            --accent-cyan: #06b6d4;
+            --accent-purple: #8b5cf6;
+            --accent-pink: #ec4899;
+            --border-color: #374151;
+            --font-main: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: var(--font-main);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 16px 24px;
+        }
+
+        /* Header */
+        header {
+            margin-bottom: 24px;
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 700;
+            background: linear-gradient(90deg, var(--accent-cyan), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 4px;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        /* Tab Navigation */
+        .tab-nav {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 24px;
+        }
+
+        .tab-btn {
+            background: var(--bg-tertiary);
+            border: none;
+            color: var(--text-muted);
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 500;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .tab-btn:hover {
+            background: var(--bg-secondary);
+            color: var(--text-color);
+        }
+
+        .tab-btn.active {
+            background: var(--accent-cyan);
+            color: white;
+        }
+
+        /* View Containers */
+        .view-container {
+            display: none;
+        }
+
+        .view-container.active {
+            display: block;
+        }
+
+        /* Mind Map View */
+        #mindmap-container {
+            position: relative;
+            width: 100%;
+            height: 600px;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+        }
+
+        .mindmap-controls {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            display: flex;
+            gap: 8px;
+            z-index: 10;
+        }
+
+        .mindmap-controls button {
+            width: 32px;
+            height: 32px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-color);
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .mindmap-controls button:hover {
+            background: var(--bg-color);
+        }
+
+        .mindmap-hint {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            background: var(--bg-tertiary);
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            color: var(--text-muted);
+            z-index: 10;
+        }
+
+        .mindmap-tooltip {
+            position: absolute;
+            bottom: 16px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--bg-tertiary);
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            color: var(--text-color);
+            opacity: 0;
+            transition: opacity 0.2s;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .mindmap-tooltip.visible {
+            opacity: 1;
+        }
+
+        /* Layers View */
+        .layers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 8px;
+            margin-bottom: 24px;
+        }
+
+        .layer-card {
+            background: var(--bg-secondary);
+            border: 2px solid transparent;
+            border-radius: 12px;
+            padding: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .layer-card:hover {
+            border-color: var(--border-color);
+        }
+
+        .layer-card.selected {
+            transform: scale(1.02);
+        }
+
+        .layer-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-bottom: 8px;
+        }
+
+        .layer-label {
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .layer-count {
+            font-size: 10px;
+            color: var(--text-dim);
+        }
+
+        /* Domains Grid */
+        .domains-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 12px;
+        }
+
+        .domain-card {
+            background: var(--bg-secondary);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .domain-card:hover {
+            border-color: var(--accent-cyan);
+        }
+
+        .domain-card.dimmed {
+            opacity: 0.3;
+        }
+
+        .domain-card.highlighted {
+            border-color: var(--accent-cyan);
+            background: rgba(6, 182, 212, 0.1);
+        }
+
+        .domain-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .domain-id {
+            font-size: 10px;
+            color: var(--text-dim);
+            font-family: monospace;
+        }
+
+        .domain-label {
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .domain-skills {
+            font-size: 11px;
+            color: var(--text-dim);
+        }
+
+        .domain-focus {
+            font-size: 10px;
+            margin-top: 8px;
+        }
+
+        /* Skills Detail View */
+        .skills-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+            gap: 16px;
+        }
+
+        .skills-domain-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 16px;
+        }
+
+        .skills-domain-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .skills-domain-title {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .skills-domain-id {
+            font-size: 10px;
+            color: var(--text-dim);
+            font-family: monospace;
+        }
+
+        .skills-list {
+            max-height: 280px;
+            overflow-y: auto;
+        }
+
+        .skill-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px;
+            border-radius: 8px;
+            background: var(--bg-tertiary);
+            margin-bottom: 6px;
+            transition: background 0.2s;
+        }
+
+        .skill-item:hover {
+            background: var(--bg-color);
+        }
+
+        .skill-level {
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .skill-label {
+            font-size: 12px;
+            flex: 1;
+        }
+
+        /* Roles View */
+        .roles-nav {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 24px;
+        }
+
+        .role-btn {
+            background: var(--bg-tertiary);
+            border: 2px solid transparent;
+            color: var(--text-muted);
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: 500;
+            padding: 8px 16px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .role-btn:hover {
+            color: var(--text-color);
+        }
+
+        .role-btn.active {
+            color: white;
+        }
+
+        /* Proficiency View */
+        .proficiency-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 12px;
+            margin-bottom: 32px;
+        }
+
+        .proficiency-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+        }
+
+        .proficiency-badge {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: 700;
+            margin: 0 auto 12px;
+        }
+
+        .proficiency-label {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .proficiency-desc {
+            font-size: 11px;
+            color: var(--text-dim);
+        }
+
+        /* Force Graph View */
+        #force-container {
+            position: relative;
+            width: 100%;
+            height: 700px;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+        }
+
+        .force-controls {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            z-index: 10;
+        }
+
+        .force-controls select,
+        .force-controls button {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            font-family: inherit;
+            font-size: 12px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .force-controls select:hover,
+        .force-controls button:hover {
+            background: var(--bg-color);
+        }
+
+        /* Tooltip */
+        .tooltip {
+            position: fixed;
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            padding: 12px 16px;
+            border-radius: 8px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s;
+            max-width: 300px;
+            font-size: 13px;
+            z-index: 1000;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .tooltip h3 {
+            font-size: 14px;
+            margin-bottom: 6px;
+            color: var(--accent-cyan);
+        }
+
+        .tooltip p {
+            margin-bottom: 4px;
+            color: var(--text-muted);
+        }
+
+        .tooltip .id {
+            font-size: 10px;
+            font-family: monospace;
+            color: var(--text-dim);
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            z-index: 100;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--bg-secondary);
+            border: 1px solid var(--accent-cyan);
+            border-radius: 16px;
+            padding: 24px;
+            max-width: 600px;
+            width: 100%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 16px;
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .modal-subtitle {
+            font-size: 12px;
+            color: var(--text-dim);
+            font-family: monospace;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 24px;
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        .modal-close:hover {
+            color: var(--text-color);
+        }
+
+        .modal-skill {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 12px;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        .modal-skill-level {
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .modal-skill-content {
+            flex: 1;
+        }
+
+        .modal-skill-label {
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .modal-skill-id {
+            font-size: 10px;
+            color: var(--text-dim);
+            font-family: monospace;
+        }
+
+        .modal-skill-prereqs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin-top: 6px;
+        }
+
+        .prereq-tag {
+            font-size: 9px;
+            padding: 2px 6px;
+            background: var(--bg-color);
+            border-radius: 4px;
+            color: var(--text-dim);
+        }
+
+        /* Footer */
+        footer {
+            margin-top: 48px;
+            padding: 24px 0;
+            border-top: 1px solid var(--border-color);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 12px;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-color);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-dim);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 12px 16px;
+            }
+
+            h1 {
+                font-size: 22px;
+            }
+
+            .skills-grid {
+                grid-template-columns: 1fr;
+            }
+
+            #mindmap-container,
+            #force-container {
+                height: 500px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>GenAI Skills Ontology</h1>
+            <p class="subtitle">v1.0.0 • 18 Domains • 153+ Skills • 6 Proficiency Levels • 5 Role Templates</p>
+        </header>
+
+        <nav class="tab-nav">
+            <button class="tab-btn active" onclick="switchView('mindmap')">Mind Map</button>
+            <button class="tab-btn" onclick="switchView('force')">Force Graph</button>
+            <button class="tab-btn" onclick="switchView('layers')">Layers</button>
+            <button class="tab-btn" onclick="switchView('domains')">Domains</button>
+            <button class="tab-btn" onclick="switchView('roles')">Roles</button>
+            <button class="tab-btn" onclick="switchView('proficiency')">Proficiency</button>
+        </nav>
+
+        <!-- Mind Map View -->
+        <div id="mindmap-view" class="view-container active">
+            <div id="mindmap-container">
+                <div class="mindmap-hint">Drag to pan • Scroll to zoom • Click domains to explore</div>
+                <div class="mindmap-controls">
+                    <button onclick="zoomMindmap(1.2)">+</button>
+                    <button onclick="zoomMindmap(0.8)">−</button>
+                    <button onclick="resetMindmap()">⟲</button>
+                </div>
+                <div id="mindmap-tooltip" class="mindmap-tooltip"></div>
+            </div>
+        </div>
+
+        <!-- Force Graph View -->
+        <div id="force-view" class="view-container">
+            <div id="force-container">
+                <div class="force-controls">
+                    <select id="role-select" onchange="updateRoleFilter(this.value)">
+                        <option value="">All Roles</option>
+                    </select>
+                    <button onclick="updateLayout('force')">Force Layout</button>
+                    <button onclick="updateLayout('radial')">Radial Layout</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Layers View -->
+        <div id="layers-view" class="view-container">
+            <div class="layers-grid" id="layers-grid"></div>
+            <div class="domains-grid" id="layers-domains-grid"></div>
+        </div>
+
+        <!-- Domains View -->
+        <div id="domains-view" class="view-container">
+            <div class="skills-grid" id="skills-grid"></div>
+        </div>
+
+        <!-- Roles View -->
+        <div id="roles-view" class="view-container">
+            <div class="roles-nav" id="roles-nav"></div>
+            <div class="domains-grid" id="roles-domains-grid"></div>
+        </div>
+
+        <!-- Proficiency View -->
+        <div id="proficiency-view" class="view-container">
+            <div class="proficiency-grid" id="proficiency-grid"></div>
+        </div>
+
+        <footer>
+            <p>18 Domains • 153+ Skills • 6 Proficiency Levels • 5 Role Templates</p>
+        </footer>
+    </div>
+
+    <!-- Tooltip -->
+    <div class="tooltip" id="tooltip"></div>
+
+    <!-- Modal -->
+    <div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
+        <div class="modal" id="modal" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <div>
+                    <h2 class="modal-title" id="modal-title"></h2>
+                    <p class="modal-subtitle" id="modal-subtitle"></p>
+                </div>
+                <button class="modal-close" onclick="closeModal()">×</button>
+            </div>
+            <div id="modal-content"></div>
+        </div>
+    </div>
+
+    <script>
+        // --- DATA ---
+        const ontologyData = {
+            layers: [
+                { id: 'L.FOUNDATION', label: 'Foundation', color: '#22c55e', domains: ['D.DIG', 'D.CTIC'] },
+                { id: 'L.THEORY', label: 'Theory', color: '#6366f1', domains: ['D.FND'] },
+                { id: 'L.APPLICATION', label: 'Application', color: '#06b6d4', domains: ['D.PRM', 'D.RAG', 'D.AGT', 'D.MOD', 'D.MUL', 'D.EVL', 'D.SEC', 'D.OPS'] },
+                { id: 'L.TOOLS', label: 'Tools', color: '#10b981', domains: ['D.TOOL'] },
+                { id: 'L.TECH_PREREQ', label: 'Tech Prerequisites', color: '#f59e0b', domains: ['D.PRQ'] },
+                { id: 'L.DOMAIN', label: 'Domain', color: '#ec4899', domains: ['D.GOV', 'D.DOM'] },
+                { id: 'L.SOFT', label: 'Soft/Strategy', color: '#8b5cf6', domains: ['D.PRD', 'D.COM', 'D.LRN'] }
+            ],
+            domains: {
+                'D.DIG': { label: 'Digital Literacy', skills: 8, desc: 'Basic digital skills for everyone' },
+                'D.CTIC': { label: 'Critical Thinking & Info Eval', skills: 6, desc: 'Evaluating sources and claims' },
+                'D.FND': { label: 'AI Literacy & Foundations', skills: 15, desc: 'Core AI/ML concepts' },
+                'D.PRM': { label: 'Prompting & HITL Workflows', skills: 12, desc: 'Effective AI interaction' },
+                'D.RAG': { label: 'Retrieval & RAG Systems', skills: 9, desc: 'Knowledge-grounded AI' },
+                'D.AGT': { label: 'Agents & Orchestration', skills: 11, desc: 'Autonomous AI systems' },
+                'D.MOD': { label: 'Model Adaptation', skills: 6, desc: 'Fine-tuning & customization' },
+                'D.MUL': { label: 'Multimodal AI', skills: 8, desc: 'Vision, audio, video AI' },
+                'D.EVL': { label: 'Evaluation & Observability', skills: 8, desc: 'Measuring AI quality' },
+                'D.SEC': { label: 'Safety & Security', skills: 7, desc: 'AI risk mitigation' },
+                'D.OPS': { label: 'LLMOps & Deployment', skills: 8, desc: 'Production AI systems' },
+                'D.TOOL': { label: 'Tools & Frameworks', skills: 10, desc: 'AI development tools' },
+                'D.PRQ': { label: 'Technical Prerequisites', skills: 12, desc: 'Engineering foundations' },
+                'D.GOV': { label: 'Governance & Compliance', skills: 6, desc: 'Policy and regulation' },
+                'D.DOM': { label: 'Domain Applications', skills: 8, desc: 'Industry-specific AI' },
+                'D.PRD': { label: 'Product & UX', skills: 8, desc: 'AI product management' },
+                'D.COM': { label: 'Communication & Collaboration', skills: 6, desc: 'Working with AI teams' },
+                'D.LRN': { label: 'Learning & Adaptation', skills: 5, desc: 'Continuous AI learning' }
+            },
+            proficiencyLevels: [
+                { level: 0, label: 'Unaware', color: '#374151', desc: 'Has not heard of it' },
+                { level: 1, label: 'Aware', color: '#6b7280', desc: 'Can explain basics' },
+                { level: 2, label: 'User', color: '#3b82f6', desc: 'Can apply with help' },
+                { level: 3, label: 'Practitioner', color: '#10b981', desc: 'Can adapt independently' },
+                { level: 4, label: 'Builder', color: '#f59e0b', desc: 'Ships solutions' },
+                { level: 5, label: 'Architect', color: '#ef4444', desc: 'Designs systems' }
+            ],
+            roles: [
+                { id: 'ROLE.BEGINNER', label: 'AI Curious Beginner', focus: ['D.DIG', 'D.CTIC', 'D.FND', 'D.PRM'], color: '#22c55e' },
+                { id: 'ROLE.KNOWLEDGE', label: 'Knowledge Worker', focus: ['D.DIG', 'D.CTIC', 'D.FND', 'D.PRM', 'D.MUL', 'D.COM'], color: '#3b82f6' },
+                { id: 'ROLE.AI_PM', label: 'AI Product Manager', focus: ['D.PRD', 'D.PRM', 'D.EVL', 'D.GOV', 'D.COM'], color: '#8b5cf6' },
+                { id: 'ROLE.LLM_ENGINEER', label: 'LLM Engineer', focus: ['D.PRQ', 'D.PRM', 'D.RAG', 'D.AGT', 'D.EVL', 'D.SEC', 'D.OPS', 'D.TOOL'], color: '#06b6d4' },
+                { id: 'ROLE.AI_ARCHITECT', label: 'AI Architect', focus: ['D.AGT', 'D.EVL', 'D.SEC', 'D.GOV', 'D.OPS', 'D.MOD'], color: '#ec4899' }
+            ],
+            skillDetails: {
+                'D.DIG': [
+                    { id: 'SK.DIG.001', label: 'Web browsing & search fundamentals', level: 1, prereqs: [] },
+                    { id: 'SK.DIG.002', label: 'File management & cloud storage', level: 1, prereqs: [] },
+                    { id: 'SK.DIG.003', label: 'Basic spreadsheet operations', level: 1, prereqs: [] },
+                    { id: 'SK.DIG.004', label: 'Email & digital communication', level: 1, prereqs: [] },
+                    { id: 'SK.DIG.005', label: 'Password & account security basics', level: 1, prereqs: [] },
+                    { id: 'SK.DIG.006', label: 'Installing & using applications', level: 1, prereqs: [] },
+                    { id: 'SK.DIG.007', label: 'Copy/paste & keyboard shortcuts', level: 1, prereqs: [] },
+                    { id: 'SK.DIG.008', label: 'Screen sharing & video calls', level: 1, prereqs: [] }
+                ],
+                'D.CTIC': [
+                    { id: 'SK.CTIC.001', label: 'Evaluating source credibility', level: 1, prereqs: [] },
+                    { id: 'SK.CTIC.002', label: 'Identifying misinformation patterns', level: 2, prereqs: ['SK.CTIC.001'] },
+                    { id: 'SK.CTIC.003', label: 'Cross-referencing claims', level: 2, prereqs: ['SK.CTIC.001'] },
+                    { id: 'SK.CTIC.004', label: 'Understanding bias in content', level: 2, prereqs: ['SK.CTIC.001'] },
+                    { id: 'SK.CTIC.005', label: 'Distinguishing fact from opinion', level: 1, prereqs: [] },
+                    { id: 'SK.CTIC.006', label: 'Recognizing AI-generated content', level: 2, prereqs: ['SK.FND.001'] }
+                ],
+                'D.FND': [
+                    { id: 'SK.FND.000', label: 'What is AI vs traditional software', level: 1, prereqs: [] },
+                    { id: 'SK.FND.001', label: 'LLM fundamentals (tokens, context, prediction)', level: 1, prereqs: ['SK.FND.000'] },
+                    { id: 'SK.FND.002', label: 'Capabilities vs limitations (hallucinations)', level: 1, prereqs: ['SK.FND.001'] },
+                    { id: 'SK.FND.003', label: 'Model families (open vs closed)', level: 2, prereqs: ['SK.FND.001'] },
+                    { id: 'SK.FND.004', label: 'Reasoning vs retrieval vs tools', level: 2, prereqs: ['SK.FND.002'] },
+                    { id: 'SK.FND.005', label: 'Training data & knowledge cutoffs', level: 1, prereqs: ['SK.FND.001'] },
+                    { id: 'SK.FND.006', label: 'Temperature & sampling basics', level: 2, prereqs: ['SK.FND.001'] },
+                    { id: 'SK.FND.010', label: 'Transformer architecture overview', level: 2, prereqs: ['SK.FND.001'] },
+                    { id: 'SK.FND.011', label: 'Diffusion models overview', level: 2, prereqs: ['SK.FND.000'] },
+                    { id: 'SK.FND.012', label: 'Embeddings & semantic similarity', level: 2, prereqs: ['SK.FND.001'] },
+                    { id: 'SK.FND.013', label: 'Multimodal model basics', level: 2, prereqs: ['SK.FND.001'] },
+                    { id: 'SK.FND.020', label: 'Privacy basics for GenAI', level: 1, prereqs: [] },
+                    { id: 'SK.FND.021', label: 'IP/copyright awareness', level: 1, prereqs: [] },
+                    { id: 'SK.FND.022', label: 'Bias & fairness basics', level: 1, prereqs: ['SK.FND.002'] },
+                    { id: 'SK.FND.023', label: 'Environmental impact awareness', level: 1, prereqs: ['SK.FND.000'] }
+                ],
+                'D.PRM': [
+                    { id: 'SK.PRM.000', label: 'Writing clear requests to AI', level: 1, prereqs: ['SK.FND.001'] },
+                    { id: 'SK.PRM.001', label: 'Instructions + constraints + format', level: 2, prereqs: ['SK.PRM.000'] },
+                    { id: 'SK.PRM.002', label: 'Few-shot examples', level: 2, prereqs: ['SK.PRM.001'] },
+                    { id: 'SK.PRM.003', label: 'Prompt debugging & iteration', level: 3, prereqs: ['SK.PRM.001'] },
+                    { id: 'SK.PRM.004', label: 'Role & persona prompting', level: 2, prereqs: ['SK.PRM.001'] },
+                    { id: 'SK.PRM.005', label: 'Chain-of-thought prompting', level: 2, prereqs: ['SK.PRM.001'] },
+                    { id: 'SK.PRM.006', label: 'Breaking complex tasks into steps', level: 2, prereqs: ['SK.PRM.001'] },
+                    { id: 'SK.PRM.010', label: 'JSON/schema outputs', level: 3, prereqs: ['SK.PRM.001', 'SK.PRQ.020'] },
+                    { id: 'SK.PRM.011', label: 'Rubrics as prompts', level: 3, prereqs: ['SK.PRM.001'] },
+                    { id: 'SK.PRM.020', label: 'Draft → critique → revise', level: 3, prereqs: ['SK.PRM.001'] },
+                    { id: 'SK.PRM.021', label: 'Grounding & citations', level: 3, prereqs: ['SK.FND.002'] },
+                    { id: 'SK.PRM.022', label: 'ReAct-style patterns', level: 4, prereqs: ['SK.PRM.010', 'SK.FND.004'] }
+                ],
+                'D.RAG': [
+                    { id: 'SK.RAG.000', label: 'What is RAG and why use it', level: 1, prereqs: ['SK.FND.004'] },
+                    { id: 'SK.RAG.001', label: 'Query rewriting', level: 3, prereqs: ['SK.PRM.001'] },
+                    { id: 'SK.RAG.002', label: 'Chunking strategies', level: 3, prereqs: ['SK.FND.012'] },
+                    { id: 'SK.RAG.003', label: 'Hybrid retrieval (vector + keyword)', level: 3, prereqs: ['SK.FND.012'] },
+                    { id: 'SK.RAG.010', label: 'Reranking & scoring', level: 3, prereqs: ['SK.RAG.003'] },
+                    { id: 'SK.RAG.011', label: 'Context budgeting', level: 4, prereqs: ['SK.FND.001', 'SK.RAG.003'] },
+                    { id: 'SK.RAG.012', label: 'Lost in the middle mitigation', level: 4, prereqs: ['SK.RAG.011'] },
+                    { id: 'SK.RAG.020', label: 'Faithfulness evaluation', level: 4, prereqs: ['SK.PRM.021', 'SK.RAG.010'] },
+                    { id: 'SK.RAG.021', label: 'Golden sets & regression testing', level: 4, prereqs: ['SK.RAG.020'] }
+                ],
+                'D.AGT': [
+                    { id: 'SK.AGT.000', label: 'What are AI agents', level: 1, prereqs: ['SK.FND.004'] },
+                    { id: 'SK.AGT.001', label: 'Tool definitions & validation', level: 3, prereqs: ['SK.PRM.010', 'SK.PRQ.020'] },
+                    { id: 'SK.AGT.002', label: 'Error handling & retries', level: 3, prereqs: ['SK.AGT.001', 'SK.PRQ.021'] },
+                    { id: 'SK.AGT.003', label: 'State & memory management', level: 3, prereqs: ['SK.AGT.001'] },
+                    { id: 'SK.AGT.010', label: 'Single-agent loops', level: 4, prereqs: ['SK.AGT.001', 'SK.EVL.020'] },
+                    { id: 'SK.AGT.011', label: 'Multi-agent patterns', level: 4, prereqs: ['SK.AGT.010'] },
+                    { id: 'SK.AGT.012', label: 'Graph-based orchestration', level: 5, prereqs: ['SK.AGT.011', 'SK.PRQ.022'] },
+                    { id: 'SK.AGT.020', label: 'MCP protocol concepts', level: 3, prereqs: ['SK.AGT.001'] },
+                    { id: 'SK.AGT.021', label: 'Agent permissions (least privilege)', level: 4, prereqs: ['SK.SEC.010', 'SK.AGT.001'] },
+                    { id: 'SK.AGT.030', label: 'Guardrails & approval gates', level: 4, prereqs: ['SK.SEC.010', 'SK.EVL.001'] },
+                    { id: 'SK.AGT.031', label: 'Agent auditability', level: 4, prereqs: ['SK.EVL.010'] }
+                ],
+                'D.MOD': [
+                    { id: 'SK.MOD.000', label: 'When to customize vs use off-the-shelf', level: 2, prereqs: ['SK.FND.003'] },
+                    { id: 'SK.MOD.001', label: 'Prompt vs fine-tune decision', level: 3, prereqs: ['SK.FND.003', 'SK.PRM.001'] },
+                    { id: 'SK.MOD.002', label: 'Data requirements for tuning', level: 3, prereqs: ['SK.MOD.001', 'SK.PRQ.030'] },
+                    { id: 'SK.MOD.010', label: 'Instruction tuning basics', level: 3, prereqs: ['SK.MOD.001'] },
+                    { id: 'SK.MOD.011', label: 'PEFT/LoRA concepts', level: 4, prereqs: ['SK.MOD.010'] },
+                    { id: 'SK.MOD.012', label: 'Synthetic data generation', level: 4, prereqs: ['SK.MOD.002', 'SK.EVL.001'] }
+                ],
+                'D.MUL': [
+                    { id: 'SK.MUL.000', label: 'Types of multimodal AI', level: 1, prereqs: ['SK.FND.000'] },
+                    { id: 'SK.MUL.001', label: 'Image-to-text extraction', level: 2, prereqs: ['SK.PRM.010'] },
+                    { id: 'SK.MUL.002', label: 'Image generation prompting', level: 2, prereqs: ['SK.PRM.001'] },
+                    { id: 'SK.MUL.003', label: 'Image generation QA', level: 3, prereqs: ['SK.MUL.002'] },
+                    { id: 'SK.MUL.010', label: 'Speech-to-text & summarization', level: 2, prereqs: ['SK.PRM.001'] },
+                    { id: 'SK.MUL.011', label: 'Video understanding', level: 3, prereqs: ['SK.PRM.021'] },
+                    { id: 'SK.MUL.012', label: 'Text-to-speech applications', level: 2, prereqs: ['SK.FND.000'] },
+                    { id: 'SK.MUL.013', label: 'Document/PDF understanding', level: 2, prereqs: ['SK.PRM.001'] }
+                ],
+                'D.EVL': [
+                    { id: 'SK.EVL.000', label: 'Why AI evaluation matters', level: 1, prereqs: ['SK.FND.002'] },
+                    { id: 'SK.EVL.001', label: 'Eval types (offline/online/red team)', level: 2, prereqs: ['SK.FND.002'] },
+                    { id: 'SK.EVL.002', label: 'LLM-as-judge patterns', level: 3, prereqs: ['SK.PRM.011', 'SK.EVL.001'] },
+                    { id: 'SK.EVL.010', label: 'Tracing & observability', level: 3, prereqs: ['SK.PRQ.022'] },
+                    { id: 'SK.EVL.011', label: 'Quality dashboards & alerts', level: 4, prereqs: ['SK.EVL.010', 'SK.EVL.001'] },
+                    { id: 'SK.EVL.020', label: 'Prompt unit tests', level: 3, prereqs: ['SK.PRM.003'] },
+                    { id: 'SK.EVL.021', label: 'Release gates & rollback', level: 4, prereqs: ['SK.EVL.011', 'SK.OPS.020'] },
+                    { id: 'SK.EVL.022', label: 'A/B testing for AI', level: 4, prereqs: ['SK.EVL.001'] }
+                ],
+                'D.SEC': [
+                    { id: 'SK.SEC.000', label: 'AI security threat landscape', level: 1, prereqs: ['SK.FND.002'] },
+                    { id: 'SK.SEC.001', label: 'Prompt injection mitigation', level: 3, prereqs: ['SK.RAG.020', 'SK.AGT.001'] },
+                    { id: 'SK.SEC.002', label: 'Data leakage prevention', level: 3, prereqs: ['SK.FND.020'] },
+                    { id: 'SK.SEC.003', label: 'Output security (XSS, injection)', level: 3, prereqs: ['SK.PRQ.021'] },
+                    { id: 'SK.SEC.010', label: 'Agent permission design', level: 4, prereqs: ['SK.AGT.001'] },
+                    { id: 'SK.SEC.011', label: 'Tool sandboxing', level: 4, prereqs: ['SK.SEC.010', 'SK.PRQ.022'] },
+                    { id: 'SK.SEC.012', label: 'Red teaming basics', level: 3, prereqs: ['SK.EVL.001'] }
+                ],
+                'D.OPS': [
+                    { id: 'SK.OPS.000', label: 'What is LLMOps', level: 1, prereqs: ['SK.FND.000'] },
+                    { id: 'SK.OPS.001', label: 'Latency drivers & optimization', level: 3, prereqs: ['SK.AGT.002', 'SK.RAG.011'] },
+                    { id: 'SK.OPS.002', label: 'Cost modeling & token budgeting', level: 3, prereqs: ['SK.OPS.001'] },
+                    { id: 'SK.OPS.010', label: 'Caching, batching, streaming', level: 4, prereqs: ['SK.OPS.002', 'SK.PRQ.022'] },
+                    { id: 'SK.OPS.011', label: 'Model routing strategies', level: 4, prereqs: ['SK.OPS.010'] },
+                    { id: 'SK.OPS.020', label: 'SLOs/SLAs & incident response', level: 4, prereqs: ['SK.EVL.010'] },
+                    { id: 'SK.OPS.021', label: 'Security reviews & deployment gates', level: 4, prereqs: ['SK.SEC.010', 'SK.EVL.021'] },
+                    { id: 'SK.OPS.022', label: 'Versioning prompts & models', level: 3, prereqs: ['SK.PRM.003'] }
+                ],
+                'D.TOOL': [
+                    { id: 'SK.TOOL.000', label: 'AI tool landscape overview', level: 1, prereqs: ['SK.FND.000'] },
+                    { id: 'SK.TOOL.001', label: 'ChatGPT/Claude/Gemini usage', level: 1, prereqs: ['SK.FND.001'] },
+                    { id: 'SK.TOOL.002', label: 'AI coding assistants (Copilot)', level: 2, prereqs: ['SK.PRQ.010'] },
+                    { id: 'SK.TOOL.003', label: 'Image generation tools (Midjourney, DALL-E)', level: 2, prereqs: ['SK.MUL.002'] },
+                    { id: 'SK.TOOL.010', label: 'LangChain/LlamaIndex concepts', level: 3, prereqs: ['SK.RAG.001', 'SK.AGT.001'] },
+                    { id: 'SK.TOOL.011', label: 'Hugging Face ecosystem', level: 3, prereqs: ['SK.FND.010'] },
+                    { id: 'SK.TOOL.020', label: 'API key management', level: 2, prereqs: ['SK.PRQ.021'] },
+                    { id: 'SK.TOOL.021', label: 'Provider selection criteria', level: 3, prereqs: ['SK.FND.003', 'SK.GOV.001'] },
+                    { id: 'SK.TOOL.030', label: 'Docker for AI apps', level: 3, prereqs: ['SK.PRQ.022'] },
+                    { id: 'SK.TOOL.031', label: 'Kubernetes awareness', level: 4, prereqs: ['SK.TOOL.030'] }
+                ],
+                'D.PRQ': [
+                    { id: 'SK.PRQ.000', label: 'Command line basics', level: 1, prereqs: [] },
+                    { id: 'SK.PRQ.001', label: 'Version control (Git basics)', level: 2, prereqs: ['SK.PRQ.000'] },
+                    { id: 'SK.PRQ.010', label: 'Python basics', level: 2, prereqs: ['SK.PRQ.000'] },
+                    { id: 'SK.PRQ.011', label: 'Data handling (Pandas/NumPy)', level: 2, prereqs: ['SK.PRQ.010'] },
+                    { id: 'SK.PRQ.012', label: 'JavaScript/TypeScript basics', level: 2, prereqs: [] },
+                    { id: 'SK.PRQ.013', label: 'SQL fundamentals', level: 2, prereqs: [] },
+                    { id: 'SK.PRQ.020', label: 'REST API basics', level: 2, prereqs: [] },
+                    { id: 'SK.PRQ.021', label: 'Authentication (OAuth, tokens)', level: 2, prereqs: ['SK.PRQ.020'] },
+                    { id: 'SK.PRQ.022', label: 'Backend service fundamentals', level: 3, prereqs: ['SK.PRQ.020'] },
+                    { id: 'SK.PRQ.030', label: 'Cloud primitives (compute, storage)', level: 2, prereqs: [] },
+                    { id: 'SK.PRQ.031', label: 'Secrets management', level: 3, prereqs: ['SK.PRQ.030', 'SK.PRQ.021'] },
+                    { id: 'SK.PRQ.032', label: 'CI/CD concepts', level: 3, prereqs: ['SK.PRQ.001'] }
+                ],
+                'D.GOV': [
+                    { id: 'SK.GOV.000', label: 'AI governance fundamentals', level: 1, prereqs: ['SK.FND.002'] },
+                    { id: 'SK.GOV.001', label: 'AI risk framing', level: 2, prereqs: ['SK.FND.002', 'SK.FND.022'] },
+                    { id: 'SK.GOV.002', label: 'Policy to controls mapping', level: 3, prereqs: ['SK.AGT.030', 'SK.EVL.010'] },
+                    { id: 'SK.GOV.010', label: 'AI regulations landscape (EU AI Act)', level: 2, prereqs: ['SK.GOV.000'] },
+                    { id: 'SK.GOV.020', label: 'PII/PHI handling & retention', level: 2, prereqs: ['SK.FND.020'] },
+                    { id: 'SK.GOV.021', label: 'Data minimization & anonymization', level: 3, prereqs: ['SK.GOV.020'] }
+                ],
+                'D.DOM': [
+                    { id: 'SK.DOM.HC.001', label: 'Healthcare: Clinical risk awareness', level: 3, prereqs: ['SK.GOV.001', 'SK.PRM.021'] },
+                    { id: 'SK.DOM.HC.002', label: 'Healthcare: Evidence synthesis', level: 3, prereqs: ['SK.RAG.020'] },
+                    { id: 'SK.DOM.LGL.001', label: 'Legal: Disclaimer & advice boundaries', level: 3, prereqs: ['SK.GOV.001', 'SK.PRD.010'] },
+                    { id: 'SK.DOM.LGL.002', label: 'Legal: Hallucination eval frameworks', level: 4, prereqs: ['SK.EVL.001', 'SK.RAG.020'] },
+                    { id: 'SK.DOM.FIN.001', label: 'Finance: Numerical auditability', level: 4, prereqs: ['SK.EVL.010', 'SK.AGT.031'] },
+                    { id: 'SK.DOM.EDU.001', label: 'Education: Learning design with AI', level: 2, prereqs: ['SK.PRM.001'] },
+                    { id: 'SK.DOM.MKT.001', label: 'Marketing: Content generation ethics', level: 2, prereqs: ['SK.FND.021', 'SK.FND.022'] },
+                    { id: 'SK.DOM.HR.001', label: 'HR: AI in hiring considerations', level: 2, prereqs: ['SK.FND.022', 'SK.GOV.001'] }
+                ],
+                'D.PRD': [
+                    { id: 'SK.PRD.000', label: 'AI product thinking basics', level: 1, prereqs: ['SK.FND.004'] },
+                    { id: 'SK.PRD.001', label: 'Use-case selection & prioritization', level: 2, prereqs: ['SK.FND.004'] },
+                    { id: 'SK.PRD.002', label: 'Workflow mapping', level: 3, prereqs: ['SK.PRD.001'] },
+                    { id: 'SK.PRD.010', label: 'Explainability UX design', level: 3, prereqs: ['SK.PRM.021'] },
+                    { id: 'SK.PRD.011', label: 'Feedback loop design', level: 3, prereqs: ['SK.EVL.011'] },
+                    { id: 'SK.PRD.020', label: 'AI enablement & training strategy', level: 3, prereqs: ['SK.PRD.002'] },
+                    { id: 'SK.PRD.021', label: 'Stakeholder management', level: 3, prereqs: ['SK.FND.002', 'SK.GOV.001'] },
+                    { id: 'SK.PRD.022', label: 'ROI measurement for AI', level: 3, prereqs: ['SK.PRD.001'] }
+                ],
+                'D.COM': [
+                    { id: 'SK.COM.001', label: 'Explaining AI to non-technical audiences', level: 2, prereqs: ['SK.FND.001'] },
+                    { id: 'SK.COM.002', label: 'Writing AI project proposals', level: 3, prereqs: ['SK.PRD.001'] },
+                    { id: 'SK.COM.003', label: 'Facilitating AI workshops', level: 3, prereqs: ['SK.COM.001'] },
+                    { id: 'SK.COM.004', label: 'Managing AI expectations', level: 2, prereqs: ['SK.FND.002'] },
+                    { id: 'SK.COM.005', label: 'Cross-functional AI collaboration', level: 3, prereqs: ['SK.COM.001'] },
+                    { id: 'SK.COM.006', label: 'AI documentation best practices', level: 3, prereqs: ['SK.PRM.003'] }
+                ],
+                'D.LRN': [
+                    { id: 'SK.LRN.001', label: 'Keeping up with AI developments', level: 1, prereqs: ['SK.FND.000'] },
+                    { id: 'SK.LRN.002', label: 'Evaluating new AI tools', level: 2, prereqs: ['SK.TOOL.000'] },
+                    { id: 'SK.LRN.003', label: 'Building personal AI workflows', level: 2, prereqs: ['SK.PRM.001'] },
+                    { id: 'SK.LRN.004', label: 'Teaching others AI skills', level: 3, prereqs: ['SK.COM.001'] },
+                    { id: 'SK.LRN.005', label: 'Experimenting safely with AI', level: 2, prereqs: ['SK.FND.020', 'SK.SEC.000'] }
+                ]
+            }
+        };
+
+        // --- STATE ---
+        let currentView = 'mindmap';
+        let selectedLayer = null;
+        let selectedRole = null;
+        let selectedDomain = null;
+        let mindmapTransform = { x: 0, y: 0, scale: 1 };
+
+        // --- UTILITIES ---
+        function getLayerForDomain(domainId) {
+            return ontologyData.layers.find(l => l.domains.includes(domainId));
+        }
+
+        function getLevelColor(level) {
+            return ontologyData.proficiencyLevels.find(p => p.level === level)?.color || '#374151';
+        }
+
+        function getTotalSkills() {
+            return Object.values(ontologyData.domains).reduce((sum, d) => sum + d.skills, 0);
+        }
+
+        // --- VIEW SWITCHING ---
+        function switchView(viewId) {
+            currentView = viewId;
+            selectedLayer = null;
+            selectedRole = null;
+
+            // Update tabs
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.textContent.toLowerCase().replace(' ', '') === viewId);
+            });
+
+            // Update view containers
+            document.querySelectorAll('.view-container').forEach(container => {
+                container.classList.toggle('active', container.id === viewId + '-view');
+            });
+
+            // Render view content
+            if (viewId === 'mindmap') renderMindMap();
+            else if (viewId === 'force') initForceGraph();
+            else if (viewId === 'layers') renderLayersView();
+            else if (viewId === 'domains') renderDomainsView();
+            else if (viewId === 'roles') renderRolesView();
+            else if (viewId === 'proficiency') renderProficiencyView();
+        }
+
+        // --- MIND MAP ---
+        let mindmapSvg = null;
+        let mindmapG = null;
+
+        function renderMindMap() {
+            const container = document.getElementById('mindmap-container');
+            const existingSvg = container.querySelector('svg');
+            if (existingSvg) existingSvg.remove();
+
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+            const centerX = width / 2;
+            const centerY = height / 2;
+
+            mindmapSvg = d3.select('#mindmap-container')
+                .append('svg')
+                .attr('width', width)
+                .attr('height', height)
+                .style('cursor', 'grab');
+
+            mindmapG = mindmapSvg.append('g')
+                .attr('transform', `translate(${mindmapTransform.x}, ${mindmapTransform.y}) scale(${mindmapTransform.scale})`);
+
+            // Build nodes
+            const nodes = [];
+            const edges = [];
+
+            // Root node
+            nodes.push({
+                id: 'root',
+                label: 'GenAI Skills',
+                x: centerX,
+                y: centerY,
+                r: 50,
+                color: '#06b6d4',
+                type: 'root'
+            });
+
+            // Layer and domain nodes
+            const layerRadius = 160;
+            ontologyData.layers.forEach((layer, i) => {
+                const angle = (i / ontologyData.layers.length) * 2 * Math.PI - Math.PI / 2;
+                const x = centerX + Math.cos(angle) * layerRadius;
+                const y = centerY + Math.sin(angle) * layerRadius;
+
+                nodes.push({
+                    id: layer.id,
+                    label: layer.label,
+                    x,
+                    y,
+                    r: 40,
+                    color: layer.color,
+                    type: 'layer',
+                    parent: 'root'
+                });
+
+                const domainRadius = 100;
+                layer.domains.forEach((domainId, j) => {
+                    const domain = ontologyData.domains[domainId];
+                    if (!domain) return;
+
+                    const spreadAngle = Math.PI * 0.6;
+                    const startAngle = angle - spreadAngle / 2;
+                    const domainAngle = layer.domains.length > 1
+                        ? startAngle + (j / (layer.domains.length - 1)) * spreadAngle
+                        : angle;
+
+                    const dx = x + Math.cos(domainAngle) * domainRadius;
+                    const dy = y + Math.sin(domainAngle) * domainRadius;
+
+                    nodes.push({
+                        id: domainId,
+                        label: domain.label.split(' ').slice(0, 2).join(' '),
+                        fullLabel: domain.label,
+                        x: dx,
+                        y: dy,
+                        r: 30,
+                        color: layer.color,
+                        type: 'domain',
+                        parent: layer.id,
+                        skills: domain.skills,
+                        desc: domain.desc
+                    });
+                });
+            });
+
+            // Build edges
+            nodes.filter(n => n.parent).forEach(n => {
+                const parent = nodes.find(p => p.id === n.parent);
+                if (parent) edges.push({ from: parent, to: n });
+            });
+
+            // Draw edges
+            mindmapG.selectAll('line')
+                .data(edges)
+                .enter()
+                .append('line')
+                .attr('x1', d => d.from.x)
+                .attr('y1', d => d.from.y)
+                .attr('x2', d => d.to.x)
+                .attr('y2', d => d.to.y)
+                .attr('stroke', d => d.to.color)
+                .attr('stroke-width', 2)
+                .attr('stroke-opacity', 0.4);
+
+            // Draw nodes
+            const nodeGroups = mindmapG.selectAll('g.node')
+                .data(nodes)
+                .enter()
+                .append('g')
+                .attr('class', 'node')
+                .attr('transform', d => `translate(${d.x}, ${d.y})`)
+                .style('cursor', d => d.type === 'domain' ? 'pointer' : 'default')
+                .on('click', (event, d) => {
+                    if (d.type === 'domain') openDomainModal(d.id);
+                })
+                .on('mouseenter', (event, d) => {
+                    if (d.fullLabel || d.desc) {
+                        const tooltip = document.getElementById('mindmap-tooltip');
+                        tooltip.textContent = d.fullLabel || d.label;
+                        tooltip.classList.add('visible');
+                    }
+                })
+                .on('mouseleave', () => {
+                    document.getElementById('mindmap-tooltip').classList.remove('visible');
+                });
+
+            nodeGroups.append('circle')
+                .attr('r', d => d.r)
+                .attr('fill', d => d.color)
+                .attr('fill-opacity', 0.8)
+                .attr('stroke', d => selectedDomain === d.id ? '#fff' : 'transparent')
+                .attr('stroke-width', 3);
+
+            nodeGroups.append('text')
+                .attr('text-anchor', 'middle')
+                .attr('dy', '0.35em')
+                .attr('fill', 'white')
+                .attr('font-size', d => d.type === 'root' ? 14 : d.type === 'layer' ? 11 : 9)
+                .attr('font-weight', d => d.type === 'root' ? 'bold' : 'normal')
+                .style('pointer-events', 'none')
+                .text(d => d.label.length > 14 ? d.label.slice(0, 12) + '...' : d.label);
+
+            nodeGroups.filter(d => d.skills)
+                .append('text')
+                .attr('text-anchor', 'middle')
+                .attr('dy', '1.8em')
+                .attr('fill', 'white')
+                .attr('fill-opacity', 0.7)
+                .attr('font-size', 8)
+                .style('pointer-events', 'none')
+                .text(d => d.skills + ' skills');
+
+            // Pan and zoom
+            let isDragging = false;
+            let dragStart = { x: 0, y: 0 };
+
+            mindmapSvg.on('mousedown', (event) => {
+                if (event.target.tagName === 'svg') {
+                    isDragging = true;
+                    dragStart = { x: event.clientX - mindmapTransform.x, y: event.clientY - mindmapTransform.y };
+                    mindmapSvg.style('cursor', 'grabbing');
+                }
+            });
+
+            mindmapSvg.on('mousemove', (event) => {
+                if (isDragging) {
+                    mindmapTransform.x = event.clientX - dragStart.x;
+                    mindmapTransform.y = event.clientY - dragStart.y;
+                    mindmapG.attr('transform', `translate(${mindmapTransform.x}, ${mindmapTransform.y}) scale(${mindmapTransform.scale})`);
+                }
+            });
+
+            mindmapSvg.on('mouseup mouseleave', () => {
+                isDragging = false;
+                mindmapSvg.style('cursor', 'grab');
+            });
+
+            mindmapSvg.on('wheel', (event) => {
+                event.preventDefault();
+                const scaleFactor = event.deltaY > 0 ? 0.9 : 1.1;
+                mindmapTransform.scale = Math.max(0.3, Math.min(3, mindmapTransform.scale * scaleFactor));
+                mindmapG.attr('transform', `translate(${mindmapTransform.x}, ${mindmapTransform.y}) scale(${mindmapTransform.scale})`);
+            });
+        }
+
+        function zoomMindmap(factor) {
+            mindmapTransform.scale = Math.max(0.3, Math.min(3, mindmapTransform.scale * factor));
+            if (mindmapG) {
+                mindmapG.attr('transform', `translate(${mindmapTransform.x}, ${mindmapTransform.y}) scale(${mindmapTransform.scale})`);
+            }
+        }
+
+        function resetMindmap() {
+            mindmapTransform = { x: 0, y: 0, scale: 1 };
+            if (mindmapG) {
+                mindmapG.attr('transform', `translate(0, 0) scale(1)`);
+            }
+        }
+
+        // --- FORCE GRAPH ---
+        let forceSimulation = null;
+
+        function initForceGraph() {
+            const container = document.getElementById('force-container');
+            const existingSvg = container.querySelector('svg');
+            if (existingSvg) existingSvg.remove();
+
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+
+            const svg = d3.select('#force-container')
+                .append('svg')
+                .attr('width', width)
+                .attr('height', height)
+                .call(d3.zoom().on('zoom', (event) => {
+                    g.attr('transform', event.transform);
+                }));
+
+            const g = svg.append('g');
+
+            // Build nodes and links
+            const nodes = [];
+            const links = [];
+
+            // Domain nodes
+            Object.entries(ontologyData.domains).forEach(([id, domain]) => {
+                const layer = getLayerForDomain(id);
+                nodes.push({
+                    id,
+                    label: domain.label,
+                    type: 'domain',
+                    color: layer?.color || '#666',
+                    radius: 35
+                });
+            });
+
+            // Skill nodes
+            Object.entries(ontologyData.skillDetails).forEach(([domainId, skills]) => {
+                skills.forEach(skill => {
+                    nodes.push({
+                        id: skill.id,
+                        label: skill.label,
+                        type: 'skill',
+                        domain: domainId,
+                        level: skill.level,
+                        radius: 5 + skill.level * 1.5
+                    });
+
+                    // Link to domain
+                    links.push({
+                        source: skill.id,
+                        target: domainId,
+                        type: 'structural'
+                    });
+
+                    // Prerequisite links
+                    skill.prereqs.forEach(prereq => {
+                        if (nodes.find(n => n.id === prereq)) {
+                            links.push({
+                                source: prereq,
+                                target: skill.id,
+                                type: 'prerequisite'
+                            });
+                        }
+                    });
+                });
+            });
+
+            // Populate role dropdown
+            const roleSelect = document.getElementById('role-select');
+            roleSelect.innerHTML = '<option value="">All Roles</option>';
+            ontologyData.roles.forEach(role => {
+                const option = document.createElement('option');
+                option.value = role.id;
+                option.textContent = role.label;
+                roleSelect.appendChild(option);
+            });
+
+            // Force simulation
+            forceSimulation = d3.forceSimulation(nodes)
+                .force('link', d3.forceLink(links).id(d => d.id).distance(d => d.type === 'structural' ? 50 : 80))
+                .force('charge', d3.forceManyBody().strength(d => d.type === 'domain' ? -400 : -80))
+                .force('collide', d3.forceCollide().radius(d => d.radius + 3))
+                .force('center', d3.forceCenter(width / 2, height / 2));
+
+            // Arrow marker
+            svg.append('defs').append('marker')
+                .attr('id', 'arrow')
+                .attr('viewBox', '0 -5 10 10')
+                .attr('refX', 15)
+                .attr('refY', 0)
+                .attr('markerWidth', 6)
+                .attr('markerHeight', 6)
+                .attr('orient', 'auto')
+                .append('path')
+                .attr('d', 'M0,-5L10,0L0,5')
+                .attr('fill', '#ef4444');
+
+            // Links
+            const link = g.append('g')
+                .selectAll('line')
+                .data(links)
+                .enter()
+                .append('line')
+                .attr('stroke', d => d.type === 'structural' ? '#333' : '#ef4444')
+                .attr('stroke-width', d => d.type === 'structural' ? 1 : 1.5)
+                .attr('stroke-opacity', d => d.type === 'structural' ? 0.3 : 0.5)
+                .attr('marker-end', d => d.type === 'prerequisite' ? 'url(#arrow)' : null);
+
+            // Nodes
+            const node = g.append('g')
+                .selectAll('g')
+                .data(nodes)
+                .enter()
+                .append('g')
+                .call(d3.drag()
+                    .on('start', (event, d) => {
+                        if (!event.active) forceSimulation.alphaTarget(0.3).restart();
+                        d.fx = d.x;
+                        d.fy = d.y;
+                    })
+                    .on('drag', (event, d) => {
+                        d.fx = event.x;
+                        d.fy = event.y;
+                    })
+                    .on('end', (event, d) => {
+                        if (!event.active) forceSimulation.alphaTarget(0);
+                        d.fx = null;
+                        d.fy = null;
+                    }));
+
+            // Skill circles
+            node.filter(d => d.type === 'skill')
+                .append('circle')
+                .attr('r', d => d.radius)
+                .attr('fill', d => getLevelColor(d.level))
+                .attr('stroke', '#fff')
+                .attr('stroke-width', 1);
+
+            // Domain rectangles
+            node.filter(d => d.type === 'domain')
+                .append('rect')
+                .attr('width', d => d.radius * 2)
+                .attr('height', d => d.radius * 2)
+                .attr('x', d => -d.radius)
+                .attr('y', d => -d.radius)
+                .attr('rx', 8)
+                .attr('fill', d => d.color)
+                .attr('stroke', '#fff')
+                .attr('stroke-width', 2);
+
+            // Labels
+            node.filter(d => d.type === 'domain')
+                .append('text')
+                .attr('text-anchor', 'middle')
+                .attr('dy', d => d.radius + 16)
+                .attr('fill', '#fff')
+                .attr('font-size', 11)
+                .attr('font-weight', 'bold')
+                .text(d => d.label.split(' ').slice(0, 2).join(' '));
+
+            // Tooltip
+            node.on('mouseenter', (event, d) => {
+                const tooltip = document.getElementById('tooltip');
+                tooltip.innerHTML = `
+                    <h3>${d.label}</h3>
+                    <p>${d.type === 'domain' ? 'Domain' : 'Level: ' + d.level}</p>
+                    <p class="id">${d.id}</p>
+                `;
+                tooltip.style.opacity = 1;
+                tooltip.style.left = (event.pageX + 15) + 'px';
+                tooltip.style.top = (event.pageY - 10) + 'px';
+            }).on('mouseleave', () => {
+                document.getElementById('tooltip').style.opacity = 0;
+            });
+
+            // Tick
+            forceSimulation.on('tick', () => {
+                link
+                    .attr('x1', d => d.source.x)
+                    .attr('y1', d => d.source.y)
+                    .attr('x2', d => d.target.x)
+                    .attr('y2', d => d.target.y);
+
+                node.attr('transform', d => `translate(${d.x}, ${d.y})`);
+            });
+
+            // Store references for layout switching
+            window.forceNodes = nodes;
+            window.forceLinks = links;
+            window.forceNode = node;
+            window.forceLink = link;
+            window.forceG = g;
+            window.forceWidth = width;
+            window.forceHeight = height;
+        }
+
+        function updateRoleFilter(roleId) {
+            if (!window.forceNode || !window.forceLink) return;
+
+            if (!roleId) {
+                window.forceNode.style('opacity', 1);
+                window.forceLink.style('opacity', d => d.type === 'structural' ? 0.3 : 0.5);
+                return;
+            }
+
+            const role = ontologyData.roles.find(r => r.id === roleId);
+            if (!role) return;
+
+            window.forceNode.style('opacity', d => {
+                if (d.type === 'domain') return role.focus.includes(d.id) ? 1 : 0.1;
+                if (d.type === 'skill') return role.focus.includes(d.domain) ? 1 : 0.1;
+                return 0.1;
+            });
+
+            window.forceLink.style('opacity', l => {
+                const sourceGroup = l.source.domain || l.source.id;
+                const targetGroup = l.target.domain || l.target.id;
+                return (role.focus.includes(sourceGroup) && role.focus.includes(targetGroup)) ? 1 : 0.05;
+            });
+        }
+
+        function updateLayout(mode) {
+            if (!forceSimulation) return;
+
+            if (mode === 'force') {
+                forceSimulation.alpha(1).restart();
+                window.forceNodes.forEach(d => {
+                    d.fx = null;
+                    d.fy = null;
+                });
+            } else if (mode === 'radial') {
+                forceSimulation.stop();
+
+                const centerX = window.forceWidth / 2;
+                const centerY = window.forceHeight / 2;
+                const domainRadius = Math.min(window.forceWidth, window.forceHeight) * 0.35;
+
+                const layerOrder = ontologyData.layers.map(l => l.id);
+                const allDomainIds = Object.keys(ontologyData.domains);
+
+                window.forceNodes.forEach(d => {
+                    if (d.type === 'domain') {
+                        const idx = allDomainIds.indexOf(d.id);
+                        const angle = (idx / allDomainIds.length) * 2 * Math.PI - Math.PI / 2;
+                        d.fx = centerX + Math.cos(angle) * domainRadius;
+                        d.fy = centerY + Math.sin(angle) * domainRadius;
+                    } else if (d.type === 'skill') {
+                        const domainIdx = allDomainIds.indexOf(d.domain);
+                        const angle = (domainIdx / allDomainIds.length) * 2 * Math.PI - Math.PI / 2;
+                        const domX = centerX + Math.cos(angle) * domainRadius;
+                        const domY = centerY + Math.sin(angle) * domainRadius;
+                        const skillAngle = Math.random() * 2 * Math.PI;
+                        const r = 20 + Math.random() * 40;
+                        d.fx = domX + Math.cos(skillAngle) * r;
+                        d.fy = domY + Math.sin(skillAngle) * r;
+                    }
+                });
+
+                window.forceNode.transition().duration(1000).attr('transform', d => `translate(${d.fx}, ${d.fy})`);
+                window.forceLink.transition().duration(1000)
+                    .attr('x1', d => d.source.fx || d.source.x)
+                    .attr('y1', d => d.source.fy || d.source.y)
+                    .attr('x2', d => d.target.fx || d.target.x)
+                    .attr('y2', d => d.target.fy || d.target.y);
+            }
+        }
+
+        // --- LAYERS VIEW ---
+        function renderLayersView() {
+            const layersGrid = document.getElementById('layers-grid');
+            const domainsGrid = document.getElementById('layers-domains-grid');
+
+            layersGrid.innerHTML = ontologyData.layers.map(layer => `
+                <div class="layer-card ${selectedLayer === layer.id ? 'selected' : ''}"
+                     style="background: ${layer.color}20; ${selectedLayer === layer.id ? `border-color: ${layer.color}` : ''}"
+                     onclick="selectLayer('${layer.id}')">
+                    <div class="layer-dot" style="background: ${layer.color}"></div>
+                    <div class="layer-label">${layer.label}</div>
+                    <div class="layer-count">${layer.domains.length} domains</div>
+                </div>
+            `).join('');
+
+            const highlightedDomains = selectedLayer
+                ? ontologyData.layers.find(l => l.id === selectedLayer)?.domains || []
+                : [];
+
+            domainsGrid.innerHTML = Object.entries(ontologyData.domains).map(([id, domain]) => {
+                const layer = getLayerForDomain(id);
+                const isHighlighted = highlightedDomains.length === 0 || highlightedDomains.includes(id);
+                return `
+                    <div class="domain-card ${!isHighlighted ? 'dimmed' : ''}"
+                         onclick="openDomainModal('${id}')">
+                        <div class="domain-header">
+                            <div class="layer-dot" style="background: ${layer?.color}"></div>
+                            <span class="domain-id">${id}</span>
+                        </div>
+                        <div class="domain-label">${domain.label}</div>
+                        <div class="domain-skills">${domain.skills} skills</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function selectLayer(layerId) {
+            selectedLayer = selectedLayer === layerId ? null : layerId;
+            renderLayersView();
+        }
+
+        // --- DOMAINS VIEW ---
+        function renderDomainsView() {
+            const grid = document.getElementById('skills-grid');
+
+            grid.innerHTML = Object.entries(ontologyData.skillDetails).map(([domainId, skills]) => {
+                const layer = getLayerForDomain(domainId);
+                const domain = ontologyData.domains[domainId];
+
+                return `
+                    <div class="skills-domain-card">
+                        <div class="skills-domain-header">
+                            <div class="layer-dot" style="background: ${layer?.color}"></div>
+                            <div>
+                                <div class="skills-domain-title">${domain?.label}</div>
+                                <div class="skills-domain-id">${domainId}</div>
+                            </div>
+                        </div>
+                        <div class="skills-list">
+                            ${skills.map(skill => `
+                                <div class="skill-item">
+                                    <div class="skill-level" style="background: ${getLevelColor(skill.level)}">${skill.level}</div>
+                                    <div class="skill-label">${skill.label}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // --- ROLES VIEW ---
+        function renderRolesView() {
+            const nav = document.getElementById('roles-nav');
+            const grid = document.getElementById('roles-domains-grid');
+
+            nav.innerHTML = ontologyData.roles.map(role => `
+                <button class="role-btn ${selectedRole === role.id ? 'active' : ''}"
+                        style="${selectedRole === role.id ? `background: ${role.color}; border-color: ${role.color}` : ''}"
+                        onclick="selectRole('${role.id}')">
+                    ${role.label}
+                </button>
+            `).join('');
+
+            const focusDomains = selectedRole
+                ? ontologyData.roles.find(r => r.id === selectedRole)?.focus || []
+                : [];
+
+            const activeRole = ontologyData.roles.find(r => r.id === selectedRole);
+
+            grid.innerHTML = Object.entries(ontologyData.domains).map(([id, domain]) => {
+                const layer = getLayerForDomain(id);
+                const isHighlighted = !selectedRole || focusDomains.includes(id);
+
+                return `
+                    <div class="domain-card ${!isHighlighted ? 'dimmed' : ''} ${isHighlighted && selectedRole ? 'highlighted' : ''}"
+                         style="${isHighlighted && selectedRole ? `border-color: ${activeRole?.color}; background: ${activeRole?.color}20` : ''}">
+                        <div class="domain-header">
+                            <div class="layer-dot" style="background: ${layer?.color}"></div>
+                            <span class="domain-id">${id}</span>
+                        </div>
+                        <div class="domain-label">${domain.label}</div>
+                        ${isHighlighted && selectedRole ? `<div class="domain-focus" style="color: ${activeRole?.color}">● Focus Area</div>` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function selectRole(roleId) {
+            selectedRole = selectedRole === roleId ? null : roleId;
+            renderRolesView();
+        }
+
+        // --- PROFICIENCY VIEW ---
+        function renderProficiencyView() {
+            const grid = document.getElementById('proficiency-grid');
+
+            grid.innerHTML = ontologyData.proficiencyLevels.map(level => `
+                <div class="proficiency-card">
+                    <div class="proficiency-badge" style="background: ${level.color}">${level.level}</div>
+                    <div class="proficiency-label">${level.label}</div>
+                    <div class="proficiency-desc">${level.desc}</div>
+                </div>
+            `).join('');
+        }
+
+        // --- MODAL ---
+        function openDomainModal(domainId) {
+            const domain = ontologyData.domains[domainId];
+            const skills = ontologyData.skillDetails[domainId] || [];
+
+            document.getElementById('modal-title').textContent = domain?.label || domainId;
+            document.getElementById('modal-subtitle').textContent = domainId;
+
+            document.getElementById('modal-content').innerHTML = skills.length > 0
+                ? skills.map(skill => `
+                    <div class="modal-skill">
+                        <div class="modal-skill-level" style="background: ${getLevelColor(skill.level)}">${skill.level}</div>
+                        <div class="modal-skill-content">
+                            <div class="modal-skill-label">${skill.label}</div>
+                            <div class="modal-skill-id">${skill.id}</div>
+                            ${skill.prereqs.length > 0 ? `
+                                <div class="modal-skill-prereqs">
+                                    ${skill.prereqs.map(p => `<span class="prereq-tag">← ${p}</span>`).join('')}
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `).join('')
+                : '<p style="color: var(--text-dim)">No skills defined for this domain.</p>';
+
+            document.getElementById('modal-overlay').classList.add('active');
+        }
+
+        function closeModal(event) {
+            if (!event || event.target === document.getElementById('modal-overlay')) {
+                document.getElementById('modal-overlay').classList.remove('active');
+            }
+        }
+
+        // Close modal on Escape
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeModal();
+        });
+
+        // --- INIT ---
+        window.addEventListener('load', () => {
+            renderMindMap();
+        });
+
+        window.addEventListener('resize', () => {
+            if (currentView === 'mindmap') renderMindMap();
+        });
+    </script>
+</body>
+
+</html>

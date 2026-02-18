@@ -1,0 +1,61 @@
+{
+  "id": "profile_07",
+  "name": "Grace Williams",
+  "current_role": "VP Marketing",
+  "target_role": "AI-Driven Marketing Strategist",
+  "industry": "Retail / E-commerce",
+  "location": "U.S.",
+  "experience_years": 20,
+  "ai_exposure_level": "Basic",
+  "archetype": "Executive",
+  "current_profile": {
+    "summary": "VP of Marketing with 20+ years experience. Strong strategy and leadership; comfortable interpreting analytics but not hands-on technical. Uses GenAI for brainstorming and review; oversees vendors implementing personalization and ad-tech optimization.",
+    "technical_skills": ["Marketing strategy", "Analytics interpretation", "Vendor management"],
+    "soft_skills": ["Executive leadership", "Strategic planning", "Team building", "Budget management"],
+    "ai_experience": "Uses GenAI for brainstorming; oversees AI vendor implementations"
+  },
+  "learning_intent": "Wants executive-level AI literacy to lead AI investments, ask better questions, and align AI projects with brand, ROI, and compliance.",
+  "target_jd": {
+    "title": "AI-Savvy Marketing Leader (Strategy + Governance)",
+    "requirements": [
+      "Set marketing AI strategy: personalization, attribution, content automation, and measurement",
+      "Evaluate vendors and internal AI proposals; define success metrics and guardrails",
+      "Ensure privacy and responsible use in targeting and content generation",
+      "Coach teams on workflows and change management for AI adoption"
+    ]
+  },
+  "expected_skill_gaps": [
+    {
+      "domain": "D.FND",
+      "description": "Practical understanding of LLMs, limitations, data privacy, and bias in marketing contexts.",
+      "skills": ["SK.FND.001", "SK.FND.002", "SK.FND.020", "SK.FND.021", "SK.FND.022"]
+    },
+    {
+      "domain": "D.PRD",
+      "description": "Workflow mapping for AI-enabled marketing operations; feedback loops for continuous improvement.",
+      "skills": ["SK.PRD.001", "SK.PRD.002", "SK.PRD.011"]
+    },
+    {
+      "domain": "D.GOV",
+      "description": "Policy to controls for marketing data; vendor risk review basics.",
+      "skills": ["SK.GOV.000", "SK.GOV.001", "SK.GOV.010"]
+    },
+    {
+      "domain": "D.LRN",
+      "description": "Evaluating new AI tools and building repeatable personal/team AI workflows.",
+      "skills": ["SK.LRN.001", "SK.LRN.002", "SK.LRN.003"]
+    },
+    {
+      "domain": "D.DOM",
+      "description": "Marketing-specific AI ethics for content generation.",
+      "skills": ["SK.DOM.MKT.001"]
+    }
+  ],
+  "estimated_current_skills": {
+    "SK.DIG.001": 3, "SK.DIG.002": 3, "SK.DIG.004": 3,
+    "SK.FND.000": 1,
+    "SK.PRM.000": 2,
+    "SK.PRD.000": 2, "SK.PRD.001": 2, "SK.PRD.021": 3,
+    "SK.COM.001": 2, "SK.COM.004": 2
+  }
+}

@@ -1,0 +1,60 @@
+{
+  "id": "profile_05",
+  "name": "Elena Brooks",
+  "current_role": "Financial Analyst",
+  "target_role": "Financial Data Scientist / AI Risk Analyst",
+  "industry": "Finance / Banking",
+  "location": "U.S.",
+  "experience_years": 5,
+  "ai_exposure_level": "None",
+  "archetype": "Domain Upskiller",
+  "current_profile": {
+    "summary": "Financial analyst (5 years) in credit risk and forecasting. Advanced Excel, intermediate SQL, basic VBA. Understands finance domain deeply (credit, fraud, reporting). Little hands-on ML; interested in AI for risk and fraud.",
+    "technical_skills": ["Excel (advanced)", "SQL (intermediate)", "VBA (basic)", "Financial modeling"],
+    "soft_skills": ["Risk analysis", "Financial reporting", "Stakeholder presentations"],
+    "ai_experience": "Minimal hands-on ML experience"
+  },
+  "learning_intent": "Wants to build predictive models for risk, fraud, and customer segmentation. Goal: pair finance expertise with ML skills and learn explainability and compliance requirements for AI in regulated finance.",
+  "target_jd": {
+    "title": "Financial Data Scientist / AI Risk Analyst (FinTech)",
+    "requirements": [
+      "Develop ML models for credit risk, fraud detection, and customer analytics",
+      "Validate models; manage explainability, bias, and regulatory documentation",
+      "Build data pipelines and deploy models with engineering partners",
+      "Present insights to leadership and translate model tradeoffs into business decisions"
+    ]
+  },
+  "expected_skill_gaps": [
+    {
+      "domain": "D.PRQ",
+      "description": "Python basics + data handling; API/auth basics for production workflows.",
+      "skills": ["SK.PRQ.010", "SK.PRQ.011", "SK.PRQ.020", "SK.PRQ.021"]
+    },
+    {
+      "domain": "D.EVL",
+      "description": "Prompt/model unit tests, monitoring, A/B testing, regression testing for model changes.",
+      "skills": ["SK.EVL.001", "SK.EVL.010", "SK.EVL.020", "SK.EVL.022"]
+    },
+    {
+      "domain": "D.GOV",
+      "description": "Risk framing; documentation; constraints for model use in financial decisioning.",
+      "skills": ["SK.GOV.001", "SK.GOV.002", "SK.GOV.010"]
+    },
+    {
+      "domain": "D.SEC",
+      "description": "Data leakage prevention and secure output handling.",
+      "skills": ["SK.SEC.000", "SK.SEC.002", "SK.SEC.003"]
+    },
+    {
+      "domain": "D.RAG",
+      "description": "If building GenAI assistants for analysts: RAG fundamentals + tool calling.",
+      "skills": ["SK.RAG.000", "SK.AGT.000", "SK.AGT.001"]
+    }
+  ],
+  "estimated_current_skills": {
+    "SK.DIG.001": 3, "SK.DIG.002": 3, "SK.DIG.003": 4,
+    "SK.PRQ.013": 2,
+    "SK.FND.000": 1,
+    "SK.COM.001": 2
+  }
+}

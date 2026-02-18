@@ -1,0 +1,65 @@
+{
+  "id": "profile_06",
+  "name": "Frank Nguyen",
+  "current_role": "HR Manager",
+  "target_role": "Head of People Analytics",
+  "industry": "Human Resources",
+  "location": "U.S.",
+  "experience_years": 15,
+  "ai_exposure_level": "Basic",
+  "archetype": "Domain Upskiller",
+  "current_profile": {
+    "summary": "HR manager with 15+ years across recruiting, HR ops, and compliance. Strong stakeholder skills; uses HRIS and Excel reporting. Has used AI-adjacent tools (resume screening) but lacks analytics modeling and technical skills.",
+    "technical_skills": ["HRIS administration", "Excel reporting", "HR compliance"],
+    "soft_skills": ["Stakeholder management", "Recruiting", "HR operations", "Team leadership"],
+    "ai_experience": "Has used AI-adjacent tools like resume screening"
+  },
+  "learning_intent": "Wants to build evidence-based HR strategy (attrition prediction, hiring funnel optimization, engagement analysis). Goal: become a people analytics lead who can implement responsible AI in hiring and workforce decisions.",
+  "target_jd": {
+    "title": "People Analytics Lead / HR Analytics Manager",
+    "requirements": [
+      "Own workforce analytics strategy; build dashboards and predictive models",
+      "Analyze engagement and retention drivers; recommend interventions",
+      "Evaluate and govern AI tools used in hiring for fairness and compliance",
+      "Communicate insights and influence exec decisions with data storytelling"
+    ]
+  },
+  "expected_skill_gaps": [
+    {
+      "domain": "D.PRQ",
+      "description": "SQL fundamentals; Python basics for analytics; data handling tooling.",
+      "skills": ["SK.PRQ.010", "SK.PRQ.011", "SK.PRQ.013"]
+    },
+    {
+      "domain": "D.CTIC",
+      "description": "Bias recognition and evaluation of AI outputs/tools used in HR.",
+      "skills": ["SK.CTIC.001", "SK.CTIC.004", "SK.CTIC.006"]
+    },
+    {
+      "domain": "D.GOV",
+      "description": "AI risk framing for hiring; data minimization; documentation and controls.",
+      "skills": ["SK.GOV.001", "SK.GOV.002", "SK.GOV.020", "SK.GOV.021"]
+    },
+    {
+      "domain": "D.EVL",
+      "description": "Evaluating AI screening tools; monitoring drift and disparate impact.",
+      "skills": ["SK.EVL.000", "SK.EVL.001", "SK.EVL.010"]
+    },
+    {
+      "domain": "D.COM",
+      "description": "Data storytelling and explaining AI limitations to leadership and candidates.",
+      "skills": ["SK.COM.001", "SK.COM.002", "SK.COM.004"]
+    },
+    {
+      "domain": "D.DOM",
+      "description": "HR-specific AI considerations for hiring and workforce decisions.",
+      "skills": ["SK.DOM.HR.001"]
+    }
+  ],
+  "estimated_current_skills": {
+    "SK.DIG.001": 3, "SK.DIG.002": 3, "SK.DIG.003": 3, "SK.DIG.004": 3,
+    "SK.FND.000": 1,
+    "SK.COM.003": 3, "SK.COM.005": 3,
+    "SK.PRD.021": 3
+  }
+}

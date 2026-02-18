@@ -1,0 +1,60 @@
+{
+  "id": "profile_02",
+  "name": "Bethany Chen",
+  "current_role": "High School Teacher",
+  "target_role": "AI Learning Experience Designer",
+  "industry": "Education / EdTech",
+  "location": "U.S.",
+  "experience_years": 8,
+  "ai_exposure_level": "Basic",
+  "archetype": "Career Switcher",
+  "current_profile": {
+    "summary": "High school STEM teacher (8 years) with a Master's in Education. Designs curriculum, runs workshops, and integrates digital tools (LMS, simulations). Uses AI tutoring apps and has experimented with GenAI for lesson drafts and differentiation ideas. No coding background.",
+    "technical_skills": ["LMS administration", "Curriculum design", "Digital tools integration"],
+    "soft_skills": ["Workshop facilitation", "Curriculum development", "Student engagement"],
+    "ai_experience": "Uses AI tutoring apps and GenAI for lesson drafts"
+  },
+  "learning_intent": "Wants to design AI-enhanced learning experiences at scale. Motivated by personalization potential and equity improvements. Goal: become an AI-literate instructional designer who can collaborate with product and engineering to build responsible AI learning tools.",
+  "target_jd": {
+    "title": "AI Learning Experience Designer / Instructional Designer (AI)",
+    "requirements": [
+      "Design AI-enhanced learning journeys, lesson plans, and assessments",
+      "Prototype prompts and content templates for AI tutors/assistants",
+      "Use learning analytics to iterate on content and personalization strategies",
+      "Ensure responsible AI use: student privacy, bias mitigation, transparency"
+    ]
+  },
+  "expected_skill_gaps": [
+    {
+      "domain": "D.FND",
+      "description": "Understand LLM basics, limitations, and multimodal capabilities relevant to education. Privacy/IP/bias fundamentals with a student-safety lens.",
+      "skills": ["SK.FND.001", "SK.FND.002", "SK.FND.013", "SK.FND.020", "SK.FND.022"]
+    },
+    {
+      "domain": "D.PRM",
+      "description": "Prompt patterns for tutoring/coaching; rubrics as prompts; iteration loops.",
+      "skills": ["SK.PRM.001", "SK.PRM.002", "SK.PRM.003", "SK.PRM.011"]
+    },
+    {
+      "domain": "D.EVL",
+      "description": "Define quality metrics for tutoring output; create small golden sets for lesson outcomes.",
+      "skills": ["SK.EVL.000", "SK.EVL.001", "SK.EVL.020"]
+    },
+    {
+      "domain": "D.DOM",
+      "description": "Learning design with AI; integrating AI into pedagogy and classroom workflows.",
+      "skills": ["SK.DOM.EDU.001"]
+    },
+    {
+      "domain": "D.COM",
+      "description": "Explain AI behaviors to educators and parents; write clear AI usage guidelines.",
+      "skills": ["SK.COM.001", "SK.COM.004", "SK.COM.006"]
+    }
+  ],
+  "estimated_current_skills": {
+    "SK.DIG.001": 3, "SK.DIG.002": 3, "SK.DIG.003": 2, "SK.DIG.004": 3,
+    "SK.FND.000": 1,
+    "SK.PRM.000": 1,
+    "SK.COM.003": 3
+  }
+}

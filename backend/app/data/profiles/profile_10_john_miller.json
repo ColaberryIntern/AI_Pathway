@@ -1,0 +1,59 @@
+{
+  "id": "profile_10",
+  "name": "John Miller",
+  "current_role": "Software Developer",
+  "target_role": "Machine Learning Engineer",
+  "industry": "Technology / IT Services",
+  "location": "U.S.",
+  "experience_years": 2,
+  "ai_exposure_level": "Intermediate",
+  "archetype": "Technical Pivot",
+  "current_profile": {
+    "summary": "Junior backend developer (2 years) building enterprise services in Java. CS degree; comfortable with APIs, databases, and unit tests. Has done small ML side projects (Kaggle) and basic Python, but no production ML experience.",
+    "technical_skills": ["Java", "REST APIs", "SQL databases", "Unit testing", "Python (basic)"],
+    "soft_skills": ["Problem solving", "Code review", "Team collaboration"],
+    "ai_experience": "Small ML side projects on Kaggle, basic Python ML"
+  },
+  "learning_intent": "Wants to specialize in ML engineering: build, deploy, and monitor models in production. Motivated by demand and interest in AI systems.",
+  "target_jd": {
+    "title": "Machine Learning Engineer",
+    "requirements": [
+      "Develop ML models and integrate them into products and services",
+      "Build data pipelines, training/inference workflows, and monitoring systems",
+      "Perform model evaluation, experimentation, and iterative improvements",
+      "Collaborate across engineering, product, and data science teams"
+    ]
+  },
+  "expected_skill_gaps": [
+    {
+      "domain": "D.PRQ",
+      "description": "Strengthen Python, data handling, and cloud primitives; secrets management and CI/CD concepts.",
+      "skills": ["SK.PRQ.010", "SK.PRQ.011", "SK.PRQ.030", "SK.PRQ.031", "SK.PRQ.032"]
+    },
+    {
+      "domain": "D.EVL",
+      "description": "Tracing/observability, unit tests for prompts/models, and quality dashboards.",
+      "skills": ["SK.EVL.001", "SK.EVL.010", "SK.EVL.011", "SK.EVL.020"]
+    },
+    {
+      "domain": "D.OPS",
+      "description": "Latency/cost drivers, caching/streaming concepts, versioning prompts/models.",
+      "skills": ["SK.OPS.001", "SK.OPS.002", "SK.OPS.010", "SK.OPS.022"]
+    },
+    {
+      "domain": "D.RAG",
+      "description": "RAG basics, tool calling, and orchestration patterns.",
+      "skills": ["SK.RAG.000", "SK.RAG.001", "SK.RAG.002", "SK.RAG.003"]
+    },
+    {
+      "domain": "D.AGT",
+      "description": "Agent fundamentals and orchestration.",
+      "skills": ["SK.AGT.000", "SK.AGT.001", "SK.AGT.002", "SK.AGT.003"]
+    }
+  ],
+  "estimated_current_skills": {
+    "SK.DIG.001": 4, "SK.DIG.002": 4,
+    "SK.PRQ.000": 3, "SK.PRQ.001": 3, "SK.PRQ.010": 2, "SK.PRQ.012": 2, "SK.PRQ.013": 3, "SK.PRQ.020": 3, "SK.PRQ.021": 2,
+    "SK.FND.000": 2, "SK.FND.001": 2, "SK.FND.010": 1
+  }
+}
