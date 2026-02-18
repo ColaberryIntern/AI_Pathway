@@ -26,9 +26,12 @@ interface DomainCardProps {
   domain: Domain
   state: DomainState
   chapterNum?: number
+  chapterNums?: number[]
 }
 
-export default function DomainCard({ domain, state, chapterNum }: DomainCardProps) {
+export default function DomainCard({ domain, state, chapterNum, chapterNums }: DomainCardProps) {
+  // Use chapterNums array if provided, fall back to single chapterNum
+  const allChapters = chapterNums?.length ? chapterNums : (chapterNum !== undefined ? [chapterNum] : [])
   const layerColor = layerColors[domain.layer] || '#374151'
   const prevStateRef = useRef<DomainState>(state)
   const [justCompleted, setJustCompleted] = useState(false)
@@ -81,10 +84,10 @@ export default function DomainCard({ domain, state, chapterNum }: DomainCardProp
         {domain.skills} skills
       </div>
 
-      {/* Status badge container - always present for smooth transitions */}
-      <div className="mt-2 h-5 relative">
+      {/* Status badge container */}
+      <div className="mt-2 min-h-[20px]">
         {/* Active badge */}
-        <div className={`absolute inset-0 transition-all duration-300 ${isActive ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-1 pointer-events-none'}`}>
+        {isActive && (
           <span className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-gradient-to-r from-sky-500 to-cyan-500 text-white rounded-full text-[10px] font-bold shadow-md animate-pulse">
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
@@ -92,25 +95,29 @@ export default function DomainCard({ domain, state, chapterNum }: DomainCardProp
             </span>
             Scanning...
           </span>
-        </div>
+        )}
 
         {/* Complete badge */}
-        <div className={`absolute inset-0 transition-all duration-300 ${isComplete ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-1 pointer-events-none'}`}>
+        {isComplete && (
           <span className={`inline-flex items-center gap-1 text-[10px] text-green-600 font-medium ${justCompleted ? 'animate-bounce-in' : ''}`}>
             <svg className={`w-3 h-3 ${justCompleted ? 'animate-check-draw' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
             </svg>
             Analyzed
           </span>
-        </div>
+        )}
 
-        {/* Selected badge */}
-        <div className={`absolute inset-0 transition-all duration-300 ${isSelected && chapterNum !== undefined ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-1 pointer-events-none'}`}>
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-indigo-600 text-white rounded-full text-[10px] font-bold shadow-sm">
-            <span className="w-1.5 h-1.5 rounded-full bg-white" />
-            Chapter {chapterNum}
-          </span>
-        </div>
+        {/* Selected badge(s) — show all chapters mapped to this domain */}
+        {isSelected && allChapters.length > 0 && (
+          <div className="flex flex-wrap gap-1">
+            {allChapters.map((num) => (
+              <span key={num} className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-indigo-600 text-white rounded-full text-[10px] font-bold shadow-sm">
+                <span className="w-1.5 h-1.5 rounded-full bg-white" />
+                Ch {num}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )

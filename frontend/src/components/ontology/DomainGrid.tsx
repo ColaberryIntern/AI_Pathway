@@ -74,9 +74,11 @@ export default function DomainGrid({
     return 'dimmed'
   }
 
-  const getChapterNum = (domainId: string): number | undefined => {
-    const entry = selectedDomains.find(s => s.domainId === domainId)
-    return entry?.chapterNum
+  const getChapterNums = (domainId: string): number[] => {
+    return selectedDomains
+      .filter(s => s.domainId === domainId)
+      .map(s => s.chapterNum)
+      .sort((a, b) => a - b)
   }
 
   return (
@@ -88,7 +90,7 @@ export default function DomainGrid({
             key={domain.id}
             domain={domain}
             state={getDomainState(domain.id)}
-            chapterNum={getChapterNum(domain.id)}
+            chapterNums={getChapterNums(domain.id)}
           />
         ))}
       </div>

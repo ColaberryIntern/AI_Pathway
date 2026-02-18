@@ -110,17 +110,32 @@ class SkillGapEngine:
         if role_context:
             target_domains = set(role_context.get("target_domains") or [])
 
+        # Domain floor: if a learner has ANY skill in a domain, other
+        # skills in that domain start at least at level 1 (Aware)
+        # instead of 0 (Unaware).  A data analyst with advanced SQL
+        # (D.PRQ level 3) is not completely unaware of other D.PRQ
+        # skills.  Floor = max(1, domain_max - 2).
+        domain_max: dict[str, int] = {}
+        for sid, level in state_a.items():
+            skill_info = self._ontology.get_skill(sid)
+            if skill_info:
+                d = skill_info["domain"]
+                domain_max[d] = max(domain_max.get(d, 0), level)
+
         gaps: list[dict[str, Any]] = []
 
         for skill_id, required_level in state_b.items():
-            current_level = state_a.get(skill_id, 0)
+            skill = self._ontology.get_skill(skill_id)
+            # skill is guaranteed non-None after validation
+
+            # Apply domain floor for skills in known domains
+            dm = domain_max.get(skill["domain"], 0)
+            domain_floor = max(1, dm - 2) if dm > 0 else 0
+            current_level = max(state_a.get(skill_id, 0), domain_floor)
             delta = required_level - current_level
 
             if delta <= 0:
                 continue
-
-            skill = self._ontology.get_skill(skill_id)
-            # skill is guaranteed non-None after validation
 
             role_relevance = 1 if skill["domain"] in target_domains else 0
 
