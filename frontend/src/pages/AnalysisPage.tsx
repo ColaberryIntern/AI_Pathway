@@ -630,14 +630,7 @@ export default function AnalysisPage() {
 
           {/* Overall Progress Bar */}
           <div className="max-w-md mx-auto">
-            <div className="flex items-center justify-between text-xs text-gray-500 mb-1.5">
-              <span>Overall progress</span>
-              <span className="font-medium">
-                {analysisProgress < 100
-                  ? `~${Math.max(1, Math.round((EXPECTED_DURATION - (EXPECTED_DURATION * analysisProgress / 95)) / 1000))}s remaining`
-                  : 'Complete!'}
-              </span>
-            </div>
+            <div className="text-xs text-gray-500 mb-1.5">Overall progress</div>
             <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
               <div
                 className="h-full bg-gradient-to-r from-sky-400 to-indigo-500 rounded-full transition-all duration-300 ease-out"
@@ -1329,12 +1322,10 @@ export default function AnalysisPage() {
       <div className="grid md:grid-cols-4 gap-4">
         <div className="card text-center border-l-4 border-l-red-500">
           <div className="text-3xl font-bold text-red-600">
-            {journeyRoadmap
-              ? <>{journeyRoadmap.skills_addressed.length} <span className="text-lg font-normal text-gray-400">of {displayGaps}</span></>
-              : displayGaps}
+            {journeyRoadmap ? journeyRoadmap.skills_addressed.length : displayGaps}
           </div>
-          <div className="text-gray-600 text-sm">Skills Addressed</div>
-          <div className="text-gray-400 text-xs mt-1">in this path</div>
+          <div className="text-gray-600 text-sm">Skills in This Path</div>
+          <div className="text-gray-400 text-xs mt-1">+1 level each</div>
         </div>
         <div className="card text-center border-l-4 border-l-indigo-500">
           <div className="text-3xl font-bold text-indigo-600">
