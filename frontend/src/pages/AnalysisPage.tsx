@@ -22,18 +22,16 @@ import {
   Wrench,
   Award,
   ExternalLink,
-  AlertTriangle,
-  TrendingUp,
-  Layers,
   Route,
   Info,
 } from 'lucide-react'
-import type { AnalysisResult, Profile, Top10CurrentSkill, Top10TargetSkill, Top10SkillGap, JourneyRoadmap } from '../types'
+import type { AnalysisResult, Profile, Top10TargetSkill, Top10SkillGap, JourneyRoadmap } from '../types'
 import ArchetypeBadge from '../components/ArchetypeBadge'
 import JourneyArrow from '../components/JourneyArrow'
 import ProficiencyLegend, { getProficiencyLevel } from '../components/ProficiencyLegend'
 import DomainGrid from '../components/ontology/DomainGrid'
 import AnalysisProgress from '../components/ontology/AnalysisProgress'
+import UnifiedSkillsChart from '../components/UnifiedSkillsChart'
 import { useAnalysisAnimation } from '../components/ontology/hooks/useAnalysisAnimation'
 
 type AnalysisStep = 'input' | 'analyzing' | 'complete' | 'error'
@@ -686,7 +684,6 @@ export default function AnalysisPage() {
   // Complete state
   const summary = result?.result.summary
   const gaps = result?.result.gap_analysis.gaps || []
-  const top10Current: Top10CurrentSkill[] = result?.result.top_10_current_skills || []
   const top10Target: Top10TargetSkill[] = result?.result.top_10_target_skills || []
   const top10Gaps: Top10SkillGap[] = result?.result.top_10_skill_gaps || []
   const journeyRoadmap: JourneyRoadmap | undefined = result?.result.journey_roadmap
@@ -717,35 +714,6 @@ export default function AnalysisPage() {
     })
     .filter((x: { domainId: string; chapterNum: number } | null): x is { domainId: string; chapterNum: number } => x !== null)
 
-  // --- Laura G format derivations ---
-
-  // Section 1: Split current skills into Strengths vs Development
-  const strengths = top10Current.filter(s => s.current_level >= 3)
-  const developmentSkills = top10Current.filter(s => s.current_level < 3)
-  const criticalDev = developmentSkills.filter(s => s.current_level === 0)
-  const importantDev = developmentSkills.filter(s => s.current_level >= 1)
-
-  // Section 3: Split gaps into Critical vs Moderate
-  const criticalGaps = top10Gaps.filter(g => g.gap >= 3)
-  const moderateGaps = top10Gaps.filter(g => g.gap > 0 && g.gap <= 2)
-
-  // Section 3c: Focus Areas — group gaps by domain
-  const focusAreaMap = new Map<string, { domain: string; domainLabel: string; skills: Top10SkillGap[] }>()
-  for (const gap of top10Gaps.filter(g => g.gap > 0)) {
-    const key = gap.domain
-    if (!focusAreaMap.has(key)) {
-      focusAreaMap.set(key, { domain: key, domainLabel: gap.domain_label || key, skills: [] })
-    }
-    focusAreaMap.get(key)!.skills.push(gap)
-  }
-  const focusAreas = Array.from(focusAreaMap.values()).sort(
-    (a, b) => {
-      const avgA = a.skills.reduce((s, g) => s + g.gap, 0) / a.skills.length
-      const avgB = b.skills.reduce((s, g) => s + g.gap, 0) / b.skills.length
-      return avgB - avgA
-    }
-  )
-
   // Build domain label lookup for chapter phasing
   const domainLabelMap = new Map<string, string>()
   for (const g of top10Gaps) {
@@ -773,17 +741,6 @@ export default function AnalysisPage() {
     }
     return groups
   })()
-
-  // Estimated hours for a focus area (cross-reference chapters)
-  const focusAreaHours = (domainId: string) => {
-    return (chapters as ChapterEntry[])
-      .filter(ch => {
-        const sid = ch.skill_id || ch.primary_skill_id || ''
-        const parts = sid.split('.')
-        return parts.length >= 3 && `D.${parts[1]}` === domainId
-      })
-      .reduce((sum, ch) => sum + (ch.estimated_time_hours || 0), 0)
-  }
 
   // Helper to render two-row gap bars
   const renderGapBars = (currentLevel: number, targetLevel: number, compact = false) => {
@@ -873,325 +830,10 @@ export default function AnalysisPage() {
       )}
 
       {/* ================================================================ */}
-      {/* PART 1: Current Skills — Strengths + Development Tiers          */}
-      {/* ================================================================ */}
-      {top10Current.length > 0 && (
-        <div className="space-y-4">
-          <h2 className="text-xl font-bold text-gray-900">
-            Part 1: Skills for Your Current Role
-          </h2>
-
-          {/* Strengths (level 3+) */}
-          {strengths.length > 0 && (
-            <div className="card border-l-4 border-l-green-500">
-              <div className="flex items-center gap-2 mb-4">
-                <Award className="h-5 w-5 text-green-600" />
-                <h3 className="font-bold text-green-700">Skills You Already Have (Strengths)</h3>
-              </div>
-              <div className="space-y-3">
-                {strengths.map((skill) => (
-                  <div key={skill.skill_id} className="p-3 bg-green-50 rounded-lg">
-                    <div className="flex items-start justify-between gap-2 mb-1.5">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <span className="font-medium text-gray-900 text-sm">{skill.skill_name}</span>
-                      </div>
-                      <div className="flex items-center gap-1.5 flex-shrink-0">
-                        <span className="text-[10px] px-1.5 py-0.5 bg-indigo-100 text-indigo-700 rounded font-medium">
-                          {skill.domain_label || skill.domain}
-                        </span>
-                        <span className="text-xs px-2 py-0.5 bg-green-200 text-green-800 rounded font-bold">
-                          L{skill.current_level}
-                        </span>
-                      </div>
-                    </div>
-                    <p className="text-xs text-gray-600 leading-relaxed">
-                      <span className="font-semibold text-gray-700">Why This Matters: </span>
-                      {skill.rationale}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Priority Skills to Develop (level 0-2) */}
-          {developmentSkills.length > 0 && (
-            <div className="card border-l-4 border-l-amber-500">
-              <div className="flex items-center gap-2 mb-4">
-                <Target className="h-5 w-5 text-amber-600" />
-                <h3 className="font-bold text-amber-700">Priority Skills to Develop for Current Role</h3>
-              </div>
-
-              {/* Critical tier (level 0) */}
-              {criticalDev.length > 0 && (
-                <div className="mb-4">
-                  <div className="flex items-center gap-1.5 mb-2">
-                    <span className="text-xs font-bold text-red-600 uppercase tracking-wide">Critical</span>
-                    <span className="text-[10px] text-gray-400">— No current proficiency</span>
-                  </div>
-                  <div className="space-y-2">
-                    {criticalDev.map((skill) => (
-                      <div key={skill.skill_id} className="p-3 bg-red-50 rounded-lg border-l-2 border-l-red-300">
-                        <div className="flex items-start justify-between gap-2 mb-1.5">
-                          <span className="font-medium text-gray-900 text-sm">{skill.skill_name}</span>
-                          <div className="flex items-center gap-1.5 flex-shrink-0">
-                            <span className="text-[10px] px-1.5 py-0.5 bg-indigo-100 text-indigo-700 rounded font-medium">
-                              {skill.domain_label || skill.domain}
-                            </span>
-                            <span className="text-xs px-2 py-0.5 bg-red-100 text-red-700 rounded font-bold">
-                              L{skill.current_level}
-                            </span>
-                          </div>
-                        </div>
-                        <p className="text-xs text-gray-600 leading-relaxed">
-                          <span className="font-semibold text-gray-700">Why This Matters: </span>
-                          {skill.rationale}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Important tier (level 1-2) */}
-              {importantDev.length > 0 && (
-                <div>
-                  <div className="flex items-center gap-1.5 mb-2">
-                    <span className="text-xs font-bold text-amber-600 uppercase tracking-wide">Important</span>
-                    <span className="text-[10px] text-gray-400">— Some foundation exists</span>
-                  </div>
-                  <div className="space-y-2">
-                    {importantDev.map((skill) => (
-                      <div key={skill.skill_id} className="p-3 bg-amber-50 rounded-lg border-l-2 border-l-amber-300">
-                        <div className="flex items-start justify-between gap-2 mb-1.5">
-                          <span className="font-medium text-gray-900 text-sm">{skill.skill_name}</span>
-                          <div className="flex items-center gap-1.5 flex-shrink-0">
-                            <span className="text-[10px] px-1.5 py-0.5 bg-indigo-100 text-indigo-700 rounded font-medium">
-                              {skill.domain_label || skill.domain}
-                            </span>
-                            <span className="text-xs px-2 py-0.5 bg-amber-100 text-amber-700 rounded font-bold">
-                              L{skill.current_level}
-                            </span>
-                          </div>
-                        </div>
-                        <p className="text-xs text-gray-600 leading-relaxed">
-                          <span className="font-semibold text-gray-700">Why This Matters: </span>
-                          {skill.rationale}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* ================================================================ */}
-      {/* PART 2: Target Role Skills                                       */}
-      {/* ================================================================ */}
-      {top10Target.length > 0 && (
-        <div className="space-y-4">
-          <h2 className="text-xl font-bold text-gray-900">
-            Part 2: Top 10 Skills for Target Role
-          </h2>
-
-          <div className="card border-2 border-indigo-200">
-            <div className="flex items-center gap-2 mb-1 pb-3 border-b border-indigo-200">
-              <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
-                <Target className="h-4 w-4 text-white" />
-              </div>
-              <div>
-                <h3 className="font-bold text-indigo-700">
-                  {primaryFunction ? `Skills Required for: ${primaryFunction}` : 'Target Role Skills'}
-                </h3>
-              </div>
-            </div>
-
-            <div className="overflow-x-auto mt-3">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-left text-xs text-gray-500 border-b border-gray-200">
-                    <th className="pb-2 w-8">#</th>
-                    <th className="pb-2">Skill</th>
-                    <th className="pb-2">Domain</th>
-                    <th className="pb-2 text-center">Level</th>
-                    <th className="pb-2 text-center">Imp.</th>
-                    <th className="pb-2">Why It&apos;s Essential</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {top10Target.map((skill) => (
-                    <tr key={skill.skill_id} className="border-b border-gray-100 last:border-0">
-                      <td className="py-2.5 text-indigo-600 font-bold">{skill.rank}</td>
-                      <td className="py-2.5 font-medium text-gray-900">{skill.skill_name}</td>
-                      <td className="py-2.5">
-                        <span className="text-[10px] px-1.5 py-0.5 bg-indigo-100 text-indigo-700 rounded font-medium whitespace-nowrap">
-                          {skill.domain_label || skill.domain}
-                        </span>
-                      </td>
-                      <td className="py-2.5 text-center">
-                        <span className="text-xs px-2 py-0.5 bg-green-100 text-green-700 rounded font-bold">
-                          L{skill.required_level}
-                        </span>
-                      </td>
-                      <td className="py-2.5 text-center">
-                        {skill.importance && (
-                          <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
-                            skill.importance === 'critical' ? 'bg-red-100 text-red-700' :
-                            skill.importance === 'high' ? 'bg-amber-100 text-amber-700' :
-                            'bg-gray-100 text-gray-600'
-                          }`}>
-                            {skill.importance}
-                          </span>
-                        )}
-                      </td>
-                      <td className="py-2.5 text-xs text-gray-500 italic max-w-xs">{skill.rationale}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ================================================================ */}
-      {/* PART 3: Gap Analysis — Critical / Moderate / Focus Areas         */}
+      {/* UNIFIED SKILLS GAP OVERVIEW                                      */}
       {/* ================================================================ */}
       {top10Gaps.length > 0 && (
-        <div className="space-y-4">
-          <h2 className="text-xl font-bold text-gray-900">
-            Part 3: Gap Analysis &amp; Focus Areas
-          </h2>
-
-          {/* 3a: Critical Gaps (gap >= 3) */}
-          {criticalGaps.length > 0 && (
-            <div className="card border-l-4 border-l-red-500">
-              <div className="flex items-center gap-2 mb-4">
-                <AlertTriangle className="h-5 w-5 text-red-600" />
-                <h3 className="font-bold text-red-700">Critical Gaps</h3>
-                <span className="text-xs text-gray-400">— 3+ levels to close</span>
-              </div>
-              <div className="space-y-4">
-                {criticalGaps.map((skill) => (
-                  <div key={skill.skill_id} className="p-3 bg-red-50 rounded-lg">
-                    <div className="flex items-center justify-between gap-2 mb-2">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <span className="font-medium text-gray-900 text-sm">{skill.skill_name}</span>
-                        <span className="text-[10px] px-1.5 py-0.5 bg-indigo-100 text-indigo-700 rounded font-medium">
-                          {skill.domain_label || skill.domain}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        <span className="text-xs text-gray-500">
-                          L{skill.current_level} → L{skill.required_level}
-                        </span>
-                        <span className="text-xs px-2 py-0.5 bg-red-200 text-red-800 rounded font-bold">
-                          Gap: +{skill.gap}
-                        </span>
-                      </div>
-                    </div>
-                    {renderGapBars(skill.current_level, skill.required_level)}
-                    {skill.rationale && (
-                      <p className="text-xs text-gray-600 leading-relaxed mt-2">
-                        <span className="font-semibold text-gray-700">Why: </span>
-                        {skill.rationale}
-                      </p>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* 3b: Moderate Gaps (gap 1-2) */}
-          {moderateGaps.length > 0 && (
-            <div className="card border-l-4 border-l-amber-500">
-              <div className="flex items-center gap-2 mb-4">
-                <TrendingUp className="h-5 w-5 text-amber-600" />
-                <h3 className="font-bold text-amber-700">Moderate Gaps</h3>
-                <span className="text-xs text-gray-400">— 1-2 levels to close</span>
-              </div>
-              <div className="space-y-4">
-                {moderateGaps.map((skill) => (
-                  <div key={skill.skill_id} className="p-3 bg-amber-50 rounded-lg">
-                    <div className="flex items-center justify-between gap-2 mb-2">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <span className="font-medium text-gray-900 text-sm">{skill.skill_name}</span>
-                        <span className="text-[10px] px-1.5 py-0.5 bg-indigo-100 text-indigo-700 rounded font-medium">
-                          {skill.domain_label || skill.domain}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        <span className="text-xs text-gray-500">
-                          L{skill.current_level} → L{skill.required_level}
-                        </span>
-                        <span className="text-xs px-2 py-0.5 bg-amber-200 text-amber-800 rounded font-bold">
-                          Gap: +{skill.gap}
-                        </span>
-                      </div>
-                    </div>
-                    {renderGapBars(skill.current_level, skill.required_level)}
-                    <p className="text-xs text-gray-600 leading-relaxed mt-2">
-                      <span className="font-semibold text-gray-700">Your Advantage: </span>
-                      {skill.current_level >= 2
-                        ? 'You already have practical experience here — this is a short step to close.'
-                        : skill.current_level === 1
-                        ? 'You have awareness of this area — building on existing foundation.'
-                        : 'Small gap to close — a focused effort will get you there.'}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* 3c: Focus Areas (grouped by domain) */}
-          {focusAreas.length > 0 && (
-            <div className="card">
-              <div className="flex items-center gap-2 mb-4">
-                <Layers className="h-5 w-5 text-indigo-600" />
-                <h3 className="font-bold text-gray-900">Focus Areas</h3>
-              </div>
-              <div className="grid md:grid-cols-2 gap-4">
-                {focusAreas.map((area, idx) => {
-                  const hours = focusAreaHours(area.domain)
-                  const avgGap = (area.skills.reduce((s, g) => s + g.gap, 0) / area.skills.length).toFixed(1)
-                  return (
-                    <div key={area.domain} className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-                      <div className="flex items-center justify-between mb-2">
-                        <h4 className="font-bold text-gray-900 text-sm">
-                          Focus Area {idx + 1}: {area.domainLabel}
-                        </h4>
-                        {hours > 0 && (
-                          <span className="text-[10px] px-2 py-0.5 bg-sky-100 text-sky-700 rounded font-medium">
-                            ~{Math.round(hours)}h
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-xs text-gray-500 mb-3">
-                        {area.skills.length} skill{area.skills.length > 1 ? 's' : ''} to develop · Avg gap: {avgGap} levels
-                      </p>
-                      <div className="space-y-1.5">
-                        {area.skills.map((skill) => (
-                          <div key={skill.skill_id} className="flex items-center justify-between text-xs">
-                            <span className="text-gray-700">{skill.skill_name}</span>
-                            <span className="text-gray-500 flex-shrink-0 ml-2">
-                              L{skill.current_level} → L{skill.required_level}
-                              <span className="text-red-500 font-bold ml-1">+{skill.gap}</span>
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          )}
-        </div>
+        <UnifiedSkillsChart gaps={top10Gaps} />
       )}
 
       {/* ================================================================ */}
