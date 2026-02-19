@@ -154,6 +154,42 @@ class OntologyService:
         """Get the full ontology data."""
         return self.data
 
+    def get_all_skill_ids(self) -> set[str]:
+        """Return the set of all valid skill IDs in the ontology."""
+        return {s["id"] for s in self.skills}
+
+    def format_skills_for_prompt(self) -> str:
+        """Format all ontology skills organized by domain for LLM prompt injection.
+
+        Returns a compact string listing every skill grouped under its domain,
+        suitable for inclusion in agent prompts when RAG is unavailable.
+        Each skill line includes skill_id, name, and level.
+
+        Output is ~5KB of text (~1500 tokens), well within context budget.
+        """
+        domain_lookup = {d["id"]: d["label"] for d in self.domains}
+
+        # Group skills by domain
+        skills_by_domain: dict[str, list[dict]] = {}
+        for skill in self.skills:
+            domain_id = skill["domain"]
+            if domain_id not in skills_by_domain:
+                skills_by_domain[domain_id] = []
+            skills_by_domain[domain_id].append(skill)
+
+        lines: list[str] = []
+        for domain in self.domains:
+            domain_id = domain["id"]
+            domain_label = domain["label"]
+            domain_skills = skills_by_domain.get(domain_id, [])
+            if not domain_skills:
+                continue
+            lines.append(f"\n## {domain_label} ({domain_id})")
+            for s in domain_skills:
+                lines.append(f"- {s['id']}: {s['name']} (Level: {s['level']})")
+
+        return "\n".join(lines)
+
 
 @lru_cache
 def get_ontology_service() -> OntologyService:

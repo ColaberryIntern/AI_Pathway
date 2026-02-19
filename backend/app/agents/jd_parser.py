@@ -6,6 +6,7 @@ skill is needed based on the job description text.
 """
 import json
 from app.agents.base import BaseAgent
+from app.services.ontology import get_ontology_service
 
 
 class JDParserAgent(BaseAgent):
@@ -57,8 +58,17 @@ Map everything to the GenAI Skills Ontology structure."""
         # Get similar JDs and relevant skills from RAG
         relevant_skills = await self.rag.retrieve_skills(jd_text, n_results=40)
 
+        # Fallback: when RAG is unavailable (NoOpRetriever), inject full ontology
+        # so the LLM sees all valid skill IDs instead of hallucinating.
+        ontology_context = ""
+        if not relevant_skills:
+            ontology = get_ontology_service()
+            ontology_context = ontology.format_skills_for_prompt()
+
         # Build prompt
-        prompt = self._build_parsing_prompt(jd_text, target_role, relevant_skills)
+        prompt = self._build_parsing_prompt(
+            jd_text, target_role, relevant_skills, ontology_context=ontology_context
+        )
 
         output_schema = {
             "type": "object",
@@ -124,13 +134,19 @@ Map everything to the GenAI Skills Ontology structure."""
         return result
 
     def _build_parsing_prompt(
-        self, jd_text: str, target_role: str, relevant_skills: list
+        self, jd_text: str, target_role: str, relevant_skills: list,
+        *, ontology_context: str = ""
     ) -> str:
         """Build the JD parsing prompt for the LLM."""
-        skills_context = "\n".join([
-            f"- {s['skill_id']}: {s['skill_name']} (Domain: {s['domain_label']}, Level: {s['level']})"
-            for s in relevant_skills
-        ])
+        if relevant_skills:
+            skills_context = "\n".join([
+                f"- {s['skill_id']}: {s['skill_name']} (Domain: {s['domain_label']}, Level: {s['level']})"
+                for s in relevant_skills
+            ])
+        elif ontology_context:
+            skills_context = ontology_context
+        else:
+            skills_context = "(No skills available)"
 
         return f"""Analyze this job description and identify the TOP 10 required skills.
 
@@ -143,6 +159,10 @@ AVAILABLE SKILLS FROM ONTOLOGY:
 {skills_context}
 
 INSTRUCTIONS:
+CRITICAL: You MUST ONLY use skill_id values from the AVAILABLE SKILLS list above.
+Do NOT invent new skill IDs. Every skill_id in your response must exactly match one from that list.
+If a JD requirement doesn't map perfectly to an ontology skill, choose the closest match.
+
 1. Select exactly 10 skills from the ontology that are most critical for this role.
 2. For each skill, determine the required proficiency level (1-5).
 3. For each skill, rate its importance (high/medium/low).

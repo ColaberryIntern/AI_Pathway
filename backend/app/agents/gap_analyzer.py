@@ -2,6 +2,7 @@
 import asyncio
 import json
 from app.agents.base import BaseAgent
+from app.services.ontology import get_ontology_service
 
 
 class GapAnalyzerAgent(BaseAgent):
@@ -58,11 +59,26 @@ Create a prioritized list that balances immediate value with logical learning pr
         skill_results = await asyncio.gather(
             *[self.rag.retrieve_skills(gap["skill_id"], n_results=1) for gap in gaps_to_process]
         )
+
+        # Fallback: when RAG is unavailable, use OntologyService for skill metadata
+        ontology = None
+        any_rag_hit = any(skills for skills in skill_results)
+        if not any_rag_hit:
+            ontology = get_ontology_service()
+
         skill_details = []
         for gap, skills in zip(gaps_to_process, skill_results):
             if skills:
                 gap.update(skills[0])
-            skill_details.append(gap)  # Always include gap, enriched or not
+            elif ontology:
+                skill_obj = ontology.get_skill(gap["skill_id"])
+                if skill_obj:
+                    domain = ontology.get_domain(skill_obj["domain"])
+                    gap["skill_name"] = skill_obj["name"]
+                    gap["domain"] = skill_obj["domain"]
+                    gap["domain_label"] = domain["label"] if domain else ""
+                    gap["level"] = skill_obj.get("level", 1)
+            skill_details.append(gap)
 
         # Use LLM to prioritize
         prompt = self._build_prioritization_prompt(

@@ -6,6 +6,7 @@ was identified based on the user's resume, role, and intake answers.
 """
 import json
 from app.agents.base import BaseAgent
+from app.services.ontology import get_ontology_service
 
 
 class ProfileAnalyzerAgent(BaseAgent):
@@ -58,8 +59,17 @@ the user's profile (job title, responsibilities, tools used, or background)."""
         profile_summary = self._create_profile_summary(profile)
         relevant_skills = await self.rag.retrieve_skills(profile_summary, n_results=50)
 
+        # Fallback: when RAG is unavailable (NoOpRetriever), inject full ontology
+        # so the LLM sees all valid skill IDs instead of hallucinating.
+        ontology_context = ""
+        if not relevant_skills:
+            ontology = get_ontology_service()
+            ontology_context = ontology.format_skills_for_prompt()
+
         # Prepare prompt for LLM
-        prompt = self._build_analysis_prompt(profile, relevant_skills)
+        prompt = self._build_analysis_prompt(
+            profile, relevant_skills, ontology_context=ontology_context
+        )
 
         output_schema = {
             "type": "object",
@@ -139,12 +149,19 @@ the user's profile (job title, responsibilities, tools used, or background)."""
 
         return " | ".join(parts)
 
-    def _build_analysis_prompt(self, profile: dict, relevant_skills: list) -> str:
+    def _build_analysis_prompt(
+        self, profile: dict, relevant_skills: list, *, ontology_context: str = ""
+    ) -> str:
         """Build the analysis prompt for the LLM."""
-        skills_context = "\n".join([
-            f"- {s['skill_id']}: {s['skill_name']} (Domain: {s['domain_label']}, Base Level: {s['level']})"
-            for s in relevant_skills[:30]
-        ])
+        if relevant_skills:
+            skills_context = "\n".join([
+                f"- {s['skill_id']}: {s['skill_name']} (Domain: {s['domain_label']}, Base Level: {s['level']})"
+                for s in relevant_skills[:30]
+            ])
+        elif ontology_context:
+            skills_context = ontology_context
+        else:
+            skills_context = "(No skills available)"
 
         current_jd_section = ""
         current_jd = profile.get("current_jd", "")
@@ -185,6 +202,10 @@ AVAILABLE SKILLS FROM ONTOLOGY:
 {skills_context}
 
 INSTRUCTIONS:
+CRITICAL: You MUST ONLY use skill_id values from the AVAILABLE SKILLS list above.
+Do NOT invent new skill IDs. Every skill_id in your response must exactly match one from that list.
+If a user capability doesn't map perfectly to an ontology skill, choose the closest match.
+
 1. Select exactly 10 skills from the ontology that best represent this user's current capabilities.
 2. For each skill, assess their current proficiency level (0-5) based on evidence from the profile.
 3. For each skill, write a rationale (1-2 sentences) explaining WHY you identified this skill,
