@@ -201,20 +201,38 @@ Learning Intent:
 AVAILABLE SKILLS FROM ONTOLOGY:
 {skills_context}
 
+PROFICIENCY SCALE:
+- Level 0 (Unaware): Has not heard of it.
+- Level 1 (Aware): Can explain the basic concept.
+- Level 2 (User): Can apply the skill with guidance or help.
+- Level 3 (Practitioner): Can adapt and apply independently. Configures, troubleshoots.
+- Level 4 (Builder): Ships production solutions. Implements end-to-end.
+- Level 5 (Architect): Designs systems of systems. Sets technical direction.
+
+CALIBRATION GUIDANCE:
+- "Uses ChatGPT/Copilot daily" → Prompt Engineering basics at Level 3 (Practitioner)
+- "Manages AI projects" → AI Product Management at Level 3-4
+- "Has built ML models" → relevant skills at Level 4 (Builder)
+- "Aware of but hasn't used" → Level 1 (Aware)
+- "Has tried/experimented with" → Level 2 (User)
+- Years of experience matter: 5+ years in a domain = Level 3+ in related skills
+
 INSTRUCTIONS:
 CRITICAL: You MUST ONLY use skill_id values from the AVAILABLE SKILLS list above.
 Do NOT invent new skill IDs. Every skill_id in your response must exactly match one from that list.
 If a user capability doesn't map perfectly to an ontology skill, choose the closest match.
 
 1. Select exactly 10 skills from the ontology that best represent this user's current capabilities.
-2. For each skill, assess their current proficiency level (0-5) based on evidence from the profile.
+2. For each skill, assess their current proficiency level (0-5) using the PROFICIENCY SCALE above.
 3. For each skill, write a rationale (1-2 sentences) explaining WHY you identified this skill,
    referencing specific evidence from their role, experience, tools used, or background.
 4. Rank the 10 skills from most relevant (rank 1) to least relevant (rank 10).
 5. Also populate state_a_skills with the same skill_id → level mapping.
-6. Be conservative — only assign higher levels with clear evidence.
+6. Be conservative — only assign higher levels with clear evidence from the profile.
+   However, do not underestimate: experienced professionals who USE AI tools daily
+   are at least Level 2-3, not Level 1.
 
 Example rationale: "User's role as Program Manager at an AI consulting firm involves
 coordinating AI training programs — this directly maps to AI Enablement & Training Strategy
-at Practitioner level."
+at Practitioner level (L3)."
 """

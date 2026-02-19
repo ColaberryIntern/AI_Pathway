@@ -19,9 +19,25 @@ class JDParserAgent(BaseAgent):
 Your task is to analyze job descriptions and extract the TOP 10 required skills mapped to
 the GenAI Skills Ontology.
 
+PROFICIENCY SCALE (use this when assigning required levels):
+- Level 1 (Aware): Can explain the concept. Entry-level familiarity.
+- Level 2 (User): Can apply with guidance. Uses existing tools/frameworks.
+- Level 3 (Practitioner): Adapts independently. Configures, customizes, troubleshoots.
+- Level 4 (Builder): Ships production solutions. Designs and implements systems end-to-end.
+- Level 5 (Architect): Designs systems of systems. Sets technical direction and standards.
+
+CALIBRATION GUIDANCE:
+- JD says "strong understanding of", "deep knowledge of" → Level 3 (Practitioner)
+- JD says "hands-on experience building", "implement", "develop" → Level 4 (Builder)
+- JD says "design systems", "lead architecture", "define strategy" → Level 5 (Architect)
+- JD says "familiarity with", "awareness of", "exposure to" → Level 2 (User)
+- Senior/lead/staff roles typically require Level 3-5 for core skills
+- Mid-level roles typically require Level 2-4 for core skills
+- Entry-level roles typically require Level 1-3 for core skills
+
 For each identified skill requirement, determine:
 1. The skill ID from the ontology
-2. The required proficiency level (0-5)
+2. The required proficiency level (1-5) using the calibration guidance above
 3. The importance/criticality (high/medium/low)
 4. A rationale explaining WHY this skill is needed, referencing specific text from the JD
 
@@ -158,13 +174,31 @@ JOB DESCRIPTION:
 AVAILABLE SKILLS FROM ONTOLOGY:
 {skills_context}
 
+PROFICIENCY SCALE (use this to assign required_level):
+- Level 1 (Aware): Can explain the concept. Entry-level familiarity.
+- Level 2 (User): Can apply with guidance. Uses existing tools.
+- Level 3 (Practitioner): Adapts independently. Configures, customizes, troubleshoots.
+- Level 4 (Builder): Ships production solutions. Designs and implements end-to-end.
+- Level 5 (Architect): Designs systems of systems. Sets technical direction.
+
+CALIBRATION RULES:
+- "strong understanding", "deep knowledge" → Level 3+
+- "hands-on experience building", "implement", "develop" → Level 4
+- "design systems", "lead architecture", "define strategy" → Level 5
+- "familiarity with", "awareness of" → Level 2
+- Senior/Lead roles: core skills should be Level 3-5
+- Mid-level roles: core skills should be Level 2-4
+- For HIGH importance skills, assign Level 3 minimum (the role NEEDS proficiency)
+- For skills central to the role's primary function, prefer Level 4 (Builder)
+
 INSTRUCTIONS:
 CRITICAL: You MUST ONLY use skill_id values from the AVAILABLE SKILLS list above.
 Do NOT invent new skill IDs. Every skill_id in your response must exactly match one from that list.
 If a JD requirement doesn't map perfectly to an ontology skill, choose the closest match.
 
 1. Select exactly 10 skills from the ontology that are most critical for this role.
-2. For each skill, determine the required proficiency level (1-5).
+2. For each skill, determine the required proficiency level (1-5) using the CALIBRATION RULES above.
+   Do NOT default to low levels — match the level to the JD's actual demands.
 3. For each skill, rate its importance (high/medium/low).
 4. For each skill, write a rationale (1-2 sentences) explaining WHY this skill is needed,
    referencing specific text or requirements from the job description.
@@ -174,7 +208,9 @@ If a JD requirement doesn't map perfectly to an ontology skill, choose the close
 
 Example rationale: "The JD requires 'Define evaluation criteria, launch experiments, and
 iterate based on performance' — this directly maps to Eval Types (offline/online/red team)
-at Practitioner level, as the role needs hands-on evaluation capability."
+at Practitioner level (L3), as the role needs independent evaluation capability."
 
 Include both explicit requirements and implied skills from the responsibilities.
-Focus on AI/GenAI related skills but also include relevant prerequisites and soft skills."""
+Focus on AI/GenAI related skills but also include relevant prerequisites and soft skills.
+Prioritize skills from agentic (D.AGT), evaluation (D.EVL), RAG (D.RAG), operations (D.OPS),
+and security (D.SEC) domains when the JD mentions those capabilities."""
