@@ -799,7 +799,7 @@ export default function AnalysisPage() {
         </div>
       )}
 
-      {/* Section 3: Skills Gap — delta between target and current */}
+      {/* Section 3: Skills Gap — two-row comparison bars */}
       {top10Gaps.length > 0 && (
         <div className="card">
           <div className="flex items-center gap-2 mb-5">
@@ -810,22 +810,24 @@ export default function AnalysisPage() {
             <span className="text-sm text-gray-500 ml-auto">Target Skills vs Your Current Level</span>
           </div>
 
-          <div className="space-y-3">
+          <div className="space-y-4">
             {top10Gaps.map((skill) => {
               const currentPct = (skill.current_level / 5) * 100
-              const gapPct = (skill.gap / 5) * 100
-              const remainingPct = ((5 - skill.required_level) / 5) * 100
+              const targetPct = (skill.required_level / 5) * 100
 
               return (
                 <div key={skill.skill_id}>
                   {/* Skill label row */}
-                  <div className="flex items-center justify-between mb-1">
+                  <div className="flex items-center justify-between mb-1.5">
                     <div className="flex items-center gap-2 min-w-0">
                       <span className="flex-shrink-0 w-5 h-5 bg-indigo-100 rounded-full flex items-center justify-center text-[10px] font-bold text-indigo-600">
                         {skill.rank}
                       </span>
                       <span className="text-sm font-medium text-gray-700 truncate">
                         {skill.skill_name}
+                      </span>
+                      <span className="text-[10px] px-1.5 py-0.5 bg-indigo-50 text-indigo-600 rounded font-medium">
+                        {skill.domain_label || skill.domain}
                       </span>
                       {skill.importance && (
                         <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
@@ -838,37 +840,41 @@ export default function AnalysisPage() {
                       )}
                     </div>
                     <div className="flex items-center gap-1 text-xs flex-shrink-0 ml-2">
-                      <span className="font-semibold text-sky-600">L{skill.current_level}</span>
-                      <ArrowRight className="h-3 w-3 text-gray-400" />
-                      <span className="font-semibold text-green-600">L{skill.required_level}</span>
-                      {skill.gap > 0 && (
-                        <span className="text-amber-600 font-bold ml-1">+{skill.gap}</span>
-                      )}
-                      {skill.gap === 0 && (
-                        <span className="text-green-600 font-medium ml-1">met</span>
+                      {skill.gap > 0 ? (
+                        <span className="text-red-600 font-bold">Gap: +{skill.gap}</span>
+                      ) : (
+                        <span className="text-green-600 font-bold flex items-center gap-1">
+                          <CheckCircle className="h-3.5 w-3.5" /> Met
+                        </span>
                       )}
                     </div>
                   </div>
-                  {/* Bar */}
-                  <div className="h-5 bg-gray-100 rounded-full overflow-hidden flex">
-                    {currentPct > 0 && (
-                      <div
-                        className="bg-sky-500 transition-all duration-700 ease-out"
-                        style={{ width: `${currentPct}%` }}
-                      />
-                    )}
-                    {gapPct > 0 && (
-                      <div
-                        className="bg-amber-400 transition-all duration-700 ease-out"
-                        style={{ width: `${gapPct}%` }}
-                      />
-                    )}
-                    {remainingPct > 0 && (
-                      <div
-                        className="bg-gray-200 transition-all duration-700 ease-out"
-                        style={{ width: `${remainingPct}%` }}
-                      />
-                    )}
+                  {/* Two-row bars */}
+                  <div className="space-y-1 pl-7">
+                    {/* You row */}
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-medium text-gray-500 w-10 text-right">You</span>
+                      <div className="flex-1 h-4 bg-gray-100 rounded overflow-hidden">
+                        {currentPct > 0 && (
+                          <div
+                            className="h-full bg-sky-500 rounded transition-all duration-700 ease-out"
+                            style={{ width: `${currentPct}%` }}
+                          />
+                        )}
+                      </div>
+                      <span className="text-[10px] font-bold text-sky-600 w-6">L{skill.current_level}</span>
+                    </div>
+                    {/* Target row */}
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-medium text-gray-500 w-10 text-right">Target</span>
+                      <div className="flex-1 h-4 bg-gray-100 rounded overflow-hidden">
+                        <div
+                          className="h-full bg-emerald-500 rounded transition-all duration-700 ease-out"
+                          style={{ width: `${targetPct}%` }}
+                        />
+                      </div>
+                      <span className="text-[10px] font-bold text-emerald-600 w-6">L{skill.required_level}</span>
+                    </div>
                   </div>
                 </div>
               )
@@ -876,25 +882,21 @@ export default function AnalysisPage() {
           </div>
 
           {/* Scale markers */}
-          <div className="flex justify-between mt-2 text-[10px] text-gray-400 px-0">
+          <div className="flex justify-between mt-3 text-[10px] text-gray-400 pl-[4.75rem] pr-8">
             {['L0', 'L1', 'L2', 'L3', 'L4', 'L5'].map((label) => (
-              <span key={label} className="w-6 text-center">{label}</span>
+              <span key={label}>{label}</span>
             ))}
           </div>
 
           {/* Legend */}
-          <div className="flex flex-wrap justify-center gap-5 mt-4 pt-3 border-t border-gray-100 text-xs text-gray-600">
+          <div className="flex flex-wrap justify-center gap-5 mt-3 pt-3 border-t border-gray-100 text-xs text-gray-600">
             <div className="flex items-center gap-1.5">
               <div className="w-3 h-3 rounded-sm bg-sky-500" />
-              <span>Current Level</span>
+              <span>Your Current Level</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <div className="w-3 h-3 rounded-sm bg-amber-400" />
-              <span>Gap to Close</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <div className="w-3 h-3 rounded-sm bg-gray-200 border border-gray-300" />
-              <span>Beyond Target</span>
+              <div className="w-3 h-3 rounded-sm bg-emerald-500" />
+              <span>Target Level Required</span>
             </div>
           </div>
         </div>
@@ -922,7 +924,7 @@ export default function AnalysisPage() {
         </div>
       </div>
 
-      {/* Learning Path — concentrated current vs target skills */}
+      {/* Learning Path — two-row bars (compact) */}
       {chapters.length > 0 && (
         <div className="card">
           <div className="flex items-center gap-2 mb-5">
@@ -932,48 +934,50 @@ export default function AnalysisPage() {
             </h2>
             <span className="text-sm text-gray-500 ml-auto">Current → Target Skill Progression</span>
           </div>
-          <div className="space-y-4">
+          <div className="space-y-3">
             {chapters.map((ch: { chapter_number?: number; skill_id?: string; primary_skill_id?: string; skill_name?: string; primary_skill_name?: string; title?: string; current_level?: number; target_level?: number; estimated_time_hours?: number }) => {
               const current = ch.current_level ?? 0
               const target = ch.target_level ?? 1
-              const gap = Math.max(0, target - current)
               const currentPct = (current / 5) * 100
-              const gapPct = (gap / 5) * 100
-              const remainingPct = ((5 - target) / 5) * 100
+              const targetPct = (target / 5) * 100
 
               return (
                 <div key={ch.chapter_number} className="p-3 bg-gray-50 rounded-lg">
-                  {/* Header: chapter number, title, level progression */}
-                  <div className="flex items-center justify-between gap-3 mb-2">
+                  {/* Header */}
+                  <div className="flex items-center justify-between gap-3 mb-1.5">
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 font-bold text-sm flex-shrink-0">
+                      <div className="w-7 h-7 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 font-bold text-xs flex-shrink-0">
                         {ch.chapter_number}
                       </div>
                       <div className="min-w-0">
                         <div className="font-medium text-gray-900 text-sm truncate">{ch.title || ch.skill_name}</div>
-                        <div className="text-xs text-gray-500">{ch.primary_skill_name || ch.skill_name}</div>
                       </div>
                     </div>
                     <div className="flex items-center gap-1 flex-shrink-0">
-                      <span className="text-xs px-2 py-0.5 bg-sky-100 text-sky-700 rounded font-bold">L{current}</span>
+                      <span className="text-[10px] font-bold text-sky-600">L{current}</span>
                       <ArrowRight className="h-3 w-3 text-gray-400" />
-                      <span className="text-xs px-2 py-0.5 bg-green-100 text-green-700 rounded font-bold">L{target}</span>
+                      <span className="text-[10px] font-bold text-emerald-600">L{target}</span>
                       {ch.estimated_time_hours && (
-                        <span className="text-xs text-gray-400 ml-1">{ch.estimated_time_hours}h</span>
+                        <span className="text-[10px] text-gray-400 ml-1">{ch.estimated_time_hours}h</span>
                       )}
                     </div>
                   </div>
-                  {/* Gap bar */}
-                  <div className="h-3 bg-gray-100 rounded-full overflow-hidden flex">
-                    {currentPct > 0 && (
-                      <div className="bg-sky-500" style={{ width: `${currentPct}%` }} />
-                    )}
-                    {gapPct > 0 && (
-                      <div className="bg-amber-400" style={{ width: `${gapPct}%` }} />
-                    )}
-                    {remainingPct > 0 && (
-                      <div className="bg-gray-200" style={{ width: `${remainingPct}%` }} />
-                    )}
+                  {/* Two-row bars (compact) */}
+                  <div className="space-y-0.5 pl-10">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[9px] text-gray-400 w-8 text-right">You</span>
+                      <div className="flex-1 h-2.5 bg-gray-100 rounded overflow-hidden">
+                        {currentPct > 0 && (
+                          <div className="h-full bg-sky-500 rounded" style={{ width: `${currentPct}%` }} />
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[9px] text-gray-400 w-8 text-right">Target</span>
+                      <div className="flex-1 h-2.5 bg-gray-100 rounded overflow-hidden">
+                        <div className="h-full bg-emerald-500 rounded" style={{ width: `${targetPct}%` }} />
+                      </div>
+                    </div>
                   </div>
                 </div>
               )
@@ -984,15 +988,11 @@ export default function AnalysisPage() {
           <div className="flex flex-wrap justify-center gap-5 mt-4 pt-3 border-t border-gray-100 text-xs text-gray-600">
             <div className="flex items-center gap-1.5">
               <div className="w-3 h-3 rounded-sm bg-sky-500" />
-              <span>Current Level</span>
+              <span>Your Current Level</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <div className="w-3 h-3 rounded-sm bg-amber-400" />
-              <span>Gap to Close</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <div className="w-3 h-3 rounded-sm bg-gray-200 border border-gray-300" />
-              <span>Beyond Target</span>
+              <div className="w-3 h-3 rounded-sm bg-emerald-500" />
+              <span>Target Level Required</span>
             </div>
           </div>
         </div>
