@@ -201,12 +201,24 @@ class PathVisualizer:
             if val:
                 profile_rows += f"<tr><td class='label'>{e(label)}</td><td>{e(str(val))}</td></tr>\n"
 
+        # --- Skill matching: compute overlap between current and target ---
+        current_skill_ids = {s.get("skill_id", "") for s in top10_current}
+        target_skill_ids = {s.get("skill_id", "") for s in top10_target}
+        # Build lookup: target skill_id -> required_level
+        target_level_lookup = {s.get("skill_id", ""): s.get("required_level", 0) for s in top10_target}
+        # Build lookup: current skill_id -> current_level
+        current_level_lookup = {s.get("skill_id", ""): s.get("current_level", 0) for s in top10_current}
+
         # --- Top 10 current skills ---
         current_rows = ""
         for s in top10_current:
-            current_rows += f"""<tr>
+            sid = s.get("skill_id", "")
+            in_target = sid in target_skill_ids
+            row_class = "match-row" if in_target else ""
+            match_badge = f"<span class='match-badge target-match'>Target: L{target_level_lookup.get(sid, 0)}</span>" if in_target else ""
+            current_rows += f"""<tr class='{row_class}'>
                 <td class='rank'>{s.get('rank','')}</td>
-                <td><span class='skill-id'>{e(s.get('skill_id',''))}</span><br>{e(s.get('skill_name',''))}</td>
+                <td><span class='skill-id'>{e(sid)}</span><br>{e(s.get('skill_name',''))}{match_badge}</td>
                 <td><span class='domain-badge'>{e(s.get('domain_label','') or s.get('domain',''))}</span></td>
                 <td class='level'>L{s.get('current_level',0)}</td>
                 <td class='rationale'>{e(s.get('rationale',''))}</td>
@@ -215,27 +227,34 @@ class PathVisualizer:
         # --- Top 10 target skills ---
         target_rows = ""
         for s in top10_target:
+            sid = s.get("skill_id", "")
             imp = s.get("importance", "")
             imp_class = "imp-critical" if imp == "critical" else "imp-high" if imp == "high" else "imp-med"
-            target_rows += f"""<tr>
+            in_current = sid in current_skill_ids
+            row_class = "match-row" if in_current else ""
+            match_badge = f"<span class='match-badge current-match'>You: L{current_level_lookup.get(sid, 0)}</span>" if in_current else ""
+            target_rows += f"""<tr class='{row_class}'>
                 <td class='rank'>{s.get('rank','')}</td>
-                <td><span class='skill-id'>{e(s.get('skill_id',''))}</span><br>{e(s.get('skill_name',''))}</td>
+                <td><span class='skill-id'>{e(sid)}</span><br>{e(s.get('skill_name',''))}{match_badge}</td>
                 <td><span class='domain-badge'>{e(s.get('domain_label','') or s.get('domain',''))}</span></td>
                 <td class='level'>L{s.get('required_level',0)}</td>
                 <td><span class='{imp_class}'>{e(imp)}</span></td>
                 <td class='rationale'>{e(s.get('rationale',''))}</td>
             </tr>\n"""
 
-        # --- Gap table ---
+        # --- Gap table (fix field names: orchestrator uses target_level/gap/priority) ---
         gap_rows = ""
         for g in gaps[:15]:
+            required = g.get('target_level', g.get('required_level', 0))
+            delta = g.get('gap', g.get('delta', 0))
+            priority = g.get('priority', g.get('priority_score', ''))
             gap_rows += f"""<tr>
                 <td><span class='skill-id'>{e(g.get('skill_id',''))}</span><br>{e(g.get('skill_name',''))}</td>
                 <td>{e(g.get('domain',''))}</td>
                 <td class='level'>L{g.get('current_level',0)}</td>
-                <td class='level'>L{g.get('required_level',0)}</td>
-                <td class='delta'>+{g.get('delta',0)}</td>
-                <td>{g.get('priority_score','')}</td>
+                <td class='level'>L{required}</td>
+                <td class='delta'>+{delta}</td>
+                <td>{priority}</td>
             </tr>\n"""
 
         # --- Chapter rows ---
@@ -297,7 +316,11 @@ td.rationale {{ font-style: italic; color: var(--text-muted); font-size: 12px; m
 .imp-critical {{ background: #fee2e2; color: var(--red); padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }}
 .imp-high {{ background: #fef3c7; color: var(--amber); padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }}
 .imp-med {{ background: #f1f5f9; color: var(--text-muted); padding: 2px 8px; border-radius: 4px; font-size: 11px; }}
-#graph-container {{ width: 100%; height: 700px; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: #fafbfc; }}
+tr.match-row {{ background: #f0fdf4; }}
+.match-badge {{ display: inline-block; margin-left: 6px; padding: 1px 6px; border-radius: 4px; font-size: 10px; font-weight: 600; }}
+.target-match {{ background: #dbeafe; color: #2563eb; }}
+.current-match {{ background: #dcfce7; color: #16a34a; }}
+#graph-container {{ width: 100%; height: 800px; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: #fafbfc; }}
 .legend {{ display: flex; gap: 16px; flex-wrap: wrap; margin: 12px 0; font-size: 12px; }}
 .legend-item {{ display: flex; align-items: center; gap: 4px; }}
 .legend-dot {{ width: 12px; height: 12px; border-radius: 50%; }}
@@ -378,7 +401,7 @@ const graphData = {graph_json};
 
 const container = document.getElementById('graph-container');
 const width = container.clientWidth;
-const height = container.clientHeight || 700;
+const height = container.clientHeight || 800;
 
 const svg = d3.select('#graph-container')
     .append('svg')
@@ -423,7 +446,7 @@ const simulation = d3.forceSimulation(graphData.nodes)
     .force('link', d3.forceLink(graphData.links).id(d => d.id).distance(d => d.type === 'path' ? 160 : 120))
     .force('charge', d3.forceManyBody().strength(d => d.type === 'domain' ? -600 : -250))
     .force('center', d3.forceCenter(width / 2, height / 2))
-    .force('collision', d3.forceCollide().radius(d => d.type === 'domain' ? 60 : 35));
+    .force('collision', d3.forceCollide().radius(d => d.type === 'domain' ? 80 : 35));
 
 // Draw links
 const link = svg.append('g')
@@ -445,27 +468,30 @@ const node = svg.append('g')
         .on('drag', dragged)
         .on('end', dragEnded));
 
-// Domain nodes (larger rectangles)
-node.filter(d => d.type === 'domain')
-    .append('rect')
-    .attr('width', 150)
-    .attr('height', 40)
-    .attr('x', -75)
-    .attr('y', -20)
-    .attr('rx', 10)
-    .attr('fill', d => d.color || '#6b7280')
-    .attr('opacity', 0.85)
-    .attr('stroke', d => d.color || '#6b7280')
-    .attr('stroke-width', 2);
-
-node.filter(d => d.type === 'domain')
-    .append('text')
-    .text(d => d.label)
-    .attr('text-anchor', 'middle')
-    .attr('dy', 5)
-    .attr('fill', 'white')
-    .attr('font-size', '14px')
-    .attr('font-weight', '600');
+// Domain nodes — dynamic width based on label length
+node.filter(d => d.type === 'domain').each(function(d) {{
+    const charWidth = 8.5;  // approx px per char at 14px font-weight 600
+    const padding = 24;
+    const w = Math.min(240, Math.max(120, d.label.length * charWidth + padding));
+    d._rectW = w;  // store for collision reference
+    d3.select(this).append('rect')
+        .attr('width', w)
+        .attr('height', 40)
+        .attr('x', -w / 2)
+        .attr('y', -20)
+        .attr('rx', 10)
+        .attr('fill', d.color || '#6b7280')
+        .attr('opacity', 0.85)
+        .attr('stroke', d.color || '#6b7280')
+        .attr('stroke-width', 2);
+    d3.select(this).append('text')
+        .text(d.label)
+        .attr('text-anchor', 'middle')
+        .attr('dy', 5)
+        .attr('fill', 'white')
+        .attr('font-size', '13px')
+        .attr('font-weight', '600');
+}});
 
 // Skill nodes (circles)
 node.filter(d => d.type === 'skill')
@@ -514,7 +540,7 @@ node.append('title')
     .text(d => d.type === 'domain' ? d.label : d.id + ': ' + d.label);
 
 // Simulation tick — clamp nodes within bounds to prevent label clipping
-const MARGIN = 80;
+const MARGIN = 120;
 simulation.on('tick', () => {{
     graphData.nodes.forEach(d => {{
         d.x = Math.max(MARGIN, Math.min(width - MARGIN, d.x));
