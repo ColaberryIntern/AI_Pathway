@@ -1,4 +1,5 @@
 """Database setup and session management."""
+from sqlalchemy import event
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy.orm import DeclarativeBase
 from app.config import get_settings
@@ -14,6 +15,15 @@ engine = create_async_engine(
     # failing immediately with "database is locked".
     connect_args={"timeout": 30},
 )
+
+# Enable WAL mode for better concurrent access — allows readers
+# to proceed while a write is in progress.
+@event.listens_for(engine.sync_engine, "connect")
+def _set_sqlite_pragma(dbapi_conn, connection_record):
+    cursor = dbapi_conn.cursor()
+    cursor.execute("PRAGMA journal_mode=WAL")
+    cursor.close()
+
 
 AsyncSessionLocal = async_sessionmaker(
     engine,

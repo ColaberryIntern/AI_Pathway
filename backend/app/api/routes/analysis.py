@@ -54,21 +54,7 @@ async def run_full_analysis(
             detail="Either profile_id or custom_profile must be provided"
         )
 
-    # Create user and goal in database
-    user = User(name=profile.get("name", "Anonymous"))
-    db.add(user)
-    await db.flush()
-
-    goal = Goal(
-        user_id=user.id,
-        target_role=request.target_role or profile.get("target_role", ""),
-        target_jd_text=request.target_jd_text,
-        learning_intent=profile.get("learning_intent", ""),
-    )
-    db.add(goal)
-    await db.flush()
-
-    # Run orchestrator
+    # Run orchestrator OUTSIDE DB transaction (20-40s of LLM calls, no DB lock)
     try:
         result = await orchestrator.execute({
             "profile": profile,
@@ -80,7 +66,21 @@ async def run_full_analysis(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
 
-    # Save results to database
+    # Quick DB save — lock held ~100ms instead of 20-40s
+    user = User(name=profile.get("name", "Anonymous"))
+    db.add(user)
+    await db.flush()
+
+    goal = Goal(
+        user_id=user.id,
+        target_role=request.target_role or profile.get("target_role", ""),
+        target_jd_text=request.target_jd_text,
+        learning_intent=profile.get("learning_intent", ""),
+        state_b_skills=result.get("jd_parsing", {}).get("state_b_skills", {}),
+    )
+    db.add(goal)
+    await db.flush()
+
     skill_gap = SkillGap(
         user_id=user.id,
         goal_id=goal.id,
@@ -101,10 +101,6 @@ async def run_full_analysis(
         total_chapters=len(result.get("learning_path", {}).get("chapters", [])),
     )
     db.add(learning_path)
-    await db.commit()
-
-    # Update goal with state_b_skills
-    goal.state_b_skills = result.get("jd_parsing", {}).get("state_b_skills", {})
     await db.commit()
 
     return {

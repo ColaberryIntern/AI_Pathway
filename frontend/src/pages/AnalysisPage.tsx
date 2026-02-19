@@ -94,7 +94,7 @@ export default function AnalysisPage() {
   // Track when analysis started for minimum display time
   const [analysisStartTime, setAnalysisStartTime] = useState<number>(0)
   const MINIMUM_DISPLAY_TIME = 8000 // 8 seconds minimum to show the visualization
-  const EXPECTED_DURATION = 15000 // typical analysis takes ~15 seconds
+  const EXPECTED_DURATION = 60000 // typical analysis takes ~45-60 seconds
   const [analysisProgress, setAnalysisProgress] = useState(0)
   const backendDone = useRef(false)
 
