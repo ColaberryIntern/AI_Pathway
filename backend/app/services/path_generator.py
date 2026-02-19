@@ -532,7 +532,13 @@ class LearningPathGenerator:
         state_a: dict[str, int],
         rejected: set[str],
     ) -> list[dict[str, Any]]:
-        """Fill unused capacity with the next eligible gap skills."""
+        """Fill unused capacity with the next eligible gap skills.
+
+        Two passes:
+        1. Respect domain cap (MAX_DOMAIN_CHAPTERS) for diversity.
+        2. If still under MAX_CHAPTERS, relax domain cap to fill all 5 slots.
+        """
+        # Pass 1: respect domain cap
         for gap in all_gaps:
             if self._count_slots(planned, state_a) >= MAX_CHAPTERS:
                 break
@@ -543,11 +549,26 @@ class LearningPathGenerator:
             skill = self._ontology.get_skill(sid)
             if skill is None:
                 continue
-            # Respect domain cap
             domain_counts = self._count_chapter_domains(planned, state_a)
             if domain_counts.get(skill["domain"], 0) >= MAX_DOMAIN_CHAPTERS:
                 continue
             # Fitness check
+            test = list(planned) + [gap]
+            if self._count_slots(test, state_a) > MAX_CHAPTERS:
+                continue
+            planned.append(gap)
+
+        # Pass 2: relax domain cap to ensure we reach MAX_CHAPTERS
+        for gap in all_gaps:
+            if self._count_slots(planned, state_a) >= MAX_CHAPTERS:
+                break
+            sid = gap["skill_id"]
+            planned_ids = {g["skill_id"] for g in planned}
+            if sid in planned_ids or sid in rejected:
+                continue
+            skill = self._ontology.get_skill(sid)
+            if skill is None:
+                continue
             test = list(planned) + [gap]
             if self._count_slots(test, state_a) > MAX_CHAPTERS:
                 continue

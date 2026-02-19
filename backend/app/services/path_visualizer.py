@@ -297,7 +297,7 @@ td.rationale {{ font-style: italic; color: var(--text-muted); font-size: 12px; m
 .imp-critical {{ background: #fee2e2; color: var(--red); padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }}
 .imp-high {{ background: #fef3c7; color: var(--amber); padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }}
 .imp-med {{ background: #f1f5f9; color: var(--text-muted); padding: 2px 8px; border-radius: 4px; font-size: 11px; }}
-#graph-container {{ width: 100%; height: 500px; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: #fafbfc; }}
+#graph-container {{ width: 100%; height: 700px; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: #fafbfc; }}
 .legend {{ display: flex; gap: 16px; flex-wrap: wrap; margin: 12px 0; font-size: 12px; }}
 .legend-item {{ display: flex; align-items: center; gap: 4px; }}
 .legend-dot {{ width: 12px; height: 12px; border-radius: 50%; }}
@@ -378,7 +378,7 @@ const graphData = {graph_json};
 
 const container = document.getElementById('graph-container');
 const width = container.clientWidth;
-const height = container.clientHeight || 500;
+const height = container.clientHeight || 700;
 
 const svg = d3.select('#graph-container')
     .append('svg')
@@ -409,7 +409,7 @@ svg.append('defs').selectAll('marker')
     .enter().append('marker')
     .attr('id', d => 'arrow-' + d)
     .attr('viewBox', '0 -5 10 10')
-    .attr('refX', 20)
+    .attr('refX', 28)
     .attr('refY', 0)
     .attr('markerWidth', 8)
     .attr('markerHeight', 8)
@@ -420,10 +420,10 @@ svg.append('defs').selectAll('marker')
 
 // Force simulation
 const simulation = d3.forceSimulation(graphData.nodes)
-    .force('link', d3.forceLink(graphData.links).id(d => d.id).distance(d => d.type === 'path' ? 120 : 80))
-    .force('charge', d3.forceManyBody().strength(d => d.type === 'domain' ? -400 : -150))
+    .force('link', d3.forceLink(graphData.links).id(d => d.id).distance(d => d.type === 'path' ? 160 : 120))
+    .force('charge', d3.forceManyBody().strength(d => d.type === 'domain' ? -600 : -250))
     .force('center', d3.forceCenter(width / 2, height / 2))
-    .force('collision', d3.forceCollide().radius(d => d.type === 'domain' ? 40 : 20));
+    .force('collision', d3.forceCollide().radius(d => d.type === 'domain' ? 60 : 35));
 
 // Draw links
 const link = svg.append('g')
@@ -431,7 +431,7 @@ const link = svg.append('g')
     .data(graphData.links)
     .enter().append('line')
     .attr('stroke', d => linkColors[d.type] || '#e2e8f0')
-    .attr('stroke-width', d => d.type === 'path' ? 3 : 1.5)
+    .attr('stroke-width', d => d.type === 'path' ? 3.5 : 2)
     .attr('stroke-dasharray', d => d.type === 'path' ? '8,4' : 'none')
     .attr('marker-end', d => d.type === 'path' ? 'url(#arrow-path)' : '');
 
@@ -448,11 +448,11 @@ const node = svg.append('g')
 // Domain nodes (larger rectangles)
 node.filter(d => d.type === 'domain')
     .append('rect')
-    .attr('width', 100)
-    .attr('height', 32)
-    .attr('x', -50)
-    .attr('y', -16)
-    .attr('rx', 8)
+    .attr('width', 150)
+    .attr('height', 40)
+    .attr('x', -75)
+    .attr('y', -20)
+    .attr('rx', 10)
     .attr('fill', d => d.color || '#6b7280')
     .attr('opacity', 0.85)
     .attr('stroke', d => d.color || '#6b7280')
@@ -462,15 +462,15 @@ node.filter(d => d.type === 'domain')
     .append('text')
     .text(d => d.label)
     .attr('text-anchor', 'middle')
-    .attr('dy', 4)
+    .attr('dy', 5)
     .attr('fill', 'white')
-    .attr('font-size', '11px')
+    .attr('font-size', '14px')
     .attr('font-weight', '600');
 
 // Skill nodes (circles)
 node.filter(d => d.type === 'skill')
     .append('circle')
-    .attr('r', d => d.state === 'chapter' ? 14 : 10)
+    .attr('r', d => d.state === 'chapter' ? 20 : 16)
     .attr('fill', d => stateColors[d.state] || '#94a3b8')
     .attr('stroke', '#fff')
     .attr('stroke-width', 2)
@@ -484,19 +484,29 @@ node.filter(d => d.type === 'skill' && d.state === 'chapter')
         return ch ? ch.num : '';
     }})
     .attr('text-anchor', 'middle')
-    .attr('dy', 4)
+    .attr('dy', 5)
     .attr('fill', 'white')
-    .attr('font-size', '10px')
+    .attr('font-size', '13px')
     .attr('font-weight', '700');
 
-// Skill labels
+// Skill labels (skill name instead of ID for readability)
+node.filter(d => d.type === 'skill')
+    .append('text')
+    .text(d => d.label)
+    .attr('dy', -24)
+    .attr('text-anchor', 'middle')
+    .attr('fill', '#334155')
+    .attr('font-size', '12px')
+    .attr('font-weight', '500');
+
+// Skill ID (smaller, below the name)
 node.filter(d => d.type === 'skill')
     .append('text')
     .text(d => d.id)
-    .attr('dy', -14)
+    .attr('dy', d => d.state === 'chapter' ? 34 : 30)
     .attr('text-anchor', 'middle')
-    .attr('fill', '#64748b')
-    .attr('font-size', '9px')
+    .attr('fill', '#94a3b8')
+    .attr('font-size', '10px')
     .attr('font-family', 'monospace');
 
 // Tooltip
