@@ -670,6 +670,9 @@ export default function AnalysisPage() {
     || chapters.reduce((sum: number, ch: { estimated_time_hours?: number }) => sum + (ch.estimated_time_hours || 0), 0)
     || summary?.estimated_learning_hours
     || 0
+  const journeyProgressPct = journeyRoadmap && journeyRoadmap.total_gap_levels > 0
+    ? Math.round((journeyRoadmap.path_closes_levels / journeyRoadmap.total_gap_levels) * 100)
+    : 0
   const actualSelectedDomains = chapters
     .map((ch: { skill_id?: string; primary_skill_id?: string; chapter_number?: number }) => {
       const sid = ch.skill_id || ch.primary_skill_id || ''
@@ -1286,19 +1289,26 @@ export default function AnalysisPage() {
           <div className="text-3xl font-bold text-red-600">
             {displayGaps}
           </div>
-          <div className="text-gray-600 text-sm">Skill Gaps</div>
+          <div className="text-gray-600 text-sm">Skills to Master</div>
+          <div className="text-gray-400 text-xs mt-1">across {focusAreas.length} domains</div>
         </div>
         <div className="card text-center border-l-4 border-l-indigo-500">
           <div className="text-3xl font-bold text-indigo-600">
-            {focusAreas.length}
+            {journeyProgressPct}%
           </div>
-          <div className="text-gray-600 text-sm">Focus Domains</div>
+          <div className="text-gray-600 text-sm">Journey Progress</div>
+          <div className="text-gray-400 text-xs mt-1">
+            {journeyRoadmap ? `${journeyRoadmap.path_closes_levels} of ${journeyRoadmap.total_gap_levels} gap-levels` : ''}
+          </div>
         </div>
         <div className="card text-center border-l-4 border-l-sky-500">
           <div className="text-3xl font-bold text-sky-600">
             {displayChapters}
           </div>
-          <div className="text-gray-600 text-sm">Learning Chapters</div>
+          <div className="text-gray-600 text-sm">Chapters</div>
+          <div className="text-gray-400 text-xs mt-1">
+            {journeyRoadmap ? `in Path ${journeyRoadmap.path_number}` : 'in this path'}
+          </div>
         </div>
         <div className="card text-center border-l-4 border-l-amber-500">
           <div className="text-3xl font-bold text-amber-600">
