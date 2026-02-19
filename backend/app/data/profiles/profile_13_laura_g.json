@@ -1,0 +1,113 @@
+{
+  "id": "profile_13",
+  "name": "Laura G",
+  "current_role": "Martech Platform Product Manager",
+  "target_role": "Martech AI Product Manager",
+  "industry": "Marketing Technology / Martech",
+  "location": "U.S.",
+  "experience_years": 8,
+  "ai_exposure_level": "Intermediate",
+  "tools_used": ["ChatGPT", "Claude", "Gemini", "Zapier AI", "Gamma"],
+  "technical_background": "Martech platform implementation (Salesforce Marketing Cloud, CDPs), journey design, API integrations, engagement scoring, Agile product management",
+  "archetype": "Career Switcher",
+  "current_profile": {
+    "summary": "Martech Platform Product Manager with experience implementing martech platforms including Salesforce Marketing Cloud and CDPs. Leads advanced feature launches such as customer journeys, AI-powered recommendations, and engagement scoring. Manages platform roadmaps and cross-functional teams. Strong Agile background with iterative feedback loops. Active GenAI user across multiple tools (ChatGPT, Claude, Gemini) for daily work including content generation, workflow automation, and tool evaluation. Has explored tools like Zapier AI and Gamma for productivity. Comfortable with structured data, APIs, and platform configuration but has not built AI/ML systems from scratch.",
+    "technical_skills": [
+      "Salesforce Marketing Cloud",
+      "CDP implementation",
+      "Journey orchestration",
+      "API integrations",
+      "Engagement scoring configuration",
+      "Platform roadmap management",
+      "Agile / Scrum",
+      "Data-driven product decisions",
+      "A/B testing",
+      "Basic JSON/data structures"
+    ],
+    "soft_skills": [
+      "Cross-functional team leadership",
+      "Stakeholder management",
+      "Strategic roadmap planning",
+      "Vendor evaluation",
+      "Agile iteration and feedback"
+    ],
+    "ai_experience": "Regular user of ChatGPT, Claude, and Gemini for daily work. Uses AI for content generation, ideation, and workflow support. Has explored Zapier AI for automation and Gamma for presentations. Comfortable writing prompts and evaluating AI tool outputs, but has not built AI systems, agents, or evaluation frameworks."
+  },
+  "learning_intent": "Wants to transition from implementing martech platforms to defining vision and strategy for AI-enabled platform products. Goal: gain hands-on experience building LLM-powered agentic solutions, lead cross-functional teams on AI feature development, and be able to work directly with engineering to build, evaluate, and ship production-ready AI features responsibly.",
+  "target_jd": {
+    "title": "Martech AI Product Manager",
+    "requirements": [
+      "Define vision, strategy, and roadmap for AI-enabled martech platform products",
+      "Hands-on experience building LLM-powered Agentic solutions that integrate with enterprise platforms",
+      "Work with engineering to build AI features including recommendation engines, intelligent routing, and autonomous lead scoring",
+      "Lead cross-functional teams across engineering, data science, marketing, and compliance",
+      "Define release process and quality gates for responsible AI deployment",
+      "Evaluate and select AI/ML capabilities for platform integration (RAG, agents, embeddings)",
+      "Ensure AI features comply with data governance, privacy, and security requirements",
+      "Build evaluation frameworks and test suites for AI-powered platform features at scale",
+      "Optimize AI feature performance for production: caching, latency, and cost management",
+      "Communicate AI strategy and capabilities to non-technical stakeholders and executives"
+    ]
+  },
+  "expected_skill_gaps": [
+    {
+      "domain": "D.AGT",
+      "description": "Moving from 'using AI tools' to 'building AI agents that integrate with martech platforms'. Need to master tool definitions, single-agent loops, and state management for autonomous platform features.",
+      "skills": ["SK.AGT.001", "SK.AGT.010", "SK.AGT.003"]
+    },
+    {
+      "domain": "D.EVL",
+      "description": "Ensuring AI platform features are production-ready and reliable. Need LLM-as-judge patterns, prompt unit tests, and comprehensive eval types for quality assurance at scale.",
+      "skills": ["SK.EVL.001", "SK.EVL.002", "SK.EVL.020"]
+    },
+    {
+      "domain": "D.RAG",
+      "description": "Building knowledge-grounded AI features for personalization and recommendations. Need RAG fundamentals, chunking strategies, and reranking for production recommender systems.",
+      "skills": ["SK.RAG.000", "SK.RAG.002", "SK.RAG.010"]
+    },
+    {
+      "domain": "D.SEC",
+      "description": "Shipping enterprise-grade AI features that are secure. Need prompt injection mitigation and security guardrails for customer-facing AI capabilities.",
+      "skills": ["SK.SEC.001"]
+    },
+    {
+      "domain": "D.OPS",
+      "description": "Production operations: AI features must scale and perform. Need caching/batching/streaming and latency optimization for enterprise deployment.",
+      "skills": ["SK.OPS.001", "SK.OPS.010"]
+    },
+    {
+      "domain": "D.PRM",
+      "description": "Deepen structured prompting for platform-specific AI features. Need formalized JSON/schema outputs and advanced prompt debugging for production systems.",
+      "skills": ["SK.PRM.003", "SK.PRM.010"]
+    }
+  ],
+  "estimated_current_skills": {
+    "SK.PRM.000": 3,
+    "SK.TOOL.001": 3,
+    "SK.PRD.002": 4,
+    "SK.PRD.011": 3,
+    "SK.LRN.002": 3,
+    "SK.PRM.010": 2,
+    "SK.RAG.000": 1,
+    "SK.FND.012": 1,
+    "SK.PRM.001": 3,
+    "SK.AGT.000": 2,
+    "SK.FND.001": 2,
+    "SK.FND.002": 2,
+    "SK.FND.020": 2,
+    "SK.TOOL.021": 2,
+    "SK.PRM.003": 2,
+    "SK.COM.001": 2,
+    "SK.PRD.001": 2,
+    "SK.EVL.001": 1,
+    "SK.AGT.001": 1,
+    "SK.AGT.010": 0,
+    "SK.EVL.002": 0,
+    "SK.EVL.020": 0,
+    "SK.RAG.002": 0,
+    "SK.SEC.001": 0,
+    "SK.OPS.010": 0,
+    "SK.OPS.001": 0,
+    "SK.AGT.003": 0
+  }
+}
