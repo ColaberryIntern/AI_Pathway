@@ -94,10 +94,14 @@ export default function AnalysisPage() {
   // Track when analysis started for minimum display time
   const [analysisStartTime, setAnalysisStartTime] = useState<number>(0)
   const MINIMUM_DISPLAY_TIME = 8000 // 8 seconds minimum to show the visualization
+  const EXPECTED_DURATION = 15000 // typical analysis takes ~15 seconds
+  const [analysisProgress, setAnalysisProgress] = useState(0)
+  const backendDone = useRef(false)
 
   const analysisMutation = useMutation({
     mutationFn: runFullAnalysis,
     onSuccess: (data) => {
+      backendDone.current = true
       // Persist user_id so the dashboard can resolve "/dashboard/latest"
       if (data.user_id) {
         localStorage.setItem('latestUserId', data.user_id)
@@ -114,6 +118,7 @@ export default function AnalysisPage() {
       }, remainingTime)
     },
     onError: () => {
+      backendDone.current = true
       // Still show error after minimum time for consistency
       const elapsed = Date.now() - analysisStartTime
       const remainingTime = Math.max(0, MINIMUM_DISPLAY_TIME - elapsed)
@@ -139,6 +144,25 @@ export default function AnalysisPage() {
       return () => clearTimeout(timer)
     }
   }, [step, currentStepIndex])
+
+  // Smooth progress bar animation (exponential ease-out → 95%, jumps to 100% on completion)
+  useEffect(() => {
+    if (step !== 'analyzing') return
+    backendDone.current = false
+    setAnalysisProgress(0)
+    const start = Date.now()
+    const interval = setInterval(() => {
+      if (backendDone.current) {
+        setAnalysisProgress(100)
+        clearInterval(interval)
+        return
+      }
+      const elapsed = Date.now() - start
+      const progress = 95 * (1 - Math.exp(-elapsed / (EXPECTED_DURATION / 3)))
+      setAnalysisProgress(Math.min(95, Math.round(progress)))
+    }, 200)
+    return () => clearInterval(interval)
+  }, [step])
 
   const handleAnalyzeJD = useCallback(async (jdText: string, role: string) => {
     if (!jdText.trim() || jdText.trim().length < 50) return
@@ -602,6 +626,24 @@ export default function AnalysisPage() {
           {/* Step Progress Bar */}
           <div className="py-4">
             <AnalysisProgress currentStep={currentStepIndex} />
+          </div>
+
+          {/* Overall Progress Bar */}
+          <div className="max-w-md mx-auto">
+            <div className="flex items-center justify-between text-xs text-gray-500 mb-1.5">
+              <span>Overall progress</span>
+              <span className="font-medium">
+                {analysisProgress < 100
+                  ? `~${Math.max(1, Math.round((EXPECTED_DURATION - (EXPECTED_DURATION * analysisProgress / 95)) / 1000))}s remaining`
+                  : 'Complete!'}
+              </span>
+            </div>
+            <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-sky-400 to-indigo-500 rounded-full transition-all duration-300 ease-out"
+                style={{ width: `${analysisProgress}%` }}
+              />
+            </div>
           </div>
 
           {/* Domain Grid Visualization */}
