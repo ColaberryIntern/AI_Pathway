@@ -24,7 +24,7 @@ import {
   Award,
   ExternalLink,
 } from 'lucide-react'
-import type { AnalysisResult, Profile, Top10CurrentSkill, Top10TargetSkill } from '../types'
+import type { AnalysisResult, Profile, Top10SkillGap } from '../types'
 import ArchetypeBadge from '../components/ArchetypeBadge'
 import JourneyArrow from '../components/JourneyArrow'
 import ProficiencyLegend, { getProficiencyLevel } from '../components/ProficiencyLegend'
@@ -647,8 +647,7 @@ export default function AnalysisPage() {
   // Complete state
   const summary = result?.result.summary
   const gaps = result?.result.gap_analysis.gaps || []
-  const top10Current: Top10CurrentSkill[] = result?.result.top_10_current_skills || []
-  const top10Target: Top10TargetSkill[] = result?.result.top_10_target_skills || []
+  const top10Gaps: Top10SkillGap[] = result?.result.top_10_skill_gaps || []
 
   // Derive actual chapter-to-domain mapping from learning path
   const chapters = result?.result?.learning_path?.chapters || []
@@ -699,102 +698,104 @@ export default function AnalysisPage() {
         </div>
       )}
 
-      {/* Top-10 Skills Assessment Breakdown */}
-      {(top10Current.length > 0 || top10Target.length > 0) && (
-        <div className="space-y-6">
-          <h2 className="text-xl font-bold text-gray-900 text-center">
-            Skills Assessment Breakdown
-          </h2>
+      {/* Top-10 Skills Gap Analysis — driven by target skills vs current */}
+      {top10Gaps.length > 0 && (
+        <div className="card">
+          <div className="flex items-center gap-2 mb-5">
+            <BarChart3 className="h-5 w-5 text-indigo-600" />
+            <h2 className="text-xl font-bold text-gray-900">
+              Skills Gap Analysis
+            </h2>
+            <span className="text-sm text-gray-500 ml-auto">Top 10 Target Skills vs Your Current Level</span>
+          </div>
 
-          <div className="grid lg:grid-cols-2 gap-6">
-            {/* Left: Your Current Skills */}
-            {top10Current.length > 0 && (
-              <div className="card border-2 border-gray-200">
-                <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-200">
-                  <div className="w-8 h-8 bg-gray-600 rounded-lg flex items-center justify-center">
-                    <User className="h-4 w-4 text-white" />
-                  </div>
-                  <h3 className="font-bold text-gray-700">Your Current Skills (Top 10)</h3>
-                </div>
-                <div className="space-y-3">
-                  {top10Current.map((skill) => (
-                    <div key={skill.skill_id} className="p-3 bg-gray-50 rounded-lg">
-                      <div className="flex items-start justify-between gap-2 mb-1">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <span className="flex-shrink-0 w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center text-xs font-bold text-gray-600">
-                            {skill.rank}
-                          </span>
-                          <div className="min-w-0">
-                            <span className="font-medium text-gray-900 text-sm block truncate">{skill.skill_name}</span>
-                            <span className="text-xs text-gray-500">{skill.skill_id}</span>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2 flex-shrink-0">
-                          <span className="text-xs px-2 py-0.5 bg-indigo-100 text-indigo-700 rounded font-medium">
-                            {skill.domain_label || skill.domain}
-                          </span>
-                          <span className="text-xs px-2 py-0.5 bg-sky-100 text-sky-700 rounded font-bold">
-                            L{skill.current_level}
-                          </span>
-                        </div>
-                      </div>
-                      <p className="text-xs text-gray-600 italic mt-1 leading-relaxed pl-8">
-                        {skill.rationale}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+          <div className="space-y-4">
+            {top10Gaps.map((skill) => {
+              const currentPct = (skill.current_level / 5) * 100
+              const gapPct = (skill.gap / 5) * 100
+              const remainingPct = ((5 - skill.required_level) / 5) * 100
 
-            {/* Right: Target Role Skills */}
-            {top10Target.length > 0 && (
-              <div className="card border-2 border-indigo-200">
-                <div className="flex items-center gap-2 mb-4 pb-3 border-b border-indigo-200">
-                  <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
-                    <Target className="h-4 w-4 text-white" />
-                  </div>
-                  <h3 className="font-bold text-indigo-700">Target Role Skills (Top 10)</h3>
-                </div>
-                <div className="space-y-3">
-                  {top10Target.map((skill) => (
-                    <div key={skill.skill_id} className="p-3 bg-indigo-50 rounded-lg">
-                      <div className="flex items-start justify-between gap-2 mb-1">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <span className="flex-shrink-0 w-6 h-6 bg-indigo-200 rounded-full flex items-center justify-center text-xs font-bold text-indigo-700">
-                            {skill.rank}
-                          </span>
-                          <div className="min-w-0">
-                            <span className="font-medium text-gray-900 text-sm block truncate">{skill.skill_name}</span>
-                            <span className="text-xs text-gray-500">{skill.skill_id}</span>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2 flex-shrink-0">
-                          <span className="text-xs px-2 py-0.5 bg-indigo-100 text-indigo-700 rounded font-medium">
-                            {skill.domain_label || skill.domain}
-                          </span>
-                          <span className="text-xs px-2 py-0.5 bg-green-100 text-green-700 rounded font-bold">
-                            L{skill.required_level}
-                          </span>
-                          {skill.importance && (
-                            <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${
-                              skill.importance === 'critical' ? 'bg-red-100 text-red-700' :
-                              skill.importance === 'high' ? 'bg-amber-100 text-amber-700' :
-                              'bg-gray-100 text-gray-600'
-                            }`}>
-                              {skill.importance}
-                            </span>
-                          )}
-                        </div>
+              return (
+                <div key={skill.skill_id} className="p-3 bg-gray-50 rounded-lg">
+                  {/* Header row: rank, name, domain, levels, importance */}
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="flex-shrink-0 w-6 h-6 bg-indigo-200 rounded-full flex items-center justify-center text-xs font-bold text-indigo-700">
+                        {skill.rank}
+                      </span>
+                      <div className="min-w-0">
+                        <span className="font-medium text-gray-900 text-sm block truncate">{skill.skill_name}</span>
+                        <span className="text-xs text-gray-500">{skill.skill_id}</span>
                       </div>
-                      <p className="text-xs text-gray-600 italic mt-1 leading-relaxed pl-8">
-                        {skill.rationale}
-                      </p>
                     </div>
-                  ))}
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <span className="text-xs px-2 py-0.5 bg-indigo-100 text-indigo-700 rounded font-medium">
+                        {skill.domain_label || skill.domain}
+                      </span>
+                      <span className="text-xs px-2 py-0.5 bg-sky-100 text-sky-700 rounded font-bold">
+                        L{skill.current_level}
+                      </span>
+                      <ArrowRight className="h-3 w-3 text-gray-400" />
+                      <span className="text-xs px-2 py-0.5 bg-green-100 text-green-700 rounded font-bold">
+                        L{skill.required_level}
+                      </span>
+                      {skill.importance && (
+                        <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${
+                          skill.importance === 'critical' ? 'bg-red-100 text-red-700' :
+                          skill.importance === 'high' ? 'bg-amber-100 text-amber-700' :
+                          'bg-gray-100 text-gray-600'
+                        }`}>
+                          {skill.importance}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Gap bar */}
+                  <div className="h-4 bg-gray-100 rounded-full overflow-hidden flex mb-1.5">
+                    {currentPct > 0 && (
+                      <div
+                        className="bg-sky-500 transition-all duration-700 ease-out"
+                        style={{ width: `${currentPct}%` }}
+                      />
+                    )}
+                    {gapPct > 0 && (
+                      <div
+                        className="bg-amber-400 transition-all duration-700 ease-out"
+                        style={{ width: `${gapPct}%` }}
+                      />
+                    )}
+                    {remainingPct > 0 && (
+                      <div
+                        className="bg-gray-200 transition-all duration-700 ease-out"
+                        style={{ width: `${remainingPct}%` }}
+                      />
+                    )}
+                  </div>
+
+                  {/* Rationale */}
+                  <p className="text-xs text-gray-600 italic leading-relaxed pl-8">
+                    {skill.rationale}
+                  </p>
                 </div>
-              </div>
-            )}
+              )
+            })}
+          </div>
+
+          {/* Legend */}
+          <div className="flex flex-wrap justify-center gap-5 mt-4 pt-3 border-t border-gray-100 text-xs text-gray-600">
+            <div className="flex items-center gap-1.5">
+              <div className="w-3 h-3 rounded-sm bg-sky-500" />
+              <span>Current Level</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-3 h-3 rounded-sm bg-amber-400" />
+              <span>Gap to Close</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-3 h-3 rounded-sm bg-gray-200 border border-gray-300" />
+              <span>Beyond Target</span>
+            </div>
           </div>
         </div>
       )}

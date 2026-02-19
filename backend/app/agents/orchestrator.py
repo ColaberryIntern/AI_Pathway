@@ -86,8 +86,33 @@ parse job descriptions, identify skill gaps, and generate personalized learning 
             results["steps"].append({"step": "jd_parsing", "status": "completed"})
 
             # Pass top-10 skill breakdowns through to the frontend
-            results["top_10_current_skills"] = profile_result.get("top_10_current_skills", [])
-            results["top_10_target_skills"] = jd_result.get("top_10_target_skills", [])
+            top_10_current = profile_result.get("top_10_current_skills", [])
+            top_10_target = jd_result.get("top_10_target_skills", [])
+            results["top_10_current_skills"] = top_10_current
+            results["top_10_target_skills"] = top_10_target
+
+            # Build top-10 skill gaps: start from target skills, compare vs current
+            state_a_lookup = {s["skill_id"]: s["current_level"] for s in top_10_current}
+            top_10_gaps = []
+            for skill in top_10_target:
+                current = state_a_lookup.get(
+                    skill["skill_id"],
+                    state_a_skills.get(skill["skill_id"], 0),
+                )
+                required = skill["required_level"]
+                top_10_gaps.append({
+                    "rank": skill["rank"],
+                    "skill_id": skill["skill_id"],
+                    "skill_name": skill["skill_name"],
+                    "domain": skill["domain"],
+                    "domain_label": skill.get("domain_label", ""),
+                    "current_level": current,
+                    "required_level": required,
+                    "gap": max(0, required - current),
+                    "importance": skill.get("importance", ""),
+                    "rationale": skill.get("rationale", ""),
+                })
+            results["top_10_skill_gaps"] = top_10_gaps
 
             # Step 3: Optional Assessment
             state_a_skills = profile_result.get("state_a_skills", {})
