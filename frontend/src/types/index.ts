@@ -6,6 +6,8 @@ export interface Profile {
   industry: string
   experience_years?: number
   ai_exposure_level?: string
+  tools_used?: string[]
+  technical_background?: string
   learning_intent?: string
   archetype?: 'Career Switcher' | 'Domain Upskiller' | 'Executive' | 'Technical Pivot'
   current_profile?: {

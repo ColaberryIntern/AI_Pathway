@@ -7,6 +7,8 @@
   "location": "U.S.",
   "experience_years": 18,
   "ai_exposure_level": "Basic",
+  "tools_used": ["None"],
+  "technical_background": "Basic scripting (Excel, simple automation)",
   "archetype": "Executive",
   "current_profile": {
     "summary": "VP of Operations with industrial engineering background. Leads lean/Six Sigma programs, ERP rollouts, and process improvements. Familiar with IoT/automation concepts but limited ML knowledge.",

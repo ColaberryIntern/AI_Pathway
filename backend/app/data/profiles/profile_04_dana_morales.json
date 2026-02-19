@@ -7,6 +7,8 @@
   "location": "U.S.",
   "experience_years": 6,
   "ai_exposure_level": "Basic",
+  "tools_used": ["ChatGPT / Claude / Gemini"],
+  "technical_background": "Some programming",
   "archetype": "Domain Upskiller",
   "current_profile": {
     "summary": "Healthcare analyst at a hospital system (6 years). Strong SQL and BI skills; builds dashboards and operational reports. Understands HIPAA and clinical workflow basics. Limited ML exposure (has used outputs of an existing readmission risk model).",

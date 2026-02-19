@@ -7,6 +7,8 @@
   "location": "U.S.",
   "experience_years": 2,
   "ai_exposure_level": "Intermediate",
+  "tools_used": ["ChatGPT / Claude / Gemini", "GitHub Copilot", "OpenAI API / Anthropic API"],
+  "technical_background": "Professional developer",
   "archetype": "Technical Pivot",
   "current_profile": {
     "summary": "Junior backend developer (2 years) building enterprise services in Java. CS degree; comfortable with APIs, databases, and unit tests. Has done small ML side projects (Kaggle) and basic Python, but no production ML experience.",

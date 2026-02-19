@@ -7,6 +7,8 @@
   "location": "U.S.",
   "experience_years": 3,
   "ai_exposure_level": "Basic",
+  "tools_used": ["ChatGPT / Claude / Gemini", "Midjourney / DALL-E"],
+  "technical_background": "No coding experience",
   "archetype": "Career Switcher",
   "current_profile": {
     "summary": "Content writer at a marketing agency (3 years). Strong writing/editing; uses GenAI tools for brainstorming and drafts. No coding; prompt work is intuitive and ad hoc.",

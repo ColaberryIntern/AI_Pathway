@@ -7,6 +7,8 @@
   "location": "U.S.",
   "experience_years": 10,
   "ai_exposure_level": "Basic",
+  "tools_used": ["ChatGPT / Claude / Gemini"],
+  "technical_background": "Basic scripting (Excel, simple automation)",
   "archetype": "Career Switcher",
   "current_profile": {
     "summary": "Marketing Manager with 10 years in consumer goods. Leads digital campaigns, lifecycle marketing, and experimentation. Strong stakeholder management; comfortable with analytics dashboards, basic SQL queries, and A/B testing. Hands-on GenAI exposure: uses ChatGPT for copy variants and ideation; has not built AI systems or worked with model evaluation.",

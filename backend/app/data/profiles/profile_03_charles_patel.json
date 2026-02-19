@@ -7,6 +7,8 @@
   "location": "U.S.",
   "experience_years": 5,
   "ai_exposure_level": "Basic",
+  "tools_used": ["ChatGPT / Claude / Gemini"],
+  "technical_background": "Basic scripting (Excel, simple automation)",
   "archetype": "Career Switcher",
   "current_profile": {
     "summary": "Junior litigation associate with 5 years experience; strong reasoning, writing, and compliance familiarity. Has used e-discovery tools (predictive coding) and understands legal risk frameworks. No formal programming; minimal ML knowledge.",

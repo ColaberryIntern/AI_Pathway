@@ -7,6 +7,8 @@
   "location": "U.S.",
   "experience_years": 4,
   "ai_exposure_level": "Basic",
+  "tools_used": ["ChatGPT / Claude / Gemini", "GitHub Copilot"],
+  "technical_background": "Professional developer",
   "archetype": "Technical Pivot",
   "current_profile": {
     "summary": "Mechanical/automation engineer (4 years) working with PLCs, robotics, sensors, and control systems. Some C/C++ for embedded work; new to Python. Has participated in a predictive maintenance pilot and is curious about ML.",

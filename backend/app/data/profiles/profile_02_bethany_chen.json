@@ -7,6 +7,8 @@
   "location": "U.S.",
   "experience_years": 8,
   "ai_exposure_level": "Basic",
+  "tools_used": ["ChatGPT / Claude / Gemini"],
+  "technical_background": "No coding experience",
   "archetype": "Career Switcher",
   "current_profile": {
     "summary": "High school STEM teacher (8 years) with a Master's in Education. Designs curriculum, runs workshops, and integrates digital tools (LMS, simulations). Uses AI tutoring apps and has experimented with GenAI for lesson drafts and differentiation ideas. No coding background.",

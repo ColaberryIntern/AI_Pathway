@@ -7,6 +7,8 @@
   "location": "U.S.",
   "experience_years": 22,
   "ai_exposure_level": "Intermediate",
+  "tools_used": ["ChatGPT / Claude / Gemini", "OpenAI API / Anthropic API"],
+  "technical_background": "Some programming",
   "archetype": "Executive",
   "current_profile": {
     "summary": "CIO at a mid-size insurance company. Extensive experience with cloud migration, cybersecurity, and IT governance. Has sponsored ML pilots but wants deeper AI literacy to guide enterprise strategy and governance.",

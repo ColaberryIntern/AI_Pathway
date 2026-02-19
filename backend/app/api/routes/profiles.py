@@ -76,6 +76,8 @@ async def list_profiles():
                 "industry": profile_data["industry"],
                 "experience_years": profile_data.get("experience_years"),
                 "ai_exposure_level": profile_data.get("ai_exposure_level"),
+                "tools_used": profile_data.get("tools_used", []),
+                "technical_background": profile_data.get("technical_background", ""),
                 "archetype": profile_data.get("archetype"),
                 "learning_intent": profile_data.get("learning_intent"),
                 "current_profile": profile_data.get("current_profile"),

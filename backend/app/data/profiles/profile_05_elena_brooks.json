@@ -7,6 +7,8 @@
   "location": "U.S.",
   "experience_years": 5,
   "ai_exposure_level": "None",
+  "tools_used": ["None"],
+  "technical_background": "Basic scripting (Excel, simple automation)",
   "archetype": "Domain Upskiller",
   "current_profile": {
     "summary": "Financial analyst (5 years) in credit risk and forecasting. Advanced Excel, intermediate SQL, basic VBA. Understands finance domain deeply (credit, fraud, reporting). Little hands-on ML; interested in AI for risk and fraud.",

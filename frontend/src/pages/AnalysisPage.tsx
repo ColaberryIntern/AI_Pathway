@@ -287,6 +287,12 @@ export default function AnalysisPage() {
                     <Sparkles className="h-4 w-4" />
                     {proficiencyLevel} AI Proficiency
                   </span>
+                  {activeProfile.technical_background && activeProfile.technical_background !== '' && (
+                    <span className="flex items-center gap-1 text-sm text-gray-600 bg-white px-2 py-1 rounded-md">
+                      <Code className="h-4 w-4" />
+                      {activeProfile.technical_background}
+                    </span>
+                  )}
                 </div>
 
                 {/* Technical Skills */}
@@ -343,6 +349,28 @@ export default function AnalysisPage() {
                     </p>
                   </div>
                 )}
+
+                {/* AI Tools Used */}
+                {activeProfile.tools_used &&
+                  activeProfile.tools_used.length > 0 &&
+                  !(activeProfile.tools_used.length === 1 && activeProfile.tools_used[0] === 'None') && (
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-1">
+                        <Wrench className="h-4 w-4" />
+                        AI Tools Used
+                      </h4>
+                      <div className="flex flex-wrap gap-2">
+                        {activeProfile.tools_used.map((tool, i) => (
+                          <span
+                            key={i}
+                            className="text-sm bg-primary-50 text-primary-700 px-2.5 py-1 rounded-md border border-primary-200"
+                          >
+                            {tool}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                 {/* Profile Summary */}
                 {activeProfile.current_profile?.summary && (

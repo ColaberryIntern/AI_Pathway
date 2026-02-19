@@ -7,6 +7,8 @@
   "location": "U.S.",
   "experience_years": 15,
   "ai_exposure_level": "Basic",
+  "tools_used": ["ChatGPT / Claude / Gemini"],
+  "technical_background": "No coding experience",
   "archetype": "Domain Upskiller",
   "current_profile": {
     "summary": "HR manager with 15+ years across recruiting, HR ops, and compliance. Strong stakeholder skills; uses HRIS and Excel reporting. Has used AI-adjacent tools (resume screening) but lacks analytics modeling and technical skills.",
