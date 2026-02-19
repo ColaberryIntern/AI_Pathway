@@ -174,6 +174,11 @@ class LearningPathGenerator:
         # cascading back-pressure problem.
         chapters = self._post_enforce_mandatory(chapters, gaps, expanded_a)
 
+        # ==============================================================
+        # Phase 5 — Top-up: fill remaining slots if under MAX_CHAPTERS
+        # ==============================================================
+        chapters = self._topup_chapters(chapters, gaps, expanded_a)
+
         return {
             "total_chapters": len(chapters),
             "chapters": chapters,
@@ -788,3 +793,48 @@ class LearningPathGenerator:
             "objectives": [],
             "project_placeholder": {},
         }
+
+    def _topup_chapters(
+        self,
+        chapters: list[dict[str, Any]],
+        all_gaps: list[dict[str, Any]],
+        state_a: dict[str, int],
+    ) -> list[dict[str, Any]]:
+        """Fill remaining slots to reach MAX_CHAPTERS with standalone skills.
+
+        Called after all phases when the path has fewer than MAX_CHAPTERS.
+        Adds the next-best gap skills as +1 chapters without requiring
+        their prerequisites to also become chapters.
+        """
+        if len(chapters) >= MAX_CHAPTERS:
+            return chapters
+
+        chapter_sids = {ch["primary_skill_id"] for ch in chapters}
+        professional_floor = (
+            1 if any(v >= 2 for v in state_a.values()) else 0
+        )
+
+        for gap in all_gaps:
+            if len(chapters) >= MAX_CHAPTERS:
+                break
+            sid = gap["skill_id"]
+            if sid in chapter_sids:
+                continue
+            skill = self._ontology.get_skill(sid)
+            if skill is None:
+                continue
+            current = max(state_a.get(sid, 0), professional_floor)
+            if current >= gap["required_level"]:
+                continue
+            chapters.append(self._build_chapter(
+                chapter_number=len(chapters) + 1,
+                skill=skill,
+                current_level=current,
+            ))
+            chapter_sids.add(sid)
+
+        # Renumber
+        for i, ch in enumerate(chapters, 1):
+            ch["chapter_number"] = i
+
+        return chapters
