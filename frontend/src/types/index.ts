@@ -108,6 +108,27 @@ export interface Progress {
   updated_at: string
 }
 
+export interface Top10CurrentSkill {
+  rank: number
+  skill_id: string
+  skill_name: string
+  domain: string
+  domain_label?: string
+  current_level: number
+  rationale: string
+}
+
+export interface Top10TargetSkill {
+  rank: number
+  skill_id: string
+  skill_name: string
+  domain: string
+  domain_label?: string
+  required_level: number
+  importance?: string
+  rationale: string
+}
+
 export interface AnalysisResult {
   user_id: string
   goal_id: string
@@ -133,6 +154,8 @@ export interface AnalysisResult {
         key_domains: string[]
       }
     }
+    top_10_current_skills?: Top10CurrentSkill[]
+    top_10_target_skills?: Top10TargetSkill[]
     gap_analysis: {
       gaps: SkillGap[]
       summary: {

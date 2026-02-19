@@ -85,6 +85,13 @@ export const parseJD = async (params: {
   return data
 }
 
+export const getVisualization = async (analysisResult: Record<string, unknown>): Promise<string> => {
+  const { data } = await api.post('/analysis/visualization', {
+    analysis_result: analysisResult,
+  }, { responseType: 'text' })
+  return data
+}
+
 export const getSkillGap = async (userId: string) => {
   const { data } = await api.get(`/analysis/gap/${userId}`)
   return data

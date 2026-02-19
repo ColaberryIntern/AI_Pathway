@@ -2,6 +2,8 @@
 import json
 from pathlib import Path
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
+from fastapi.responses import HTMLResponse
+from pydantic import BaseModel as _BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.deps import get_database, get_agent_orchestrator
 from app.agents.orchestrator import Orchestrator
@@ -162,3 +164,30 @@ async def get_skill_gap(
         "gaps": skill_gap.gaps,
         "created_at": skill_gap.created_at.isoformat(),
     }
+
+
+class VisualizationRequest(_BaseModel):
+    """Accept the analysis result dict for visualization."""
+
+    analysis_result: dict
+
+
+@router.post("/visualization", response_class=HTMLResponse)
+async def generate_visualization(request: VisualizationRequest):
+    """Generate a standalone HTML ontology path visualization.
+
+    Accepts the ``result`` field from a completed analysis and returns
+    a self-contained HTML page with D3.js interactive graph.
+    """
+    from app.services.path_visualizer import PathVisualizer
+
+    try:
+        visualizer = PathVisualizer()
+        html_content = visualizer.generate_html(request.analysis_result)
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Visualization generation failed: {str(e)}",
+        )
+
+    return HTMLResponse(content=html_content)

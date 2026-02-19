@@ -85,6 +85,10 @@ parse job descriptions, identify skill gaps, and generate personalized learning 
             results["jd_parsing"] = jd_result
             results["steps"].append({"step": "jd_parsing", "status": "completed"})
 
+            # Pass top-10 skill breakdowns through to the frontend
+            results["top_10_current_skills"] = profile_result.get("top_10_current_skills", [])
+            results["top_10_target_skills"] = jd_result.get("top_10_target_skills", [])
+
             # Step 3: Optional Assessment
             state_a_skills = profile_result.get("state_a_skills", {})
             if not task.get("skip_assessment", True):

@@ -20,6 +20,8 @@ export default function ProfileSelectionPage() {
     ai_exposure_level: 'Basic',
     learning_intent: '',
     current_jd: '',
+    tools_used: [] as string[],
+    technical_background: '',
     archetype: '' as string,
     current_profile: {
       technical_skills: [] as string[],
@@ -326,7 +328,7 @@ export default function ProfileSelectionPage() {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              AI Exposure Level <span className="text-gray-400 font-normal">(Optional)</span>
+              How would you describe your current AI knowledge?
             </label>
             <select
               className="input"
@@ -344,7 +346,78 @@ export default function ProfileSelectionPage() {
               <option value="Advanced">Advanced</option>
             </select>
           </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              What is your technical or coding background?
+            </label>
+            <select
+              className="input"
+              value={customProfile.technical_background}
+              onChange={(e) =>
+                setCustomProfile({
+                  ...customProfile,
+                  technical_background: e.target.value,
+                })
+              }
+            >
+              <option value="">Select...</option>
+              <option value="No coding experience">No coding experience</option>
+              <option value="Basic scripting (Excel, simple automation)">Basic scripting (Excel, simple automation)</option>
+              <option value="Some programming">Some programming</option>
+              <option value="Professional developer">Professional developer</option>
+            </select>
+          </div>
         </div>
+
+        {/* AI Tools Used - Multi-select */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Which AI tools have you used? <span className="text-gray-400 font-normal">(Select all that apply)</span>
+          </label>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            {[
+              'ChatGPT / Claude / Gemini',
+              'GitHub Copilot',
+              'Midjourney / DALL-E',
+              'OpenAI API / Anthropic API',
+              'None',
+            ].map((tool) => {
+              const isSelected = customProfile.tools_used.includes(tool)
+              const isNone = tool === 'None'
+              return (
+                <label
+                  key={tool}
+                  className={`flex items-center gap-2 p-3 rounded-lg border cursor-pointer transition-all ${
+                    isSelected
+                      ? 'border-indigo-300 bg-indigo-50 text-indigo-700'
+                      : 'border-gray-200 bg-white hover:border-gray-300 text-gray-700'
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                    checked={isSelected}
+                    onChange={() => {
+                      setCustomProfile(prev => {
+                        let next: string[]
+                        if (isNone) {
+                          next = isSelected ? [] : ['None']
+                        } else {
+                          next = isSelected
+                            ? prev.tools_used.filter(t => t !== tool)
+                            : [...prev.tools_used.filter(t => t !== 'None'), tool]
+                        }
+                        return { ...prev, tools_used: next }
+                      })
+                    }}
+                  />
+                  <span className="text-sm">{tool}</span>
+                </label>
+              )
+            })}
+          </div>
+        </div>
+
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Learning Intent <span className="text-gray-400 font-normal">(Optional)</span>

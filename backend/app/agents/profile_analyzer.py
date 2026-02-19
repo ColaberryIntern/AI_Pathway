@@ -1,4 +1,9 @@
-"""Profile Analyzer Agent - Extracts State A from user profile."""
+"""Profile Analyzer Agent - Extracts State A from user profile.
+
+Identifies the user's top 10 current AI-related skills mapped to the
+GenAI Skills Ontology, each with a rationale explaining *why* the skill
+was identified based on the user's resume, role, and intake answers.
+"""
 import json
 from app.agents.base import BaseAgent
 
@@ -10,8 +15,8 @@ class ProfileAnalyzerAgent(BaseAgent):
     description = "Analyzes user profiles to extract current role, skills, and AI exposure level"
 
     system_prompt = """You are an expert career analyst specializing in AI skills assessment.
-Your task is to analyze a user's professional profile and determine their current skill levels
-based on the GenAI Skills Ontology.
+Your task is to analyze a user's professional profile and determine their top 10 current
+skills based on the GenAI Skills Ontology.
 
 For each skill, assign a proficiency level (0-5):
 - 0: Unaware - Has not heard of it
@@ -22,7 +27,10 @@ For each skill, assign a proficiency level (0-5):
 - 5: Architect - Designs systems
 
 Be conservative in your assessments - only assign higher levels if there's clear evidence.
-Focus on AI/GenAI related skills and their prerequisites."""
+Focus on AI/GenAI related skills and their prerequisites.
+
+For EACH skill you identify, provide a rationale that references specific evidence from
+the user's profile (job title, responsibilities, tools used, or background)."""
 
     async def execute(self, task: dict) -> dict:
         """Analyze a user profile and extract State A skills.
@@ -36,6 +44,7 @@ Focus on AI/GenAI related skills and their prerequisites."""
         Returns:
             {
                 "state_a_skills": dict - Skill IDs mapped to proficiency levels
+                "top_10_current_skills": list - Top 10 skills with rationale
                 "profile_summary": str - Summary of the profile
                 "recommended_focus_domains": list - Domains to focus on
             }
@@ -55,9 +64,28 @@ Focus on AI/GenAI related skills and their prerequisites."""
         output_schema = {
             "type": "object",
             "properties": {
+                "top_10_current_skills": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "rank": {"type": "integer", "description": "Priority rank 1-10"},
+                            "skill_id": {"type": "string", "description": "Ontology skill ID (e.g. SK.FND.001)"},
+                            "skill_name": {"type": "string"},
+                            "domain": {"type": "string", "description": "Domain ID (e.g. D.FND)"},
+                            "domain_label": {"type": "string", "description": "Human-readable domain name"},
+                            "current_level": {"type": "integer", "description": "Assessed proficiency 0-5"},
+                            "rationale": {"type": "string", "description": "Why this skill was identified, referencing the user's profile"}
+                        },
+                        "required": ["rank", "skill_id", "skill_name", "domain", "current_level", "rationale"]
+                    },
+                    "minItems": 10,
+                    "maxItems": 10,
+                    "description": "Exactly 10 skills ranked by relevance to the user's current role"
+                },
                 "state_a_skills": {
                     "type": "object",
-                    "description": "Mapping of skill IDs to proficiency levels (0-5)"
+                    "description": "Mapping of skill IDs to proficiency levels (0-5) — same skills as top_10_current_skills"
                 },
                 "profile_summary": {
                     "type": "string",
@@ -73,7 +101,7 @@ Focus on AI/GenAI related skills and their prerequisites."""
                     "description": "Domain IDs to focus on for learning"
                 }
             },
-            "required": ["state_a_skills", "profile_summary", "recommended_focus_domains"]
+            "required": ["top_10_current_skills", "state_a_skills", "profile_summary", "recommended_focus_domains"]
         }
 
         result = await self._call_llm_structured(prompt, output_schema)
@@ -123,7 +151,22 @@ Focus on AI/GenAI related skills and their prerequisites."""
         if current_jd:
             current_jd_section = f"\nCurrent Job Description:\n{current_jd}\n"
 
-        return f"""Analyze this professional profile and assess their current skill levels.
+        # Include the 3 intake question answers if available
+        intake_section = ""
+        intake_parts = []
+        if profile.get("ai_exposure_level"):
+            intake_parts.append(f"AI Knowledge Level: {profile['ai_exposure_level']}")
+        if profile.get("tools_used"):
+            tools = profile["tools_used"]
+            if isinstance(tools, list):
+                tools = ", ".join(tools)
+            intake_parts.append(f"AI Tools Used: {tools}")
+        if profile.get("technical_background"):
+            intake_parts.append(f"Technical/Coding Background: {profile['technical_background']}")
+        if intake_parts:
+            intake_section = "\nIntake Answers:\n" + "\n".join(intake_parts) + "\n"
+
+        return f"""Analyze this professional profile and identify their TOP 10 current AI-related skills.
 
 PROFILE:
 Name: {profile.get('name', 'Unknown')}
@@ -134,13 +177,23 @@ AI Exposure: {profile.get('ai_exposure_level', 'Unknown')}
 
 Background:
 {json.dumps(profile.get('current_profile', {}), indent=2)}
-{current_jd_section}
+{current_jd_section}{intake_section}
 Learning Intent:
 {profile.get('learning_intent', 'Not specified')}
 
-RELEVANT SKILLS TO ASSESS:
+AVAILABLE SKILLS FROM ONTOLOGY:
 {skills_context}
 
-Based on this profile, assess the user's current proficiency level (0-5) for each relevant skill.
-Only include skills where you have enough information to make an assessment.
-Be conservative - don't assign high levels without clear evidence."""
+INSTRUCTIONS:
+1. Select exactly 10 skills from the ontology that best represent this user's current capabilities.
+2. For each skill, assess their current proficiency level (0-5) based on evidence from the profile.
+3. For each skill, write a rationale (1-2 sentences) explaining WHY you identified this skill,
+   referencing specific evidence from their role, experience, tools used, or background.
+4. Rank the 10 skills from most relevant (rank 1) to least relevant (rank 10).
+5. Also populate state_a_skills with the same skill_id → level mapping.
+6. Be conservative — only assign higher levels with clear evidence.
+
+Example rationale: "User's role as Program Manager at an AI consulting firm involves
+coordinating AI training programs — this directly maps to AI Enablement & Training Strategy
+at Practitioner level."
+"""

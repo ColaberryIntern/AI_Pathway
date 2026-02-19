@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation } from '@tanstack/react-query'
-import { getProfile, runFullAnalysis, parseJDProfile } from '../services/api'
+import { getProfile, runFullAnalysis, parseJDProfile, getVisualization } from '../services/api'
 import SkillsGapChart from '../components/SkillsGapChart'
 import {
   Loader2,
@@ -22,8 +22,9 @@ import {
   FileText,
   Wrench,
   Award,
+  ExternalLink,
 } from 'lucide-react'
-import type { AnalysisResult, Profile } from '../types'
+import type { AnalysisResult, Profile, Top10CurrentSkill, Top10TargetSkill } from '../types'
 import ArchetypeBadge from '../components/ArchetypeBadge'
 import JourneyArrow from '../components/JourneyArrow'
 import ProficiencyLegend, { getProficiencyLevel } from '../components/ProficiencyLegend'
@@ -618,6 +619,8 @@ export default function AnalysisPage() {
   // Complete state
   const summary = result?.result.summary
   const gaps = result?.result.gap_analysis.gaps || []
+  const top10Current: Top10CurrentSkill[] = result?.result.top_10_current_skills || []
+  const top10Target: Top10TargetSkill[] = result?.result.top_10_target_skills || []
 
   // Derive actual chapter-to-domain mapping from learning path
   const chapters = result?.result?.learning_path?.chapters || []
@@ -665,6 +668,106 @@ export default function AnalysisPage() {
             completedDomains={actualSelectedDomains.map((d: { domainId: string }) => d.domainId)}
             selectedDomains={actualSelectedDomains}
           />
+        </div>
+      )}
+
+      {/* Top-10 Skills Assessment Breakdown */}
+      {(top10Current.length > 0 || top10Target.length > 0) && (
+        <div className="space-y-6">
+          <h2 className="text-xl font-bold text-gray-900 text-center">
+            Skills Assessment Breakdown
+          </h2>
+
+          <div className="grid lg:grid-cols-2 gap-6">
+            {/* Left: Your Current Skills */}
+            {top10Current.length > 0 && (
+              <div className="card border-2 border-gray-200">
+                <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-200">
+                  <div className="w-8 h-8 bg-gray-600 rounded-lg flex items-center justify-center">
+                    <User className="h-4 w-4 text-white" />
+                  </div>
+                  <h3 className="font-bold text-gray-700">Your Current Skills (Top 10)</h3>
+                </div>
+                <div className="space-y-3">
+                  {top10Current.map((skill) => (
+                    <div key={skill.skill_id} className="p-3 bg-gray-50 rounded-lg">
+                      <div className="flex items-start justify-between gap-2 mb-1">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="flex-shrink-0 w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center text-xs font-bold text-gray-600">
+                            {skill.rank}
+                          </span>
+                          <div className="min-w-0">
+                            <span className="font-medium text-gray-900 text-sm block truncate">{skill.skill_name}</span>
+                            <span className="text-xs text-gray-500">{skill.skill_id}</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          <span className="text-xs px-2 py-0.5 bg-indigo-100 text-indigo-700 rounded font-medium">
+                            {skill.domain_label || skill.domain}
+                          </span>
+                          <span className="text-xs px-2 py-0.5 bg-sky-100 text-sky-700 rounded font-bold">
+                            L{skill.current_level}
+                          </span>
+                        </div>
+                      </div>
+                      <p className="text-xs text-gray-600 italic mt-1 leading-relaxed pl-8">
+                        {skill.rationale}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Right: Target Role Skills */}
+            {top10Target.length > 0 && (
+              <div className="card border-2 border-indigo-200">
+                <div className="flex items-center gap-2 mb-4 pb-3 border-b border-indigo-200">
+                  <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
+                    <Target className="h-4 w-4 text-white" />
+                  </div>
+                  <h3 className="font-bold text-indigo-700">Target Role Skills (Top 10)</h3>
+                </div>
+                <div className="space-y-3">
+                  {top10Target.map((skill) => (
+                    <div key={skill.skill_id} className="p-3 bg-indigo-50 rounded-lg">
+                      <div className="flex items-start justify-between gap-2 mb-1">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="flex-shrink-0 w-6 h-6 bg-indigo-200 rounded-full flex items-center justify-center text-xs font-bold text-indigo-700">
+                            {skill.rank}
+                          </span>
+                          <div className="min-w-0">
+                            <span className="font-medium text-gray-900 text-sm block truncate">{skill.skill_name}</span>
+                            <span className="text-xs text-gray-500">{skill.skill_id}</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          <span className="text-xs px-2 py-0.5 bg-indigo-100 text-indigo-700 rounded font-medium">
+                            {skill.domain_label || skill.domain}
+                          </span>
+                          <span className="text-xs px-2 py-0.5 bg-green-100 text-green-700 rounded font-bold">
+                            L{skill.required_level}
+                          </span>
+                          {skill.importance && (
+                            <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${
+                              skill.importance === 'critical' ? 'bg-red-100 text-red-700' :
+                              skill.importance === 'high' ? 'bg-amber-100 text-amber-700' :
+                              'bg-gray-100 text-gray-600'
+                            }`}>
+                              {skill.importance}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <p className="text-xs text-gray-600 italic mt-1 leading-relaxed pl-8">
+                        {skill.rationale}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
@@ -739,13 +842,32 @@ export default function AnalysisPage() {
       )}
 
       {/* CTA */}
-      <div className="flex justify-center">
+      <div className="flex justify-center gap-4">
         <button
           onClick={handleViewPath}
           className="btn btn-primary flex items-center gap-2 text-lg px-8 py-4 shadow-lg hover:shadow-xl transition-shadow"
         >
           View Your Learning Path
           <ArrowRight className="h-5 w-5" />
+        </button>
+        <button
+          onClick={async () => {
+            if (!result?.result) return
+            try {
+              const html = await getVisualization(result.result as Record<string, unknown>)
+              const win = window.open('', '_blank')
+              if (win) {
+                win.document.write(html)
+                win.document.close()
+              }
+            } catch {
+              // Silently fail — the button is a secondary action
+            }
+          }}
+          className="btn btn-secondary flex items-center gap-2 text-lg px-6 py-4"
+        >
+          View Ontology Path
+          <ExternalLink className="h-5 w-5" />
         </button>
       </div>
     </div>
