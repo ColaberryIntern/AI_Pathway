@@ -1287,10 +1287,12 @@ export default function AnalysisPage() {
       <div className="grid md:grid-cols-4 gap-4">
         <div className="card text-center border-l-4 border-l-red-500">
           <div className="text-3xl font-bold text-red-600">
-            {displayGaps}
+            {journeyRoadmap
+              ? <>{journeyRoadmap.skills_addressed.length} <span className="text-lg font-normal text-gray-400">of {displayGaps}</span></>
+              : displayGaps}
           </div>
-          <div className="text-gray-600 text-sm">Skills to Master</div>
-          <div className="text-gray-400 text-xs mt-1">across {focusAreas.length} domains</div>
+          <div className="text-gray-600 text-sm">Skills Addressed</div>
+          <div className="text-gray-400 text-xs mt-1">in this path</div>
         </div>
         <div className="card text-center border-l-4 border-l-indigo-500">
           <div className="text-3xl font-bold text-indigo-600">
@@ -1303,11 +1305,13 @@ export default function AnalysisPage() {
         </div>
         <div className="card text-center border-l-4 border-l-sky-500">
           <div className="text-3xl font-bold text-sky-600">
-            {displayChapters}
+            {journeyRoadmap ? `~${journeyRoadmap.estimated_total_paths}` : displayChapters}
           </div>
-          <div className="text-gray-600 text-sm">Chapters</div>
+          <div className="text-gray-600 text-sm">
+            {journeyRoadmap ? 'Paths Estimated' : 'Chapters'}
+          </div>
           <div className="text-gray-400 text-xs mt-1">
-            {journeyRoadmap ? `in Path ${journeyRoadmap.path_number}` : 'in this path'}
+            {journeyRoadmap ? 'to full role readiness' : ''}
           </div>
         </div>
         <div className="card text-center border-l-4 border-l-amber-500">
@@ -1315,6 +1319,7 @@ export default function AnalysisPage() {
             {Math.round(displayHours)}h
           </div>
           <div className="text-gray-600 text-sm">Estimated Time</div>
+          <div className="text-gray-400 text-xs mt-1">for this path</div>
         </div>
       </div>
 
