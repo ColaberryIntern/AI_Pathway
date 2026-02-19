@@ -513,8 +513,13 @@ node.filter(d => d.type === 'skill')
 node.append('title')
     .text(d => d.type === 'domain' ? d.label : d.id + ': ' + d.label);
 
-// Simulation tick
+// Simulation tick — clamp nodes within bounds to prevent label clipping
+const MARGIN = 80;
 simulation.on('tick', () => {{
+    graphData.nodes.forEach(d => {{
+        d.x = Math.max(MARGIN, Math.min(width - MARGIN, d.x));
+        d.y = Math.max(MARGIN, Math.min(height - MARGIN, d.y));
+    }});
     link
         .attr('x1', d => d.source.x)
         .attr('y1', d => d.source.y)

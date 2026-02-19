@@ -167,6 +167,8 @@ export interface AnalysisResult {
       role_analysis: {
         primary_function: string
         key_domains: string[]
+        seniority_level?: string
+        technical_depth?: string
       }
     }
     top_10_current_skills?: Top10CurrentSkill[]

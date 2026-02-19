@@ -22,6 +22,9 @@ import {
   Wrench,
   Award,
   ExternalLink,
+  AlertTriangle,
+  TrendingUp,
+  Layers,
 } from 'lucide-react'
 import type { AnalysisResult, Profile, Top10CurrentSkill, Top10TargetSkill, Top10SkillGap } from '../types'
 import ArchetypeBadge from '../components/ArchetypeBadge'
@@ -649,12 +652,15 @@ export default function AnalysisPage() {
   const top10Current: Top10CurrentSkill[] = result?.result.top_10_current_skills || []
   const top10Target: Top10TargetSkill[] = result?.result.top_10_target_skills || []
   const top10Gaps: Top10SkillGap[] = result?.result.top_10_skill_gaps || []
+  const roleAnalysis = result?.result.jd_parsing?.role_analysis
+  const primaryFunction = roleAnalysis?.primary_function || ''
+  const keyDomains = roleAnalysis?.key_domains || []
 
   // Derive actual chapter-to-domain mapping from learning path
   const chapters = result?.result?.learning_path?.chapters || []
 
   // Compute robust display values from actual data arrays
-  const displayGaps = chapters.length || gaps.length || summary?.total_gaps_identified || 0
+  const displayGaps = top10Gaps.filter(g => g.gap > 0).length || gaps.length || summary?.total_gaps_identified || 0
   const displayChapters = chapters.length || summary?.total_chapters || 0
   const displayHours =
     result?.result?.learning_path?.total_estimated_hours
@@ -670,8 +676,104 @@ export default function AnalysisPage() {
     })
     .filter((x: { domainId: string; chapterNum: number } | null): x is { domainId: string; chapterNum: number } => x !== null)
 
+  // --- Laura G format derivations ---
+
+  // Section 1: Split current skills into Strengths vs Development
+  const strengths = top10Current.filter(s => s.current_level >= 3)
+  const developmentSkills = top10Current.filter(s => s.current_level < 3)
+  const criticalDev = developmentSkills.filter(s => s.current_level === 0)
+  const importantDev = developmentSkills.filter(s => s.current_level >= 1)
+
+  // Section 3: Split gaps into Critical vs Moderate
+  const criticalGaps = top10Gaps.filter(g => g.gap >= 3)
+  const moderateGaps = top10Gaps.filter(g => g.gap > 0 && g.gap <= 2)
+
+  // Section 3c: Focus Areas — group gaps by domain
+  const focusAreaMap = new Map<string, { domain: string; domainLabel: string; skills: Top10SkillGap[] }>()
+  for (const gap of top10Gaps.filter(g => g.gap > 0)) {
+    const key = gap.domain
+    if (!focusAreaMap.has(key)) {
+      focusAreaMap.set(key, { domain: key, domainLabel: gap.domain_label || key, skills: [] })
+    }
+    focusAreaMap.get(key)!.skills.push(gap)
+  }
+  const focusAreas = Array.from(focusAreaMap.values()).sort(
+    (a, b) => {
+      const avgA = a.skills.reduce((s, g) => s + g.gap, 0) / a.skills.length
+      const avgB = b.skills.reduce((s, g) => s + g.gap, 0) / b.skills.length
+      return avgB - avgA
+    }
+  )
+
+  // Build domain label lookup for chapter phasing
+  const domainLabelMap = new Map<string, string>()
+  for (const g of top10Gaps) {
+    if (g.domain_label) domainLabelMap.set(g.domain, g.domain_label)
+  }
+  for (const t of top10Target) {
+    if (t.domain_label) domainLabelMap.set(t.domain, t.domain_label)
+  }
+  const resolveDomainLabel = (domainId: string) => domainLabelMap.get(domainId) || domainId
+
+  // Section 5: Group chapters by domain into phases
+  type ChapterEntry = { chapter_number?: number; skill_id?: string; primary_skill_id?: string; skill_name?: string; primary_skill_name?: string; title?: string; current_level?: number; target_level?: number; estimated_time_hours?: number; learning_objectives?: string[]; industry_context?: string }
+  const phases = (() => {
+    const groups: Array<{ domain: string; domainLabel: string; chapters: ChapterEntry[] }> = []
+    for (const ch of chapters as ChapterEntry[]) {
+      const sid = ch.skill_id || ch.primary_skill_id || ''
+      const parts = sid.split('.')
+      const domainId = parts.length >= 3 ? `D.${parts[1]}` : 'unknown'
+      const last = groups[groups.length - 1]
+      if (last && last.domain === domainId) {
+        last.chapters.push(ch)
+      } else {
+        groups.push({ domain: domainId, domainLabel: resolveDomainLabel(domainId), chapters: [ch] })
+      }
+    }
+    return groups
+  })()
+
+  // Estimated hours for a focus area (cross-reference chapters)
+  const focusAreaHours = (domainId: string) => {
+    return (chapters as ChapterEntry[])
+      .filter(ch => {
+        const sid = ch.skill_id || ch.primary_skill_id || ''
+        const parts = sid.split('.')
+        return parts.length >= 3 && `D.${parts[1]}` === domainId
+      })
+      .reduce((sum, ch) => sum + (ch.estimated_time_hours || 0), 0)
+  }
+
+  // Helper to render two-row gap bars
+  const renderGapBars = (currentLevel: number, targetLevel: number, compact = false) => {
+    const currentPct = (currentLevel / 5) * 100
+    const targetPct = (targetLevel / 5) * 100
+    const h = compact ? 'h-2.5' : 'h-4'
+    return (
+      <div className={`space-y-${compact ? '0.5' : '1'}`}>
+        <div className="flex items-center gap-2">
+          <span className={`${compact ? 'text-[9px] w-8' : 'text-[10px] w-10'} font-medium text-gray-500 text-right`}>You</span>
+          <div className={`flex-1 ${h} bg-gray-100 rounded overflow-hidden`}>
+            {currentPct > 0 && (
+              <div className={`h-full bg-sky-500 rounded transition-all duration-700 ease-out`} style={{ width: `${currentPct}%` }} />
+            )}
+          </div>
+          <span className="text-[10px] font-bold text-sky-600 w-6">L{currentLevel}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className={`${compact ? 'text-[9px] w-8' : 'text-[10px] w-10'} font-medium text-gray-500 text-right`}>Target</span>
+          <div className={`flex-1 ${h} bg-gray-100 rounded overflow-hidden`}>
+            <div className={`h-full bg-emerald-500 rounded transition-all duration-700 ease-out`} style={{ width: `${targetPct}%` }} />
+          </div>
+          <span className="text-[10px] font-bold text-emerald-600 w-6">L{targetLevel}</span>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="max-w-4xl mx-auto space-y-8">
+      {/* Success Header */}
       <div className="text-center">
         <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
           <CheckCircle className="h-10 w-10 text-green-500" />
@@ -680,9 +782,39 @@ export default function AnalysisPage() {
           Analysis Complete!
         </h1>
         <p className="text-gray-600">
-          Your personalized learning path is ready.
+          Your personalized AI skills assessment is ready.
         </p>
       </div>
+
+      {/* Section 0: Role Context Header */}
+      {(summary?.target_role || primaryFunction) && (
+        <div className="card bg-gradient-to-r from-indigo-50 to-sky-50 border-indigo-200">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center flex-shrink-0">
+              <Briefcase className="h-5 w-5 text-white" />
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-gray-900">
+                Your Path to: {summary?.target_role || primaryFunction}
+              </h2>
+              {primaryFunction && summary?.target_role && primaryFunction !== summary.target_role && (
+                <p className="text-sm text-gray-600 mt-1">
+                  Core Focus: {primaryFunction}
+                </p>
+              )}
+              {keyDomains.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  {keyDomains.map((domain, i) => (
+                    <span key={i} className="text-xs px-2 py-0.5 bg-indigo-100 text-indigo-700 rounded-full font-medium">
+                      {domain}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Domain Grid — actual chapter-to-domain mapping */}
       {actualSelectedDomains.length > 0 && (
@@ -699,285 +831,446 @@ export default function AnalysisPage() {
         </div>
       )}
 
-      {/* Section 1 & 2: Current Skills vs Target Skills — side by side */}
-      {(top10Current.length > 0 || top10Target.length > 0) && (
+      {/* ================================================================ */}
+      {/* PART 1: Current Skills — Strengths + Development Tiers          */}
+      {/* ================================================================ */}
+      {top10Current.length > 0 && (
         <div className="space-y-4">
-          <h2 className="text-xl font-bold text-gray-900 text-center">
-            Skills Assessment
+          <h2 className="text-xl font-bold text-gray-900">
+            Part 1: Skills for Your Current Role
           </h2>
 
-          <div className="grid lg:grid-cols-2 gap-6">
-            {/* Left: Your Current Skills */}
-            {top10Current.length > 0 && (
-              <div className="card border-2 border-gray-200">
-                <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-200">
-                  <div className="w-8 h-8 bg-gray-600 rounded-lg flex items-center justify-center">
-                    <User className="h-4 w-4 text-white" />
-                  </div>
-                  <h3 className="font-bold text-gray-700">Your Current Skills</h3>
-                  <span className="text-xs text-gray-400 ml-auto">Top 10</span>
-                </div>
-                <div className="space-y-2.5">
-                  {top10Current.map((skill) => (
-                    <div key={skill.skill_id} className="p-2.5 bg-gray-50 rounded-lg">
-                      <div className="flex items-start justify-between gap-2 mb-1">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <span className="flex-shrink-0 w-5 h-5 bg-gray-200 rounded-full flex items-center justify-center text-[10px] font-bold text-gray-600">
-                            {skill.rank}
-                          </span>
-                          <div className="min-w-0">
-                            <span className="font-medium text-gray-900 text-sm block truncate">{skill.skill_name}</span>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-1.5 flex-shrink-0">
-                          <span className="text-[10px] px-1.5 py-0.5 bg-indigo-100 text-indigo-700 rounded font-medium">
-                            {skill.domain_label || skill.domain}
-                          </span>
-                          <span className="text-xs px-2 py-0.5 bg-sky-100 text-sky-700 rounded font-bold">
-                            L{skill.current_level}
-                          </span>
-                        </div>
-                      </div>
-                      <p className="text-[11px] text-gray-500 italic leading-relaxed pl-7">
-                        {skill.rationale}
-                      </p>
-                    </div>
-                  ))}
-                </div>
+          {/* Strengths (level 3+) */}
+          {strengths.length > 0 && (
+            <div className="card border-l-4 border-l-green-500">
+              <div className="flex items-center gap-2 mb-4">
+                <Award className="h-5 w-5 text-green-600" />
+                <h3 className="font-bold text-green-700">Skills You Already Have (Strengths)</h3>
               </div>
-            )}
+              <div className="space-y-3">
+                {strengths.map((skill) => (
+                  <div key={skill.skill_id} className="p-3 bg-green-50 rounded-lg">
+                    <div className="flex items-start justify-between gap-2 mb-1.5">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="font-medium text-gray-900 text-sm">{skill.skill_name}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 flex-shrink-0">
+                        <span className="text-[10px] px-1.5 py-0.5 bg-indigo-100 text-indigo-700 rounded font-medium">
+                          {skill.domain_label || skill.domain}
+                        </span>
+                        <span className="text-xs px-2 py-0.5 bg-green-200 text-green-800 rounded font-bold">
+                          L{skill.current_level}
+                        </span>
+                      </div>
+                    </div>
+                    <p className="text-xs text-gray-600 leading-relaxed">
+                      <span className="font-semibold text-gray-700">Why This Matters: </span>
+                      {skill.rationale}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
-            {/* Right: Target Role Skills */}
-            {top10Target.length > 0 && (
-              <div className="card border-2 border-indigo-200">
-                <div className="flex items-center gap-2 mb-4 pb-3 border-b border-indigo-200">
-                  <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
-                    <Target className="h-4 w-4 text-white" />
+          {/* Priority Skills to Develop (level 0-2) */}
+          {developmentSkills.length > 0 && (
+            <div className="card border-l-4 border-l-amber-500">
+              <div className="flex items-center gap-2 mb-4">
+                <Target className="h-5 w-5 text-amber-600" />
+                <h3 className="font-bold text-amber-700">Priority Skills to Develop for Current Role</h3>
+              </div>
+
+              {/* Critical tier (level 0) */}
+              {criticalDev.length > 0 && (
+                <div className="mb-4">
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <span className="text-xs font-bold text-red-600 uppercase tracking-wide">Critical</span>
+                    <span className="text-[10px] text-gray-400">— No current proficiency</span>
                   </div>
-                  <h3 className="font-bold text-indigo-700">Target Role Skills</h3>
-                  <span className="text-xs text-gray-400 ml-auto">Top 10</span>
-                </div>
-                <div className="space-y-2.5">
-                  {top10Target.map((skill) => (
-                    <div key={skill.skill_id} className="p-2.5 bg-indigo-50 rounded-lg">
-                      <div className="flex items-start justify-between gap-2 mb-1">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <span className="flex-shrink-0 w-5 h-5 bg-indigo-200 rounded-full flex items-center justify-center text-[10px] font-bold text-indigo-700">
-                            {skill.rank}
-                          </span>
-                          <div className="min-w-0">
-                            <span className="font-medium text-gray-900 text-sm block truncate">{skill.skill_name}</span>
+                  <div className="space-y-2">
+                    {criticalDev.map((skill) => (
+                      <div key={skill.skill_id} className="p-3 bg-red-50 rounded-lg border-l-2 border-l-red-300">
+                        <div className="flex items-start justify-between gap-2 mb-1.5">
+                          <span className="font-medium text-gray-900 text-sm">{skill.skill_name}</span>
+                          <div className="flex items-center gap-1.5 flex-shrink-0">
+                            <span className="text-[10px] px-1.5 py-0.5 bg-indigo-100 text-indigo-700 rounded font-medium">
+                              {skill.domain_label || skill.domain}
+                            </span>
+                            <span className="text-xs px-2 py-0.5 bg-red-100 text-red-700 rounded font-bold">
+                              L{skill.current_level}
+                            </span>
                           </div>
                         </div>
-                        <div className="flex items-center gap-1.5 flex-shrink-0">
-                          <span className="text-[10px] px-1.5 py-0.5 bg-indigo-100 text-indigo-700 rounded font-medium">
-                            {skill.domain_label || skill.domain}
-                          </span>
-                          <span className="text-xs px-2 py-0.5 bg-green-100 text-green-700 rounded font-bold">
-                            L{skill.required_level}
-                          </span>
-                          {skill.importance && (
-                            <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
-                              skill.importance === 'critical' ? 'bg-red-100 text-red-700' :
-                              skill.importance === 'high' ? 'bg-amber-100 text-amber-700' :
-                              'bg-gray-100 text-gray-600'
-                            }`}>
-                              {skill.importance}
-                            </span>
-                          )}
-                        </div>
+                        <p className="text-xs text-gray-600 leading-relaxed">
+                          <span className="font-semibold text-gray-700">Why This Matters: </span>
+                          {skill.rationale}
+                        </p>
                       </div>
-                      <p className="text-[11px] text-gray-500 italic leading-relaxed pl-7">
-                        {skill.rationale}
-                      </p>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
+              )}
+
+              {/* Important tier (level 1-2) */}
+              {importantDev.length > 0 && (
+                <div>
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <span className="text-xs font-bold text-amber-600 uppercase tracking-wide">Important</span>
+                    <span className="text-[10px] text-gray-400">— Some foundation exists</span>
+                  </div>
+                  <div className="space-y-2">
+                    {importantDev.map((skill) => (
+                      <div key={skill.skill_id} className="p-3 bg-amber-50 rounded-lg border-l-2 border-l-amber-300">
+                        <div className="flex items-start justify-between gap-2 mb-1.5">
+                          <span className="font-medium text-gray-900 text-sm">{skill.skill_name}</span>
+                          <div className="flex items-center gap-1.5 flex-shrink-0">
+                            <span className="text-[10px] px-1.5 py-0.5 bg-indigo-100 text-indigo-700 rounded font-medium">
+                              {skill.domain_label || skill.domain}
+                            </span>
+                            <span className="text-xs px-2 py-0.5 bg-amber-100 text-amber-700 rounded font-bold">
+                              L{skill.current_level}
+                            </span>
+                          </div>
+                        </div>
+                        <p className="text-xs text-gray-600 leading-relaxed">
+                          <span className="font-semibold text-gray-700">Why This Matters: </span>
+                          {skill.rationale}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ================================================================ */}
+      {/* PART 2: Target Role Skills                                       */}
+      {/* ================================================================ */}
+      {top10Target.length > 0 && (
+        <div className="space-y-4">
+          <h2 className="text-xl font-bold text-gray-900">
+            Part 2: Top 10 Skills for Target Role
+          </h2>
+
+          <div className="card border-2 border-indigo-200">
+            <div className="flex items-center gap-2 mb-1 pb-3 border-b border-indigo-200">
+              <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
+                <Target className="h-4 w-4 text-white" />
               </div>
-            )}
+              <div>
+                <h3 className="font-bold text-indigo-700">
+                  {primaryFunction ? `Skills Required for: ${primaryFunction}` : 'Target Role Skills'}
+                </h3>
+              </div>
+            </div>
+
+            <div className="overflow-x-auto mt-3">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-xs text-gray-500 border-b border-gray-200">
+                    <th className="pb-2 w-8">#</th>
+                    <th className="pb-2">Skill</th>
+                    <th className="pb-2">Domain</th>
+                    <th className="pb-2 text-center">Level</th>
+                    <th className="pb-2 text-center">Imp.</th>
+                    <th className="pb-2">Why It&apos;s Essential</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {top10Target.map((skill) => (
+                    <tr key={skill.skill_id} className="border-b border-gray-100 last:border-0">
+                      <td className="py-2.5 text-indigo-600 font-bold">{skill.rank}</td>
+                      <td className="py-2.5 font-medium text-gray-900">{skill.skill_name}</td>
+                      <td className="py-2.5">
+                        <span className="text-[10px] px-1.5 py-0.5 bg-indigo-100 text-indigo-700 rounded font-medium whitespace-nowrap">
+                          {skill.domain_label || skill.domain}
+                        </span>
+                      </td>
+                      <td className="py-2.5 text-center">
+                        <span className="text-xs px-2 py-0.5 bg-green-100 text-green-700 rounded font-bold">
+                          L{skill.required_level}
+                        </span>
+                      </td>
+                      <td className="py-2.5 text-center">
+                        {skill.importance && (
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
+                            skill.importance === 'critical' ? 'bg-red-100 text-red-700' :
+                            skill.importance === 'high' ? 'bg-amber-100 text-amber-700' :
+                            'bg-gray-100 text-gray-600'
+                          }`}>
+                            {skill.importance}
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-2.5 text-xs text-gray-500 italic max-w-xs">{skill.rationale}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       )}
 
-      {/* Section 3: Skills Gap — two-row comparison bars */}
+      {/* ================================================================ */}
+      {/* PART 3: Gap Analysis — Critical / Moderate / Focus Areas         */}
+      {/* ================================================================ */}
       {top10Gaps.length > 0 && (
-        <div className="card">
-          <div className="flex items-center gap-2 mb-5">
-            <BarChart3 className="h-5 w-5 text-indigo-600" />
-            <h2 className="text-xl font-bold text-gray-900">
-              Skills Gap
-            </h2>
-            <span className="text-sm text-gray-500 ml-auto">Target Skills vs Your Current Level</span>
-          </div>
+        <div className="space-y-4">
+          <h2 className="text-xl font-bold text-gray-900">
+            Part 3: Gap Analysis &amp; Focus Areas
+          </h2>
 
-          <div className="space-y-4">
-            {top10Gaps.map((skill) => {
-              const currentPct = (skill.current_level / 5) * 100
-              const targetPct = (skill.required_level / 5) * 100
-
-              return (
-                <div key={skill.skill_id}>
-                  {/* Skill label row */}
-                  <div className="flex items-center justify-between mb-1.5">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <span className="flex-shrink-0 w-5 h-5 bg-indigo-100 rounded-full flex items-center justify-center text-[10px] font-bold text-indigo-600">
-                        {skill.rank}
-                      </span>
-                      <span className="text-sm font-medium text-gray-700 truncate">
-                        {skill.skill_name}
-                      </span>
-                      <span className="text-[10px] px-1.5 py-0.5 bg-indigo-50 text-indigo-600 rounded font-medium">
-                        {skill.domain_label || skill.domain}
-                      </span>
-                      {skill.importance && (
-                        <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
-                          skill.importance === 'critical' ? 'bg-red-100 text-red-700' :
-                          skill.importance === 'high' ? 'bg-amber-100 text-amber-700' :
-                          'bg-gray-100 text-gray-600'
-                        }`}>
-                          {skill.importance}
+          {/* 3a: Critical Gaps (gap >= 3) */}
+          {criticalGaps.length > 0 && (
+            <div className="card border-l-4 border-l-red-500">
+              <div className="flex items-center gap-2 mb-4">
+                <AlertTriangle className="h-5 w-5 text-red-600" />
+                <h3 className="font-bold text-red-700">Critical Gaps</h3>
+                <span className="text-xs text-gray-400">— 3+ levels to close</span>
+              </div>
+              <div className="space-y-4">
+                {criticalGaps.map((skill) => (
+                  <div key={skill.skill_id} className="p-3 bg-red-50 rounded-lg">
+                    <div className="flex items-center justify-between gap-2 mb-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="font-medium text-gray-900 text-sm">{skill.skill_name}</span>
+                        <span className="text-[10px] px-1.5 py-0.5 bg-indigo-100 text-indigo-700 rounded font-medium">
+                          {skill.domain_label || skill.domain}
                         </span>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-1 text-xs flex-shrink-0 ml-2">
-                      {skill.gap > 0 ? (
-                        <span className="text-red-600 font-bold">Gap: +{skill.gap}</span>
-                      ) : (
-                        <span className="text-green-600 font-bold flex items-center gap-1">
-                          <CheckCircle className="h-3.5 w-3.5" /> Met
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <span className="text-xs text-gray-500">
+                          L{skill.current_level} → L{skill.required_level}
                         </span>
-                      )}
+                        <span className="text-xs px-2 py-0.5 bg-red-200 text-red-800 rounded font-bold">
+                          Gap: +{skill.gap}
+                        </span>
+                      </div>
                     </div>
+                    {renderGapBars(skill.current_level, skill.required_level)}
+                    {skill.rationale && (
+                      <p className="text-xs text-gray-600 leading-relaxed mt-2">
+                        <span className="font-semibold text-gray-700">Why: </span>
+                        {skill.rationale}
+                      </p>
+                    )}
                   </div>
-                  {/* Two-row bars */}
-                  <div className="space-y-1 pl-7">
-                    {/* You row */}
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-medium text-gray-500 w-10 text-right">You</span>
-                      <div className="flex-1 h-4 bg-gray-100 rounded overflow-hidden">
-                        {currentPct > 0 && (
-                          <div
-                            className="h-full bg-sky-500 rounded transition-all duration-700 ease-out"
-                            style={{ width: `${currentPct}%` }}
-                          />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* 3b: Moderate Gaps (gap 1-2) */}
+          {moderateGaps.length > 0 && (
+            <div className="card border-l-4 border-l-amber-500">
+              <div className="flex items-center gap-2 mb-4">
+                <TrendingUp className="h-5 w-5 text-amber-600" />
+                <h3 className="font-bold text-amber-700">Moderate Gaps</h3>
+                <span className="text-xs text-gray-400">— 1-2 levels to close</span>
+              </div>
+              <div className="space-y-4">
+                {moderateGaps.map((skill) => (
+                  <div key={skill.skill_id} className="p-3 bg-amber-50 rounded-lg">
+                    <div className="flex items-center justify-between gap-2 mb-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="font-medium text-gray-900 text-sm">{skill.skill_name}</span>
+                        <span className="text-[10px] px-1.5 py-0.5 bg-indigo-100 text-indigo-700 rounded font-medium">
+                          {skill.domain_label || skill.domain}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <span className="text-xs text-gray-500">
+                          L{skill.current_level} → L{skill.required_level}
+                        </span>
+                        <span className="text-xs px-2 py-0.5 bg-amber-200 text-amber-800 rounded font-bold">
+                          Gap: +{skill.gap}
+                        </span>
+                      </div>
+                    </div>
+                    {renderGapBars(skill.current_level, skill.required_level)}
+                    <p className="text-xs text-gray-600 leading-relaxed mt-2">
+                      <span className="font-semibold text-gray-700">Your Advantage: </span>
+                      {skill.current_level >= 2
+                        ? 'You already have practical experience here — this is a short step to close.'
+                        : skill.current_level === 1
+                        ? 'You have awareness of this area — building on existing foundation.'
+                        : 'Small gap to close — a focused effort will get you there.'}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* 3c: Focus Areas (grouped by domain) */}
+          {focusAreas.length > 0 && (
+            <div className="card">
+              <div className="flex items-center gap-2 mb-4">
+                <Layers className="h-5 w-5 text-indigo-600" />
+                <h3 className="font-bold text-gray-900">Focus Areas</h3>
+              </div>
+              <div className="grid md:grid-cols-2 gap-4">
+                {focusAreas.map((area, idx) => {
+                  const hours = focusAreaHours(area.domain)
+                  const avgGap = (area.skills.reduce((s, g) => s + g.gap, 0) / area.skills.length).toFixed(1)
+                  return (
+                    <div key={area.domain} className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-bold text-gray-900 text-sm">
+                          Focus Area {idx + 1}: {area.domainLabel}
+                        </h4>
+                        {hours > 0 && (
+                          <span className="text-[10px] px-2 py-0.5 bg-sky-100 text-sky-700 rounded font-medium">
+                            ~{Math.round(hours)}h
+                          </span>
                         )}
                       </div>
-                      <span className="text-[10px] font-bold text-sky-600 w-6">L{skill.current_level}</span>
-                    </div>
-                    {/* Target row */}
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-medium text-gray-500 w-10 text-right">Target</span>
-                      <div className="flex-1 h-4 bg-gray-100 rounded overflow-hidden">
-                        <div
-                          className="h-full bg-emerald-500 rounded transition-all duration-700 ease-out"
-                          style={{ width: `${targetPct}%` }}
-                        />
+                      <p className="text-xs text-gray-500 mb-3">
+                        {area.skills.length} skill{area.skills.length > 1 ? 's' : ''} to develop · Avg gap: {avgGap} levels
+                      </p>
+                      <div className="space-y-1.5">
+                        {area.skills.map((skill) => (
+                          <div key={skill.skill_id} className="flex items-center justify-between text-xs">
+                            <span className="text-gray-700">{skill.skill_name}</span>
+                            <span className="text-gray-500 flex-shrink-0 ml-2">
+                              L{skill.current_level} → L{skill.required_level}
+                              <span className="text-red-500 font-bold ml-1">+{skill.gap}</span>
+                            </span>
+                          </div>
+                        ))}
                       </div>
-                      <span className="text-[10px] font-bold text-emerald-600 w-6">L{skill.required_level}</span>
                     </div>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-
-          {/* Scale markers */}
-          <div className="flex justify-between mt-3 text-[10px] text-gray-400 pl-[4.75rem] pr-8">
-            {['L0', 'L1', 'L2', 'L3', 'L4', 'L5'].map((label) => (
-              <span key={label}>{label}</span>
-            ))}
-          </div>
-
-          {/* Legend */}
-          <div className="flex flex-wrap justify-center gap-5 mt-3 pt-3 border-t border-gray-100 text-xs text-gray-600">
-            <div className="flex items-center gap-1.5">
-              <div className="w-3 h-3 rounded-sm bg-sky-500" />
-              <span>Your Current Level</span>
+                  )
+                })}
+              </div>
             </div>
-            <div className="flex items-center gap-1.5">
-              <div className="w-3 h-3 rounded-sm bg-emerald-500" />
-              <span>Target Level Required</span>
-            </div>
-          </div>
+          )}
         </div>
       )}
 
       {/* Summary Cards */}
-      <div className="grid md:grid-cols-3 gap-4">
-        <div className="card text-center border-l-4 border-l-indigo-500">
-          <div className="text-3xl font-bold text-indigo-600">
+      <div className="grid md:grid-cols-4 gap-4">
+        <div className="card text-center border-l-4 border-l-red-500">
+          <div className="text-3xl font-bold text-red-600">
             {displayGaps}
           </div>
-          <div className="text-gray-600">Skill Gaps Identified</div>
+          <div className="text-gray-600 text-sm">Skill Gaps</div>
+        </div>
+        <div className="card text-center border-l-4 border-l-indigo-500">
+          <div className="text-3xl font-bold text-indigo-600">
+            {focusAreas.length}
+          </div>
+          <div className="text-gray-600 text-sm">Focus Domains</div>
         </div>
         <div className="card text-center border-l-4 border-l-sky-500">
           <div className="text-3xl font-bold text-sky-600">
             {displayChapters}
           </div>
-          <div className="text-gray-600">Learning Chapters</div>
+          <div className="text-gray-600 text-sm">Learning Chapters</div>
         </div>
         <div className="card text-center border-l-4 border-l-amber-500">
           <div className="text-3xl font-bold text-amber-600">
             {Math.round(displayHours)}h
           </div>
-          <div className="text-gray-600">Estimated Time</div>
+          <div className="text-gray-600 text-sm">Estimated Time</div>
         </div>
       </div>
 
-      {/* Learning Path — two-row bars (compact) */}
-      {chapters.length > 0 && (
+      {/* ================================================================ */}
+      {/* LEARNING PATH — Domain-Grouped Phases                            */}
+      {/* ================================================================ */}
+      {phases.length > 0 && (
         <div className="card">
           <div className="flex items-center gap-2 mb-5">
             <BookOpen className="h-5 w-5 text-indigo-600" />
             <h2 className="text-xl font-bold text-gray-900">
-              Your Learning Path
+              Recommended Learning Sequence
             </h2>
-            <span className="text-sm text-gray-500 ml-auto">Current → Target Skill Progression</span>
           </div>
-          <div className="space-y-3">
-            {chapters.map((ch: { chapter_number?: number; skill_id?: string; primary_skill_id?: string; skill_name?: string; primary_skill_name?: string; title?: string; current_level?: number; target_level?: number; estimated_time_hours?: number }) => {
-              const current = ch.current_level ?? 0
-              const target = ch.target_level ?? 1
-              const currentPct = (current / 5) * 100
-              const targetPct = (target / 5) * 100
 
+          <div className="space-y-6">
+            {phases.map((phase, phaseIdx) => {
+              const phaseHours = phase.chapters.reduce((sum, ch) => sum + (ch.estimated_time_hours || 0), 0)
               return (
-                <div key={ch.chapter_number} className="p-3 bg-gray-50 rounded-lg">
-                  {/* Header */}
-                  <div className="flex items-center justify-between gap-3 mb-1.5">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-7 h-7 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 font-bold text-xs flex-shrink-0">
-                        {ch.chapter_number}
-                      </div>
-                      <div className="min-w-0">
-                        <div className="font-medium text-gray-900 text-sm truncate">{ch.title || ch.skill_name}</div>
-                      </div>
+                <div key={phaseIdx}>
+                  {/* Phase header */}
+                  <div className="flex items-center gap-3 mb-3 pb-2 border-b border-indigo-100">
+                    <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                      {phaseIdx + 1}
                     </div>
-                    <div className="flex items-center gap-1 flex-shrink-0">
-                      <span className="text-[10px] font-bold text-sky-600">L{current}</span>
-                      <ArrowRight className="h-3 w-3 text-gray-400" />
-                      <span className="text-[10px] font-bold text-emerald-600">L{target}</span>
-                      {ch.estimated_time_hours && (
-                        <span className="text-[10px] text-gray-400 ml-1">{ch.estimated_time_hours}h</span>
-                      )}
+                    <div className="flex-1">
+                      <h3 className="font-bold text-indigo-700">Phase {phaseIdx + 1}: {phase.domainLabel}</h3>
+                      <p className="text-xs text-gray-500">
+                        {phase.chapters.length} chapter{phase.chapters.length > 1 ? 's' : ''}
+                        {phaseHours > 0 && ` · ~${Math.round(phaseHours)}h`}
+                      </p>
                     </div>
                   </div>
-                  {/* Two-row bars (compact) */}
-                  <div className="space-y-0.5 pl-10">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-[9px] text-gray-400 w-8 text-right">You</span>
-                      <div className="flex-1 h-2.5 bg-gray-100 rounded overflow-hidden">
-                        {currentPct > 0 && (
-                          <div className="h-full bg-sky-500 rounded" style={{ width: `${currentPct}%` }} />
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-[9px] text-gray-400 w-8 text-right">Target</span>
-                      <div className="flex-1 h-2.5 bg-gray-100 rounded overflow-hidden">
-                        <div className="h-full bg-emerald-500 rounded" style={{ width: `${targetPct}%` }} />
-                      </div>
-                    </div>
+
+                  {/* Chapters within phase */}
+                  <div className="space-y-3 pl-4">
+                    {phase.chapters.map((ch) => {
+                      const current = ch.current_level ?? 0
+                      const target = ch.target_level ?? 1
+                      return (
+                        <div key={ch.chapter_number} className="p-3 bg-gray-50 rounded-lg">
+                          {/* Chapter header */}
+                          <div className="flex items-center justify-between gap-3 mb-2">
+                            <div className="flex items-center gap-3 min-w-0">
+                              <div className="w-7 h-7 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 font-bold text-xs flex-shrink-0">
+                                {ch.chapter_number}
+                              </div>
+                              <div className="min-w-0">
+                                <div className="font-medium text-gray-900 text-sm truncate">{ch.title || ch.skill_name || ch.primary_skill_name}</div>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-1 flex-shrink-0">
+                              <span className="text-[10px] font-bold text-sky-600">L{current}</span>
+                              <ArrowRight className="h-3 w-3 text-gray-400" />
+                              <span className="text-[10px] font-bold text-emerald-600">L{target}</span>
+                              {ch.estimated_time_hours && (
+                                <span className="text-[10px] text-gray-400 ml-1">{ch.estimated_time_hours}h</span>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Two-row bars */}
+                          <div className="pl-10 mb-2">
+                            {renderGapBars(current, target, true)}
+                          </div>
+
+                          {/* Learning objectives */}
+                          {ch.learning_objectives && ch.learning_objectives.length > 0 && (
+                            <div className="pl-10 mt-2">
+                              <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide mb-1">Learning Objectives</p>
+                              <ul className="text-xs text-gray-600 space-y-0.5">
+                                {ch.learning_objectives.slice(0, 3).map((obj, i) => (
+                                  <li key={i} className="flex items-start gap-1.5">
+                                    <span className="text-indigo-400 mt-0.5">•</span>
+                                    <span>{obj}</span>
+                                  </li>
+                                ))}
+                                {ch.learning_objectives.length > 3 && (
+                                  <li className="text-gray-400 text-[10px]">+{ch.learning_objectives.length - 3} more</li>
+                                )}
+                              </ul>
+                            </div>
+                          )}
+
+                          {/* Industry context */}
+                          {ch.industry_context && (
+                            <p className="pl-10 mt-1.5 text-[11px] text-gray-500 italic line-clamp-2">
+                              {ch.industry_context}
+                            </p>
+                          )}
+                        </div>
+                      )
+                    })}
                   </div>
                 </div>
               )
@@ -1002,7 +1295,7 @@ export default function AnalysisPage() {
       {summary?.recommendations && summary.recommendations.length > 0 && (
         <div className="card bg-indigo-50 border-indigo-200">
           <h2 className="text-xl font-bold text-gray-900 mb-4">
-            Recommendations
+            Recommended Next Steps
           </h2>
           <ul className="space-y-2">
             {summary.recommendations.map((rec, i) => (
