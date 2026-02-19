@@ -91,6 +91,9 @@ parse job descriptions, identify skill gaps, and generate personalized learning 
             results["top_10_current_skills"] = top_10_current
             results["top_10_target_skills"] = top_10_target
 
+            # Extract state_a_skills early — needed for gap computation below
+            state_a_skills = profile_result.get("state_a_skills", {})
+
             # Build top-10 skill gaps: start from target skills, compare vs current
             state_a_lookup = {s["skill_id"]: s["current_level"] for s in top_10_current}
             top_10_gaps = []
@@ -115,7 +118,6 @@ parse job descriptions, identify skill gaps, and generate personalized learning 
             results["top_10_skill_gaps"] = top_10_gaps
 
             # Step 3: Optional Assessment
-            state_a_skills = profile_result.get("state_a_skills", {})
             if not task.get("skip_assessment", True):
                 # Generate and get assessment
                 assessment_result = await self._execute_step(
