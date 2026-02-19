@@ -12,7 +12,7 @@ from app.agents.assessment_agent import AssessmentAgent
 from app.agents.gap_analyzer import GapAnalyzerAgent
 from app.agents.path_generator import PathGeneratorAgent
 from app.agents.content_curator import ContentCuratorAgent
-from app.services.path_generator import LearningPathGenerator
+from app.services.path_generator import LearningPathGenerator, MAX_CHAPTERS
 from app.services.ontology import get_ontology_service
 
 
@@ -303,6 +303,71 @@ parse job descriptions, identify skill gaps, and generate personalized learning 
                 results["steps"].append({"step": "path_generation", "status": "completed"})
 
             results["learning_path"] = path_result
+
+            # Journey Roadmap — bridge gap analysis and learning path
+            # Shows users where this +1-per-chapter path fits in
+            # their full multi-path journey to the target role.
+            path_chapters = path_result.get("chapters", [])
+            path_skill_ids = {
+                ch.get("primary_skill_id") or ch.get("skill_id", "")
+                for ch in path_chapters
+            }
+
+            total_gap_levels = sum(
+                g["gap"] for g in top_10_gaps if g["gap"] > 0
+            )
+            path_closes = len(path_chapters)  # each chapter = +1 level
+
+            skills_addressed = []
+            skills_remaining = []
+            for gap in top_10_gaps:
+                if gap["gap"] <= 0:
+                    continue
+                if gap["skill_id"] in path_skill_ids:
+                    ch_match = next(
+                        (ch for ch in path_chapters
+                         if (ch.get("primary_skill_id") or ch.get("skill_id", ""))
+                         == gap["skill_id"]),
+                        None,
+                    )
+                    after = (
+                        ch_match["target_level"]
+                        if ch_match
+                        else gap["current_level"] + 1
+                    )
+                    skills_addressed.append({
+                        "skill_id": gap["skill_id"],
+                        "skill_name": gap["skill_name"],
+                        "domain_label": gap.get("domain_label", ""),
+                        "current_level": gap["current_level"],
+                        "after_path_level": after,
+                        "required_level": gap["required_level"],
+                        "gap_closed": 1,
+                        "gap_remaining": max(0, gap["required_level"] - after),
+                    })
+                else:
+                    skills_remaining.append({
+                        "skill_id": gap["skill_id"],
+                        "skill_name": gap["skill_name"],
+                        "domain_label": gap.get("domain_label", ""),
+                        "current_level": gap["current_level"],
+                        "required_level": gap["required_level"],
+                        "gap": gap["gap"],
+                    })
+
+            remaining_levels = total_gap_levels - path_closes
+            results["journey_roadmap"] = {
+                "path_number": 1,
+                "total_gap_levels": total_gap_levels,
+                "path_closes_levels": path_closes,
+                "remaining_gap_levels": remaining_levels,
+                "estimated_total_paths": (
+                    1 + -(-remaining_levels // MAX_CHAPTERS)
+                    if remaining_levels > 0 else 1
+                ),
+                "skills_addressed": skills_addressed,
+                "skills_remaining": skills_remaining,
+            }
 
             # Step 6: Optional Content Curation
             if task.get("include_resources", True):

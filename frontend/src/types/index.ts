@@ -144,6 +144,36 @@ export interface Top10SkillGap {
   rationale: string
 }
 
+export interface JourneySkillAddressed {
+  skill_id: string
+  skill_name: string
+  domain_label: string
+  current_level: number
+  after_path_level: number
+  required_level: number
+  gap_closed: number
+  gap_remaining: number
+}
+
+export interface JourneySkillRemaining {
+  skill_id: string
+  skill_name: string
+  domain_label: string
+  current_level: number
+  required_level: number
+  gap: number
+}
+
+export interface JourneyRoadmap {
+  path_number: number
+  total_gap_levels: number
+  path_closes_levels: number
+  remaining_gap_levels: number
+  estimated_total_paths: number
+  skills_addressed: JourneySkillAddressed[]
+  skills_remaining: JourneySkillRemaining[]
+}
+
 export interface AnalysisResult {
   user_id: string
   goal_id: string
@@ -189,6 +219,7 @@ export interface AnalysisResult {
       chapters: Chapter[]
       total_estimated_hours: number
     }
+    journey_roadmap?: JourneyRoadmap
     summary: {
       profile_summary: string
       target_role: string

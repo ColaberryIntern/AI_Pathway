@@ -25,8 +25,10 @@ import {
   AlertTriangle,
   TrendingUp,
   Layers,
+  Route,
+  Info,
 } from 'lucide-react'
-import type { AnalysisResult, Profile, Top10CurrentSkill, Top10TargetSkill, Top10SkillGap } from '../types'
+import type { AnalysisResult, Profile, Top10CurrentSkill, Top10TargetSkill, Top10SkillGap, JourneyRoadmap } from '../types'
 import ArchetypeBadge from '../components/ArchetypeBadge'
 import JourneyArrow from '../components/JourneyArrow'
 import ProficiencyLegend, { getProficiencyLevel } from '../components/ProficiencyLegend'
@@ -652,6 +654,7 @@ export default function AnalysisPage() {
   const top10Current: Top10CurrentSkill[] = result?.result.top_10_current_skills || []
   const top10Target: Top10TargetSkill[] = result?.result.top_10_target_skills || []
   const top10Gaps: Top10SkillGap[] = result?.result.top_10_skill_gaps || []
+  const journeyRoadmap: JourneyRoadmap | undefined = result?.result.journey_roadmap
   const roleAnalysis = result?.result.jd_parsing?.role_analysis
   const primaryFunction = roleAnalysis?.primary_function || ''
   const keyDomains = roleAnalysis?.key_domains || []
@@ -1147,6 +1150,121 @@ export default function AnalysisPage() {
                     </div>
                   )
                 })}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ================================================================ */}
+      {/* JOURNEY ROADMAP — Bridge gap analysis and learning path          */}
+      {/* ================================================================ */}
+      {journeyRoadmap && journeyRoadmap.total_gap_levels > 0 && (
+        <div className="card">
+          <div className="flex items-center gap-2 mb-4">
+            <Route className="w-5 h-5 text-indigo-600" />
+            <h2 className="text-lg font-bold text-gray-900">Your Journey Roadmap</h2>
+            <span className="text-sm text-gray-500 ml-auto">
+              Path {journeyRoadmap.path_number} of ~{journeyRoadmap.estimated_total_paths} estimated
+            </span>
+          </div>
+
+          {/* Progress bar */}
+          <div className="mb-5">
+            <div className="flex items-center justify-between text-xs text-gray-500 mb-1">
+              <span>Progress toward target role</span>
+              <span className="font-medium text-indigo-600">
+                {journeyRoadmap.path_closes_levels} of {journeyRoadmap.total_gap_levels} gap-levels
+              </span>
+            </div>
+            <div className="w-full h-3 bg-gray-200 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-indigo-500 rounded-full transition-all"
+                style={{
+                  width: `${Math.round((journeyRoadmap.path_closes_levels / journeyRoadmap.total_gap_levels) * 100)}%`,
+                }}
+              />
+            </div>
+            <div className="text-xs text-gray-400 mt-1 text-right">
+              {Math.round((journeyRoadmap.path_closes_levels / journeyRoadmap.total_gap_levels) * 100)}% after this path
+            </div>
+          </div>
+
+          {journeyRoadmap.total_gap_levels === journeyRoadmap.path_closes_levels ? (
+            <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-700 text-sm">
+              <CheckCircle className="w-4 h-4 inline mr-1" />
+              This path covers all your identified skill gaps!
+            </div>
+          ) : (
+            <div className="grid md:grid-cols-2 gap-4">
+              {/* Left: what this path covers */}
+              <div>
+                <h3 className="text-sm font-semibold text-gray-700 mb-2">
+                  This Path Covers ({journeyRoadmap.skills_addressed.length} skills, +1 level each)
+                </h3>
+                <div className="space-y-2">
+                  {journeyRoadmap.skills_addressed.map((s) => (
+                    <div key={s.skill_id} className="flex items-center justify-between p-2 bg-indigo-50 rounded text-sm">
+                      <div className="flex-1 min-w-0">
+                        <span className="font-medium text-gray-800 truncate block">{s.skill_name}</span>
+                        <span className="text-xs text-gray-500">{s.domain_label}</span>
+                      </div>
+                      <div className="flex items-center gap-1 ml-2 flex-shrink-0">
+                        <span className="text-xs font-bold text-sky-600">L{s.current_level}</span>
+                        <ArrowRight className="w-3 h-3 text-gray-400" />
+                        <span className="text-xs font-bold text-emerald-600">L{s.after_path_level}</span>
+                        <span className="text-[10px] text-gray-400 ml-1">(of L{s.required_level})</span>
+                        {s.gap_remaining === 0 ? (
+                          <CheckCircle className="w-3.5 h-3.5 text-emerald-500 ml-1" />
+                        ) : (
+                          <span className="text-[10px] px-1 py-0.5 bg-indigo-200 text-indigo-700 rounded ml-1">+1</span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Right: what remains */}
+              <div>
+                <h3 className="text-sm font-semibold text-gray-700 mb-2">
+                  Remaining After This Path
+                </h3>
+                <div className="space-y-2">
+                  {/* Skills addressed but not fully closed */}
+                  {journeyRoadmap.skills_addressed
+                    .filter(s => s.gap_remaining > 0)
+                    .map((s) => (
+                      <div key={s.skill_id} className="flex items-center justify-between p-2 bg-amber-50 rounded text-sm">
+                        <span className="text-gray-700 truncate flex-1">{s.skill_name}</span>
+                        <span className="text-xs text-amber-600 flex-shrink-0 ml-2">
+                          L{s.after_path_level} of L{s.required_level} ({s.gap_remaining} more)
+                        </span>
+                      </div>
+                    ))}
+                  {/* Skills not started */}
+                  {journeyRoadmap.skills_remaining.length > 0 && (
+                    <div className="p-2 bg-gray-50 rounded text-sm">
+                      <span className="text-gray-600 font-medium">
+                        + {journeyRoadmap.skills_remaining.length} skills not yet started
+                      </span>
+                      <div className="mt-1 space-y-1">
+                        {journeyRoadmap.skills_remaining.map((s) => (
+                          <div key={s.skill_id} className="flex items-center justify-between text-xs text-gray-500 pl-2">
+                            <span className="truncate flex-1">{s.skill_name}</span>
+                            <span className="flex-shrink-0 ml-2">L{s.current_level} → L{s.required_level} (+{s.gap})</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* CTA */}
+                <div className="mt-3 p-2 bg-blue-50 border border-blue-200 rounded text-xs text-blue-700 flex items-start gap-1.5">
+                  <Info className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
+                  <span>Each path builds solid +1 level foundations. Complete this path, then generate your next one to keep progressing.</span>
+                </div>
               </div>
             </div>
           )}
