@@ -2,7 +2,6 @@ import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { getProfile, runFullAnalysis, parseJDProfile, getVisualization } from '../services/api'
-import SkillsGapChart from '../components/SkillsGapChart'
 import {
   Loader2,
   CheckCircle,
@@ -822,36 +821,81 @@ export default function AnalysisPage() {
         </div>
       </div>
 
-      {/* Skills Gap Visual */}
-      {chapters.length > 0 && <SkillsGapChart chapters={chapters} />}
+      {/* Learning Path — concentrated current vs target skills */}
+      {chapters.length > 0 && (
+        <div className="card">
+          <div className="flex items-center gap-2 mb-5">
+            <BookOpen className="h-5 w-5 text-indigo-600" />
+            <h2 className="text-xl font-bold text-gray-900">
+              Your Learning Path
+            </h2>
+            <span className="text-sm text-gray-500 ml-auto">Current → Target Skill Progression</span>
+          </div>
+          <div className="space-y-4">
+            {chapters.map((ch: { chapter_number?: number; skill_id?: string; primary_skill_id?: string; skill_name?: string; primary_skill_name?: string; title?: string; current_level?: number; target_level?: number; estimated_time_hours?: number }) => {
+              const current = ch.current_level ?? 0
+              const target = ch.target_level ?? 1
+              const gap = Math.max(0, target - current)
+              const currentPct = (current / 5) * 100
+              const gapPct = (gap / 5) * 100
+              const remainingPct = ((5 - target) / 5) * 100
 
-      {/* Learning Path Chapters — matches the domain grid badges */}
-      <div className="card">
-        <h2 className="text-xl font-bold text-gray-900 mb-4">
-          Your Learning Path
-        </h2>
-        <div className="space-y-3">
-          {chapters.map((ch: { chapter_number?: number; skill_id?: string; skill_name?: string; title?: string; current_level?: number; target_level?: number; estimated_time_hours?: number }) => (
-            <div
-              key={ch.chapter_number}
-              className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-            >
-              <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 font-bold text-sm">
-                {ch.chapter_number}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="font-medium text-gray-900">{ch.title || ch.skill_name}</div>
-                <div className="text-sm text-gray-500">{ch.skill_name}</div>
-              </div>
-              <div className="text-sm flex items-center gap-1 flex-shrink-0">
-                <span className="px-2 py-0.5 bg-red-100 text-red-700 rounded font-medium">L{ch.current_level}</span>
-                <ArrowRight className="h-3 w-3 text-gray-400" />
-                <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded font-medium">L{ch.target_level}</span>
-              </div>
+              return (
+                <div key={ch.chapter_number} className="p-3 bg-gray-50 rounded-lg">
+                  {/* Header: chapter number, title, level progression */}
+                  <div className="flex items-center justify-between gap-3 mb-2">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 font-bold text-sm flex-shrink-0">
+                        {ch.chapter_number}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="font-medium text-gray-900 text-sm truncate">{ch.title || ch.skill_name}</div>
+                        <div className="text-xs text-gray-500">{ch.primary_skill_name || ch.skill_name}</div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1 flex-shrink-0">
+                      <span className="text-xs px-2 py-0.5 bg-sky-100 text-sky-700 rounded font-bold">L{current}</span>
+                      <ArrowRight className="h-3 w-3 text-gray-400" />
+                      <span className="text-xs px-2 py-0.5 bg-green-100 text-green-700 rounded font-bold">L{target}</span>
+                      {ch.estimated_time_hours && (
+                        <span className="text-xs text-gray-400 ml-1">{ch.estimated_time_hours}h</span>
+                      )}
+                    </div>
+                  </div>
+                  {/* Gap bar */}
+                  <div className="h-3 bg-gray-100 rounded-full overflow-hidden flex">
+                    {currentPct > 0 && (
+                      <div className="bg-sky-500" style={{ width: `${currentPct}%` }} />
+                    )}
+                    {gapPct > 0 && (
+                      <div className="bg-amber-400" style={{ width: `${gapPct}%` }} />
+                    )}
+                    {remainingPct > 0 && (
+                      <div className="bg-gray-200" style={{ width: `${remainingPct}%` }} />
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+
+          {/* Legend */}
+          <div className="flex flex-wrap justify-center gap-5 mt-4 pt-3 border-t border-gray-100 text-xs text-gray-600">
+            <div className="flex items-center gap-1.5">
+              <div className="w-3 h-3 rounded-sm bg-sky-500" />
+              <span>Current Level</span>
             </div>
-          ))}
+            <div className="flex items-center gap-1.5">
+              <div className="w-3 h-3 rounded-sm bg-amber-400" />
+              <span>Gap to Close</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-3 h-3 rounded-sm bg-gray-200 border border-gray-300" />
+              <span>Beyond Target</span>
+            </div>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Recommendations */}
       {summary?.recommendations && summary.recommendations.length > 0 && (
