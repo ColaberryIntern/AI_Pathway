@@ -318,42 +318,51 @@ parse job descriptions, identify skill gaps, and generate personalized learning 
             )
             path_closes = len(path_chapters)  # each chapter = +1 level
 
+            # Build skills_addressed from CHAPTERS directly (not
+            # top_10_gaps intersection) so prerequisites and mandatory
+            # category fills appear in "This Path Covers".
             skills_addressed = []
+            for ch in path_chapters:
+                sid = ch.get("primary_skill_id") or ch.get("skill_id", "")
+                if not sid:
+                    continue
+                skill_obj = ontology.get_skill(sid)
+                domain_obj = (
+                    ontology.get_domain(skill_obj["domain"])
+                    if skill_obj else None
+                )
+                current = ch.get("current_level", 0)
+                after = ch.get("target_level", current + 1)
+                required = valid_state_b.get(sid, after)
+                skills_addressed.append({
+                    "skill_id": sid,
+                    "skill_name": (
+                        ch.get("primary_skill_name")
+                        or ch.get("skill_name", sid)
+                    ),
+                    "domain_label": (
+                        domain_obj["label"] if domain_obj else ""
+                    ),
+                    "current_level": current,
+                    "after_path_level": after,
+                    "required_level": required,
+                    "gap_closed": after - current,
+                    "gap_remaining": max(0, required - after),
+                })
+
+            # skills_remaining: top-10 gaps NOT addressed by any chapter
             skills_remaining = []
             for gap in top_10_gaps:
-                if gap["gap"] <= 0:
+                if gap["gap"] <= 0 or gap["skill_id"] in path_skill_ids:
                     continue
-                if gap["skill_id"] in path_skill_ids:
-                    ch_match = next(
-                        (ch for ch in path_chapters
-                         if (ch.get("primary_skill_id") or ch.get("skill_id", ""))
-                         == gap["skill_id"]),
-                        None,
-                    )
-                    after = (
-                        ch_match["target_level"]
-                        if ch_match
-                        else gap["current_level"] + 1
-                    )
-                    skills_addressed.append({
-                        "skill_id": gap["skill_id"],
-                        "skill_name": gap["skill_name"],
-                        "domain_label": gap.get("domain_label", ""),
-                        "current_level": gap["current_level"],
-                        "after_path_level": after,
-                        "required_level": gap["required_level"],
-                        "gap_closed": 1,
-                        "gap_remaining": max(0, gap["required_level"] - after),
-                    })
-                else:
-                    skills_remaining.append({
-                        "skill_id": gap["skill_id"],
-                        "skill_name": gap["skill_name"],
-                        "domain_label": gap.get("domain_label", ""),
-                        "current_level": gap["current_level"],
-                        "required_level": gap["required_level"],
-                        "gap": gap["gap"],
-                    })
+                skills_remaining.append({
+                    "skill_id": gap["skill_id"],
+                    "skill_name": gap["skill_name"],
+                    "domain_label": gap.get("domain_label", ""),
+                    "current_level": gap["current_level"],
+                    "required_level": gap["required_level"],
+                    "gap": gap["gap"],
+                })
 
             remaining_levels = total_gap_levels - path_closes
             results["journey_roadmap"] = {

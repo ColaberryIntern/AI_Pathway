@@ -1206,7 +1206,10 @@ export default function AnalysisPage() {
                   {journeyRoadmap.skills_addressed.map((s) => (
                     <div key={s.skill_id} className="flex items-center justify-between p-2 bg-indigo-50 rounded text-sm">
                       <div className="flex-1 min-w-0">
-                        <span className="font-medium text-gray-800 truncate block">{s.skill_name}</span>
+                        <span className="font-medium text-gray-800 truncate block">
+                          <span className="text-indigo-500 font-mono text-[11px]">{s.skill_id}</span>{' '}
+                          {s.skill_name}
+                        </span>
                         <span className="text-xs text-gray-500">{s.domain_label}</span>
                       </div>
                       <div className="flex items-center gap-1 ml-2 flex-shrink-0">
@@ -1236,7 +1239,10 @@ export default function AnalysisPage() {
                     .filter(s => s.gap_remaining > 0)
                     .map((s) => (
                       <div key={s.skill_id} className="flex items-center justify-between p-2 bg-amber-50 rounded text-sm">
-                        <span className="text-gray-700 truncate flex-1">{s.skill_name}</span>
+                        <span className="text-gray-700 truncate flex-1">
+                          <span className="text-amber-500 font-mono text-[11px]">{s.skill_id}</span>{' '}
+                          {s.skill_name}
+                        </span>
                         <span className="text-xs text-amber-600 flex-shrink-0 ml-2">
                           L{s.after_path_level} of L{s.required_level} ({s.gap_remaining} more)
                         </span>
@@ -1251,7 +1257,10 @@ export default function AnalysisPage() {
                       <div className="mt-1 space-y-1">
                         {journeyRoadmap.skills_remaining.map((s) => (
                           <div key={s.skill_id} className="flex items-center justify-between text-xs text-gray-500 pl-2">
-                            <span className="truncate flex-1">{s.skill_name}</span>
+                            <span className="truncate flex-1">
+                              <span className="text-gray-400 font-mono">{s.skill_id}</span>{' '}
+                              {s.skill_name}
+                            </span>
                             <span className="flex-shrink-0 ml-2">L{s.current_level} → L{s.required_level} (+{s.gap})</span>
                           </div>
                         ))}
