@@ -365,15 +365,15 @@ class PathVisualizer:
             path_num = 2
             ch_in_path = 0
             for g in future_skills:
-                if ch_in_path == 0:
-                    path_extra_rows += f"""<tr class='path-header'>
-                        <td colspan='5'>Path {path_num} (projected)</td>
-                    </tr>\n"""
                 gap_val = g.get('gap', 0)
                 cur = g.get('current_level', 0)
-                tgt = g.get('target_level', 0)
                 # Each chapter = +1 level, so show incremental steps
                 for step in range(gap_val):
+                    # Print path header when starting a new path
+                    if ch_in_path == 0:
+                        path_extra_rows += f"""<tr class='path-header'>
+                            <td colspan='5'>Path {path_num} (projected)</td>
+                        </tr>\n"""
                     from_lvl = cur + step
                     to_lvl = from_lvl + 1
                     ch_in_path += 1
