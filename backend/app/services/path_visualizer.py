@@ -47,6 +47,8 @@ class PathVisualizer:
         chapters = analysis_result.get("learning_path", {}).get("chapters", [])
         profile_analysis = analysis_result.get("profile_analysis", {})
         journey_roadmap = analysis_result.get("journey_roadmap", {})
+        all_skill_gaps = analysis_result.get("all_skill_gaps", [])
+        full_journey = analysis_result.get("full_journey_estimate", {})
 
         # Build graph data for D3
         graph_data = self._build_graph_data(
@@ -63,6 +65,8 @@ class PathVisualizer:
             graph_data=graph_data,
             journey_roadmap=journey_roadmap,
             top10_gaps=top10_gaps,
+            all_skill_gaps=all_skill_gaps,
+            full_journey=full_journey,
         )
 
     # ------------------------------------------------------------------
@@ -214,11 +218,14 @@ class PathVisualizer:
         graph_data: dict,
         journey_roadmap: dict | None = None,
         top10_gaps: list[dict] | None = None,
+        all_skill_gaps: list[dict] | None = None,
+        full_journey: dict | None = None,
     ) -> str:
         """Render the full HTML page."""
         e = html.escape  # shorthand
 
         # --- Profile summary table ---
+        fj = full_journey or {}
         profile_rows = ""
         for key, label in [
             ("profile_summary", "Profile"),
@@ -230,6 +237,29 @@ class PathVisualizer:
             val = summary.get(key, "")
             if val:
                 profile_rows += f"<tr><td class='label'>{e(label)}</td><td>{e(str(val))}</td></tr>\n"
+
+        # --- Full journey summary (expandable) ---
+        summary_extra_rows = ""
+        all_skills_table = ""
+        if fj:
+            summary_extra_rows += f"<tr><td class='label'>Total Skills with Gaps</td><td>{fj.get('total_skills_with_gaps', 0)}</td></tr>\n"
+            summary_extra_rows += f"<tr><td class='label'>Total Gap-Levels</td><td>{fj.get('total_gap_levels', 0)}</td></tr>\n"
+            summary_extra_rows += f"<tr><td class='label'>Total Est. Chapters</td><td>{fj.get('total_estimated_chapters', 0)}</td></tr>\n"
+            summary_extra_rows += f"<tr><td class='label'>Total Est. Hours</td><td>{fj.get('total_estimated_hours', 0)}</td></tr>\n"
+            summary_extra_rows += f"<tr><td class='label'>Est. Paths to Complete</td><td>~{fj.get('total_estimated_paths', 1)}</td></tr>\n"
+            # Build all-skills table
+            for g in (all_skill_gaps or []):
+                all_skills_table += f"""<tr>
+                    <td><span class='skill-id'>{e(g.get('skill_id',''))}</span><br>{e(g.get('skill_name',''))}</td>
+                    <td>{e(g.get('domain',''))}</td>
+                    <td class='level'>L{g.get('current_level',0)}</td>
+                    <td class='level'>L{g.get('target_level',0)}</td>
+                    <td class='delta'>+{g.get('gap',0)}</td>
+                </tr>\n"""
+
+        summary_toggle_html = ""
+        if fj:
+            summary_toggle_html = """<button class="toggle-btn" id="summary-toggle" onclick="toggleSummary()">Show Full Journey Details</button>"""
 
         # --- Skill matching: compute overlap between current and target ---
         current_skill_ids = {s.get("skill_id", "") for s in top10_current}
@@ -272,13 +302,16 @@ class PathVisualizer:
                 <td class='rationale'>{e(s.get('rationale',''))}</td>
             </tr>\n"""
 
-        # --- Gap table (fix field names: orchestrator uses target_level/gap/priority) ---
-        gap_rows = ""
-        for g in gaps[:15]:
+        # --- Gap table (default: scaffold-aligned gaps; expandable: all gaps) ---
+        all_gaps = all_skill_gaps or []
+        default_gap_ids = {g.get('skill_id', '') for g in gaps}
+
+        gap_rows_default = ""
+        for g in gaps:
             required = g.get('target_level', g.get('required_level', 0))
             delta = g.get('gap', g.get('delta', 0))
             priority = g.get('priority', g.get('priority_score', ''))
-            gap_rows += f"""<tr>
+            gap_rows_default += f"""<tr>
                 <td><span class='skill-id'>{e(g.get('skill_id',''))}</span><br>{e(g.get('skill_name',''))}</td>
                 <td>{e(g.get('domain',''))}</td>
                 <td class='level'>L{g.get('current_level',0)}</td>
@@ -287,7 +320,26 @@ class PathVisualizer:
                 <td>{priority}</td>
             </tr>\n"""
 
-        # --- Chapter rows ---
+        gap_rows_extra = ""
+        for g in all_gaps:
+            if g.get('skill_id', '') in default_gap_ids:
+                continue
+            gap_rows_extra += f"""<tr>
+                <td><span class='skill-id'>{e(g.get('skill_id',''))}</span><br>{e(g.get('skill_name',''))}</td>
+                <td>{e(g.get('domain',''))}</td>
+                <td class='level'>L{g.get('current_level',0)}</td>
+                <td class='level'>L{g.get('target_level',0)}</td>
+                <td class='delta'>+{g.get('gap',0)}</td>
+                <td></td>
+            </tr>\n"""
+
+        extra_gap_count = len(all_gaps) - len(default_gap_ids)
+        total_gap_count = len(all_gaps)
+        gap_toggle_html = ""
+        if extra_gap_count > 0:
+            gap_toggle_html = f"""<button class="toggle-btn" id="gap-toggle" onclick="toggleGaps()">Show All {total_gap_count} Gaps</button>"""
+
+        # --- Chapter rows (default: this path; expandable: full journey) ---
         chapter_rows = ""
         for ch in chapters:
             chapter_rows += f"""<tr>
@@ -298,6 +350,49 @@ class PathVisualizer:
                 <td class='arrow'>→</td>
                 <td class='level level-target'>L{ch.get('target_level',0)}</td>
             </tr>\n"""
+
+        # Build projected future chapters from all_skill_gaps not in Path 1
+        chapter_skill_ids = {
+            ch.get('skill_id') or ch.get('primary_skill_id', '')
+            for ch in chapters
+        }
+        future_skills = [
+            g for g in all_gaps
+            if g.get('skill_id', '') not in chapter_skill_ids
+        ]
+        path_extra_rows = ""
+        if future_skills:
+            path_num = 2
+            ch_in_path = 0
+            for g in future_skills:
+                if ch_in_path == 0:
+                    path_extra_rows += f"""<tr class='path-header'>
+                        <td colspan='5'>Path {path_num} (projected)</td>
+                    </tr>\n"""
+                gap_val = g.get('gap', 0)
+                cur = g.get('current_level', 0)
+                tgt = g.get('target_level', 0)
+                # Each chapter = +1 level, so show incremental steps
+                for step in range(gap_val):
+                    from_lvl = cur + step
+                    to_lvl = from_lvl + 1
+                    ch_in_path += 1
+                    path_extra_rows += f"""<tr class='projected-row'>
+                        <td class='rank'>{ch_in_path}</td>
+                        <td><span class='skill-id'>{e(g.get('skill_id',''))}</span><br>
+                            {e(g.get('skill_name',''))}</td>
+                        <td class='level'>L{from_lvl}</td>
+                        <td class='arrow'>→</td>
+                        <td class='level level-target'>L{to_lvl}</td>
+                    </tr>\n"""
+                    if ch_in_path >= 5:
+                        ch_in_path = 0
+                        path_num += 1
+
+        path_toggle_html = ""
+        if future_skills:
+            remaining_count = sum(g.get('gap', 0) for g in future_skills)
+            path_toggle_html = f"""<button class="toggle-btn" id="path-toggle" onclick="togglePath()">Show Full Journey (+{remaining_count} more chapters)</button>"""
 
         graph_json = json.dumps(graph_data)
 
@@ -322,13 +417,17 @@ class PathVisualizer:
                 f"</div>\n"
             )
 
-        # Build remaining rows
+        # Build remaining rows (includes partial badges)
         remaining_rows = ""
+        remaining_total_levels = sum(s.get('gap', 0) for s in skills_remaining)
         for s in skills_remaining:
+            partial_badge = ""
+            if s.get("partial"):
+                partial_badge = " <span class='partial-badge'>+1 this path</span>"
             remaining_rows += (
                 f"<div class='jp-skill'>"
                 f"<span class='skill-id'>{html.escape(s.get('skill_id', ''))}</span> "
-                f"{html.escape(s.get('skill_name', ''))}"
+                f"{html.escape(s.get('skill_name', ''))}{partial_badge}"
                 f"<span class='jp-level'>L{s.get('current_level', 0)} → "
                 f"L{s.get('required_level', 0)} (+{s.get('gap', 0)})</span>"
                 f"</div>\n"
@@ -346,13 +445,16 @@ class PathVisualizer:
         <div style="width:100%;height:10px;background:#e2e8f0;border-radius:6px;overflow:hidden;margin-bottom:16px">
             <div style="width:{pct}%;height:100%;background:var(--primary);border-radius:6px"></div>
         </div>
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px">
+            This path: +{path_closes} levels &nbsp;|&nbsp; Remaining: {remaining_total_levels} gap-levels &nbsp;|&nbsp; Total: {total_gaps} gap-levels
+        </div>
         <div class="grid-2">
             <div>
                 <h3 style="color:#f59e0b">This Path ({len(skills_addressed)} skills, +1 level each)</h3>
                 {addressed_rows}
             </div>
             <div>
-                <h3 style="color:#8b5cf6">Future Paths ({len(skills_remaining)} skills remaining)</h3>
+                <h3 style="color:#8b5cf6">Remaining ({len(skills_remaining)} entries, {remaining_total_levels} gap-levels)</h3>
                 {remaining_rows}
             </div>
         </div>
@@ -416,6 +518,14 @@ tr.match-row {{ background: #f0fdf4; }}
 @media print {{ .print-btn {{ display: none; }} }}
 .jp-skill {{ display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-bottom: 1px solid #f1f5f9; font-size: 13px; }}
 .jp-level {{ font-weight: 600; font-size: 12px; color: var(--text-muted); flex-shrink: 0; margin-left: 8px; }}
+.toggle-btn {{ background: var(--primary); color: white; border: none; padding: 6px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500; margin-top: 12px; }}
+.toggle-btn:hover {{ opacity: 0.85; }}
+.partial-badge {{ background: #fef3c7; color: #d97706; padding: 1px 6px; border-radius: 4px; font-size: 10px; font-weight: 600; margin-left: 6px; }}
+tr.projected-row {{ background: #faf5ff; }}
+tr.projected-row td {{ color: var(--text-muted); }}
+tr.path-header {{ background: #f1f5f9; }}
+tr.path-header td {{ font-weight: 600; color: var(--primary); font-size: 13px; padding: 6px 10px; }}
+@media print {{ .toggle-btn {{ display: none; }} }}
 </style>
 </head>
 <body>
@@ -432,6 +542,16 @@ tr.match-row {{ background: #f0fdf4; }}
     <div class="card">
         <h3>Profile Summary</h3>
         <table>{profile_rows}</table>
+        {summary_toggle_html}
+        <div id="summary-extra" style="display:none;margin-top:16px">
+            <h3 style="margin-top:12px;color:var(--primary)">Full Journey Estimate</h3>
+            <table>{summary_extra_rows}</table>
+            <h3 style="margin-top:16px">All Skills Needing Improvement</h3>
+            <table>
+                <thead><tr><th>Skill</th><th>Domain</th><th>Current</th><th>Target</th><th>Gap</th></tr></thead>
+                <tbody>{all_skills_table}</tbody>
+            </table>
+        </div>
     </div>
 
     <!-- Top 10 Skills Breakdown -->
@@ -458,8 +578,10 @@ tr.match-row {{ background: #f0fdf4; }}
     <div class="card">
         <table>
             <thead><tr><th>Skill</th><th>Domain</th><th>Current</th><th>Required</th><th>Gap</th><th>Priority</th></tr></thead>
-            <tbody>{gap_rows}</tbody>
+            <tbody>{gap_rows_default}</tbody>
+            <tbody id="gap-extra" style="display:none">{gap_rows_extra}</tbody>
         </table>
+        {gap_toggle_html}
     </div>
 
     <!-- Learning Path -->
@@ -468,7 +590,9 @@ tr.match-row {{ background: #f0fdf4; }}
         <table>
             <thead><tr><th>Ch</th><th>Skill</th><th>From</th><th></th><th>To</th></tr></thead>
             <tbody>{chapter_rows}</tbody>
+            <tbody id="path-extra" style="display:none">{path_extra_rows}</tbody>
         </table>
+        {path_toggle_html}
     </div>
 
     {journey_section}
@@ -664,6 +788,44 @@ function dragEnded(event, d) {{
     if (!event.active) simulation.alphaTarget(0);
     d.fx = null;
     d.fy = null;
+}}
+
+// --- Toggle functions for Show More buttons ---
+function toggleGaps() {{
+    const extra = document.getElementById('gap-extra');
+    const btn = document.getElementById('gap-toggle');
+    if (!extra) return;
+    if (extra.style.display === 'none') {{
+        extra.style.display = '';
+        btn.textContent = 'Show Less';
+    }} else {{
+        extra.style.display = 'none';
+        btn.textContent = 'Show All {total_gap_count} Gaps';
+    }}
+}}
+function togglePath() {{
+    const extra = document.getElementById('path-extra');
+    const btn = document.getElementById('path-toggle');
+    if (!extra) return;
+    if (extra.style.display === 'none') {{
+        extra.style.display = '';
+        btn.textContent = 'Show Current Path Only';
+    }} else {{
+        extra.style.display = 'none';
+        btn.textContent = btn.dataset.label || 'Show Full Journey';
+    }}
+}}
+function toggleSummary() {{
+    const extra = document.getElementById('summary-extra');
+    const btn = document.getElementById('summary-toggle');
+    if (!extra) return;
+    if (extra.style.display === 'none') {{
+        extra.style.display = '';
+        btn.textContent = 'Show Less';
+    }} else {{
+        extra.style.display = 'none';
+        btn.textContent = 'Show Full Journey Details';
+    }}
 }}
 </script>
 </body>

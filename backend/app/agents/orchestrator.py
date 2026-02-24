@@ -391,8 +391,37 @@ parse job descriptions, identify skill gaps, and generate personalized learning 
                 for ch in path_chapters
             }
 
+            # Compute ALL gaps from state_a vs state_b so the numbers
+            # add up correctly (not just top-10).
+            all_gaps_full = []
+            for sid, required_level in valid_state_b.items():
+                current = valid_state_a.get(sid, 0)
+                gap = max(0, required_level - current)
+                if gap > 0:
+                    skill_obj = ontology.get_skill(sid)
+                    if skill_obj:
+                        domain_obj = ontology.get_domain(
+                            skill_obj["domain"]
+                        )
+                        all_gaps_full.append({
+                            "skill_id": sid,
+                            "skill_name": skill_obj["name"],
+                            "domain": skill_obj["domain"],
+                            "domain_label": (
+                                domain_obj["label"]
+                                if domain_obj else ""
+                            ),
+                            "current_level": current,
+                            "target_level": required_level,
+                            "gap": gap,
+                        })
+            all_gaps_full.sort(
+                key=lambda x: (-x["gap"], x["skill_id"])
+            )
+            results["all_skill_gaps"] = all_gaps_full
+
             total_gap_levels = sum(
-                g["gap"] for g in top_10_gaps if g["gap"] > 0
+                g["gap"] for g in all_gaps_full
             )
             path_closes = len(path_chapters)  # each chapter = +1 level
 
@@ -428,21 +457,52 @@ parse job descriptions, identify skill gaps, and generate personalized learning 
                     "gap_remaining": max(0, required - after),
                 })
 
-            # skills_remaining: top-10 gaps NOT addressed by any chapter
+            # skills_remaining: ALL remaining gaps — includes partial
+            # gaps on addressed skills AND full gaps on other skills.
+            # This ensures path_closes + sum(remaining) = total_gap_levels.
             skills_remaining = []
-            for gap in top_10_gaps:
-                if gap["gap"] <= 0 or gap["skill_id"] in path_skill_ids:
-                    continue
-                skills_remaining.append({
-                    "skill_id": gap["skill_id"],
-                    "skill_name": gap["skill_name"],
-                    "domain_label": gap.get("domain_label", ""),
-                    "current_level": gap["current_level"],
-                    "required_level": gap["required_level"],
-                    "gap": gap["gap"],
-                })
+            for gap_entry in all_gaps_full:
+                sid = gap_entry["skill_id"]
+                if sid in path_skill_ids:
+                    # Skill IS in current path — show remaining gap
+                    addressed = next(
+                        (s for s in skills_addressed
+                         if s["skill_id"] == sid), None
+                    )
+                    if addressed and addressed["gap_remaining"] > 0:
+                        skills_remaining.append({
+                            "skill_id": sid,
+                            "skill_name": gap_entry["skill_name"],
+                            "domain_label": gap_entry.get(
+                                "domain_label", ""
+                            ),
+                            "current_level": addressed[
+                                "after_path_level"
+                            ],
+                            "required_level": gap_entry[
+                                "target_level"
+                            ],
+                            "gap": addressed["gap_remaining"],
+                            "partial": True,
+                        })
+                else:
+                    skills_remaining.append({
+                        "skill_id": sid,
+                        "skill_name": gap_entry["skill_name"],
+                        "domain_label": gap_entry.get(
+                            "domain_label", ""
+                        ),
+                        "current_level": gap_entry["current_level"],
+                        "required_level": gap_entry["target_level"],
+                        "gap": gap_entry["gap"],
+                        "partial": False,
+                    })
 
             remaining_levels = total_gap_levels - path_closes
+            hours_per_chapter = (
+                path_result.get("total_estimated_hours", 0)
+                / max(len(path_chapters), 1)
+            )
             results["journey_roadmap"] = {
                 "path_number": 1,
                 "total_gap_levels": total_gap_levels,
@@ -454,6 +514,18 @@ parse job descriptions, identify skill gaps, and generate personalized learning 
                 ),
                 "skills_addressed": skills_addressed,
                 "skills_remaining": skills_remaining,
+            }
+            results["full_journey_estimate"] = {
+                "total_skills_with_gaps": len(all_gaps_full),
+                "total_gap_levels": total_gap_levels,
+                "total_estimated_chapters": total_gap_levels,
+                "total_estimated_hours": round(
+                    total_gap_levels * hours_per_chapter, 1
+                ),
+                "total_estimated_paths": (
+                    1 + -(-remaining_levels // MAX_CHAPTERS)
+                    if remaining_levels > 0 else 1
+                ),
             }
 
             # Step 6: Optional Content Curation
