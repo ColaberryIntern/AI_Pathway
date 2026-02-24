@@ -7,55 +7,102 @@
   "location": "U.S.",
   "experience_years": 2,
   "ai_exposure_level": "Intermediate",
-  "tools_used": ["ChatGPT / Claude / Gemini", "GitHub Copilot", "OpenAI API / Anthropic API"],
-  "technical_background": "Professional developer",
+  "tools_used": ["ChatGPT", "Claude", "GitHub Copilot", "OpenAI API"],
+  "technical_background": "Professional backend developer with CS degree. 2 years building enterprise Java services with REST APIs, PostgreSQL, and microservices. Comfortable with Git, CI/CD, Docker, and unit testing. Has done small ML side projects (Kaggle competitions, basic scikit-learn models) and basic Python. Uses Copilot and ChatGPT daily for development.",
   "archetype": "Technical Pivot",
   "current_profile": {
-    "summary": "Junior backend developer (2 years) building enterprise services in Java. CS degree; comfortable with APIs, databases, and unit tests. Has done small ML side projects (Kaggle) and basic Python, but no production ML experience.",
-    "technical_skills": ["Java", "REST APIs", "SQL databases", "Unit testing", "Python (basic)"],
-    "soft_skills": ["Problem solving", "Code review", "Team collaboration"],
-    "ai_experience": "Small ML side projects on Kaggle, basic Python ML"
+    "summary": "Junior backend software developer with 2 years of professional experience building enterprise services in Java at a mid-size IT services company. CS degree with coursework in algorithms, data structures, and introductory ML. Builds REST APIs, works with PostgreSQL databases, and writes unit tests daily. Comfortable with Git workflows, Docker for local development, and basic CI/CD pipelines. Has completed several Kaggle competitions as side projects using Python and scikit-learn (tabular classification, basic NLP). Uses GitHub Copilot extensively for code generation and ChatGPT/Claude for debugging and architecture discussions. Explored the OpenAI API for a personal chatbot project. Strong engineering fundamentals but no production ML experience — has not trained, deployed, or monitored models in a production environment.",
+    "technical_skills": [
+      "Java (professional: Spring Boot, microservices)",
+      "Python (intermediate: scikit-learn, pandas, basic PyTorch)",
+      "REST API design and implementation",
+      "SQL databases (PostgreSQL, query optimization)",
+      "Git workflows (branching, PRs, code review)",
+      "Docker (local development, basic Compose)",
+      "Unit testing (JUnit, pytest basics)",
+      "CI/CD pipelines (GitHub Actions, basic)",
+      "Linux command line and shell scripting",
+      "Basic cloud services (AWS S3, EC2)"
+    ],
+    "soft_skills": [
+      "Problem solving and algorithmic thinking",
+      "Code review and constructive feedback",
+      "Team collaboration (Agile/Scrum)",
+      "Technical documentation",
+      "Self-directed learning and experimentation"
+    ],
+    "ai_experience": "Active user of GitHub Copilot for daily coding (code completion, test generation, refactoring suggestions). Uses ChatGPT and Claude for debugging, architecture discussions, and learning new concepts. Built a personal chatbot project using the OpenAI API with basic prompt engineering. Completed 3 Kaggle competitions using scikit-learn (tabular data classification, basic NLP sentiment analysis). Understands ML concepts at a theory level (supervised learning, train/test split, overfitting) but has never deployed or monitored a model in production."
   },
-  "learning_intent": "Wants to specialize in ML engineering: build, deploy, and monitor models in production. Motivated by demand and interest in AI systems.",
+  "learning_intent": "Wants to specialize in ML engineering: build, deploy, and monitor models in production environments. Motivated by strong industry demand and genuine interest in AI systems. Goal: leverage existing software engineering skills to bridge into ML — learn production ML workflows, model evaluation and monitoring, LLMOps, RAG systems, and agent orchestration. Wants to be able to take a model from prototype to production with proper testing, monitoring, and scaling.",
   "target_jd": {
     "title": "Machine Learning Engineer",
     "requirements": [
-      "Develop ML models and integrate them into products and services",
-      "Build data pipelines, training/inference workflows, and monitoring systems",
-      "Perform model evaluation, experimentation, and iterative improvements",
-      "Collaborate across engineering, product, and data science teams"
+      "Develop and deploy ML models integrated into products and services at scale",
+      "Build robust data pipelines for training, evaluation, and inference workflows",
+      "Implement model evaluation frameworks including offline metrics, online monitoring, and A/B testing",
+      "Design and maintain RAG systems for knowledge-grounded AI features",
+      "Build and orchestrate AI agent systems with proper error handling and state management",
+      "Optimize model serving for latency, cost, and reliability (caching, batching, streaming)",
+      "Implement CI/CD for ML: model versioning, prompt versioning, and automated testing",
+      "Collaborate across engineering, product, and data science teams on AI feature development",
+      "Ensure security and safety of AI systems: prompt injection mitigation, data leakage prevention",
+      "Monitor production AI systems with tracing, observability, and quality dashboards"
     ]
   },
   "expected_skill_gaps": [
     {
       "domain": "D.PRQ",
-      "description": "Strengthen Python, data handling, and cloud primitives; secrets management and CI/CD concepts.",
+      "description": "Strengthen Python data stack for production ML (Pandas/NumPy at scale), cloud primitives beyond basics, secrets management, and advanced CI/CD for ML pipelines.",
       "skills": ["SK.PRQ.010", "SK.PRQ.011", "SK.PRQ.030", "SK.PRQ.031", "SK.PRQ.032"]
     },
     {
       "domain": "D.EVL",
-      "description": "Tracing/observability, unit tests for prompts/models, and quality dashboards.",
-      "skills": ["SK.EVL.001", "SK.EVL.010", "SK.EVL.011", "SK.EVL.020"]
+      "description": "Production-grade evaluation: tracing/observability, prompt unit tests, quality dashboards, release gates, and A/B testing for AI features.",
+      "skills": ["SK.EVL.001", "SK.EVL.010", "SK.EVL.011", "SK.EVL.020", "SK.EVL.022"]
     },
     {
       "domain": "D.OPS",
-      "description": "Latency/cost drivers, caching/streaming concepts, versioning prompts/models.",
-      "skills": ["SK.OPS.001", "SK.OPS.002", "SK.OPS.010", "SK.OPS.022"]
+      "description": "LLMOps: latency/cost optimization, caching/batching/streaming, model routing, SLOs/SLAs, and prompt/model versioning for production systems.",
+      "skills": ["SK.OPS.001", "SK.OPS.002", "SK.OPS.010", "SK.OPS.011", "SK.OPS.022"]
     },
     {
       "domain": "D.RAG",
-      "description": "RAG basics, tool calling, and orchestration patterns.",
-      "skills": ["SK.RAG.000", "SK.RAG.001", "SK.RAG.002", "SK.RAG.003"]
+      "description": "Building RAG systems end-to-end: query rewriting, chunking strategies, hybrid retrieval, reranking, context budgeting, and faithfulness evaluation.",
+      "skills": ["SK.RAG.000", "SK.RAG.001", "SK.RAG.002", "SK.RAG.003", "SK.RAG.010"]
     },
     {
       "domain": "D.AGT",
-      "description": "Agent fundamentals and orchestration.",
-      "skills": ["SK.AGT.000", "SK.AGT.001", "SK.AGT.002", "SK.AGT.003"]
+      "description": "Agent engineering: tool definitions, error handling, state management, single-agent loops, and multi-agent patterns for production systems.",
+      "skills": ["SK.AGT.001", "SK.AGT.002", "SK.AGT.003", "SK.AGT.010", "SK.AGT.011"]
+    },
+    {
+      "domain": "D.MOD",
+      "description": "Model adaptation: when to fine-tune vs prompt, data requirements, instruction tuning basics, and PEFT/LoRA concepts.",
+      "skills": ["SK.MOD.000", "SK.MOD.001", "SK.MOD.002", "SK.MOD.010"]
+    },
+    {
+      "domain": "D.SEC",
+      "description": "AI security: prompt injection mitigation, data leakage prevention, output security, and tool sandboxing for production AI systems.",
+      "skills": ["SK.SEC.001", "SK.SEC.002", "SK.SEC.003", "SK.SEC.011"]
+    },
+    {
+      "domain": "D.PRM",
+      "description": "Advanced prompting: structured JSON outputs, chain-of-thought, prompt debugging at scale, and ReAct-style patterns for agent systems.",
+      "skills": ["SK.PRM.003", "SK.PRM.005", "SK.PRM.010", "SK.PRM.022"]
     }
   ],
   "estimated_current_skills": {
-    "SK.DIG.001": 4, "SK.DIG.002": 4,
-    "SK.PRQ.000": 3, "SK.PRQ.001": 3, "SK.PRQ.010": 2, "SK.PRQ.012": 2, "SK.PRQ.013": 3, "SK.PRQ.020": 3, "SK.PRQ.021": 2,
-    "SK.FND.000": 2, "SK.FND.001": 2, "SK.FND.010": 1
+    "SK.DIG.001": 4, "SK.DIG.002": 4, "SK.DIG.005": 3, "SK.DIG.006": 4,
+    "SK.CTIC.001": 3, "SK.CTIC.003": 2,
+    "SK.FND.000": 2, "SK.FND.001": 2, "SK.FND.002": 1, "SK.FND.010": 1, "SK.FND.012": 1,
+    "SK.PRM.000": 2, "SK.PRM.001": 1, "SK.PRM.004": 1,
+    "SK.TOOL.001": 3, "SK.TOOL.002": 3, "SK.TOOL.020": 2,
+    "SK.PRQ.000": 3, "SK.PRQ.001": 3, "SK.PRQ.010": 2, "SK.PRQ.011": 1,
+    "SK.PRQ.012": 2, "SK.PRQ.013": 3, "SK.PRQ.020": 3, "SK.PRQ.021": 2,
+    "SK.PRQ.022": 2,
+    "SK.COM.006": 2,
+    "SK.LRN.001": 2, "SK.LRN.005": 2,
+    "SK.AGT.000": 1, "SK.RAG.000": 0,
+    "SK.EVL.000": 0, "SK.OPS.000": 0, "SK.SEC.000": 0, "SK.MOD.000": 0
   }
 }

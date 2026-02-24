@@ -7,56 +7,104 @@
   "location": "U.S.",
   "experience_years": 3,
   "ai_exposure_level": "Basic",
-  "tools_used": ["ChatGPT / Claude / Gemini", "Midjourney / DALL-E"],
-  "technical_background": "No coding experience",
+  "tools_used": ["ChatGPT", "Claude", "Midjourney", "DALL-E"],
+  "technical_background": "No formal coding experience. Strong writing, editing, and content strategy skills from agency work. Daily user of multiple GenAI tools for content creation but approaches are intuitive and ad hoc rather than systematic. Comfortable with CMS platforms and basic SEO tools.",
   "archetype": "Career Switcher",
   "current_profile": {
-    "summary": "Content writer at a marketing agency (3 years). Strong writing/editing; uses GenAI tools for brainstorming and drafts. No coding; prompt work is intuitive and ad hoc.",
-    "technical_skills": ["Content writing", "Copyediting", "SEO basics", "CMS tools"],
-    "soft_skills": ["Creative writing", "Brand voice", "Client communication"],
-    "ai_experience": "Uses GenAI tools for brainstorming and drafts"
+    "summary": "Content writer at a digital marketing agency with 3 years of experience creating blog posts, social media content, email campaigns, and website copy for diverse B2B and B2C clients. Strong writing and editing skills with attention to brand voice consistency. Uses ChatGPT and Claude daily for brainstorming, drafting, and rewriting content. Actively uses Midjourney and DALL-E for visual content concepts and social media graphics. Comfortable with CMS platforms (WordPress, HubSpot), basic SEO tools (Ahrefs, SEMrush), and content analytics. Prompt work is intuitive — writes effective prompts through trial and error but has no systematic framework for prompt design, testing, or iteration. No coding background. Has experimented with chaining prompts for longer content workflows but informally.",
+    "technical_skills": [
+      "Content writing and copyediting",
+      "SEO fundamentals (keyword research, on-page optimization)",
+      "CMS platforms (WordPress, HubSpot)",
+      "Social media content strategy",
+      "Email marketing copywriting",
+      "Content analytics (Google Analytics, HubSpot reporting)",
+      "Brand voice and style guide development",
+      "AI image generation (Midjourney, DALL-E prompts)",
+      "Basic HTML/CSS (for CMS formatting)",
+      "Content calendar management"
+    ],
+    "soft_skills": [
+      "Creative writing and storytelling",
+      "Brand voice consistency and adaptation",
+      "Client communication and presentation",
+      "Deadline management and prioritization",
+      "Collaborative content development"
+    ],
+    "ai_experience": "Daily user of ChatGPT and Claude for content drafting, brainstorming, rewriting, and research. Active user of Midjourney and DALL-E for visual content creation and concept exploration. Has experimented with prompt chaining for longer content workflows (research → outline → draft → edit) but approaches are informal and not documented. Comfortable getting good outputs through trial and error but lacks systematic frameworks for prompt design, evaluation, or version control. Has not worked with APIs, structured outputs, or production prompt systems."
   },
-  "learning_intent": "Wants to future-proof by becoming a prompt/AI workflow specialist who designs repeatable, high-quality content pipelines with GenAI.",
+  "learning_intent": "Wants to future-proof career by becoming a prompt/AI workflow specialist who designs repeatable, high-quality content pipelines with GenAI. Goal: move from intuitive prompting to systematic prompt engineering — learn structured prompt design, evaluation criteria for AI content quality, prompt library management, and collaboration with product/engineering teams to integrate prompts into production tools. Wants to bridge the gap between creative content strategy and technical prompt engineering.",
   "target_jd": {
     "title": "Prompt Engineer / AI Content Strategist",
     "requirements": [
-      "Design prompt templates and workflows for consistent, high-quality AI-generated content",
-      "Iterate prompts using feedback and evaluation criteria; maintain prompt libraries",
-      "Collaborate with product/engineering to integrate prompts into tools",
-      "Ensure ethical and brand-safe content generation; manage hallucination risks"
+      "Design prompt templates and workflows for consistent, high-quality AI-generated content across formats",
+      "Iterate prompts using structured feedback, evaluation criteria, and A/B testing; maintain prompt libraries",
+      "Collaborate with product and engineering teams to integrate prompts into tools and platforms",
+      "Ensure ethical and brand-safe content generation; manage hallucination and factual accuracy risks",
+      "Build and maintain prompt style guides with version control and documentation standards",
+      "Design evaluation rubrics for AI-generated content quality (accuracy, tone, brand voice, engagement)",
+      "Create few-shot example libraries and reference datasets for consistent prompt behavior",
+      "Develop prompt debugging and optimization workflows for production content systems",
+      "Train content teams on AI-augmented writing workflows and best practices",
+      "Monitor AI content pipeline performance and iterate based on quality metrics and user feedback"
     ]
   },
   "expected_skill_gaps": [
     {
       "domain": "D.FND",
-      "description": "Understand model limitations (hallucinations), knowledge cutoffs, and IP/copyright basics.",
+      "description": "Understanding model limitations (hallucinations, knowledge cutoffs), training data concepts, IP/copyright basics for AI-generated content.",
       "skills": ["SK.FND.001", "SK.FND.002", "SK.FND.005", "SK.FND.021"]
     },
     {
       "domain": "D.PRM",
-      "description": "Few-shot prompting, constraints/format control, prompt debugging, structured outputs.",
+      "description": "Systematic prompting: instructions with constraints, few-shot examples, prompt debugging, role/persona prompting, and structured JSON/schema outputs.",
       "skills": ["SK.PRM.001", "SK.PRM.002", "SK.PRM.003", "SK.PRM.004", "SK.PRM.010"]
     },
     {
       "domain": "D.EVL",
-      "description": "Rubric-based evaluation and simple A/B tests for prompt variants.",
-      "skills": ["SK.EVL.000", "SK.EVL.001", "SK.EVL.002", "SK.EVL.022"]
+      "description": "Evaluating AI content quality: rubric-based evaluation, LLM-as-judge patterns, prompt unit tests, and A/B testing for prompt variants.",
+      "skills": ["SK.EVL.000", "SK.EVL.001", "SK.EVL.002", "SK.EVL.020"]
     },
     {
       "domain": "D.SEC",
-      "description": "Safety basics, privacy considerations, and brand-risk guardrails.",
+      "description": "Content safety basics: AI security awareness, data leakage prevention in content generation, and brand-risk guardrails.",
       "skills": ["SK.SEC.000", "SK.SEC.002"]
     },
     {
       "domain": "D.GOV",
-      "description": "Basic governance for content generation.",
+      "description": "AI governance basics for content generation: responsible use guidelines, copyright considerations, and content generation ethics.",
       "skills": ["SK.GOV.000", "SK.FND.022"]
+    },
+    {
+      "domain": "D.MUL",
+      "description": "Understanding multimodal AI more deeply: image generation quality assurance, document understanding, and cross-modal content workflows.",
+      "skills": ["SK.MUL.002", "SK.MUL.003", "SK.MUL.013"]
+    },
+    {
+      "domain": "D.COM",
+      "description": "Writing AI workflow documentation, creating prompt style guides, and training others on AI content creation best practices.",
+      "skills": ["SK.COM.006", "SK.COM.004"]
+    },
+    {
+      "domain": "D.LRN",
+      "description": "Building systematic personal AI workflows, evaluating new AI tools, and teaching AI skills to content teams.",
+      "skills": ["SK.LRN.002", "SK.LRN.003", "SK.LRN.004"]
     }
   ],
   "estimated_current_skills": {
     "SK.DIG.001": 3, "SK.DIG.002": 3, "SK.DIG.004": 3,
+    "SK.DIG.006": 3, "SK.DIG.008": 3,
+    "SK.CTIC.001": 2, "SK.CTIC.005": 2,
     "SK.FND.000": 1, "SK.FND.001": 1,
-    "SK.PRM.000": 2,
-    "SK.COM.001": 2
+    "SK.PRM.000": 2, "SK.PRM.004": 1,
+    "SK.TOOL.001": 2, "SK.TOOL.003": 2,
+    "SK.MUL.002": 2,
+    "SK.COM.001": 2, "SK.COM.006": 1,
+    "SK.LRN.001": 1, "SK.LRN.003": 1,
+    "SK.PRD.011": 1,
+    "SK.DOM.MKT.001": 1,
+    "SK.FND.002": 0, "SK.FND.005": 0, "SK.FND.021": 0,
+    "SK.PRM.001": 0, "SK.PRM.002": 0, "SK.PRM.003": 0,
+    "SK.EVL.000": 0, "SK.SEC.000": 0, "SK.GOV.000": 0
   }
 }

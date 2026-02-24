@@ -537,11 +537,36 @@ parse job descriptions, identify skill gaps, and generate personalized learning 
         """Derive valid state_b when JD parser returns non-ontology IDs.
 
         Strategy:
+        0. Match top_10_target_skills skill names against ontology (most reliable)
         1. Match extracted_requirements skill names against ontology
         2. Match target role text against ontology roles for focus domains
         3. Final fallback: foundational AI domains
         """
         state_b: dict[str, int] = {}
+
+        # Strategy 0: map top-10 target skill names to ontology.
+        # This is the most reliable strategy because the JD parser's
+        # structured output includes descriptive skill names even when
+        # the IDs themselves are invalid.
+        top10_target = jd_result.get("top_10_target_skills", [])
+        for entry in top10_target:
+            skill_name = entry.get("skill_name", "")
+            if not skill_name:
+                continue
+            matches = ontology.search_skills(skill_name)
+            if matches:
+                best = matches[0]
+                state_b[best["id"]] = max(
+                    state_b.get(best["id"], 0),
+                    entry.get("required_level", best["level"]),
+                )
+
+        if len(state_b) >= 5:
+            logger.info(
+                "state_b derived from top-10 skill name matching: %d skills",
+                len(state_b),
+            )
+            return state_b
 
         # Strategy 1: match JD parser skill names to ontology
         extracted_reqs = jd_result.get("extracted_requirements", [])

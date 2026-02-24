@@ -116,7 +116,41 @@ the user's profile (job title, responsibilities, tools used, or background)."""
 
         result = await self._call_llm_structured(prompt, output_schema)
 
-        # Merge with any pre-defined skills from profile
+        # Post-process: ensure all skill IDs are valid ontology IDs.
+        # When RAG is unavailable, the LLM may hallucinate IDs despite
+        # instructions.  This is critical for custom profiles that lack
+        # estimated_current_skills and depend entirely on LLM output.
+        ontology = get_ontology_service()
+        valid_ids = ontology.get_all_skill_ids()
+
+        cleaned_state_a = {}
+        for sid, lvl in result.get("state_a_skills", {}).items():
+            if sid in valid_ids:
+                cleaned_state_a[sid] = lvl
+            else:
+                # Try fuzzy match by skill name
+                name_guess = sid.replace("SK.", "").replace(".", " ")
+                matches = ontology.search_skills(name_guess)
+                if matches:
+                    cleaned_state_a[matches[0]["id"]] = lvl
+        result["state_a_skills"] = cleaned_state_a
+
+        if "top_10_current_skills" in result:
+            cleaned_top10 = []
+            for entry in result["top_10_current_skills"]:
+                sid = entry.get("skill_id", "")
+                if sid in valid_ids:
+                    cleaned_top10.append(entry)
+                else:
+                    name = entry.get("skill_name", "")
+                    matches = ontology.search_skills(name) if name else []
+                    if matches:
+                        entry["skill_id"] = matches[0]["id"]
+                        entry["domain"] = matches[0]["domain"]
+                        cleaned_top10.append(entry)
+            result["top_10_current_skills"] = cleaned_top10
+
+        # Merge with any pre-defined skills from profile (overrides LLM)
         if "estimated_current_skills" in profile:
             result["state_a_skills"] = {
                 **result.get("state_a_skills", {}),

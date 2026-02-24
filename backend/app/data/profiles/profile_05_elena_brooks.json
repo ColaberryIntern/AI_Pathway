@@ -8,55 +8,104 @@
   "experience_years": 5,
   "ai_exposure_level": "None",
   "tools_used": ["None"],
-  "technical_background": "Basic scripting (Excel, simple automation)",
+  "technical_background": "Advanced Excel and financial modeling. Intermediate SQL for querying data warehouses. Basic VBA for automating repetitive reporting tasks. Strong quantitative skills from finance degree and CFA Level 1 preparation. No AI or ML tool experience — purely traditional analytics.",
   "archetype": "Domain Upskiller",
   "current_profile": {
-    "summary": "Financial analyst (5 years) in credit risk and forecasting. Advanced Excel, intermediate SQL, basic VBA. Understands finance domain deeply (credit, fraud, reporting). Little hands-on ML; interested in AI for risk and fraud.",
-    "technical_skills": ["Excel (advanced)", "SQL (intermediate)", "VBA (basic)", "Financial modeling"],
-    "soft_skills": ["Risk analysis", "Financial reporting", "Stakeholder presentations"],
-    "ai_experience": "Minimal hands-on ML experience"
+    "summary": "Financial analyst with 5 years of experience in credit risk and forecasting at a regional bank. Builds financial models for credit decisioning, performs variance analysis, and generates regulatory reports. Advanced Excel user (financial modeling, scenario analysis, Monte Carlo simulations via add-ins). Intermediate SQL for querying the data warehouse and building cohort analyses. Basic VBA for automating monthly reporting workflows. Deep understanding of finance domain: credit risk, fraud indicators, BSA/AML reporting, and regulatory requirements (OCC, FDIC). Passed CFA Level 1. No hands-on ML or AI experience whatsoever — has heard of AI in finance from conferences but has not used any AI tools in work or personal projects.",
+    "technical_skills": [
+      "Excel (advanced: financial modeling, scenario analysis, pivot tables)",
+      "SQL (intermediate: joins, subqueries, data warehouse queries)",
+      "VBA (basic: automating reports, data cleaning macros)",
+      "Financial modeling (DCF, credit scoring, stress testing)",
+      "Regulatory reporting (OCC, FDIC, BSA/AML)",
+      "Data visualization (Excel charts, basic Tableau)",
+      "Statistical analysis (regression, time series in Excel)",
+      "Bloomberg Terminal operations",
+      "Credit risk assessment frameworks",
+      "Variance analysis and forecasting"
+    ],
+    "soft_skills": [
+      "Risk analysis and quantitative reasoning",
+      "Financial reporting and documentation",
+      "Stakeholder presentations to senior management",
+      "Regulatory compliance awareness",
+      "Cross-functional collaboration (risk, compliance, operations)"
+    ],
+    "ai_experience": "No hands-on AI or ML experience. Has attended bank-sponsored conferences with AI sessions on fraud detection and credit risk modeling, but has not used any AI tools professionally or personally. Understands the concept of predictive modeling from statistical background but has no practical ML skills. Interested in AI for risk analytics but starting from zero."
   },
-  "learning_intent": "Wants to build predictive models for risk, fraud, and customer segmentation. Goal: pair finance expertise with ML skills and learn explainability and compliance requirements for AI in regulated finance.",
+  "learning_intent": "Wants to build predictive models for risk, fraud detection, and customer segmentation, combining deep finance domain expertise with new ML capabilities. Goal: pair existing quantitative skills with Python-based ML workflows, learn explainability and fairness requirements for AI in regulated finance (model risk management, SR 11-7 compliance), and eventually lead the bank's transition from traditional statistical models to ML-based risk assessment. Particularly interested in credit risk scoring, fraud detection, and automated regulatory reporting.",
   "target_jd": {
     "title": "Financial Data Scientist / AI Risk Analyst (FinTech)",
     "requirements": [
-      "Develop ML models for credit risk, fraud detection, and customer analytics",
-      "Validate models; manage explainability, bias, and regulatory documentation",
-      "Build data pipelines and deploy models with engineering partners",
-      "Present insights to leadership and translate model tradeoffs into business decisions"
+      "Develop ML models for credit risk scoring, fraud detection, and customer segmentation",
+      "Validate models for accuracy, explainability, bias, and regulatory compliance (SR 11-7, OCC guidance)",
+      "Build data pipelines and deploy models with engineering partners in production environments",
+      "Present insights and model tradeoffs to leadership and translate into business decisions",
+      "Design and implement model monitoring for drift, performance degradation, and fairness metrics",
+      "Ensure numerical auditability and documentation standards for regulatory examination",
+      "Apply NLP techniques to financial documents (loan applications, complaint data, regulatory filings)",
+      "Build automated reporting pipelines that combine ML predictions with traditional financial metrics",
+      "Collaborate with compliance and legal teams on AI governance for financial services",
+      "Evaluate vendor AI/ML solutions for integration into existing risk management workflows"
     ]
   },
   "expected_skill_gaps": [
     {
       "domain": "D.PRQ",
-      "description": "Python basics + data handling; API/auth basics for production workflows.",
+      "description": "Python basics and data handling (Pandas/NumPy) for ML workflows. API/auth basics for production model serving.",
       "skills": ["SK.PRQ.010", "SK.PRQ.011", "SK.PRQ.020", "SK.PRQ.021"]
     },
     {
       "domain": "D.EVL",
-      "description": "Prompt/model unit tests, monitoring, A/B testing, regression testing for model changes.",
+      "description": "Model evaluation: offline/online eval types, monitoring, A/B testing, regression testing for model changes, and quality dashboards.",
       "skills": ["SK.EVL.001", "SK.EVL.010", "SK.EVL.020", "SK.EVL.022"]
     },
     {
       "domain": "D.GOV",
-      "description": "Risk framing; documentation; constraints for model use in financial decisioning.",
+      "description": "AI risk framing, policy-to-controls mapping, AI regulations landscape, and documentation standards for financial model governance.",
       "skills": ["SK.GOV.001", "SK.GOV.002", "SK.GOV.010"]
     },
     {
       "domain": "D.SEC",
-      "description": "Data leakage prevention and secure output handling.",
+      "description": "Data leakage prevention, secure output handling, and output security for financial AI systems handling sensitive data.",
       "skills": ["SK.SEC.000", "SK.SEC.002", "SK.SEC.003"]
     },
     {
-      "domain": "D.RAG",
-      "description": "If building GenAI assistants for analysts: RAG fundamentals + tool calling.",
-      "skills": ["SK.RAG.000", "SK.AGT.000", "SK.AGT.001"]
+      "domain": "D.FND",
+      "description": "LLM fundamentals, model limitations, bias/fairness concepts, and privacy basics critical for regulated financial AI.",
+      "skills": ["SK.FND.001", "SK.FND.002", "SK.FND.020", "SK.FND.022"]
+    },
+    {
+      "domain": "D.DOM",
+      "description": "Finance-specific AI considerations: numerical auditability, explainability requirements, and regulatory documentation for ML models.",
+      "skills": ["SK.DOM.FIN.001"]
+    },
+    {
+      "domain": "D.MOD",
+      "description": "Understanding when to customize models vs use off-the-shelf, and data requirements for training on financial data.",
+      "skills": ["SK.MOD.000", "SK.MOD.001", "SK.MOD.002"]
+    },
+    {
+      "domain": "D.COM",
+      "description": "Explaining AI model decisions to non-technical leadership and writing AI project proposals for budget approval.",
+      "skills": ["SK.COM.001", "SK.COM.002"]
     }
   ],
   "estimated_current_skills": {
-    "SK.DIG.001": 3, "SK.DIG.002": 3, "SK.DIG.003": 4,
+    "SK.DIG.001": 3, "SK.DIG.002": 3, "SK.DIG.003": 4, "SK.DIG.004": 3,
+    "SK.DIG.005": 3, "SK.DIG.006": 3,
+    "SK.CTIC.001": 3, "SK.CTIC.003": 3, "SK.CTIC.005": 3,
     "SK.PRQ.013": 2,
     "SK.FND.000": 1,
-    "SK.COM.001": 2
+    "SK.PRD.002": 2, "SK.PRD.022": 2,
+    "SK.COM.001": 2, "SK.COM.004": 2,
+    "SK.GOV.000": 1, "SK.GOV.001": 1,
+    "SK.DOM.FIN.001": 1,
+    "SK.LRN.001": 1,
+    "SK.PRQ.010": 0, "SK.PRQ.011": 0,
+    "SK.FND.001": 0, "SK.FND.002": 0,
+    "SK.EVL.000": 0, "SK.SEC.000": 0,
+    "SK.TOOL.001": 0, "SK.PRM.000": 0,
+    "SK.MOD.000": 0
   }
 }

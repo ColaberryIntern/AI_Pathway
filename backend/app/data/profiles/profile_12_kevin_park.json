@@ -7,56 +7,103 @@
   "location": "U.S.",
   "experience_years": 4,
   "ai_exposure_level": "Basic",
-  "tools_used": ["ChatGPT / Claude / Gemini", "GitHub Copilot"],
-  "technical_background": "Professional developer",
+  "tools_used": ["ChatGPT", "GitHub Copilot"],
+  "technical_background": "Professional automation/controls engineer with mechanical engineering degree. 4 years working with PLCs, robotics, sensors, and control systems. Strong C/C++ for embedded systems. Basic Python from a recent online course. Comfortable with version control, Linux, and hardware integration. Has participated in a predictive maintenance pilot project as a domain expert.",
   "archetype": "Technical Pivot",
   "current_profile": {
-    "summary": "Mechanical/automation engineer (4 years) working with PLCs, robotics, sensors, and control systems. Some C/C++ for embedded work; new to Python. Has participated in a predictive maintenance pilot and is curious about ML.",
-    "technical_skills": ["PLCs", "Robotics", "Sensors", "Control systems", "C/C++ (embedded)"],
-    "soft_skills": ["Systems thinking", "Technical documentation", "Cross-team collaboration"],
-    "ai_experience": "Participated in predictive maintenance pilot"
+    "summary": "Automation/controls engineer with 4 years of experience at an industrial automation company working with PLCs, robotics cells, sensors, and SCADA systems across automotive and electronics manufacturing. Mechanical engineering degree with strong C/C++ skills for embedded firmware and real-time control systems. Comfortable with version control (Git), Linux environments, and hardware-software integration. Started learning Python through an online course (completed basics, NumPy, basic data visualization) to prepare for ML applications. Participated in a predictive maintenance pilot project as the domain expert on vibration sensor data and failure modes — worked with data scientists who built the models. Uses ChatGPT for debugging embedded code and GitHub Copilot for C++ development. Curious about applying ML to industrial systems but has no ML model building experience.",
+    "technical_skills": [
+      "PLC programming (Allen-Bradley, Siemens S7)",
+      "Robotics integration (FANUC, ABB, Universal Robots)",
+      "Sensor systems (vibration, temperature, proximity, vision)",
+      "C/C++ for embedded systems and firmware",
+      "Python basics (NumPy, matplotlib, online course level)",
+      "Git version control",
+      "Linux command line and shell scripting",
+      "SCADA and HMI configuration",
+      "CAD and mechanical design (SolidWorks)",
+      "Industrial communication protocols (Modbus, EtherNet/IP)"
+    ],
+    "soft_skills": [
+      "Systems thinking and root cause analysis",
+      "Technical documentation and specifications",
+      "Cross-team collaboration (mechanical, electrical, software)",
+      "Safety-critical system design awareness",
+      "Project management for automation projects"
+    ],
+    "ai_experience": "Participated in a predictive maintenance pilot as the domain expert on vibration data and failure modes — worked alongside data scientists who built the actual models. Uses ChatGPT for debugging embedded C/C++ code and exploring Python concepts. Uses GitHub Copilot for C++ development. Understands the concept of using sensor data for prediction but has never built, trained, or evaluated an ML model. Familiar with computer vision from seeing vision inspection systems on factory floors but has not worked with CV models directly."
   },
-  "learning_intent": "Wants to build intelligent automation systems (predictive maintenance, computer vision inspection, adaptive robotics). Goal: merge domain expertise with ML skills and safe deployment practices in industrial environments.",
+  "learning_intent": "Wants to build intelligent automation systems that combine traditional control engineering with ML capabilities: predictive maintenance, computer vision inspection, adaptive robotics control, and anomaly detection from sensor data. Goal: merge deep domain expertise in industrial automation with ML skills for sensor data processing, model training, edge deployment, and safe operation of AI in physical systems. Wants to be the engineer who bridges the gap between manufacturing domain knowledge and ML implementation, deploying models that work reliably in real-time industrial environments.",
   "target_jd": {
     "title": "AI Automation Engineer / Robotics AI Specialist",
     "requirements": [
-      "Develop ML solutions for industrial systems (predictive maintenance, vision-based QC)",
-      "Integrate models into real-time/edge environments; ensure reliability and safety",
-      "Work with data pipelines from sensors and OT systems to training/inference workloads",
-      "Monitor performance, handle failures, and iterate models over time"
+      "Develop ML solutions for industrial systems: predictive maintenance, vision-based quality control, and anomaly detection",
+      "Integrate ML models into real-time and edge computing environments; ensure reliability and safety",
+      "Build data pipelines from sensors and OT systems to training and inference workloads",
+      "Monitor deployed model performance, handle failures gracefully, and iterate models over time",
+      "Apply computer vision techniques for quality inspection and defect detection in manufacturing",
+      "Design safe AI systems for physical environments with proper failure modes and fallbacks",
+      "Optimize model inference for edge deployment: latency, memory, and power constraints",
+      "Collaborate with data scientists, controls engineers, and production teams on AI implementation",
+      "Ensure security of AI systems in industrial environments: secure communication, access control",
+      "Document and validate AI system performance for safety and quality certifications"
     ]
   },
   "expected_skill_gaps": [
     {
       "domain": "D.PRQ",
-      "description": "Python basics and data handling; backend service fundamentals for integrations.",
+      "description": "Python data stack for ML (Pandas/NumPy production-level), REST APIs for model serving, and backend service fundamentals for integration.",
       "skills": ["SK.PRQ.010", "SK.PRQ.011", "SK.PRQ.020", "SK.PRQ.022"]
     },
     {
       "domain": "D.FND",
-      "description": "Embeddings and multimodal basics; model limitations and reliability tradeoffs.",
+      "description": "ML fundamentals: embeddings for sensor data, multimodal basics for vision, model limitations, and reliability tradeoffs in safety-critical systems.",
       "skills": ["SK.FND.001", "SK.FND.002", "SK.FND.012", "SK.FND.013"]
     },
     {
       "domain": "D.OPS",
-      "description": "Latency optimization, deployment gates, versioning, and incident response concepts.",
+      "description": "Model deployment and operations: latency optimization for edge inference, deployment gates, versioning, and incident response for production AI.",
       "skills": ["SK.OPS.000", "SK.OPS.001", "SK.OPS.020", "SK.OPS.022"]
     },
     {
       "domain": "D.SEC",
-      "description": "Secure tool integration and safe handling of outputs in systems that affect physical processes.",
+      "description": "Secure AI integration in industrial systems: output security, agent permission design for autonomous systems, and tool sandboxing.",
       "skills": ["SK.SEC.000", "SK.SEC.003", "SK.SEC.010"]
     },
     {
       "domain": "D.MUL",
-      "description": "Computer vision basics for quality inspection.",
-      "skills": ["SK.MUL.000", "SK.MUL.001"]
+      "description": "Computer vision fundamentals: image-to-text extraction, image understanding for quality inspection, and video analysis for monitoring.",
+      "skills": ["SK.MUL.000", "SK.MUL.001", "SK.MUL.011"]
+    },
+    {
+      "domain": "D.EVL",
+      "description": "Model evaluation for industrial AI: evaluation types, tracing/observability for deployed models, and quality dashboards for production systems.",
+      "skills": ["SK.EVL.000", "SK.EVL.001", "SK.EVL.010"]
+    },
+    {
+      "domain": "D.MOD",
+      "description": "Model adaptation: when to use off-the-shelf vs custom models, data requirements for training on industrial sensor data, and fine-tuning approaches.",
+      "skills": ["SK.MOD.000", "SK.MOD.001", "SK.MOD.002"]
+    },
+    {
+      "domain": "D.AGT",
+      "description": "Agent basics for autonomous industrial systems: understanding agent concepts and tool definitions for automated decision-making.",
+      "skills": ["SK.AGT.000", "SK.AGT.001"]
     }
   ],
   "estimated_current_skills": {
-    "SK.DIG.001": 3, "SK.DIG.002": 3,
-    "SK.PRQ.000": 3,
-    "SK.FND.000": 1,
-    "SK.COM.001": 2, "SK.COM.006": 2
+    "SK.DIG.001": 3, "SK.DIG.002": 3, "SK.DIG.005": 3, "SK.DIG.006": 4,
+    "SK.CTIC.001": 3, "SK.CTIC.003": 2,
+    "SK.FND.000": 1, "SK.FND.004": 1,
+    "SK.PRM.000": 1,
+    "SK.TOOL.001": 1, "SK.TOOL.002": 2,
+    "SK.PRQ.000": 3, "SK.PRQ.001": 3, "SK.PRQ.010": 1, "SK.PRQ.011": 1,
+    "SK.PRQ.020": 1,
+    "SK.COM.001": 2, "SK.COM.006": 2,
+    "SK.LRN.001": 1, "SK.LRN.005": 2,
+    "SK.MUL.000": 1,
+    "SK.EVL.000": 0, "SK.OPS.000": 0, "SK.SEC.000": 0,
+    "SK.MOD.000": 0, "SK.AGT.000": 0,
+    "SK.FND.012": 0, "SK.FND.013": 0
   }
 }

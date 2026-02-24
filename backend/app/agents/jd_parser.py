@@ -144,6 +144,47 @@ Map everything to the GenAI Skills Ontology structure."""
 
         result = await self._call_llm_structured(prompt, output_schema)
 
+        # Post-process: validate and remap skill IDs to ontology.
+        # Critical for custom profiles where the LLM may hallucinate
+        # IDs despite instructions — ensures state_b is grounded.
+        ontology = get_ontology_service()
+        valid_ids = ontology.get_all_skill_ids()
+
+        # Build a name lookup from the top_10 for remapping
+        name_to_orig = {}
+        for entry in result.get("top_10_target_skills", []):
+            name_to_orig[entry.get("skill_id", "")] = entry.get("skill_name", "")
+
+        cleaned_b = {}
+        for sid, lvl in result.get("state_b_skills", {}).items():
+            if sid in valid_ids:
+                cleaned_b[sid] = lvl
+            else:
+                name = name_to_orig.get(sid, "")
+                matches = ontology.search_skills(name) if name else []
+                if matches:
+                    cleaned_b[matches[0]["id"]] = lvl
+        result["state_b_skills"] = cleaned_b
+
+        if "top_10_target_skills" in result:
+            for entry in result["top_10_target_skills"]:
+                sid = entry.get("skill_id", "")
+                if sid not in valid_ids:
+                    name = entry.get("skill_name", "")
+                    matches = ontology.search_skills(name) if name else []
+                    if matches:
+                        entry["skill_id"] = matches[0]["id"]
+                        entry["domain"] = matches[0]["domain"]
+
+        if "extracted_requirements" in result:
+            for req in result["extracted_requirements"]:
+                sid = req.get("skill_id", "")
+                if sid not in valid_ids:
+                    name = req.get("skill_name", "")
+                    matches = ontology.search_skills(name) if name else []
+                    if matches:
+                        req["skill_id"] = matches[0]["id"]
+
         self._log_execution("parse_jd", {"jd_length": len(jd_text)}, result)
         result["duration_ms"] = self._end_execution()
 

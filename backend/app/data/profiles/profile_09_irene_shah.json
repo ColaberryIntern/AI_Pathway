@@ -7,58 +7,102 @@
   "location": "U.S.",
   "experience_years": 22,
   "ai_exposure_level": "Intermediate",
-  "tools_used": ["ChatGPT / Claude / Gemini", "OpenAI API / Anthropic API"],
-  "technical_background": "Some programming",
+  "tools_used": ["ChatGPT", "Claude", "Gemini", "OpenAI API"],
+  "technical_background": "Strong IT leadership background with cloud migration, cybersecurity, and enterprise architecture experience. Some hands-on programming early in career (Java, SQL). Now focused on strategy, governance, and vendor management. Has sponsored ML pilots and overseen AI vendor evaluations.",
   "archetype": "Executive",
   "current_profile": {
-    "summary": "CIO at a mid-size insurance company. Extensive experience with cloud migration, cybersecurity, and IT governance. Has sponsored ML pilots but wants deeper AI literacy to guide enterprise strategy and governance.",
-    "technical_skills": ["IT governance", "Cloud architecture", "Cybersecurity", "Enterprise systems"],
-    "soft_skills": ["Executive leadership", "Strategic planning", "Board communication", "Vendor management"],
-    "ai_experience": "Has sponsored ML pilots, wants deeper AI literacy"
+    "summary": "CIO at a mid-size insurance company with 22 years of progressive IT leadership experience. Led cloud migration from on-prem to AWS, established cybersecurity program, and manages a 60-person IT organization. Has sponsored three ML pilots (claims fraud detection, underwriting assist, customer churn prediction) with mixed results — strong technical output but struggled with governance, measurement, and organizational adoption. Earlier in career wrote Java and SQL; now operates at the strategy and governance layer. Active user of ChatGPT and Claude for executive communication, board prep, and vendor analysis. Has explored the OpenAI API through a sandbox project with the data team. Understands technical concepts at a conceptual level but needs structured frameworks to lead enterprise AI strategy.",
+    "technical_skills": [
+      "IT governance and enterprise architecture",
+      "Cloud architecture (AWS: EC2, S3, Lambda, RDS)",
+      "Cybersecurity program management (NIST, SOC2)",
+      "Enterprise systems (ERP, CRM, data warehouse)",
+      "Vendor management and contract negotiation",
+      "Budget management ($15M+ IT portfolio)",
+      "SQL (intermediate, from earlier career)",
+      "Java (basic, earlier career)",
+      "Data warehouse and BI strategy",
+      "IT compliance and audit management"
+    ],
+    "soft_skills": [
+      "Executive leadership and board communication",
+      "Strategic planning and roadmap development",
+      "Change management and organizational transformation",
+      "Vendor evaluation and partnership management",
+      "Cross-functional executive collaboration"
+    ],
+    "ai_experience": "Has sponsored three ML pilots in insurance (fraud detection, underwriting, churn) with external vendors and internal data team. Uses ChatGPT and Claude daily for executive communication, board prep, and vendor analysis. Explored OpenAI API through a sandbox project with the data team. Attended multiple AI executive briefings and conferences. Understands AI concepts at a strategic level but lacks structured frameworks for governance, evaluation, and responsible deployment at scale."
   },
-  "learning_intent": "Wants to operate like a 'Chief AI Officer' in practice: set AI strategy, governance, and capability building across the enterprise.",
+  "learning_intent": "Wants to operate as a 'Chief AI Officer' in practice: set enterprise AI strategy, establish governance frameworks, build AI capability across the organization, and ensure responsible deployment. Goal: develop structured frameworks to evaluate AI initiatives, establish model risk management practices, build talent strategy for AI, and communicate AI strategy to the board with confidence. Needs to move from 'sponsor' to 'strategic leader' of AI transformation.",
   "target_jd": {
     "title": "Enterprise AI Leader (Strategy + Governance)",
     "requirements": [
-      "Define and execute enterprise AI strategy aligned to business priorities",
-      "Implement responsible AI governance, risk management, and compliance controls",
-      "Stand up evaluation, monitoring, and model risk management practices",
-      "Build AI talent strategy and operating model (CoE vs embedded)"
+      "Define and execute enterprise AI strategy aligned to business priorities and competitive landscape",
+      "Implement responsible AI governance framework including risk management, compliance controls, and ethical guidelines",
+      "Stand up evaluation, monitoring, and model risk management practices across all AI initiatives",
+      "Build AI talent strategy and operating model (Center of Excellence vs embedded teams)",
+      "Establish vendor evaluation criteria and partnership frameworks for AI/ML capabilities",
+      "Define KPIs and success metrics for AI initiatives; report to board on AI portfolio performance",
+      "Ensure compliance with emerging AI regulations (EU AI Act, state-level requirements, industry standards)",
+      "Lead organizational change management for AI adoption across business units",
+      "Oversee data governance, privacy, and security practices for AI training and deployment",
+      "Build cross-functional AI council to align technology, business, legal, and compliance stakeholders"
     ]
   },
   "expected_skill_gaps": [
     {
       "domain": "D.GOV",
-      "description": "AI risk framing, policy-to-controls mapping, and retention/minimization practices.",
+      "description": "Move from general IT governance to AI-specific governance: risk framing, policy-to-controls mapping, regulatory landscape, and data minimization practices.",
       "skills": ["SK.GOV.001", "SK.GOV.002", "SK.GOV.010", "SK.GOV.020", "SK.GOV.021"]
     },
     {
       "domain": "D.EVL",
-      "description": "Monitoring, drift, logging, evaluation strategies, and release gates for AI systems.",
+      "description": "Evaluation and monitoring frameworks for AI systems: understanding eval types, tracing, quality dashboards, and release gates at an oversight level.",
       "skills": ["SK.EVL.001", "SK.EVL.010", "SK.EVL.011", "SK.EVL.021"]
     },
     {
       "domain": "D.SEC",
-      "description": "Threat landscape, injection/data leakage risks, and secure deployment practices (oversight level).",
+      "description": "AI security threat landscape, injection/data leakage risks, and agent permission design for enterprise AI deployments.",
       "skills": ["SK.SEC.000", "SK.SEC.001", "SK.SEC.002", "SK.SEC.010"]
     },
     {
       "domain": "D.LRN",
-      "description": "Keeping up with AI developments and evaluating new tools/vendors.",
-      "skills": ["SK.LRN.001", "SK.LRN.002"]
+      "description": "Building systematic approaches to staying current with AI developments and evaluating new AI tools/vendors for the enterprise.",
+      "skills": ["SK.LRN.001", "SK.LRN.002", "SK.LRN.004"]
     },
     {
       "domain": "D.PRD",
-      "description": "AI enablement strategy and talent development.",
-      "skills": ["SK.PRD.020", "SK.PRD.021", "SK.PRD.022"]
+      "description": "AI enablement strategy, talent development, use-case prioritization, and ROI measurement frameworks for AI portfolio.",
+      "skills": ["SK.PRD.001", "SK.PRD.020", "SK.PRD.021", "SK.PRD.022"]
+    },
+    {
+      "domain": "D.FND",
+      "description": "Deepen understanding of model families, reasoning vs retrieval vs tools, and bias/fairness concepts to make informed strategic decisions.",
+      "skills": ["SK.FND.003", "SK.FND.004", "SK.FND.022"]
+    },
+    {
+      "domain": "D.COM",
+      "description": "Writing AI project proposals for board, facilitating AI workshops, and cross-functional AI collaboration at the enterprise level.",
+      "skills": ["SK.COM.002", "SK.COM.003", "SK.COM.005"]
+    },
+    {
+      "domain": "D.OPS",
+      "description": "Understanding LLMOps concepts at an oversight level: SLOs/SLAs, cost modeling, and deployment gate requirements.",
+      "skills": ["SK.OPS.000", "SK.OPS.002", "SK.OPS.020"]
     }
   ],
   "estimated_current_skills": {
-    "SK.DIG.001": 3, "SK.DIG.002": 3, "SK.DIG.005": 3,
-    "SK.FND.000": 2, "SK.FND.001": 1, "SK.FND.002": 1,
-    "SK.GOV.000": 2,
-    "SK.PRQ.030": 3,
-    "SK.COM.001": 2, "SK.COM.002": 3,
-    "SK.PRD.001": 2, "SK.PRD.021": 4
+    "SK.DIG.001": 4, "SK.DIG.002": 4, "SK.DIG.003": 3, "SK.DIG.004": 4,
+    "SK.DIG.005": 4, "SK.DIG.006": 3, "SK.DIG.008": 4,
+    "SK.CTIC.001": 3, "SK.CTIC.003": 3, "SK.CTIC.004": 3, "SK.CTIC.005": 3,
+    "SK.FND.000": 2, "SK.FND.001": 1, "SK.FND.002": 1, "SK.FND.020": 2,
+    "SK.PRM.000": 2, "SK.PRM.001": 1,
+    "SK.TOOL.001": 2, "SK.TOOL.020": 2,
+    "SK.PRQ.013": 2, "SK.PRQ.030": 3,
+    "SK.GOV.000": 2, "SK.GOV.001": 1,
+    "SK.PRD.001": 2, "SK.PRD.021": 4, "SK.PRD.020": 2,
+    "SK.COM.001": 3, "SK.COM.002": 3, "SK.COM.004": 3,
+    "SK.LRN.001": 2, "SK.LRN.002": 2,
+    "SK.EVL.000": 0, "SK.SEC.000": 0, "SK.OPS.000": 0
   }
 }
