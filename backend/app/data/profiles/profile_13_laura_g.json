@@ -79,28 +79,38 @@
       "domain": "D.PRM",
       "description": "Deepen structured prompting for platform-specific AI features. Need formalized JSON/schema outputs and advanced prompt debugging for production systems.",
       "skills": ["SK.PRM.003", "SK.PRM.010"]
+    },
+    {
+      "domain": "D.COM",
+      "description": "Communicating AI strategy and capabilities to non-technical stakeholders and executives. Evangelize AI adoption and set realistic expectations.",
+      "skills": ["SK.COM.001"]
+    },
+    {
+      "domain": "D.PRD",
+      "description": "Strategic AI roadmapping, use-case selection, and AI enablement training for the martech product organization.",
+      "skills": ["SK.PRD.001", "SK.PRD.020"]
     }
   ],
   "estimated_current_skills": {
-    "SK.PRM.000": 3,
+    "SK.PRM.000": 2,
     "SK.TOOL.001": 3,
     "SK.PRD.002": 4,
     "SK.PRD.011": 3,
     "SK.LRN.002": 3,
-    "SK.PRM.010": 2,
-    "SK.RAG.000": 1,
+    "SK.PRM.010": 1,
+    "SK.RAG.000": 0,
     "SK.FND.012": 1,
-    "SK.PRM.001": 3,
-    "SK.AGT.000": 2,
+    "SK.PRM.001": 1,
+    "SK.AGT.000": 1,
     "SK.FND.001": 2,
     "SK.FND.002": 2,
-    "SK.FND.020": 2,
+    "SK.FND.020": 1,
     "SK.TOOL.021": 2,
-    "SK.PRM.003": 2,
-    "SK.COM.001": 2,
-    "SK.PRD.001": 2,
-    "SK.EVL.001": 1,
-    "SK.AGT.001": 1,
+    "SK.PRM.003": 1,
+    "SK.COM.001": 1,
+    "SK.PRD.001": 1,
+    "SK.EVL.001": 0,
+    "SK.AGT.001": 0,
     "SK.AGT.010": 0,
     "SK.EVL.002": 0,
     "SK.EVL.020": 0,
@@ -108,6 +118,8 @@
     "SK.SEC.001": 0,
     "SK.OPS.010": 0,
     "SK.OPS.001": 0,
-    "SK.AGT.003": 0
+    "SK.AGT.003": 0,
+    "SK.PRD.020": 1,
+    "SK.GOV.020": 2
   }
 }

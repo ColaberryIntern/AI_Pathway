@@ -14,6 +14,7 @@ from app.agents.path_generator import PathGeneratorAgent
 from app.agents.content_curator import ContentCuratorAgent
 from app.services.path_generator import LearningPathGenerator, MAX_CHAPTERS
 from app.services.ontology import get_ontology_service
+from app.data.role_templates import ROLE_TEMPLATES
 
 
 logger = logging.getLogger(__name__)
@@ -172,26 +173,96 @@ parse job descriptions, identify skill gaps, and generate personalized learning 
             # Fallback: when RAG is unavailable the JD parser may return
             # entirely invented skill IDs (e.g. "SKL001"), leaving
             # valid_state_b empty.  In that case, derive state_b from
-            # the profile's expected_skill_gaps.  We include ALL skills
-            # from the target domains (not just the specific listed
-            # subset) so the gap engine has enough candidates to fill
-            # 5 chapters even after per-skill floors eliminate some.
+            # the profile's expected_skill_gaps.
             profile_data = task.get("profile", {})
             if not valid_state_b and "expected_skill_gaps" in profile_data:
                 for gap_group in profile_data["expected_skill_gaps"]:
-                    # Add the specific listed skills first
                     for sid in gap_group.get("skills", []):
                         skill = ontology.get_skill(sid)
                         if skill:
                             valid_state_b[sid] = skill["level"]
-                    # Also add ALL skills from each target domain so
-                    # the gap engine sees the full domain landscape.
+
+            # Role template overlay: when a client-approved role
+            # template exists, overlay its confirmed target levels on
+            # state_b — whether state_b came from the LLM JD parser
+            # or the fallback above.  This corrects LLM-guessed
+            # target levels to match what the client specified and
+            # keeps state_b focused on approved skills.
+            template = ROLE_TEMPLATES.get(
+                profile_data.get("target_role", "")
+            )
+            if template:
+                for sid, level in template.items():
+                    if sid in valid_state_b:
+                        valid_state_b[sid] = max(
+                            valid_state_b[sid], level,
+                        )
+                    else:
+                        valid_state_b[sid] = level
+            elif "expected_skill_gaps" in profile_data:
+                # No template: expand ALL skills from each target
+                # domain so the gap engine has enough candidates
+                # to fill 5 chapters after per-skill floors.
+                for gap_group in profile_data["expected_skill_gaps"]:
                     domain_id = gap_group.get("domain")
                     if domain_id:
-                        for skill in ontology.get_skills_by_domain(domain_id):
+                        for skill in ontology.get_skills_by_domain(
+                            domain_id
+                        ):
                             sid = skill["id"]
                             if sid not in valid_state_b:
                                 valid_state_b[sid] = skill["level"]
+
+            # When a role template is active, rebuild top_10_target
+            # and top_10_gaps from the template skills so the Skills
+            # Gap Overview and Journey Roadmap "remaining" section
+            # match the scaffold chapters (which use valid_state_b).
+            if template:
+                rebuilt = []
+                for sid, level in template.items():
+                    skill_obj = ontology.get_skill(sid)
+                    if not skill_obj:
+                        continue
+                    domain_obj = ontology.get_domain(
+                        skill_obj["domain"]
+                    )
+                    current = valid_state_a.get(sid, 0)
+                    gap = max(0, level - current)
+                    if gap <= 0:
+                        continue
+                    importance = (
+                        "CRITICAL" if gap >= 3
+                        else "HIGH" if gap >= 2
+                        else "MEDIUM"
+                    )
+                    rebuilt.append({
+                        "rank": 0,
+                        "skill_id": sid,
+                        "skill_name": skill_obj["name"],
+                        "domain": skill_obj["domain"],
+                        "domain_label": (
+                            domain_obj["label"]
+                            if domain_obj else ""
+                        ),
+                        "required_level": level,
+                        "current_level": current,
+                        "gap": gap,
+                        "importance": importance,
+                        "rationale": (
+                            f"Required for "
+                            f"{profile_data.get('target_role', '')} "
+                            f"role"
+                        ),
+                    })
+                rebuilt.sort(
+                    key=lambda x: (-x["gap"], -x["required_level"])
+                )
+                for i, entry in enumerate(rebuilt[:10]):
+                    entry["rank"] = i + 1
+                top_10_target = rebuilt[:10]  # noqa: F841
+                top_10_gaps = rebuilt[:10]
+                results["top_10_target_skills"] = top_10_target
+                results["top_10_skill_gaps"] = top_10_gaps
 
             # Fallback for custom profiles (no expected_skill_gaps):
             # match LLM-returned skill names against ontology via text
@@ -220,9 +291,16 @@ parse job descriptions, identify skill gaps, and generate personalized learning 
                             if did not in seen:
                                 seen.add(did)
                                 target_domains.append(did)
+                # When a role template exists, pass its skill IDs as
+                # priority_skills so the path generator can protect
+                # them from mandatory-category swaps.
+                _tpl = ROLE_TEMPLATES.get(
+                    profile_data.get("target_role", "")
+                )
                 role_context = {
                     "target_role": profile_data.get("target_role", ""),
                     "target_domains": target_domains,
+                    "priority_skills": set(_tpl.keys()) if _tpl else set(),
                 }
 
             deterministic = LearningPathGenerator(ontology_service=ontology)

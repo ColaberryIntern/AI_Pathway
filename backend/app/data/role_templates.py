@@ -93,6 +93,48 @@ ROLE_TEMPLATES: dict[str, dict[str, int]] = {
     },
 
     # ------------------------------------------------------------------
+    # Martech AI Product Manager
+    # ------------------------------------------------------------------
+    # Hands-on AI product role requiring deeper technical depth than a
+    # generic AI PM.  Must build agentic solutions, evaluate AI quality,
+    # and lead AI transformation in martech environments.
+    # Levels confirmed by client (Luda) based on Laura G's target JD.
+    "Martech AI Product Manager": {
+        # D.PRM — structured prompting for platform-specific AI
+        "SK.PRM.001": 3,   # Instructions + constraints — Practitioner
+        "SK.PRM.003": 4,   # Prompt debugging — Builder (rapid experimentation)
+        "SK.PRM.010": 4,   # JSON/schema outputs — Builder (API integration)
+
+        # D.AGT — building AI agents for martech platforms (CRITICAL)
+        "SK.AGT.001": 4,   # Tool definitions & validation — Builder
+        "SK.AGT.010": 4,   # Single-agent loops — Builder
+
+        # D.RAG — knowledge-grounded AI features (CRITICAL)
+        "SK.RAG.000": 4,   # What is RAG — Builder (personalization foundation)
+
+        # D.EVL — evaluation frameworks (HIGH)
+        "SK.EVL.001": 4,   # Eval types offline/online/red team — Builder
+        "SK.EVL.002": 4,   # LLM-as-judge patterns — Builder
+
+        # D.SEC — security (HIGH)
+        "SK.SEC.001": 3,   # Prompt injection mitigation — Practitioner
+
+        # D.PRD — product design (core of PM role)
+        "SK.PRD.001": 4,   # Use-case selection & prioritization — Builder
+
+        # D.COM — cross-functional leadership
+        "SK.COM.001": 4,   # Explaining AI to non-technical audiences — Builder
+
+        # D.GOV — governance
+        "SK.GOV.020": 2,   # PII/PHI handling — User
+
+        # D.FND — foundations (understand, don't master)
+        "SK.FND.001": 1,   # LLM fundamentals — Aware
+        "SK.FND.002": 1,   # Capabilities vs limitations — Aware
+        "SK.FND.020": 1,   # Privacy basics — Aware
+    },
+
+    # ------------------------------------------------------------------
     # Healthcare Data Scientist
     # ------------------------------------------------------------------
     # Needs analytical depth, model evaluation, and domain-specific

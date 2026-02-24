@@ -16,18 +16,27 @@ async def lifespan(app: FastAPI):
     await init_db()
     print("Database initialized")
 
-    # Initialize RAG vector store with ontology
-    try:
-        from app.services.rag.vector_store import get_vector_store
-        from pathlib import Path
+    # Initialize RAG vector store with ontology — skip if GCP credentials
+    # are not available (avoids blocking startup with network timeouts)
+    import os
+    gcp_creds = (
+        os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")
+        or os.environ.get("GOOGLE_CLOUD_PROJECT")
+    )
+    if gcp_creds:
+        try:
+            from app.services.rag.vector_store import get_vector_store
+            from pathlib import Path
 
-        vector_store = get_vector_store()
-        ontology_path = Path(__file__).parent / "data" / "ontology.json"
-        if ontology_path.exists():
-            vector_store.load_ontology(str(ontology_path))
-            print("Ontology loaded into vector store")
-    except Exception as e:
-        print(f"Warning: Could not initialize vector store: {e}")
+            vector_store = get_vector_store()
+            ontology_path = Path(__file__).parent / "data" / "ontology.json"
+            if ontology_path.exists():
+                vector_store.load_ontology(str(ontology_path))
+                print("Ontology loaded into vector store")
+        except Exception as e:
+            print(f"Warning: Could not initialize vector store: {e}")
+    else:
+        print("Skipping vector store init (no GCP credentials configured)")
 
     yield
 

@@ -139,7 +139,12 @@ class LearningPathGenerator:
         # the lowest-level skill (L2+) so the gap engine produces at
         # least one gap for that category.
         state_b = dict(state_b)  # don't mutate caller's dict
-        self._ensure_mandatory_in_state_b(state_b)
+        priority_skills: set[str] = set()
+        if role_context:
+            priority_skills = set(role_context.get("priority_skills") or [])
+        self._ensure_mandatory_in_state_b(
+            state_b, expanded_a, priority_skills,
+        )
 
         gaps = self._gap_engine.compute_gap(expanded_a, state_b, role_context)
 
@@ -172,7 +177,9 @@ class LearningPathGenerator:
         # missing mandatory categories.  This operates on the final
         # chapter list rather than the candidate list, avoiding the
         # cascading back-pressure problem.
-        chapters = self._post_enforce_mandatory(chapters, gaps, expanded_a)
+        chapters = self._post_enforce_mandatory(
+            chapters, gaps, expanded_a, priority_skills,
+        )
 
         # ==============================================================
         # Phase 5 — Top-up: fill remaining slots if under MAX_CHAPTERS
@@ -195,6 +202,8 @@ class LearningPathGenerator:
     def _ensure_mandatory_in_state_b(
         self,
         state_b: dict[str, int],
+        expanded_a: dict[str, int] | None = None,
+        priority_skills: set[str] | None = None,
     ) -> None:
         """Inject one skill per missing mandatory category into *state_b*.
 
@@ -203,8 +212,18 @@ class LearningPathGenerator:
         first domain in that category.  Level 2+ guarantees a positive
         delta after the gap engine's professional floor (L1).
 
+        When *priority_skills* is non-empty (role template exists),
+        skip injection for categories whose template skills are all
+        awareness-level (L <= 1) and the learner already meets that
+        level.  This prevents forcing a D.FND chapter when the role
+        template only requires L1 awareness and the learner is already
+        at L2.
+
         Mutates *state_b* in place.
         """
+        expanded_a = expanded_a or {}
+        priority_skills = priority_skills or set()
+
         state_b_domains = set()
         for sid in state_b:
             skill = self._ontology.get_skill(sid)
@@ -212,8 +231,32 @@ class LearningPathGenerator:
                 state_b_domains.add(skill["domain"])
 
         for cat in MANDATORY_CATEGORIES:
-            if state_b_domains & set(cat["domains"]):
+            cat_domains = set(cat["domains"])
+            if state_b_domains & cat_domains:
                 continue  # category already represented
+
+            # When a role template is active, check if the template
+            # considers this category "awareness-only" (all template
+            # skills in this category are L <= 1) and the learner
+            # already meets that level.  If so, skip injection.
+            if priority_skills:
+                cat_template_skills = [
+                    sid for sid in priority_skills
+                    if (s := self._ontology.get_skill(sid))
+                    and s["domain"] in cat_domains
+                ]
+                if cat_template_skills:
+                    all_awareness = all(
+                        state_b.get(sid, self._ontology.get_skill(sid)["level"]) <= 1
+                        for sid in cat_template_skills
+                        if self._ontology.get_skill(sid)
+                    )
+                    learner_meets = all(
+                        expanded_a.get(sid, 0) >= 1
+                        for sid in cat_template_skills
+                    )
+                    if all_awareness and learner_meets:
+                        continue  # template says awareness-only, learner meets it
 
             # Find the lowest-level L2+ skill with fewest prerequisites
             # from the first viable domain.
@@ -239,6 +282,7 @@ class LearningPathGenerator:
         chapters: list[dict[str, Any]],
         all_gaps: list[dict[str, Any]],
         state_a: dict[str, int],
+        priority_skills: set[str] | None = None,
     ) -> list[dict[str, Any]]:
         """Swap chapters to ensure mandatory category coverage.
 
@@ -251,7 +295,12 @@ class LearningPathGenerator:
         The replacement skill is chosen to be self-contained: it must
         not require unmet prerequisites, so that a 1-for-1 swap keeps
         the chapter count at exactly ``MAX_CHAPTERS``.
+
+        When *priority_skills* is non-empty, chapters covering those
+        skills are protected from being swapped out, and priority
+        skills are preferred as replacements.
         """
+        priority_skills = priority_skills or set()
         if not chapters:
             return chapters
 
@@ -276,35 +325,53 @@ class LearningPathGenerator:
 
             # Find a replacement skill: must be from this category,
             # must have all prereqs already met (self-contained swap).
+            # When priority_skills exist, prefer them as replacements.
             replacement_skill = None
-            for gap in all_gaps:
-                if gap["domain"] not in cat_domains:
-                    continue
-                sid = gap["skill_id"]
-                # Already in the chapter list?
-                if any(
-                    ch.get("primary_skill_id") == sid for ch in chapters
-                ):
-                    continue
-                # Check all prereqs are met
-                prereqs_met = True
-                for prereq_id in gap["prerequisites"]:
-                    prereq_skill = self._ontology.get_skill(prereq_id)
-                    if prereq_skill is None:
+
+            # Pass 1: prefer priority_skills from this category
+            if priority_skills:
+                for gap in all_gaps:
+                    if gap["domain"] not in cat_domains:
                         continue
-                    current = state_a.get(prereq_id, 0)
-                    # Also count as met if it's already a chapter
+                    sid = gap["skill_id"]
+                    if sid not in priority_skills:
+                        continue
                     if any(
-                        ch.get("primary_skill_id") == prereq_id
+                        ch.get("primary_skill_id") == sid
                         for ch in chapters
                     ):
                         continue
-                    if current < prereq_skill["level"]:
-                        prereqs_met = False
-                        break
-                if prereqs_met:
                     replacement_skill = gap
                     break
+
+            # Pass 2: any self-contained skill from this category
+            if replacement_skill is None:
+                for gap in all_gaps:
+                    if gap["domain"] not in cat_domains:
+                        continue
+                    sid = gap["skill_id"]
+                    if any(
+                        ch.get("primary_skill_id") == sid
+                        for ch in chapters
+                    ):
+                        continue
+                    prereqs_met = True
+                    for prereq_id in gap["prerequisites"]:
+                        prereq_skill = self._ontology.get_skill(prereq_id)
+                        if prereq_skill is None:
+                            continue
+                        current = state_a.get(prereq_id, 0)
+                        if any(
+                            ch.get("primary_skill_id") == prereq_id
+                            for ch in chapters
+                        ):
+                            continue
+                        if current < prereq_skill["level"]:
+                            prereqs_met = False
+                            break
+                    if prereqs_met:
+                        replacement_skill = gap
+                        break
 
             if replacement_skill is None:
                 # Fallback: pick the cheapest gap (fewest prereqs)
@@ -325,8 +392,10 @@ class LearningPathGenerator:
             # Find the chapter to replace: lowest-priority chapter
             # from a domain that either (a) isn't mandatory, or
             # (b) has multiple chapters so removing one still leaves
-            # coverage.
-            swap_idx = self._find_swap_target(chapters, chapter_domains)
+            # coverage.  Priority skills are protected.
+            swap_idx = self._find_swap_target(
+                chapters, chapter_domains, priority_skills, all_gaps,
+            )
             if swap_idx is None:
                 continue
 
@@ -353,14 +422,26 @@ class LearningPathGenerator:
         self,
         chapters: list[dict[str, Any]],
         chapter_domains: list[dict[str, Any] | None],
+        priority_skills: set[str] | None = None,
+        all_gaps: list[dict[str, Any]] | None = None,
     ) -> int | None:
         """Find the best chapter to replace for mandatory coverage.
 
-        Prefers chapters from domains that have multiple chapters
-        (so removing one doesn't lose domain coverage).  Falls back
-        to the last chapter.  Never swaps the only representative
-        of a mandatory category.
+        Selection priority (most preferred first):
+        1. Non-priority chapter from a domain with 2+ chapters
+        2. Non-priority chapter (any domain, but not sole mandatory)
+        3. Priority skill chapter from a domain with 2+ chapters
+           (mandatory coverage overrides priority protection)
+        4. Priority skill chapter (last resort, not sole mandatory)
+
+        Never swaps the only representative of a mandatory category
+        that has actual gaps.  Categories with no gaps (e.g. D.FND
+        when the template says awareness-only) are not protected,
+        allowing prerequisite chapters to be swapped.
         """
+        priority_skills = priority_skills or set()
+        gap_domains = {g["domain"] for g in (all_gaps or [])} if all_gaps else None
+
         # Count chapters per domain
         domain_chapter_counts: dict[str, int] = {}
         for skill in chapter_domains:
@@ -368,10 +449,17 @@ class LearningPathGenerator:
                 d = skill["domain"]
                 domain_chapter_counts[d] = domain_chapter_counts.get(d, 0) + 1
 
-        # Identify which chapters are the sole mandatory representative
+        # Identify which chapters are the sole mandatory representative.
+        # When a role template is active, skip protection for categories
+        # with no gaps (the learner already meets the template targets).
         mandatory_sole: set[int] = set()
         for cat in MANDATORY_CATEGORIES:
             cat_domains = set(cat["domains"])
+
+            if priority_skills and gap_domains is not None:
+                if not (cat_domains & gap_domains):
+                    continue  # no gaps in this category — don't protect
+
             cat_indices = [
                 i for i, s in enumerate(chapter_domains)
                 if s and s["domain"] in cat_domains
@@ -379,19 +467,39 @@ class LearningPathGenerator:
             if len(cat_indices) == 1:
                 mandatory_sole.add(cat_indices[0])
 
-        # Prefer swapping a chapter from a domain with 2+ chapters,
-        # scanning from the end (lowest priority / last in topo order).
+        # Identify priority skill chapters (soft-protected)
+        priority_indices: set[int] = set()
+        for idx, ch in enumerate(chapters):
+            if ch.get("primary_skill_id", "") in priority_skills:
+                priority_indices.add(idx)
+
+        # Pass 1: prefer non-mandatory-sole, non-priority chapters
         best_idx = None
         for idx in reversed(range(len(chapters))):
-            if idx in mandatory_sole:
+            if idx in mandatory_sole or idx in priority_indices:
                 continue
             skill = chapter_domains[idx]
             if skill and domain_chapter_counts.get(skill["domain"], 0) >= 2:
                 return idx
             if best_idx is None:
-                best_idx = idx  # first non-mandatory-sole from the end
+                best_idx = idx
 
-        return best_idx
+        if best_idx is not None:
+            return best_idx
+
+        # Pass 2: allow swapping priority skill chapters as last resort
+        # (mandatory coverage takes precedence over priority protection)
+        best_priority_idx = None
+        for idx in reversed(range(len(chapters))):
+            if idx in mandatory_sole:
+                continue  # never swap sole mandatory representative
+            skill = chapter_domains[idx]
+            if skill and domain_chapter_counts.get(skill["domain"], 0) >= 2:
+                return idx
+            if best_priority_idx is None:
+                best_priority_idx = idx
+
+        return best_priority_idx
 
     # ------------------------------------------------------------------
     # Internals

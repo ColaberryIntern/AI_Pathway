@@ -81,6 +81,7 @@ export default function UnifiedSkillsChart({
               <div className="flex items-center justify-between gap-2 mb-2">
                 <div className="flex items-center gap-2 min-w-0">
                   <span className="font-medium text-gray-900 text-sm truncate">
+                    <span className="text-indigo-500 font-mono text-[11px]">{skill.skill_id}</span>{' '}
                     {skill.skill_name}
                   </span>
                   <span className="text-[10px] px-1.5 py-0.5 bg-indigo-100 text-indigo-700 rounded font-medium whitespace-nowrap flex-shrink-0">

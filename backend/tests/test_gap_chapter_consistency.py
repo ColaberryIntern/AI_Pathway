@@ -20,6 +20,7 @@ sys.path.insert(0, ".")
 
 from app.services.path_generator import LearningPathGenerator
 from app.services.ontology import get_ontology_service
+from app.data.role_templates import ROLE_TEMPLATES
 
 PROFILES_DIR = Path(__file__).parent.parent / "app" / "data" / "profiles"
 
@@ -36,6 +37,7 @@ PROFILE_FILES = [
     ("profile_10_john_miller.json", "John Miller"),
     ("profile_11_kelly_johnson.json", "Kelly Johnson"),
     ("profile_12_kevin_park.json", "Kevin Park"),
+    ("profile_13_laura_g.json", "Laura G"),
 ]
 
 
@@ -45,7 +47,13 @@ def load_profile(filename: str) -> dict:
 
 
 def build_inputs(profile: dict, ontology):
-    """Build state_a, state_b, and role_context from a profile."""
+    """Build state_a, state_b, and role_context from a profile.
+
+    Mirrors the orchestrator's state_b construction:
+    - Always adds explicitly-listed skills from expected_skill_gaps
+    - If a role template exists: overlay template levels, skip domain expansion
+    - If no role template: expand ALL skills from each target domain
+    """
     state_a = profile["estimated_current_skills"]
     state_b = {}
     for gap_group in profile["expected_skill_gaps"]:
@@ -53,15 +61,30 @@ def build_inputs(profile: dict, ontology):
             skill = ontology.get_skill(sid)
             if skill:
                 state_b[sid] = skill["level"]
-        domain_id = gap_group.get("domain")
-        if domain_id:
-            for skill in ontology.get_skills_by_domain(domain_id):
-                sid = skill["id"]
-                if sid not in state_b:
-                    state_b[sid] = skill["level"]
+
+    template = ROLE_TEMPLATES.get(profile.get("target_role", ""))
+    if template:
+        # Overlay confirmed target levels; skip full domain expansion
+        for sid, level in template.items():
+            if sid in state_b:
+                state_b[sid] = max(state_b[sid], level)
+            else:
+                state_b[sid] = level
+    else:
+        # No template: expand ALL skills from each target domain
+        for gap_group in profile["expected_skill_gaps"]:
+            domain_id = gap_group.get("domain")
+            if domain_id:
+                for skill in ontology.get_skills_by_domain(domain_id):
+                    sid = skill["id"]
+                    if sid not in state_b:
+                        state_b[sid] = skill["level"]
+
+    _tpl = ROLE_TEMPLATES.get(profile.get("target_role", ""))
     role_context = {
         "target_role": profile["target_role"],
         "target_domains": [g["domain"] for g in profile["expected_skill_gaps"]],
+        "priority_skills": set(_tpl.keys()) if _tpl else set(),
     }
     return state_a, state_b, role_context
 
@@ -308,11 +331,19 @@ def test_mandatory_category_coverage():
     - Applied AI:  D.PRM, D.RAG, D.AGT, D.MOD, D.MUL, D.OPS, D.TOOL
     - Evaluation:  D.EVL
     - Safety:      D.SEC, D.GOV
+
+    Exception: when a role template exists and indicates a category is
+    awareness-only (all template skills in that category are L <= 1)
+    and the learner already meets those levels, the category can
+    legitimately be absent from the scaffold.
     """
     from app.services.path_generator import MANDATORY_CATEGORIES
+    from app.services.gap_engine import SkillGapEngine
+    from app.services.state_inference import expand_state_a
 
     ont = get_ontology_service()
     gen = LearningPathGenerator(ontology_service=ont)
+    engine = SkillGapEngine(ontology_service=ont)
 
     print("\n" + "=" * 80)
     print("MANDATORY CATEGORY COVERAGE TEST")
@@ -324,16 +355,26 @@ def test_mandatory_category_coverage():
         state_a, state_b, rc = build_inputs(profile, ont)
         scaffold = gen.generate_path(state_a, state_b, role_context=rc)
 
+        # Compute actual gaps to determine which categories are active
+        expanded_a = expand_state_a(state_a, ont)[0]
+        gaps = engine.compute_gap(expanded_a, state_b, role_context=rc)
+        gap_domains = {g["domain"] for g in gaps}
+
         chapter_domains = set()
         for ch in scaffold["chapters"]:
             skill = ont.get_skill(ch["primary_skill_id"])
             if skill:
                 chapter_domains.add(skill["domain"])
 
+        has_template = bool(rc.get("priority_skills"))
+
         missing = []
         for cat in MANDATORY_CATEGORIES:
             cat_domains = set(cat["domains"])
             if not chapter_domains & cat_domains:
+                # Allow missing if template-aware and no gaps in category
+                if has_template and not (cat_domains & gap_domains):
+                    continue  # awareness-only, learner meets it
                 missing.append(cat["name"])
 
         status = "OK" if not missing else "FAIL"

@@ -42,13 +42,15 @@ class PathVisualizer:
         summary = analysis_result.get("summary", {})
         top10_current = analysis_result.get("top_10_current_skills", [])
         top10_target = analysis_result.get("top_10_target_skills", [])
+        top10_gaps = analysis_result.get("top_10_skill_gaps", [])
         gaps = analysis_result.get("gap_analysis", {}).get("gaps", [])
         chapters = analysis_result.get("learning_path", {}).get("chapters", [])
         profile_analysis = analysis_result.get("profile_analysis", {})
+        journey_roadmap = analysis_result.get("journey_roadmap", {})
 
         # Build graph data for D3
         graph_data = self._build_graph_data(
-            top10_current, top10_target, gaps, chapters
+            top10_current, top10_target, gaps, chapters, top10_gaps,
         )
 
         return self._render_html(
@@ -59,6 +61,8 @@ class PathVisualizer:
             chapters=chapters,
             profile_summary=profile_analysis.get("profile_summary", ""),
             graph_data=graph_data,
+            journey_roadmap=journey_roadmap,
+            top10_gaps=top10_gaps,
         )
 
     # ------------------------------------------------------------------
@@ -71,6 +75,7 @@ class PathVisualizer:
         top10_target: list[dict],
         gaps: list[dict],
         chapters: list[dict],
+        top10_gaps: list[dict] | None = None,
     ) -> dict:
         """Build nodes & links for the D3 ontology path chart."""
         domains = self._ontology.domains
@@ -84,6 +89,12 @@ class PathVisualizer:
             ch.get("skill_id") or ch.get("primary_skill_id", "")
             for ch in chapters
         }
+        # Remaining: skills in top-10 gaps but not in this path
+        remaining_skill_ids = {
+            g["skill_id"] for g in (top10_gaps or [])
+            if g.get("gap", 0) > 0
+            and g["skill_id"] not in chapter_skill_ids
+        }
 
         # Build layer color map
         layer_colors: dict[str, str] = {}
@@ -91,7 +102,11 @@ class PathVisualizer:
             layer_colors[layer["id"]] = layer.get("color", "#6b7280")
 
         # Collect relevant domain IDs
-        all_relevant_skills = current_skill_ids | target_skill_ids | gap_skill_ids | chapter_skill_ids
+        all_relevant_skills = (
+            current_skill_ids | target_skill_ids
+            | gap_skill_ids | chapter_skill_ids
+            | remaining_skill_ids
+        )
         relevant_domains: set[str] = set()
         for sid in all_relevant_skills:
             skill = self._ontology.get_skill(sid)
@@ -119,6 +134,8 @@ class PathVisualizer:
             state = "neutral"
             if sid in chapter_skill_ids:
                 state = "chapter"
+            elif sid in remaining_skill_ids:
+                state = "remaining"
             elif sid in gap_skill_ids:
                 state = "gap"
             elif sid in target_skill_ids:
@@ -144,7 +161,8 @@ class PathVisualizer:
                 "type": sn["state"],
             })
 
-        # Build chapter flow links
+        # Build chapter flow links (1 → 2 → 3 → 4 → 5)
+        last_chapter_sid = ""
         for i, ch in enumerate(chapters):
             sid = ch.get("skill_id") or ch.get("primary_skill_id", "")
             if i > 0:
@@ -155,6 +173,16 @@ class PathVisualizer:
                         "target": sid,
                         "type": "path",
                     })
+            last_chapter_sid = sid
+
+        # Connect last chapter to remaining skills (future path hint)
+        if last_chapter_sid:
+            for rsid in sorted(remaining_skill_ids):
+                links.append({
+                    "source": last_chapter_sid,
+                    "target": rsid,
+                    "type": "future",
+                })
 
         return {
             "nodes": domain_nodes + skill_nodes,
@@ -184,6 +212,8 @@ class PathVisualizer:
         chapters: list[dict],
         profile_summary: str,
         graph_data: dict,
+        journey_roadmap: dict | None = None,
+        top10_gaps: list[dict] | None = None,
     ) -> str:
         """Render the full HTML page."""
         e = html.escape  # shorthand
@@ -271,6 +301,63 @@ class PathVisualizer:
 
         graph_json = json.dumps(graph_data)
 
+        # --- Journey progress section ---
+        jr = journey_roadmap or {}
+        total_gaps = jr.get("total_gap_levels", 0)
+        path_closes = jr.get("path_closes_levels", 0)
+        est_paths = jr.get("estimated_total_paths", 1)
+        pct = round(path_closes / total_gaps * 100) if total_gaps else 0
+        skills_addressed = jr.get("skills_addressed", [])
+        skills_remaining = jr.get("skills_remaining", [])
+
+        # Build addressed rows
+        addressed_rows = ""
+        for s in skills_addressed:
+            addressed_rows += (
+                f"<div class='jp-skill'>"
+                f"<span class='skill-id'>{html.escape(s.get('skill_id', ''))}</span> "
+                f"{html.escape(s.get('skill_name', ''))}"
+                f"<span class='jp-level'>L{s.get('current_level', 0)} → "
+                f"L{s.get('after_path_level', 0)}</span>"
+                f"</div>\n"
+            )
+
+        # Build remaining rows
+        remaining_rows = ""
+        for s in skills_remaining:
+            remaining_rows += (
+                f"<div class='jp-skill'>"
+                f"<span class='skill-id'>{html.escape(s.get('skill_id', ''))}</span> "
+                f"{html.escape(s.get('skill_name', ''))}"
+                f"<span class='jp-level'>L{s.get('current_level', 0)} → "
+                f"L{s.get('required_level', 0)} (+{s.get('gap', 0)})</span>"
+                f"</div>\n"
+            )
+
+        journey_section = ""
+        if total_gaps > 0:
+            journey_section = f"""
+    <h2>Journey Progress</h2>
+    <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+            <span style="font-weight:700;font-size:15px">Path 1 of ~{est_paths} estimated</span>
+            <span style="font-weight:600;color:var(--primary)">{path_closes} of {total_gaps} gap-levels ({pct}%)</span>
+        </div>
+        <div style="width:100%;height:10px;background:#e2e8f0;border-radius:6px;overflow:hidden;margin-bottom:16px">
+            <div style="width:{pct}%;height:100%;background:var(--primary);border-radius:6px"></div>
+        </div>
+        <div class="grid-2">
+            <div>
+                <h3 style="color:#f59e0b">This Path ({len(skills_addressed)} skills, +1 level each)</h3>
+                {addressed_rows}
+            </div>
+            <div>
+                <h3 style="color:#8b5cf6">Future Paths ({len(skills_remaining)} skills remaining)</h3>
+                {remaining_rows}
+            </div>
+        </div>
+    </div>"""
+
         return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -327,6 +414,8 @@ tr.match-row {{ background: #f0fdf4; }}
 .print-btn {{ background: var(--primary); color: white; border: none; padding: 8px 20px; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 500; }}
 .print-btn:hover {{ opacity: 0.9; }}
 @media print {{ .print-btn {{ display: none; }} }}
+.jp-skill {{ display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-bottom: 1px solid #f1f5f9; font-size: 13px; }}
+.jp-level {{ font-weight: 600; font-size: 12px; color: var(--text-muted); flex-shrink: 0; margin-left: 8px; }}
 </style>
 </head>
 <body>
@@ -382,13 +471,14 @@ tr.match-row {{ background: #f0fdf4; }}
         </table>
     </div>
 
+    {journey_section}
+
     <!-- Ontology Path Graph -->
     <h2>Ontology Path Visualization</h2>
     <div class="legend">
         <div class="legend-item"><div class="legend-dot" style="background:#16a34a"></div> Current Skills</div>
-        <div class="legend-item"><div class="legend-dot" style="background:#3b82f6"></div> Target Skills</div>
-        <div class="legend-item"><div class="legend-dot" style="background:#f59e0b"></div> Learning Path</div>
-        <div class="legend-item"><div class="legend-dot" style="background:#ef4444"></div> Skill Gaps</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#f59e0b"></div> This Path (Chapters)</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#8b5cf6;border:2px dashed #7c3aed"></div> Future Paths</div>
         <div class="legend-item"><div class="legend-dot" style="background:#6b7280;border:2px solid #374151"></div> Domains</div>
     </div>
     <div class="card">
@@ -413,6 +503,7 @@ const stateColors = {{
     current: '#16a34a',
     target: '#3b82f6',
     chapter: '#f59e0b',
+    remaining: '#8b5cf6',
     gap: '#ef4444',
     neutral: '#94a3b8',
 }};
@@ -421,16 +512,19 @@ const linkColors = {{
     current: '#bbf7d0',
     target: '#bfdbfe',
     chapter: '#fef08a',
+    remaining: '#ddd6fe',
     gap: '#fecaca',
     path: '#f59e0b',
+    future: '#a78bfa',
     neutral: '#e2e8f0',
 }};
 
-// Create arrow markers for path links
-svg.append('defs').selectAll('marker')
-    .data(['path'])
+// Create arrow markers for path and future links
+const defs = svg.append('defs');
+defs.selectAll('marker')
+    .data([{{ id: 'path', color: '#f59e0b' }}, {{ id: 'future', color: '#8b5cf6' }}])
     .enter().append('marker')
-    .attr('id', d => 'arrow-' + d)
+    .attr('id', d => 'arrow-' + d.id)
     .attr('viewBox', '0 -5 10 10')
     .attr('refX', 28)
     .attr('refY', 0)
@@ -439,14 +533,14 @@ svg.append('defs').selectAll('marker')
     .attr('orient', 'auto')
     .append('path')
     .attr('d', 'M0,-5L10,0L0,5')
-    .attr('fill', '#f59e0b');
+    .attr('fill', d => d.color);
 
 // Force simulation
 const simulation = d3.forceSimulation(graphData.nodes)
-    .force('link', d3.forceLink(graphData.links).id(d => d.id).distance(d => d.type === 'path' ? 160 : 120))
+    .force('link', d3.forceLink(graphData.links).id(d => d.id).distance(d => d.type === 'path' ? 160 : d.type === 'future' ? 180 : 120))
     .force('charge', d3.forceManyBody().strength(d => d.type === 'domain' ? -600 : -250))
     .force('center', d3.forceCenter(width / 2, height / 2))
-    .force('collision', d3.forceCollide().radius(d => d.type === 'domain' ? 80 : 35));
+    .force('collision', d3.forceCollide().radius(d => d.type === 'domain' ? 80 : 40));
 
 // Draw links
 const link = svg.append('g')
@@ -454,9 +548,10 @@ const link = svg.append('g')
     .data(graphData.links)
     .enter().append('line')
     .attr('stroke', d => linkColors[d.type] || '#e2e8f0')
-    .attr('stroke-width', d => d.type === 'path' ? 3.5 : 2)
-    .attr('stroke-dasharray', d => d.type === 'path' ? '8,4' : 'none')
-    .attr('marker-end', d => d.type === 'path' ? 'url(#arrow-path)' : '');
+    .attr('stroke-width', d => d.type === 'path' ? 3.5 : d.type === 'future' ? 2 : 2)
+    .attr('stroke-dasharray', d => d.type === 'path' ? '8,4' : d.type === 'future' ? '4,4' : 'none')
+    .attr('marker-end', d => d.type === 'path' ? 'url(#arrow-path)' : d.type === 'future' ? 'url(#arrow-future)' : '')
+    .attr('opacity', d => d.type === 'future' ? 0.6 : 1);
 
 // Draw nodes
 const node = svg.append('g')
@@ -496,11 +591,13 @@ node.filter(d => d.type === 'domain').each(function(d) {{
 // Skill nodes (circles)
 node.filter(d => d.type === 'skill')
     .append('circle')
-    .attr('r', d => d.state === 'chapter' ? 20 : 16)
+    .attr('r', d => d.state === 'chapter' ? 22 : d.state === 'remaining' ? 18 : 16)
     .attr('fill', d => stateColors[d.state] || '#94a3b8')
-    .attr('stroke', '#fff')
-    .attr('stroke-width', 2)
-    .attr('opacity', 0.9);
+    .attr('stroke', d => d.state === 'remaining' ? '#7c3aed' : d.state === 'chapter' ? '#d97706' : '#fff')
+    .attr('stroke-width', d => d.state === 'remaining' ? 3 : d.state === 'chapter' ? 3 : 2)
+    .attr('stroke-dasharray', d => d.state === 'remaining' ? '4,3' : 'none')
+    .attr('opacity', 0.9)
+    .attr('filter', d => d.state === 'chapter' ? 'drop-shadow(0 2px 4px rgba(245,158,11,0.4))' : 'none');
 
 // Chapter numbers on chapter nodes
 node.filter(d => d.type === 'skill' && d.state === 'chapter')
