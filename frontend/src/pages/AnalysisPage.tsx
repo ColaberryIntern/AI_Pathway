@@ -94,6 +94,7 @@ export default function AnalysisPage() {
   const MINIMUM_DISPLAY_TIME = 8000 // 8 seconds minimum to show the visualization
   const EXPECTED_DURATION = 60000 // typical analysis takes ~45-60 seconds
   const [analysisProgress, setAnalysisProgress] = useState(0)
+  const [showAllRemaining, setShowAllRemaining] = useState(false)
   const backendDone = useRef(false)
 
   const analysisMutation = useMutation({
@@ -929,24 +930,38 @@ export default function AnalysisPage() {
                       </div>
                     ))}
                   {/* Skills not started */}
-                  {journeyRoadmap.skills_remaining.length > 0 && (
-                    <div className="p-2 bg-gray-50 rounded text-sm">
-                      <span className="text-gray-600 font-medium">
-                        + {journeyRoadmap.skills_remaining.length} skills not yet started
-                      </span>
-                      <div className="mt-1 space-y-1">
-                        {journeyRoadmap.skills_remaining.map((s) => (
-                          <div key={s.skill_id} className="flex items-center justify-between text-xs text-gray-500 pl-2">
-                            <span className="truncate flex-1">
-                              <span className="text-gray-400 font-mono">{s.skill_id}</span>{' '}
-                              {s.skill_name}
-                            </span>
-                            <span className="flex-shrink-0 ml-2">L{s.current_level} → L{s.required_level} (+{s.gap})</span>
-                          </div>
-                        ))}
+                  {journeyRoadmap.skills_remaining.length > 0 && (() => {
+                    const PREVIEW_COUNT = 5;
+                    const remaining = journeyRoadmap.skills_remaining;
+                    const visible = showAllRemaining ? remaining : remaining.slice(0, PREVIEW_COUNT);
+                    const hiddenCount = remaining.length - PREVIEW_COUNT;
+                    return (
+                      <div className="p-2 bg-gray-50 rounded text-sm">
+                        <span className="text-gray-600 font-medium">
+                          + {remaining.length} skills not yet started
+                        </span>
+                        <div className="mt-1 space-y-1">
+                          {visible.map((s) => (
+                            <div key={s.skill_id} className="flex items-center justify-between text-xs text-gray-500 pl-2">
+                              <span className="truncate flex-1">
+                                <span className="text-gray-400 font-mono">{s.skill_id}</span>{' '}
+                                {s.skill_name}
+                              </span>
+                              <span className="flex-shrink-0 ml-2">L{s.current_level} → L{s.required_level} (+{s.gap})</span>
+                            </div>
+                          ))}
+                        </div>
+                        {hiddenCount > 0 && (
+                          <button
+                            onClick={() => setShowAllRemaining(!showAllRemaining)}
+                            className="mt-2 text-xs font-medium text-indigo-600 hover:text-indigo-800 transition-colors"
+                          >
+                            {showAllRemaining ? 'Show less' : `Show ${hiddenCount} more skills`}
+                          </button>
+                        )}
                       </div>
-                    </div>
-                  )}
+                    );
+                  })()}
                 </div>
 
                 {/* CTA */}
