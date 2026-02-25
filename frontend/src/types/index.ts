@@ -162,6 +162,7 @@ export interface JourneySkillRemaining {
   current_level: number
   required_level: number
   gap: number
+  partial?: boolean
 }
 
 export interface JourneyRoadmap {

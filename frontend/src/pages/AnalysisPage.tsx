@@ -929,10 +929,11 @@ export default function AnalysisPage() {
                         </span>
                       </div>
                     ))}
-                  {/* Skills not started */}
-                  {journeyRoadmap.skills_remaining.length > 0 && (() => {
+                  {/* Skills not started (exclude partial — already shown in amber above) */}
+                  {(() => {
                     const PREVIEW_COUNT = 5;
-                    const remaining = journeyRoadmap.skills_remaining;
+                    const remaining = journeyRoadmap.skills_remaining.filter(s => !s.partial);
+                    if (remaining.length === 0) return null;
                     const visible = showAllRemaining ? remaining : remaining.slice(0, PREVIEW_COUNT);
                     const hiddenCount = remaining.length - PREVIEW_COUNT;
                     return (

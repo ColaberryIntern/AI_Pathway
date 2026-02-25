@@ -423,7 +423,17 @@ parse job descriptions, identify skill gaps, and generate personalized learning 
             total_gap_levels = sum(
                 g["gap"] for g in all_gaps_full
             )
-            path_closes = len(path_chapters)  # each chapter = +1 level
+            all_gaps_map = {
+                g["skill_id"]: g for g in all_gaps_full
+            }
+            # path_closes: only count chapters that address a state_b
+            # skill (prerequisite/category fills not in state_b don't
+            # close any of the total_gap_levels).
+            path_closes = sum(
+                1 for ch in path_chapters
+                if (ch.get("primary_skill_id")
+                    or ch.get("skill_id", "")) in all_gaps_map
+            )
 
             # Build skills_addressed from CHAPTERS directly (not
             # top_10_gaps intersection) so prerequisites and mandatory
@@ -459,30 +469,29 @@ parse job descriptions, identify skill gaps, and generate personalized learning 
 
             # skills_remaining: ALL remaining gaps — includes partial
             # gaps on addressed skills AND full gaps on other skills.
-            # This ensures path_closes + sum(remaining) = total_gap_levels.
+            # Uses all_gaps_full perspective (state_a → state_b) so that
+            # path_closes + sum(remaining.gap) = total_gap_levels.
             skills_remaining = []
             for gap_entry in all_gaps_full:
                 sid = gap_entry["skill_id"]
                 if sid in path_skill_ids:
-                    # Skill IS in current path — show remaining gap
-                    addressed = next(
-                        (s for s in skills_addressed
-                         if s["skill_id"] == sid), None
-                    )
-                    if addressed and addressed["gap_remaining"] > 0:
+                    # Skill IS in current path — path closes 1 of
+                    # its gap levels; remaining = original_gap - 1.
+                    remaining_gap = gap_entry["gap"] - 1
+                    if remaining_gap > 0:
                         skills_remaining.append({
                             "skill_id": sid,
                             "skill_name": gap_entry["skill_name"],
                             "domain_label": gap_entry.get(
                                 "domain_label", ""
                             ),
-                            "current_level": addressed[
-                                "after_path_level"
+                            "current_level": gap_entry[
+                                "current_level"
                             ],
                             "required_level": gap_entry[
                                 "target_level"
                             ],
-                            "gap": addressed["gap_remaining"],
+                            "gap": remaining_gap,
                             "partial": True,
                         })
                 else:
