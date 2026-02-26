@@ -42,16 +42,30 @@ HARD RULES — violating any of these invalidates the output:
 ENRICHMENT FIELDS you must populate for every chapter:
 - title (short, descriptive)
 - learning_objectives (3-5 measurable objectives)
+- introduction (200-300 word personalized narrative connecting the learner's
+  current role, daily work, and existing skills to this chapter's topic;
+  explain what they will be able to do after completing the chapter)
 - core_concepts (2-3, each with title, content, examples)
+- prompting_examples (2-3 per chapter, each with: title, description,
+  prompt (exact copy-paste text), expected_output, customization_tips)
+- agent_examples (1-2 per chapter, each with: title, scenario,
+  agent_role, instructions (multi-step list), expected_behavior, use_case)
 - exercises (2 practical exercises — one hands-on, one reflection)
 - applied_project (1 realistic project with deliverable)
+- key_takeaways (5 concise bullet points summarizing the chapter's
+  most important lessons and actionable insights)
+- exact_prompt (1 copy-paste-ready prompt per chapter with: title,
+  context, prompt_text (the full prompt), expected_output,
+  how_to_customize)
 - self_assessment_questions (3, each with question, options, answer)
 - industry_context (1 paragraph)
-- estimated_time_hours (typically 2-4 hours)
+- estimated_time_hours (typically 3-5 hours)
 
 Also provide top-level: title, description, total_estimated_hours.
 Ensure single-level progression per chapter.
-Make content practical and immediately applicable."""
+Make content practical and immediately applicable.
+Prompting examples and agent examples should be SPECIFIC to the chapter's
+skill topic and the learner's industry — not generic boilerplate."""
 
     async def execute(self, task: dict) -> dict:
         """Enrich a deterministic chapter scaffold with LLM-generated content.
@@ -141,6 +155,7 @@ Make content practical and immediately applicable."""
                             },
                             "current_level": {"type": "integer"},
                             "target_level": {"type": "integer"},
+                            "introduction": {"type": "string"},
                             "core_concepts": {
                                 "type": "array",
                                 "items": {
@@ -152,6 +167,36 @@ Make content practical and immediately applicable."""
                                             "type": "array",
                                             "items": {"type": "string"}
                                         }
+                                    }
+                                }
+                            },
+                            "prompting_examples": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "title": {"type": "string"},
+                                        "description": {"type": "string"},
+                                        "prompt": {"type": "string"},
+                                        "expected_output": {"type": "string"},
+                                        "customization_tips": {"type": "string"}
+                                    }
+                                }
+                            },
+                            "agent_examples": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "title": {"type": "string"},
+                                        "scenario": {"type": "string"},
+                                        "agent_role": {"type": "string"},
+                                        "instructions": {
+                                            "type": "array",
+                                            "items": {"type": "string"}
+                                        },
+                                        "expected_behavior": {"type": "string"},
+                                        "use_case": {"type": "string"}
                                     }
                                 }
                             },
@@ -180,6 +225,20 @@ Make content practical and immediately applicable."""
                                     "project_description": {"type": "string"},
                                     "deliverable": {"type": "string"},
                                     "estimated_time_minutes": {"type": "integer"}
+                                }
+                            },
+                            "key_takeaways": {
+                                "type": "array",
+                                "items": {"type": "string"}
+                            },
+                            "exact_prompt": {
+                                "type": "object",
+                                "properties": {
+                                    "title": {"type": "string"},
+                                    "context": {"type": "string"},
+                                    "prompt_text": {"type": "string"},
+                                    "expected_output": {"type": "string"},
+                                    "how_to_customize": {"type": "string"}
                                 }
                             },
                             "self_assessment_questions": {
@@ -222,7 +281,7 @@ Make content practical and immediately applicable."""
                 )
 
             result = await self._call_llm_structured(
-                retry_prompt, output_schema, max_tokens=16384,
+                retry_prompt, output_schema, max_tokens=65536,
             )
 
             errors = self._validate_enrichment(result, scaffold, num_chapters)
@@ -388,18 +447,50 @@ ENRICHMENT REQUIREMENTS — for EVERY chapter provide:
    Each MUST start with a Bloom's-taxonomy action verb
    (Identify, Explain, Implement, Analyze, Evaluate, Design)
    and describe an observable outcome the learner can demonstrate.
-3. "core_concepts" — 2-3 items (each with title, content, examples)
-4. "exercises" — 2 practical exercises (one hands-on, one reflection)
-5. "applied_project" — 1 realistic, industry-relevant project:
+3. "introduction" — 200-300 word personalized narrative that:
+   - References the learner's current role, team context, and daily work
+   - Bridges their existing skills to this chapter's topic
+   - Explains what they will be able to do after completing the chapter
+   - Uses second person ("you") and a supportive, professional tone
+4. "core_concepts" — 2-3 items (each with title, content (100+ words), examples)
+5. "prompting_examples" — 2-3 per chapter, each with:
+   {{
+     "title": "descriptive name",
+     "description": "when and why to use this prompt",
+     "prompt": "EXACT copy-paste prompt text the learner can use",
+     "expected_output": "what the AI should return",
+     "customization_tips": "how to adapt for their specific context"
+   }}
+6. "agent_examples" — 1-2 per chapter, each with:
+   {{
+     "title": "descriptive name",
+     "scenario": "business context where this agent is useful",
+     "agent_role": "the agent's defined role/persona",
+     "instructions": ["step 1", "step 2", ...],
+     "expected_behavior": "what the agent does end-to-end",
+     "use_case": "how this maps to the target role's JD requirements"
+   }}
+7. "exercises" — 2 practical exercises (one hands-on, one reflection)
+8. "applied_project" — 1 realistic, industry-relevant project:
    {{
      "project_title": "...",
      "project_description": "...",
      "deliverable": "...",
      "estimated_time_minutes": int
    }}
-6. "self_assessment_questions" — 3 items (question, options, answer)
-7. "industry_context" — 1 paragraph for {industry or 'the general business context'}
-8. "estimated_time_hours" — typically 2-4 hours
+9. "key_takeaways" — exactly 5 concise bullet points summarizing the
+   chapter's most important lessons, written as actionable statements
+10. "exact_prompt" — 1 copy-paste-ready prompt per chapter:
+   {{
+     "title": "descriptive name for this prompt",
+     "context": "when to use this prompt in daily work",
+     "prompt_text": "THE FULL EXACT PROMPT (50-200 words)",
+     "expected_output": "what the AI will produce",
+     "how_to_customize": "placeholders the learner should replace"
+   }}
+11. "self_assessment_questions" — 3 items (question, options, answer)
+12. "industry_context" — 1 paragraph for {industry or 'the general business context'}
+13. "estimated_time_hours" — typically 3-5 hours
 
 COMPLEXITY PROGRESSION:
 - Chapters 1-2: use lower-order verbs (Identify, Describe, Explain)
@@ -544,7 +635,7 @@ Make the content:
         )
 
         retry_result = await self._call_llm_structured(
-            quality_prompt, output_schema, max_tokens=16384,
+            quality_prompt, output_schema, max_tokens=65536,
         )
 
         # The retry must still pass structural validation.
@@ -672,6 +763,46 @@ Make the content:
                             f"{ch_label}: applied_project.{field} is missing."
                         )
 
+            # ---- Introduction required (200+ chars) ----
+            intro = chapter.get("introduction")
+            if not intro or not isinstance(intro, str) or len(intro) < 100:
+                errors.append(
+                    f"{ch_label}: 'introduction' is missing or too short "
+                    f"(need 200-300 words)."
+                )
+
+            # ---- Prompting examples: 2-3 required ----
+            prompts = chapter.get("prompting_examples")
+            if not prompts or not isinstance(prompts, list) or len(prompts) < 2:
+                errors.append(
+                    f"{ch_label}: need at least 2 'prompting_examples'."
+                )
+
+            # ---- Agent examples: 1-2 required ----
+            agents = chapter.get("agent_examples")
+            if not agents or not isinstance(agents, list) or len(agents) < 1:
+                errors.append(
+                    f"{ch_label}: need at least 1 'agent_examples'."
+                )
+
+            # ---- Key takeaways: exactly 5 ----
+            takeaways = chapter.get("key_takeaways")
+            if not takeaways or not isinstance(takeaways, list) or len(takeaways) < 5:
+                errors.append(
+                    f"{ch_label}: need exactly 5 'key_takeaways'."
+                )
+
+            # ---- Exact prompt required ----
+            exact = chapter.get("exact_prompt")
+            if not exact or not isinstance(exact, dict):
+                errors.append(
+                    f"{ch_label}: 'exact_prompt' is missing or empty."
+                )
+            elif not exact.get("prompt_text"):
+                errors.append(
+                    f"{ch_label}: exact_prompt.prompt_text is missing."
+                )
+
         return errors
 
     # ------------------------------------------------------------------
@@ -741,7 +872,40 @@ Make the content:
                 ],
                 "current_level": ch["current_level"],
                 "target_level": ch["target_level"],
+                "introduction": (
+                    "This chapter introduction will be populated once "
+                    "content enrichment is completed. It will contain a "
+                    "personalized narrative connecting your background to "
+                    "this topic. Please re-run enrichment to generate "
+                    "the full content for this chapter."
+                ),
                 "core_concepts": [],
+                "prompting_examples": [
+                    {
+                        "title": "Pending enrichment",
+                        "description": "Prompting example pending.",
+                        "prompt": "Prompt text pending enrichment.",
+                        "expected_output": "Pending.",
+                        "customization_tips": "Pending.",
+                    },
+                    {
+                        "title": "Pending enrichment",
+                        "description": "Prompting example pending.",
+                        "prompt": "Prompt text pending enrichment.",
+                        "expected_output": "Pending.",
+                        "customization_tips": "Pending.",
+                    },
+                ],
+                "agent_examples": [
+                    {
+                        "title": "Pending enrichment",
+                        "scenario": "Agent example pending.",
+                        "agent_role": "Pending.",
+                        "instructions": ["Pending enrichment."],
+                        "expected_behavior": "Pending.",
+                        "use_case": "Pending.",
+                    },
+                ],
                 "exercises": [],
                 "applied_project": {
                     "project_title": "Pending enrichment",
@@ -752,9 +916,23 @@ Make the content:
                     "deliverable": "To be determined",
                     "estimated_time_minutes": 60,
                 },
+                "key_takeaways": [
+                    "Key takeaway pending enrichment.",
+                    "Key takeaway pending enrichment.",
+                    "Key takeaway pending enrichment.",
+                    "Key takeaway pending enrichment.",
+                    "Key takeaway pending enrichment.",
+                ],
+                "exact_prompt": {
+                    "title": "Pending enrichment",
+                    "context": "Pending.",
+                    "prompt_text": "Exact prompt text pending enrichment.",
+                    "expected_output": "Pending.",
+                    "how_to_customize": "Pending.",
+                },
                 "self_assessment_questions": [],
                 "industry_context": "",
-                "estimated_time_hours": 2.0,
+                "estimated_time_hours": 3.0,
             })
 
         return {
@@ -765,5 +943,5 @@ Make the content:
                 "populate full content."
             ),
             "chapters": chapters,
-            "total_estimated_hours": 2.0 * len(chapters),
+            "total_estimated_hours": 3.0 * len(chapters),
         }

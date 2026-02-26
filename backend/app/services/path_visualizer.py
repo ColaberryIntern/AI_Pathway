@@ -49,6 +49,10 @@ class PathVisualizer:
         journey_roadmap = analysis_result.get("journey_roadmap", {})
         all_skill_gaps = analysis_result.get("all_skill_gaps", [])
         full_journey = analysis_result.get("full_journey_estimate", {})
+        fit_score = analysis_result.get("fit_score", 0.0)
+        executive_introduction = analysis_result.get(
+            "executive_introduction", ""
+        )
 
         # Build graph data for D3
         graph_data = self._build_graph_data(
@@ -67,6 +71,8 @@ class PathVisualizer:
             top10_gaps=top10_gaps,
             all_skill_gaps=all_skill_gaps,
             full_journey=full_journey,
+            fit_score=fit_score,
+            executive_introduction=executive_introduction,
         )
 
     # ------------------------------------------------------------------
@@ -220,6 +226,8 @@ class PathVisualizer:
         top10_gaps: list[dict] | None = None,
         all_skill_gaps: list[dict] | None = None,
         full_journey: dict | None = None,
+        fit_score: float = 0.0,
+        executive_introduction: str = "",
     ) -> str:
         """Render the full HTML page."""
         e = html.escape  # shorthand
@@ -394,6 +402,134 @@ class PathVisualizer:
             remaining_count = sum(g.get('gap', 0) for g in future_skills)
             path_toggle_html = f"""<button class="toggle-btn" id="path-toggle" onclick="togglePath()">Show Full Journey (+{remaining_count} more chapters)</button>"""
 
+        # --- Detailed chapter content sections ---
+        chapter_detail_html = ""
+        for ch in chapters:
+            ch_num = ch.get("chapter_number", "")
+            ch_title = e(ch.get("title", ""))
+            ch_skill = e(ch.get("skill_name", "") or ch.get("primary_skill_name", ""))
+            ch_intro = e(ch.get("introduction", ""))
+            cur_lvl = ch.get("current_level", 0)
+            tgt_lvl = ch.get("target_level", 0)
+
+            # Learning objectives
+            objectives_html = ""
+            for obj in ch.get("learning_objectives", []):
+                objectives_html += f"<li>{e(obj)}</li>\n"
+
+            # Core concepts
+            concepts_html = ""
+            for cc in ch.get("core_concepts", []):
+                examples_html = ""
+                for ex in cc.get("examples", []):
+                    examples_html += f"<div class='ch-example'>{e(ex)}</div>\n"
+                concepts_html += f"""<div class='ch-concept'>
+                    <h5>{e(cc.get('title', ''))}</h5>
+                    <p>{e(cc.get('content', ''))}</p>
+                    {examples_html}
+                </div>\n"""
+
+            # Prompting examples
+            prompts_html = ""
+            for pe in ch.get("prompting_examples", []):
+                prompts_html += f"""<div class='ch-prompt-example'>
+                    <h5>{e(pe.get('title', ''))}</h5>
+                    <p class='ch-desc'>{e(pe.get('description', ''))}</p>
+                    <pre class='ch-prompt-code'>{e(pe.get('prompt', ''))}</pre>
+                    <div class='ch-grid-2'>
+                        <div class='ch-box ch-box-green'>
+                            <span class='ch-box-label'>Expected Output</span>
+                            <p>{e(pe.get('expected_output', ''))}</p>
+                        </div>
+                        <div class='ch-box ch-box-amber'>
+                            <span class='ch-box-label'>Customization Tips</span>
+                            <p>{e(pe.get('customization_tips', ''))}</p>
+                        </div>
+                    </div>
+                </div>\n"""
+
+            # Agent examples
+            agents_html = ""
+            for ae in ch.get("agent_examples", []):
+                instr_html = ""
+                for j, inst in enumerate(ae.get("instructions", []), 1):
+                    instr_html += f"<li><span class='step-num'>{j}</span> {e(inst)}</li>\n"
+                agents_html += f"""<div class='ch-agent-example'>
+                    <h5>{e(ae.get('title', ''))}</h5>
+                    <p class='ch-desc'>{e(ae.get('scenario', ''))}</p>
+                    <div class='ch-box ch-box-teal'>
+                        <span class='ch-box-label'>Agent Role</span>
+                        <p>{e(ae.get('agent_role', ''))}</p>
+                    </div>
+                    <ol class='ch-instructions'>{instr_html}</ol>
+                    <div class='ch-grid-2'>
+                        <div class='ch-box ch-box-blue'>
+                            <span class='ch-box-label'>Expected Behavior</span>
+                            <p>{e(ae.get('expected_behavior', ''))}</p>
+                        </div>
+                        <div class='ch-box ch-box-indigo'>
+                            <span class='ch-box-label'>Use Case</span>
+                            <p>{e(ae.get('use_case', ''))}</p>
+                        </div>
+                    </div>
+                </div>\n"""
+
+            # Key takeaways
+            takeaways_html = ""
+            for kt in ch.get("key_takeaways", []):
+                takeaways_html += f"<li>{e(kt)}</li>\n"
+
+            # Exact prompt
+            exact = ch.get("exact_prompt", {}) or {}
+            exact_html = ""
+            if exact.get("prompt_text"):
+                exact_html = f"""<div class='ch-exact-prompt'>
+                    <h4>EXACT PROMPT — Copy &amp; Paste Ready</h4>
+                    <p class='ch-desc'><strong>{e(exact.get('title', ''))}</strong> — {e(exact.get('context', ''))}</p>
+                    <pre class='ch-prompt-code ch-exact-code'>{e(exact.get('prompt_text', ''))}</pre>
+                    <div class='ch-grid-2'>
+                        <div class='ch-box ch-box-green'>
+                            <span class='ch-box-label'>Expected Output</span>
+                            <p>{e(exact.get('expected_output', ''))}</p>
+                        </div>
+                        <div class='ch-box ch-box-amber'>
+                            <span class='ch-box-label'>How to Customize</span>
+                            <p>{e(exact.get('how_to_customize', ''))}</p>
+                        </div>
+                    </div>
+                </div>\n"""
+
+            # Exercises
+            exercises_html = ""
+            for ex in ch.get("exercises", []):
+                instr_html = ""
+                for j, inst in enumerate(ex.get("instructions", []), 1):
+                    instr_html += f"<li><span class='step-num'>{j}</span> {e(inst)}</li>\n"
+                time_badge = f" <span class='time-badge'>~{ex.get('estimated_time_minutes', '')} min</span>" if ex.get("estimated_time_minutes") else ""
+                exercises_html += f"""<div class='ch-exercise'>
+                    <span class='ex-type'>{e(ex.get('type', ''))}</span>{time_badge}
+                    <h5>{e(ex.get('title', ''))}</h5>
+                    <p class='ch-desc'>{e(ex.get('description', ''))}</p>
+                    {f"<ol class='ch-instructions'>{instr_html}</ol>" if instr_html else ""}
+                </div>\n"""
+
+            chapter_detail_html += f"""
+            <div class='ch-detail' id='ch-detail-{ch_num}'>
+                <h3>Chapter {ch_num}: {ch_title}</h3>
+                <div class='ch-meta'>
+                    <span class='ch-skill-badge'>{ch_skill}</span>
+                    <span class='ch-level'>L{cur_lvl} → L{tgt_lvl}</span>
+                </div>
+                {f"<div class='ch-intro'>{ch_intro}</div>" if ch_intro else ""}
+                {f"<div class='ch-section'><h4>Learning Objectives</h4><ul class='ch-objectives'>{objectives_html}</ul></div>" if objectives_html else ""}
+                {f"<div class='ch-section'><h4>Core Concepts</h4>{concepts_html}</div>" if concepts_html else ""}
+                {f"<div class='ch-section'><h4>Prompting Examples</h4>{prompts_html}</div>" if prompts_html else ""}
+                {f"<div class='ch-section'><h4>AI Agent Examples</h4>{agents_html}</div>" if agents_html else ""}
+                {f"<div class='ch-section'><h4>Exercises</h4>{exercises_html}</div>" if exercises_html else ""}
+                {f"<div class='ch-section'><h4>Key Takeaways</h4><ul class='ch-takeaways'>{takeaways_html}</ul></div>" if takeaways_html else ""}
+                {exact_html}
+            </div>\n"""
+
         graph_json = json.dumps(graph_data)
 
         # --- Journey progress section ---
@@ -436,6 +572,7 @@ class PathVisualizer:
         journey_section = ""
         if total_gaps > 0:
             journey_section = f"""
+    <a id="section-journey"></a>
     <h2>Journey Progress</h2>
     <div class="card">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
@@ -526,19 +663,133 @@ tr.projected-row td {{ color: var(--text-muted); }}
 tr.path-header {{ background: #f1f5f9; }}
 tr.path-header td {{ font-weight: 600; color: var(--primary); font-size: 13px; padding: 6px 10px; }}
 @media print {{ .toggle-btn {{ display: none; }} }}
+/* Cover page styles */
+.cover-page {{ background: linear-gradient(135deg, #312e81, #1e40af, #0e7490); border-radius: 16px; padding: 48px 40px; margin-bottom: 32px; color: white; text-align: center; position: relative; overflow: hidden; }}
+.cover-page::before {{ content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: radial-gradient(circle at 30% 20%, rgba(255,255,255,0.1) 0%, transparent 50%); pointer-events: none; }}
+.cover-brand {{ font-size: 14px; font-weight: 700; letter-spacing: 4px; text-transform: uppercase; color: rgba(255,255,255,0.7); margin-bottom: 16px; }}
+.cover-title {{ font-size: 32px; font-weight: 800; margin-bottom: 12px; color: white; border: none; padding: 0; line-height: 1.3; }}
+.cover-subtitle {{ font-size: 16px; color: rgba(255,255,255,0.8); margin-bottom: 32px; }}
+.cover-meta {{ display: flex; justify-content: center; gap: 32px; flex-wrap: wrap; margin-bottom: 24px; }}
+.cover-meta-item {{ text-align: center; }}
+.cover-meta-label {{ display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: rgba(255,255,255,0.6); margin-bottom: 4px; }}
+.cover-meta-value {{ display: block; font-size: 24px; font-weight: 700; }}
+.cover-fit-score {{ color: #fbbf24; font-size: 32px; }}
+.cover-page .print-btn {{ background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); }}
+.cover-page .print-btn:hover {{ background: rgba(255,255,255,0.3); }}
+/* Executive intro */
+.exec-intro {{ background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 24px; }}
+.exec-intro h2 {{ color: var(--primary); margin-top: 0; }}
+.exec-intro p {{ font-size: 15px; line-height: 1.8; color: var(--text); white-space: pre-line; }}
+/* TOC styles */
+.toc {{ margin-bottom: 24px; }}
+.toc h3 {{ margin-bottom: 12px; }}
+.toc-list {{ padding-left: 20px; }}
+.toc-list li {{ margin-bottom: 8px; font-size: 14px; }}
+.toc-list a {{ color: var(--primary); text-decoration: none; font-weight: 500; }}
+.toc-list a:hover {{ text-decoration: underline; }}
+@media print {{ .cover-page {{ break-after: page; }} .cover-page .print-btn {{ display: none; }} }}
+/* Chapter detail styles */
+.ch-detail {{ background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 24px; }}
+.ch-detail h3 {{ font-size: 20px; font-weight: 700; color: var(--primary); margin-bottom: 8px; }}
+.ch-meta {{ display: flex; gap: 12px; align-items: center; margin-bottom: 16px; }}
+.ch-skill-badge {{ background: #e0e7ff; color: var(--primary); padding: 3px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; }}
+.ch-level {{ font-weight: 600; font-size: 13px; color: var(--text-muted); }}
+.ch-intro {{ background: linear-gradient(135deg, #eef2ff, #f0f9ff); border: 1px solid #c7d2fe; border-radius: 10px; padding: 16px; margin-bottom: 20px; font-size: 14px; line-height: 1.7; color: var(--text); white-space: pre-line; }}
+.ch-section {{ margin-bottom: 20px; }}
+.ch-section h4 {{ font-size: 16px; font-weight: 600; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }}
+.ch-objectives {{ padding-left: 20px; }}
+.ch-objectives li {{ margin-bottom: 6px; font-size: 13px; }}
+.ch-concept {{ background: #fff; border: 1px solid var(--border); border-radius: 10px; padding: 14px; margin-bottom: 12px; }}
+.ch-concept h5 {{ font-size: 15px; font-weight: 600; margin-bottom: 6px; }}
+.ch-concept p {{ font-size: 13px; line-height: 1.6; color: var(--text); }}
+.ch-example {{ background: #eef2ff; border-left: 3px solid var(--primary); padding: 8px 12px; margin-top: 8px; border-radius: 0 6px 6px 0; font-size: 12px; font-style: italic; color: var(--text-muted); }}
+.ch-prompt-example, .ch-agent-example {{ background: #fff; border: 1px solid var(--border); border-radius: 10px; padding: 14px; margin-bottom: 12px; }}
+.ch-prompt-example h5, .ch-agent-example h5 {{ font-size: 15px; font-weight: 600; margin-bottom: 4px; }}
+.ch-desc {{ font-size: 13px; color: var(--text-muted); margin-bottom: 10px; }}
+.ch-prompt-code {{ background: #1e293b; color: #e2e8f0; padding: 14px; border-radius: 8px; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 13px; white-space: pre-wrap; word-wrap: break-word; margin-bottom: 12px; line-height: 1.5; }}
+.ch-exact-code {{ border: 2px solid #f59e0b; }}
+.ch-grid-2 {{ display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }}
+@media (max-width: 600px) {{ .ch-grid-2 {{ grid-template-columns: 1fr; }} }}
+.ch-box {{ padding: 10px; border-radius: 8px; font-size: 13px; }}
+.ch-box-label {{ font-size: 11px; font-weight: 600; display: block; margin-bottom: 4px; }}
+.ch-box-green {{ background: #f0fdf4; border: 1px solid #bbf7d0; }}
+.ch-box-green .ch-box-label {{ color: #16a34a; }}
+.ch-box-amber {{ background: #fffbeb; border: 1px solid #fde68a; }}
+.ch-box-amber .ch-box-label {{ color: #d97706; }}
+.ch-box-teal {{ background: #f0fdfa; border: 1px solid #99f6e4; }}
+.ch-box-teal .ch-box-label {{ color: #0d9488; }}
+.ch-box-blue {{ background: #eff6ff; border: 1px solid #bfdbfe; }}
+.ch-box-blue .ch-box-label {{ color: #2563eb; }}
+.ch-box-indigo {{ background: #eef2ff; border: 1px solid #c7d2fe; }}
+.ch-box-indigo .ch-box-label {{ color: var(--primary); }}
+.ch-instructions {{ padding-left: 0; list-style: none; }}
+.ch-instructions li {{ display: flex; gap: 8px; align-items: flex-start; margin-bottom: 6px; font-size: 13px; }}
+.step-num {{ background: #e0e7ff; color: var(--primary); width: 22px; height: 22px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; flex-shrink: 0; }}
+.ch-exercise {{ border: 2px dashed var(--border); border-radius: 10px; padding: 14px; margin-bottom: 12px; }}
+.ch-exercise h5 {{ font-size: 15px; font-weight: 600; margin: 6px 0 4px; }}
+.ex-type {{ background: #e0f2fe; color: #0284c7; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }}
+.time-badge {{ background: #f1f5f9; color: var(--text-muted); padding: 2px 8px; border-radius: 4px; font-size: 11px; margin-left: 6px; }}
+.ch-takeaways {{ padding-left: 20px; }}
+.ch-takeaways li {{ margin-bottom: 6px; font-size: 13px; }}
+.ch-exact-prompt {{ background: #1e293b; border-radius: 12px; padding: 20px; margin-top: 16px; color: #e2e8f0; }}
+.ch-exact-prompt h4 {{ color: #fff; font-size: 16px; margin-bottom: 8px; }}
+.ch-exact-prompt .ch-desc {{ color: #94a3b8; }}
+.ch-exact-prompt .ch-box {{ background: #334155; border: 1px solid #475569; color: #e2e8f0; }}
+.ch-exact-prompt .ch-box-label {{ color: #67e8f9; }}
+.ch-exact-prompt .ch-box-green .ch-box-label {{ color: #4ade80; }}
+.ch-exact-prompt .ch-box-amber .ch-box-label {{ color: #fbbf24; }}
 </style>
 </head>
 <body>
 <div class="container">
-    <div style="display: flex; justify-content: space-between; align-items: center;">
-        <div>
-            <h1>AI Pathway — Ontology Path Visualization</h1>
-            <p class="subtitle">Skills assessment, gap analysis, and learning path through the GenAI Skills Ontology</p>
+    <!-- Cover Page -->
+    <div class="cover-page">
+        <div class="cover-brand">AI PATHWAY</div>
+        <h1 class="cover-title">{e(summary.get('learning_path_title', 'Personalized Learning Path'))}</h1>
+        <p class="cover-subtitle">Skills assessment, gap analysis, and learning path through the GenAI Skills Ontology</p>
+        <div class="cover-meta">
+            <div class="cover-meta-item">
+                <span class="cover-meta-label">Target Role</span>
+                <span class="cover-meta-value">{e(summary.get('target_role', ''))}</span>
+            </div>
+            <div class="cover-meta-item">
+                <span class="cover-meta-label">Fit Score</span>
+                <span class="cover-meta-value cover-fit-score">{round(fit_score * 100)}%</span>
+            </div>
+            <div class="cover-meta-item">
+                <span class="cover-meta-label">Chapters</span>
+                <span class="cover-meta-value">{len(chapters)}</span>
+            </div>
+            <div class="cover-meta-item">
+                <span class="cover-meta-label">Est. Hours</span>
+                <span class="cover-meta-value">{summary.get('estimated_learning_hours', 0)}</span>
+            </div>
         </div>
         <button class="print-btn" onclick="window.print()">Print / Save PDF</button>
     </div>
 
+    {f'''<!-- Executive Introduction -->
+    <div class="exec-intro">
+        <h2>Your Learning Journey</h2>
+        <p>{e(executive_introduction)}</p>
+    </div>''' if executive_introduction else ''}
+
+    <!-- Table of Contents -->
+    <div class="card toc">
+        <h3>Table of Contents</h3>
+        <ol class="toc-list">
+            <li><a href="#section-profile">Profile Summary</a></li>
+            <li><a href="#section-skills">Skills Assessment Breakdown</a></li>
+            <li><a href="#section-gaps">Gap Analysis</a></li>
+            <li><a href="#section-path">Learning Path ({len(chapters)} Chapters)</a></li>
+            <li><a href="#section-journey">Journey Progress</a></li>
+            <li><a href="#section-chapters">Chapter Details</a></li>
+            <li><a href="#section-graph">Ontology Path Visualization</a></li>
+        </ol>
+    </div>
+
     <!-- Profile Summary -->
+    <a id="section-profile"></a>
     <div class="card">
         <h3>Profile Summary</h3>
         <table>{profile_rows}</table>
@@ -555,6 +806,7 @@ tr.path-header td {{ font-weight: 600; color: var(--primary); font-size: 13px; p
     </div>
 
     <!-- Top 10 Skills Breakdown -->
+    <a id="section-skills"></a>
     <h2>Skills Assessment Breakdown</h2>
     <div class="grid-2">
         <div class="card">
@@ -574,6 +826,7 @@ tr.path-header td {{ font-weight: 600; color: var(--primary); font-size: 13px; p
     </div>
 
     <!-- Gap Analysis -->
+    <a id="section-gaps"></a>
     <h2>Gap Analysis</h2>
     <div class="card">
         <table>
@@ -585,6 +838,7 @@ tr.path-header td {{ font-weight: 600; color: var(--primary); font-size: 13px; p
     </div>
 
     <!-- Learning Path -->
+    <a id="section-path"></a>
     <h2>Learning Path ({len(chapters)} Chapters)</h2>
     <div class="card">
         <table>
@@ -597,7 +851,13 @@ tr.path-header td {{ font-weight: 600; color: var(--primary); font-size: 13px; p
 
     {journey_section}
 
+    <!-- Detailed Chapter Content -->
+    <a id="section-chapters"></a>
+    <h2>Chapter Details</h2>
+    {chapter_detail_html}
+
     <!-- Ontology Path Graph -->
+    <a id="section-graph"></a>
     <h2>Ontology Path Visualization</h2>
     <div class="legend">
         <div class="legend-item"><div class="legend-dot" style="background:#16a34a"></div> Current Skills</div>

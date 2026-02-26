@@ -420,6 +420,20 @@ parse job descriptions, identify skill gaps, and generate personalized learning 
             )
             results["all_skill_gaps"] = all_gaps_full
 
+            # Fit score: how close the person is to the target role.
+            # Calculated as: sum(min(current, required)) / sum(required)
+            # across all state_b skills.  0.0 = no match, 1.0 = perfect.
+            total_required = sum(valid_state_b.values())
+            total_current_matched = sum(
+                min(valid_state_a.get(sid, 0), req)
+                for sid, req in valid_state_b.items()
+            )
+            fit_score = (
+                round(total_current_matched / total_required, 2)
+                if total_required > 0 else 0.0
+            )
+            results["fit_score"] = fit_score
+
             total_gap_levels = sum(
                 g["gap"] for g in all_gaps_full
             )
@@ -559,6 +573,19 @@ parse job descriptions, identify skill gaps, and generate personalized learning 
 
             # Generate summary
             results["summary"] = self._generate_summary(results)
+
+            # Executive Introduction — personalized career narrative
+            exec_intro = await self._generate_executive_intro(
+                profile_data=task.get("profile", {}),
+                profile_summary=profile_result.get("profile_summary", ""),
+                fit_score=fit_score,
+                total_gaps=len(all_gaps_full),
+                total_chapters=len(path_chapters),
+                target_role=results["summary"].get("target_role", ""),
+                primary_domains=results["summary"].get("primary_domains", []),
+            )
+            results["executive_introduction"] = exec_intro
+
             results["status"] = "completed"
 
         except Exception as e:
@@ -729,6 +756,79 @@ parse job descriptions, identify skill gaps, and generate personalized learning 
             len(state_b), fallback_domains,
         )
         return state_b
+
+    async def _generate_executive_intro(
+        self,
+        *,
+        profile_data: dict,
+        profile_summary: str,
+        fit_score: float,
+        total_gaps: int,
+        total_chapters: int,
+        target_role: str,
+        primary_domains: list[str],
+    ) -> str:
+        """Generate a personalized executive introduction narrative.
+
+        Uses the profile data, fit score, and gap analysis to produce
+        a 200-400 word narrative about the learner's career trajectory
+        and what their learning path addresses.
+
+        Falls back to a deterministic summary if the LLM call fails.
+        """
+        pct = round(fit_score * 100)
+        domains_str = ", ".join(primary_domains[:5]) if primary_domains else "AI/ML"
+        current_role = profile_data.get("current_role", "professional")
+        name = profile_data.get("name", "Learner")
+        industry = profile_data.get("industry", "your industry")
+
+        prompt = f"""Write a 200-400 word personalized executive introduction for a learning pathway report.
+
+LEARNER: {name}
+CURRENT ROLE: {current_role}
+TARGET ROLE: {target_role}
+INDUSTRY: {industry}
+PROFILE SUMMARY: {profile_summary}
+FIT SCORE: {pct}% match to target role
+SKILLS GAP: {total_gaps} skills need development
+LEARNING PATH: {total_chapters} chapters across {domains_str}
+
+REQUIREMENTS:
+- Address the learner directly in second person ("you")
+- Reference their current role and how it connects to their target
+- Mention the fit score as a positive starting point
+- Describe the gap areas and how this learning path addresses them
+- End with an encouraging statement about their career trajectory
+- Professional but warm tone
+- Do NOT use bullet points — write flowing paragraphs
+- Return ONLY the introduction text, no headers or formatting"""
+
+        try:
+            result = await self._call_llm_structured(
+                prompt,
+                {"type": "object", "properties": {"text": {"type": "string"}}},
+                max_tokens=2048,
+            )
+            text = result.get("text", "")
+            if text and len(text) > 100:
+                return text
+        except Exception as exc:
+            logger.warning(
+                "Executive introduction LLM call failed: %s", exc,
+            )
+
+        # Deterministic fallback
+        return (
+            f"As a {current_role} in {industry}, you bring valuable "
+            f"domain expertise to your journey toward becoming a "
+            f"{target_role}. Your current skill profile shows a "
+            f"{pct}% match with the target role requirements, "
+            f"demonstrating a solid foundation to build upon. "
+            f"This personalized learning path addresses {total_gaps} "
+            f"skill gaps across {domains_str} through {total_chapters} "
+            f"structured chapters designed to bridge the distance "
+            f"between where you are and where you want to be."
+        )
 
     def _build_recommendations(self, path: dict) -> list[str]:
         """Generate deterministic recommendations from actual chapter data.

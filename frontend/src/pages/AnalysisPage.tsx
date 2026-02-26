@@ -688,6 +688,8 @@ export default function AnalysisPage() {
   const top10Target: Top10TargetSkill[] = result?.result.top_10_target_skills || []
   const top10Gaps: Top10SkillGap[] = result?.result.top_10_skill_gaps || []
   const journeyRoadmap: JourneyRoadmap | undefined = result?.result.journey_roadmap
+  const fitScore: number = result?.result.fit_score ?? 0
+  const executiveIntroduction: string = result?.result.executive_introduction ?? ''
   const roleAnalysis = result?.result.jd_parsing?.role_analysis
   const primaryFunction = roleAnalysis?.primary_function || ''
   const keyDomains = roleAnalysis?.key_domains || []
@@ -784,6 +786,42 @@ export default function AnalysisPage() {
           Your personalized AI skills assessment is ready.
         </p>
       </div>
+
+      {/* Fit Score + Executive Introduction */}
+      {fitScore > 0 && (
+        <div className="card bg-gradient-to-br from-indigo-600 to-sky-600 text-white">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-lg font-bold">Role Fit Score</h2>
+              <p className="text-sm text-indigo-100">
+                How closely your current skills match the target role
+              </p>
+            </div>
+            <div className="text-right">
+              <div className="text-5xl font-bold">{Math.round(fitScore * 100)}%</div>
+              <div className="text-xs text-indigo-200 mt-1">current match</div>
+            </div>
+          </div>
+          <div className="h-3 bg-white/20 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-white/80 rounded-full transition-all duration-1000 ease-out"
+              style={{ width: `${Math.round(fitScore * 100)}%` }}
+            />
+          </div>
+        </div>
+      )}
+
+      {executiveIntroduction && (
+        <div className="card">
+          <h2 className="text-lg font-bold text-gray-900 mb-3 flex items-center gap-2">
+            <BookOpen className="h-5 w-5 text-indigo-600" />
+            Your Learning Journey
+          </h2>
+          <p className="text-gray-700 leading-relaxed whitespace-pre-line">
+            {executiveIntroduction}
+          </p>
+        </div>
+      )}
 
       {/* Section 0: Role Context Header */}
       {(summary?.target_role || primaryFunction) && (

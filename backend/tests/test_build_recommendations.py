@@ -181,8 +181,20 @@ def test_no_generic_domains():
     recs = build_recommendations(scaffold, ont)
     rec_text = " ".join(recs)
 
-    # Hank's path does NOT cover Governance, Product & UX, or Communication
-    absent_domains = ["Governance", "Product & UX", "Communication"]
+    # Check that every domain mentioned in recommendations is actually
+    # in the path's chapters (not a hallucinated domain).
+    chapter_domains = set()
+    for ch in scaffold.get("chapters", []):
+        sid = ch.get("primary_skill_id", "")
+        skill = ont.get_skill(sid)
+        if skill:
+            domain_obj = ont.get_domain(skill["domain"])
+            if domain_obj:
+                chapter_domains.add(domain_obj["label"])
+
+    # All domain labels should be found in the recommendation text
+    all_domains = [d["label"] for d in ont.domains]
+    absent_domains = [d for d in all_domains if d not in chapter_domains]
     for d in absent_domains:
         assert d not in rec_text, (
             f"Recommendation mentions absent domain '{d}': {recs}"

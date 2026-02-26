@@ -14,6 +14,11 @@ import {
   BookOpen,
   Lightbulb,
   Code,
+  MessageSquare,
+  Bot,
+  Star,
+  Copy,
+  ClipboardCheck,
 } from 'lucide-react'
 import type { Chapter } from '../types'
 
@@ -178,7 +183,7 @@ export default function LearningPathPage() {
               {/* Chapter Content - Expandable */}
               <div
                 className={`overflow-hidden transition-all duration-300 ${
-                  isExpanded ? 'max-h-[3000px] opacity-100' : 'max-h-0 opacity-0'
+                  isExpanded ? 'max-h-[8000px] opacity-100' : 'max-h-0 opacity-0'
                 }`}
               >
                 <div className="mt-6 space-y-6 border-t pt-6">
@@ -196,6 +201,19 @@ export default function LearningPathPage() {
                       </span>
                     </div>
                   </div>
+
+                  {/* Introduction */}
+                  {chapter.introduction && (
+                    <div className="bg-gradient-to-r from-indigo-50 to-sky-50 rounded-xl p-5 border border-indigo-100">
+                      <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                        <BookOpen className="h-5 w-5 text-indigo-600" />
+                        Chapter Introduction
+                      </h4>
+                      <p className="text-gray-700 leading-relaxed whitespace-pre-line">
+                        {chapter.introduction}
+                      </p>
+                    </div>
+                  )}
 
                   {/* Learning Objectives */}
                   <div className="bg-indigo-50 rounded-xl p-5">
@@ -240,6 +258,84 @@ export default function LearningPathPage() {
                       ))}
                     </div>
                   </div>
+
+                  {/* Prompting Examples */}
+                  {chapter.prompting_examples && chapter.prompting_examples.length > 0 && (
+                    <div>
+                      <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                        <MessageSquare className="h-5 w-5 text-violet-500" />
+                        Prompting Examples
+                      </h4>
+                      <div className="space-y-4">
+                        {chapter.prompting_examples.map((pe, i) => (
+                          <div key={i} className="bg-white border border-violet-200 rounded-xl p-5 shadow-sm">
+                            <h5 className="font-medium text-gray-900 mb-1 text-lg">{pe.title}</h5>
+                            <p className="text-sm text-gray-600 mb-3">{pe.description}</p>
+                            <div className="bg-gray-900 text-gray-100 rounded-lg p-4 font-mono text-sm whitespace-pre-wrap mb-3">
+                              {pe.prompt}
+                            </div>
+                            <div className="grid gap-3 sm:grid-cols-2">
+                              <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                                <p className="text-xs font-medium text-green-700 mb-1">Expected Output</p>
+                                <p className="text-sm text-gray-700">{pe.expected_output}</p>
+                              </div>
+                              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                                <p className="text-xs font-medium text-amber-700 mb-1">Customization Tips</p>
+                                <p className="text-sm text-gray-700">{pe.customization_tips}</p>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Agent Examples */}
+                  {chapter.agent_examples && chapter.agent_examples.length > 0 && (
+                    <div>
+                      <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                        <Bot className="h-5 w-5 text-emerald-500" />
+                        AI Agent Examples
+                      </h4>
+                      <div className="space-y-4">
+                        {chapter.agent_examples.map((ae, i) => (
+                          <div key={i} className="bg-white border border-emerald-200 rounded-xl p-5 shadow-sm">
+                            <h5 className="font-medium text-gray-900 mb-1 text-lg">{ae.title}</h5>
+                            <p className="text-sm text-gray-600 mb-3">{ae.scenario}</p>
+                            <div className="bg-emerald-50 border border-emerald-100 rounded-lg p-3 mb-3">
+                              <p className="text-xs font-medium text-emerald-700 mb-1">Agent Role</p>
+                              <p className="text-sm text-gray-700">{ae.agent_role}</p>
+                            </div>
+                            {ae.instructions && ae.instructions.length > 0 && (
+                              <div className="bg-gray-50 rounded-lg p-4 mb-3">
+                                <p className="text-xs font-medium text-gray-600 mb-2">Agent Instructions</p>
+                                <ol className="space-y-1.5 text-sm text-gray-700">
+                                  {ae.instructions.map((inst, j) => (
+                                    <li key={j} className="flex gap-2">
+                                      <span className="w-5 h-5 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center flex-shrink-0 font-medium text-xs">
+                                        {j + 1}
+                                      </span>
+                                      <span>{inst}</span>
+                                    </li>
+                                  ))}
+                                </ol>
+                              </div>
+                            )}
+                            <div className="grid gap-3 sm:grid-cols-2">
+                              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                                <p className="text-xs font-medium text-blue-700 mb-1">Expected Behavior</p>
+                                <p className="text-sm text-gray-700">{ae.expected_behavior}</p>
+                              </div>
+                              <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-3">
+                                <p className="text-xs font-medium text-indigo-700 mb-1">Use Case</p>
+                                <p className="text-sm text-gray-700">{ae.use_case}</p>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                   {/* Exercises */}
                   <div>
@@ -287,6 +383,57 @@ export default function LearningPathPage() {
                       ))}
                     </div>
                   </div>
+
+                  {/* Key Takeaways */}
+                  {chapter.key_takeaways && chapter.key_takeaways.length > 0 && (
+                    <div className="bg-amber-50 rounded-xl p-5 border border-amber-200">
+                      <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                        <Star className="h-5 w-5 text-amber-500" />
+                        Key Takeaways
+                      </h4>
+                      <ul className="space-y-2">
+                        {chapter.key_takeaways.map((takeaway, i) => (
+                          <li key={i} className="flex items-start gap-2 text-gray-700">
+                            <CheckCircle className="h-4 w-4 text-amber-500 flex-shrink-0 mt-0.5" />
+                            {takeaway}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Exact Prompt — Copy-Paste Ready */}
+                  {chapter.exact_prompt && chapter.exact_prompt.prompt_text && (
+                    <div className="bg-gray-900 rounded-xl p-5 text-gray-100">
+                      <h4 className="font-semibold text-white mb-1 flex items-center gap-2">
+                        <Copy className="h-5 w-5 text-sky-400" />
+                        EXACT PROMPT — Copy &amp; Paste Ready
+                      </h4>
+                      <p className="text-sm text-gray-400 mb-3">{chapter.exact_prompt.title}</p>
+                      <p className="text-sm text-gray-300 mb-3">{chapter.exact_prompt.context}</p>
+                      <div
+                        className="bg-gray-800 rounded-lg p-4 font-mono text-sm whitespace-pre-wrap mb-3 border border-gray-700 cursor-pointer hover:border-sky-500 transition-colors relative group"
+                        onClick={() => {
+                          navigator.clipboard.writeText(chapter.exact_prompt!.prompt_text)
+                        }}
+                      >
+                        <span className="absolute top-2 right-2 text-xs text-gray-500 group-hover:text-sky-400 flex items-center gap-1">
+                          <ClipboardCheck className="h-3 w-3" /> Click to copy
+                        </span>
+                        {chapter.exact_prompt.prompt_text}
+                      </div>
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <div className="bg-gray-800 rounded-lg p-3 border border-gray-700">
+                          <p className="text-xs font-medium text-green-400 mb-1">Expected Output</p>
+                          <p className="text-sm text-gray-300">{chapter.exact_prompt.expected_output}</p>
+                        </div>
+                        <div className="bg-gray-800 rounded-lg p-3 border border-gray-700">
+                          <p className="text-xs font-medium text-amber-400 mb-1">How to Customize</p>
+                          <p className="text-sm text-gray-300">{chapter.exact_prompt.how_to_customize}</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Resources */}
                   {chapter.resources && chapter.resources.length > 0 && (

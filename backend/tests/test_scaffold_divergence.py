@@ -123,22 +123,23 @@ def test_scaffolds_diverge():
             print(f"  Ch{ch['chapter_number']}: {sid:<20} {lvl}  ({domain})")
         print(f"  Level spread: {sorted(levels)}")
 
-    # Assert every profile gets exactly 5 chapters
+    # Assert every profile gets exactly MAX_CHAPTERS chapters
+    from app.services.path_generator import MAX_CHAPTERS
     print("\n" + "=" * 80)
     print("CHAPTER COUNT CHECK")
     print("=" * 80)
     chapter_failures = []
     for name in [n for _, n in PROFILE_FILES]:
         count = scaffolds[name]["total_chapters"]
-        status = "OK" if count == 5 else "FAIL"
+        status = "OK" if count == MAX_CHAPTERS else "FAIL"
         print(f"  {name}: {count} chapters [{status}]")
-        if count != 5:
+        if count != MAX_CHAPTERS:
             chapter_failures.append(name)
 
     assert not chapter_failures, (
-        f"FAIL: These profiles did not get 5 chapters: {chapter_failures}"
+        f"FAIL: These profiles did not get {MAX_CHAPTERS} chapters: {chapter_failures}"
     )
-    print("PASS: All profiles have exactly 5 chapters.")
+    print(f"PASS: All profiles have exactly {MAX_CHAPTERS} chapters.")
 
     # Assert mixed starting levels (not all the same)
     print("\n" + "=" * 80)

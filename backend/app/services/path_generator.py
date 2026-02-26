@@ -33,8 +33,8 @@ from app.services.gap_engine import SkillGapEngine
 from app.services.ontology import OntologyService, get_ontology_service
 from app.services.state_inference import expand_state_a
 
-MAX_CHAPTERS = 5
-MAX_DOMAIN_CHAPTERS = 2
+MAX_CHAPTERS = 10
+MAX_DOMAIN_CHAPTERS = 3
 
 # Every learning path must include at least one skill from each
 # mandatory category.  Categories are checked in order; the first

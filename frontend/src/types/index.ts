@@ -50,8 +50,13 @@ export interface Chapter {
   learning_objectives: string[]
   current_level: number
   target_level: number
+  introduction?: string
   core_concepts: CoreConcept[]
+  prompting_examples?: PromptingExample[]
+  agent_examples?: AgentExample[]
   exercises: Exercise[]
+  key_takeaways?: string[]
+  exact_prompt?: ExactPrompt
   self_assessment_questions: AssessmentQuestion[]
   resources?: Resource[]
   industry_context?: string
@@ -62,6 +67,31 @@ export interface CoreConcept {
   title: string
   content: string
   examples?: string[]
+}
+
+export interface PromptingExample {
+  title: string
+  description: string
+  prompt: string
+  expected_output: string
+  customization_tips: string
+}
+
+export interface AgentExample {
+  title: string
+  scenario: string
+  agent_role: string
+  instructions: string[]
+  expected_behavior: string
+  use_case: string
+}
+
+export interface ExactPrompt {
+  title: string
+  context: string
+  prompt_text: string
+  expected_output: string
+  how_to_customize: string
 }
 
 export interface Exercise {
@@ -221,6 +251,8 @@ export interface AnalysisResult {
       total_estimated_hours: number
     }
     journey_roadmap?: JourneyRoadmap
+    fit_score?: number
+    executive_introduction?: string
     summary: {
       profile_summary: string
       target_role: string

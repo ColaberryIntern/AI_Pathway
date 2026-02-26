@@ -247,11 +247,12 @@ def test_gaps_have_positive_delta(profile, pipeline_result):
 # Test 5: Learning path scaffold
 # ======================================================================
 
-def test_scaffold_produces_5_chapters(profile, pipeline_result):
-    """Every profile must produce exactly 5 chapters."""
+def test_scaffold_produces_expected_chapters(profile, pipeline_result):
+    """Every profile must produce exactly MAX_CHAPTERS chapters."""
+    from app.services.path_generator import MAX_CHAPTERS
     _, _, _, scaffold, _ = pipeline_result
-    assert scaffold["total_chapters"] == 5, (
-        f"{profile['name']}: expected 5 chapters, "
+    assert scaffold["total_chapters"] == MAX_CHAPTERS, (
+        f"{profile['name']}: expected {MAX_CHAPTERS} chapters, "
         f"got {scaffold['total_chapters']}"
     )
 
@@ -400,9 +401,10 @@ def test_visualization_graph_data(profile, pipeline_result, ontology):
             )
 
     # chapters list in graph must match scaffold
-    assert len(graph_data["chapters"]) == 5, (
+    from app.services.path_generator import MAX_CHAPTERS
+    assert len(graph_data["chapters"]) == MAX_CHAPTERS, (
         f"{profile['name']}: graph chapters count "
-        f"{len(graph_data['chapters'])} != 5"
+        f"{len(graph_data['chapters'])} != {MAX_CHAPTERS}"
     )
 
     # Node states must be valid

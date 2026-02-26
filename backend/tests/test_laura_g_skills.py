@@ -291,8 +291,9 @@ def test_critical_gaps_have_high_delta():
     )
 
 
-def test_scaffold_produces_5_chapters():
-    """Learning path scaffold must produce exactly 5 chapters for Laura."""
+def test_scaffold_produces_expected_chapters():
+    """Learning path scaffold must produce exactly MAX_CHAPTERS chapters for Laura."""
+    from app.services.path_generator import MAX_CHAPTERS
     ont = get_ontology_service()
     gen = LearningPathGenerator(ontology_service=ont)
     profile = load_laura()
@@ -320,8 +321,8 @@ def test_scaffold_produces_5_chapters():
               f"({ch['primary_skill_name']}) "
               f"[L{ch['current_level']}->L{ch['target_level']}]")
 
-    assert scaffold["total_chapters"] == 5, (
-        f"Expected 5 chapters, got {scaffold['total_chapters']}"
+    assert scaffold["total_chapters"] == MAX_CHAPTERS, (
+        f"Expected {MAX_CHAPTERS} chapters, got {scaffold['total_chapters']}"
     )
 
 
@@ -407,11 +408,11 @@ def test_scaffold_prerequisite_ordering():
 
 
 def test_scaffold_contains_luda_skills():
-    """Scaffold must contain at least 4 of Luda's top-10 skills.
+    """Scaffold must contain at least 7 of Luda's top-10 skills.
 
-    The system produces 5 chapters per path.  One slot may be consumed
-    by a prerequisite skill (e.g. SK.PRM.001 as prereq for SK.PRM.010).
-    We require at least 4 of 5 chapters to be Luda-confirmed skills.
+    The system produces MAX_CHAPTERS chapters per path.  Some slots may
+    be consumed by prerequisite skills or mandatory category fills.
+    We require at least 7 chapters to be Luda-confirmed skills.
     """
     ont = get_ontology_service()
     gen = LearningPathGenerator(ontology_service=ont)
@@ -444,9 +445,9 @@ def test_scaffold_contains_luda_skills():
     if non_luda:
         print(f"Non-Luda slots:  {sorted(non_luda)}")
 
-    assert len(overlap) >= 4, (
+    assert len(overlap) >= 7, (
         f"Scaffold contains only {len(overlap)}/10 Luda skills "
-        f"(need >=4): {sorted(overlap)}. "
+        f"(need >=7): {sorted(overlap)}. "
         f"Non-Luda chapters: {sorted(non_luda)}"
     )
 
@@ -483,7 +484,7 @@ if __name__ == "__main__":
         test_state_b_levels_meet_minimums,
         test_gap_analysis_covers_all_10_skills,
         test_critical_gaps_have_high_delta,
-        test_scaffold_produces_5_chapters,
+        test_scaffold_produces_expected_chapters,
         test_scaffold_no_hallucinated_skills,
         test_scaffold_prerequisite_ordering,
         test_scaffold_contains_luda_skills,
