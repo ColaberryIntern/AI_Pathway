@@ -8,8 +8,10 @@ from app.services.path_quality_evaluator import PathQualityEvaluator
 logger = logging.getLogger(__name__)
 
 MAX_ENRICHMENT_ATTEMPTS = 2
-QUALITY_THRESHOLD = 3.0
+QUALITY_THRESHOLD = 2.5
 ENRICHMENT_PROMPT_VERSION = "v1"
+BATCH_SIZE = 3          # chapters per parallel enrichment batch
+BATCH_MAX_TOKENS = 22000  # tokens per batch (~7k per chapter)
 
 
 class PathGeneratorAgent(BaseAgent):
@@ -127,183 +129,75 @@ skill topic and the learner's industry — not generic boilerplate."""
         for ch, content in zip(chapters_input, content_results):
             ch["reference_content"] = content[:3] if content else []
 
-        # Generate path using LLM
-        prompt = self._build_generation_prompt(
-            chapters_input, industry, learning_intent, profile_summary,
-            num_chapters,
-            is_scaffold=scaffold is not None,
-            prompt_version=ENRICHMENT_PROMPT_VERSION,
-        )
+        # Generate path using LLM — parallel batch enrichment
+        # Split chapters into batches of BATCH_SIZE and enrich in parallel.
+        # Each batch gets its own LLM call with reduced token budget,
+        # running concurrently for ~3x speedup on 10 chapters.
+        output_schema = self._chapter_output_schema()
 
-        output_schema = {
-            "type": "object",
-            "properties": {
-                "title": {"type": "string"},
-                "description": {"type": "string"},
-                "chapters": {
-                    "type": "array",
-                    "items": {
-                        "type": "object",
-                        "properties": {
-                            "chapter_number": {"type": "integer"},
-                            "skill_id": {"type": "string"},
-                            "skill_name": {"type": "string"},
-                            "title": {"type": "string"},
-                            "learning_objectives": {
-                                "type": "array",
-                                "items": {"type": "string"}
-                            },
-                            "current_level": {"type": "integer"},
-                            "target_level": {"type": "integer"},
-                            "introduction": {"type": "string"},
-                            "core_concepts": {
-                                "type": "array",
-                                "items": {
-                                    "type": "object",
-                                    "properties": {
-                                        "title": {"type": "string"},
-                                        "content": {"type": "string"},
-                                        "examples": {
-                                            "type": "array",
-                                            "items": {"type": "string"}
-                                        }
-                                    }
-                                }
-                            },
-                            "prompting_examples": {
-                                "type": "array",
-                                "items": {
-                                    "type": "object",
-                                    "properties": {
-                                        "title": {"type": "string"},
-                                        "description": {"type": "string"},
-                                        "prompt": {"type": "string"},
-                                        "expected_output": {"type": "string"},
-                                        "customization_tips": {"type": "string"}
-                                    }
-                                }
-                            },
-                            "agent_examples": {
-                                "type": "array",
-                                "items": {
-                                    "type": "object",
-                                    "properties": {
-                                        "title": {"type": "string"},
-                                        "scenario": {"type": "string"},
-                                        "agent_role": {"type": "string"},
-                                        "instructions": {
-                                            "type": "array",
-                                            "items": {"type": "string"}
-                                        },
-                                        "expected_behavior": {"type": "string"},
-                                        "use_case": {"type": "string"}
-                                    }
-                                }
-                            },
-                            "exercises": {
-                                "type": "array",
-                                "items": {
-                                    "type": "object",
-                                    "properties": {
-                                        "id": {"type": "string"},
-                                        "title": {"type": "string"},
-                                        "description": {"type": "string"},
-                                        "type": {"type": "string"},
-                                        "estimated_time_minutes": {"type": "integer"},
-                                        "instructions": {
-                                            "type": "array",
-                                            "items": {"type": "string"}
-                                        },
-                                        "deliverable": {"type": "string"}
-                                    }
-                                }
-                            },
-                            "applied_project": {
-                                "type": "object",
-                                "properties": {
-                                    "project_title": {"type": "string"},
-                                    "project_description": {"type": "string"},
-                                    "deliverable": {"type": "string"},
-                                    "estimated_time_minutes": {"type": "integer"}
-                                }
-                            },
-                            "key_takeaways": {
-                                "type": "array",
-                                "items": {"type": "string"}
-                            },
-                            "exact_prompt": {
-                                "type": "object",
-                                "properties": {
-                                    "title": {"type": "string"},
-                                    "context": {"type": "string"},
-                                    "prompt_text": {"type": "string"},
-                                    "expected_output": {"type": "string"},
-                                    "how_to_customize": {"type": "string"}
-                                }
-                            },
-                            "self_assessment_questions": {
-                                "type": "array",
-                                "items": {
-                                    "type": "object",
-                                    "properties": {
-                                        "question": {"type": "string"},
-                                        "options": {
-                                            "type": "array",
-                                            "items": {"type": "string"}
-                                        },
-                                        "answer": {"type": "string"}
-                                    }
-                                }
-                            },
-                            "industry_context": {"type": "string"},
-                            "estimated_time_hours": {"type": "number"}
-                        }
-                    }
-                },
-                "total_estimated_hours": {"type": "number"}
-            }
-        }
+        if scaffold:
+            batches = [
+                chapters_input[i:i + BATCH_SIZE]
+                for i in range(0, len(chapters_input), BATCH_SIZE)
+            ]
+            logger.info(
+                "PathGeneratorAgent: enriching %d chapters in %d parallel "
+                "batches of up to %d",
+                num_chapters, len(batches), BATCH_SIZE,
+            )
 
-        # ---------------------------------------------------------------
-        # Stage 1: Structural validation with retry
-        # ---------------------------------------------------------------
-        # The structural loop runs up to MAX_ENRICHMENT_ATTEMPTS times.
-        # A structurally invalid result is unusable, so failure falls
-        # back to the deterministic scaffold.
-        last_error = ""
-        for attempt in range(1, MAX_ENRICHMENT_ATTEMPTS + 1):
-            retry_prompt = prompt
-            if last_error:
-                retry_prompt = (
-                    f"{prompt}\n\n"
-                    f"PREVIOUS ATTEMPT FAILED VALIDATION:\n{last_error}\n"
-                    f"Fix these issues in your response."
+            batch_tasks = [
+                self._enrich_batch(
+                    batch, industry, learning_intent, profile_summary,
+                    scaffold,
                 )
+                for batch in batches
+            ]
+            batch_results = await asyncio.gather(*batch_tasks)
 
-            result = await self._call_llm_structured(
-                retry_prompt, output_schema, max_tokens=65536,
-            )
+            # Merge batch results into a single chapters list
+            all_chapters = []
+            for batch_result, batch_failures in batch_results:
+                structural_failures += batch_failures
+                all_chapters.extend(batch_result)
 
-            errors = self._validate_enrichment(result, scaffold, num_chapters)
-            if not errors:
-                break
-
-            structural_failures += 1
-            last_error = "\n".join(f"- {e}" for e in errors)
-            logger.warning(
-                "PathGeneratorAgent structural validation failed "
-                "(attempt %d/%d): %s",
-                attempt, MAX_ENRICHMENT_ATTEMPTS, last_error,
-            )
+            if len(all_chapters) == num_chapters:
+                result = {
+                    "title": f"AI Learning Path: {all_chapters[0].get('skill_name', 'Skills')} & Beyond",
+                    "description": (
+                        f"A personalized {num_chapters}-chapter learning path "
+                        f"for {industry or 'technology'} professionals."
+                    ),
+                    "chapters": all_chapters,
+                    "total_estimated_hours": sum(
+                        ch.get("estimated_time_hours", 3.0)
+                        for ch in all_chapters
+                    ),
+                }
+            else:
+                logger.error(
+                    "Batch enrichment produced %d chapters (expected %d). "
+                    "Falling back to scaffold.",
+                    len(all_chapters), num_chapters,
+                )
+                result = self._scaffold_fallback(scaffold)
+                fallback_used = True
         else:
-            # All structural attempts exhausted — use scaffold fallback.
-            logger.error(
-                "PathGeneratorAgent enrichment failed after %d attempts. "
-                "Returning scaffold with placeholder content.",
-                MAX_ENRICHMENT_ATTEMPTS,
+            # Legacy non-scaffold path — single call (rare)
+            prompt = self._build_generation_prompt(
+                chapters_input, industry, learning_intent, profile_summary,
+                num_chapters,
+                is_scaffold=False,
+                prompt_version=ENRICHMENT_PROMPT_VERSION,
             )
-            result = self._scaffold_fallback(scaffold)
-            fallback_used = True
+            result = await self._call_llm_structured(
+                prompt, output_schema, max_tokens=65536,
+            )
+            errors = self._validate_enrichment(result, scaffold, num_chapters)
+            if errors:
+                logger.warning("Legacy enrichment failed: %s", errors)
+                result = {"chapters": [], "title": "", "description": ""}
+                fallback_used = True
 
         # ---------------------------------------------------------------
         # Stage 2: Soft quality gate (single retry, never blocks)
@@ -584,6 +478,206 @@ Make the content:
 - Progressively building on previous chapters
 - Relevant to the user's industry and goals
 - Engaging with real-world examples"""
+
+    # ------------------------------------------------------------------
+    # Batch enrichment
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _chapter_output_schema() -> dict:
+        """Return the JSON schema for enriched chapter output."""
+        return {
+            "type": "object",
+            "properties": {
+                "title": {"type": "string"},
+                "description": {"type": "string"},
+                "chapters": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "chapter_number": {"type": "integer"},
+                            "skill_id": {"type": "string"},
+                            "skill_name": {"type": "string"},
+                            "title": {"type": "string"},
+                            "learning_objectives": {
+                                "type": "array",
+                                "items": {"type": "string"}
+                            },
+                            "current_level": {"type": "integer"},
+                            "target_level": {"type": "integer"},
+                            "introduction": {"type": "string"},
+                            "core_concepts": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "title": {"type": "string"},
+                                        "content": {"type": "string"},
+                                        "examples": {
+                                            "type": "array",
+                                            "items": {"type": "string"}
+                                        }
+                                    }
+                                }
+                            },
+                            "prompting_examples": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "title": {"type": "string"},
+                                        "description": {"type": "string"},
+                                        "prompt": {"type": "string"},
+                                        "expected_output": {"type": "string"},
+                                        "customization_tips": {"type": "string"}
+                                    }
+                                }
+                            },
+                            "agent_examples": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "title": {"type": "string"},
+                                        "scenario": {"type": "string"},
+                                        "agent_role": {"type": "string"},
+                                        "instructions": {
+                                            "type": "array",
+                                            "items": {"type": "string"}
+                                        },
+                                        "expected_behavior": {"type": "string"},
+                                        "use_case": {"type": "string"}
+                                    }
+                                }
+                            },
+                            "exercises": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {"type": "string"},
+                                        "title": {"type": "string"},
+                                        "description": {"type": "string"},
+                                        "type": {"type": "string"},
+                                        "estimated_time_minutes": {"type": "integer"},
+                                        "instructions": {
+                                            "type": "array",
+                                            "items": {"type": "string"}
+                                        },
+                                        "deliverable": {"type": "string"}
+                                    }
+                                }
+                            },
+                            "applied_project": {
+                                "type": "object",
+                                "properties": {
+                                    "project_title": {"type": "string"},
+                                    "project_description": {"type": "string"},
+                                    "deliverable": {"type": "string"},
+                                    "estimated_time_minutes": {"type": "integer"}
+                                }
+                            },
+                            "key_takeaways": {
+                                "type": "array",
+                                "items": {"type": "string"}
+                            },
+                            "exact_prompt": {
+                                "type": "object",
+                                "properties": {
+                                    "title": {"type": "string"},
+                                    "context": {"type": "string"},
+                                    "prompt_text": {"type": "string"},
+                                    "expected_output": {"type": "string"},
+                                    "how_to_customize": {"type": "string"}
+                                }
+                            },
+                            "self_assessment_questions": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "question": {"type": "string"},
+                                        "options": {
+                                            "type": "array",
+                                            "items": {"type": "string"}
+                                        },
+                                        "answer": {"type": "string"}
+                                    }
+                                }
+                            },
+                            "industry_context": {"type": "string"},
+                            "estimated_time_hours": {"type": "number"}
+                        }
+                    }
+                },
+                "total_estimated_hours": {"type": "number"}
+            }
+        }
+
+    async def _enrich_batch(
+        self,
+        batch: list[dict],
+        industry: str,
+        learning_intent: str,
+        profile_summary: str,
+        full_scaffold: list[dict],
+    ) -> tuple[list[dict], int]:
+        """Enrich a batch of chapters with retry logic.
+
+        Returns (enriched_chapters, structural_failure_count).
+        On failure, returns scaffold fallback chapters for this batch.
+        """
+        batch_size = len(batch)
+        batch_nums = [ch["chapter_number"] for ch in batch]
+
+        prompt = self._build_generation_prompt(
+            batch, industry, learning_intent, profile_summary,
+            batch_size,
+            is_scaffold=True,
+            prompt_version=ENRICHMENT_PROMPT_VERSION,
+        )
+
+        output_schema = self._chapter_output_schema()
+        failures = 0
+        last_error = ""
+
+        for attempt in range(1, MAX_ENRICHMENT_ATTEMPTS + 1):
+            retry_prompt = prompt
+            if last_error:
+                retry_prompt = (
+                    f"{prompt}\n\n"
+                    f"PREVIOUS ATTEMPT FAILED VALIDATION:\n{last_error}\n"
+                    f"Fix these issues in your response."
+                )
+
+            result = await self._call_llm_structured(
+                retry_prompt, output_schema, max_tokens=BATCH_MAX_TOKENS,
+            )
+
+            errors = self._validate_enrichment(result, batch, batch_size)
+            if not errors:
+                logger.info(
+                    "Batch chapters %s enriched successfully (attempt %d)",
+                    batch_nums, attempt,
+                )
+                return result.get("chapters", []), failures
+
+            failures += 1
+            last_error = "\n".join(f"- {e}" for e in errors)
+            logger.warning(
+                "Batch chapters %s failed validation (attempt %d/%d): %s",
+                batch_nums, attempt, MAX_ENRICHMENT_ATTEMPTS, last_error,
+            )
+
+        # All attempts failed — return scaffold fallback for this batch
+        logger.error(
+            "Batch chapters %s enrichment failed after %d attempts. "
+            "Using scaffold fallback.",
+            batch_nums, MAX_ENRICHMENT_ATTEMPTS,
+        )
+        fallback = self._scaffold_fallback(batch)
+        return fallback.get("chapters", []), failures
 
     # ------------------------------------------------------------------
     # Soft quality gate

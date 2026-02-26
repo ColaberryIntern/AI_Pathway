@@ -551,15 +551,32 @@ parse job descriptions, identify skill gaps, and generate personalized learning 
                 ),
             }
 
-            # Step 6: Optional Content Curation
+            # Generate summary (needed for exec intro)
+            results["summary"] = self._generate_summary(results)
+
+            # Step 6 + 7: Content Curation + Executive Intro IN PARALLEL
+            # These are independent — run concurrently for ~8s savings.
+            exec_intro_task = self._generate_executive_intro(
+                profile_data=task.get("profile", {}),
+                profile_summary=profile_result.get("profile_summary", ""),
+                fit_score=fit_score,
+                total_gaps=len(all_gaps_full),
+                total_chapters=len(path_chapters),
+                target_role=results["summary"].get("target_role", ""),
+                primary_domains=results["summary"].get("primary_domains", []),
+            )
+
             if task.get("include_resources", True):
-                resources_result = await self._execute_step(
+                curation_task = self._execute_step(
                     "content_curation",
                     self.content_curator,
                     {
                         "chapters": path_result.get("chapters", []),
                         "industry": task.get("profile", {}).get("industry", ""),
                     }
+                )
+                resources_result, exec_intro = await asyncio.gather(
+                    curation_task, exec_intro_task,
                 )
                 # Merge resources into chapters
                 for ch_resource in resources_result.get("chapter_resources", []):
@@ -569,21 +586,9 @@ parse job descriptions, identify skill gaps, and generate personalized learning 
                             chapter["resources"] = ch_resource.get("resources", [])
                 results["steps"].append({"step": "content_curation", "status": "completed"})
             else:
+                exec_intro = await exec_intro_task
                 results["steps"].append({"step": "content_curation", "status": "skipped"})
 
-            # Generate summary
-            results["summary"] = self._generate_summary(results)
-
-            # Executive Introduction — personalized career narrative
-            exec_intro = await self._generate_executive_intro(
-                profile_data=task.get("profile", {}),
-                profile_summary=profile_result.get("profile_summary", ""),
-                fit_score=fit_score,
-                total_gaps=len(all_gaps_full),
-                total_chapters=len(path_chapters),
-                target_role=results["summary"].get("target_role", ""),
-                primary_domains=results["summary"].get("primary_domains", []),
-            )
             results["executive_introduction"] = exec_intro
 
             results["status"] = "completed"
