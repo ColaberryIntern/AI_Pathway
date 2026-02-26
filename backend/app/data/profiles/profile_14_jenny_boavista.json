@@ -1,0 +1,126 @@
+{
+  "id": "profile_14",
+  "name": "Jenny Boavista",
+  "current_role": "Program and Operations Manager",
+  "target_role": "Martech AI Product Manager",
+  "industry": "AI Consulting & Technology",
+  "location": "U.S.",
+  "experience_years": 8,
+  "ai_exposure_level": "Intermediate",
+  "tools_used": ["ChatGPT", "ClickUp", "Asana", "Jira"],
+  "technical_background": "Program and operations management across AI consulting, government healthcare, and clinical trials. PMP certified with MBA in Healthcare Management. Drives operational excellence at an AI insights firm including client success, GenAI training program coordination, and conference event strategy. Strong in formal project management (WBS, Gantt charts, risk analysis, communication plans) and contract administration. Familiar with generative AI tools for project management but has not built AI/ML systems. No coding or technical platform experience.",
+  "archetype": "Career Switcher",
+  "current_profile": {
+    "summary": "Program and Operations Manager at GAI Insights, an AI consulting firm, with 8 years of experience spanning AI operations, government healthcare policy, clinical trials operations, and independent PM consulting. Drives operational excellence across client success, event planning, and Generative AI enablement programs. Coordinates the design and delivery of GenAI training programs for internal teams and external clients. Organizes the Women in AI Breakfast and supports the GAI Insights Annual Conference. Previously managed pharmacy Medicaid operations at Oregon Health Authority and clinical DXA operations at Bioclinica. PMP certified with MBA in Healthcare Management. Uses ChatGPT for project management tasks. Strong in stakeholder communication, process optimization, and cross-functional collaboration but has no hands-on experience building AI systems, agents, or technical platform features.",
+    "technical_skills": [
+      "Project management (PMP: WBS, Gantt charts, risk analysis, communication plans)",
+      "Contract administration and vendor management",
+      "Process optimization and operational workflows",
+      "Event planning and logistics coordination",
+      "Training program design and delivery coordination",
+      "Project management tools (ClickUp, Asana, Jira)",
+      "Basic GenAI tool usage (ChatGPT for drafting and ideation)",
+      "Performance tracking and reporting",
+      "Budget management and revenue reporting",
+      "Federal compliance and policy analysis"
+    ],
+    "soft_skills": [
+      "Client success and relationship management",
+      "Cross-functional team coordination",
+      "Stakeholder communication across technical and non-technical audiences",
+      "Conference and event leadership",
+      "AI community building (Women in AI Breakfast)"
+    ],
+    "ai_experience": "Works at GAI Insights, an AI consulting firm, where she coordinates GenAI training programs and champions AI tool adoption for internal processes. Uses ChatGPT for project management tasks including drafting documents, ideation, and workflow support. Familiar with the AI tool landscape from working alongside AI practitioners and subject matter experts daily. Has not built, trained, or evaluated AI/ML models. No experience with agents, RAG systems, prompt engineering frameworks, or production AI deployment."
+  },
+  "learning_intent": "Wants to transition from managing AI operations and programs into defining vision and strategy for AI-enabled martech platform products. Goal: gain hands-on understanding of LLM-powered agentic solutions, learn to evaluate and select AI/ML capabilities for platform integration, build expertise in AI product quality gates and evaluation frameworks, and leverage existing governance and stakeholder management strengths in a product management context. Aims to bridge the gap between operational program management and technical AI product leadership.",
+  "target_jd": {
+    "title": "Martech AI Product Manager",
+    "requirements": [
+      "Define vision, strategy, and roadmap for AI-enabled martech platform products",
+      "Hands-on experience building LLM-powered Agentic solutions that integrate with enterprise platforms",
+      "Work with engineering to build AI features including recommendation engines, intelligent routing, and autonomous lead scoring",
+      "Lead cross-functional teams across engineering, data science, marketing, and compliance",
+      "Define release process and quality gates for responsible AI deployment",
+      "Evaluate and select AI/ML capabilities for platform integration (RAG, agents, embeddings)",
+      "Ensure AI features comply with data governance, privacy, and security requirements",
+      "Build evaluation frameworks and test suites for AI-powered platform features at scale",
+      "Optimize AI feature performance for production: caching, latency, and cost management",
+      "Communicate AI strategy and capabilities to non-technical stakeholders and executives"
+    ]
+  },
+  "expected_skill_gaps": [
+    {
+      "domain": "D.AGT",
+      "description": "No experience building AI agents. Needs to understand tool definitions, single-agent loops, and state management to oversee agentic solution development for enterprise martech platforms.",
+      "skills": ["SK.AGT.001", "SK.AGT.010", "SK.AGT.003"]
+    },
+    {
+      "domain": "D.EVL",
+      "description": "No AI evaluation experience. Needs eval types, LLM-as-judge patterns, and prompt unit tests to define quality gates and build evaluation frameworks for AI platform features.",
+      "skills": ["SK.EVL.001", "SK.EVL.002", "SK.EVL.020"]
+    },
+    {
+      "domain": "D.RAG",
+      "description": "No RAG experience. Needs RAG fundamentals, chunking strategies, and reranking to evaluate and select knowledge-grounded AI capabilities for martech personalization and recommendations.",
+      "skills": ["SK.RAG.000", "SK.RAG.002", "SK.RAG.010"]
+    },
+    {
+      "domain": "D.SEC",
+      "description": "No AI security experience. Needs prompt injection mitigation knowledge to ensure customer-facing AI features meet enterprise security requirements.",
+      "skills": ["SK.SEC.001"]
+    },
+    {
+      "domain": "D.OPS",
+      "description": "No production AI operations experience. Needs latency optimization and caching/batching/streaming knowledge to oversee AI feature performance in production.",
+      "skills": ["SK.OPS.001", "SK.OPS.010"]
+    },
+    {
+      "domain": "D.PRM",
+      "description": "Basic prompt writing only. Needs structured prompting skills including prompt debugging, iteration, and JSON/schema outputs for production AI systems.",
+      "skills": ["SK.PRM.003", "SK.PRM.010"]
+    },
+    {
+      "domain": "D.COM",
+      "description": "Strong general communication but needs to deepen AI-specific strategy communication to executive and board-level stakeholders.",
+      "skills": ["SK.COM.001"]
+    },
+    {
+      "domain": "D.PRD",
+      "description": "Strong operational PM skills but needs AI-specific product strategy: use-case selection for AI features and AI enablement training at the product organization level.",
+      "skills": ["SK.PRD.001", "SK.PRD.020"]
+    }
+  ],
+  "estimated_current_skills": {
+    "SK.PRM.000": 2,
+    "SK.PRM.001": 1,
+    "SK.PRM.003": 0,
+    "SK.PRM.010": 0,
+    "SK.TOOL.001": 2,
+    "SK.TOOL.021": 1,
+    "SK.FND.001": 1,
+    "SK.FND.002": 2,
+    "SK.FND.012": 0,
+    "SK.FND.020": 1,
+    "SK.PRD.001": 2,
+    "SK.PRD.002": 3,
+    "SK.PRD.011": 1,
+    "SK.PRD.020": 3,
+    "SK.COM.001": 3,
+    "SK.LRN.002": 2,
+    "SK.GOV.020": 2,
+    "SK.AGT.000": 0,
+    "SK.AGT.001": 0,
+    "SK.AGT.003": 0,
+    "SK.AGT.010": 0,
+    "SK.EVL.001": 0,
+    "SK.EVL.002": 0,
+    "SK.EVL.020": 0,
+    "SK.RAG.000": 0,
+    "SK.RAG.002": 0,
+    "SK.RAG.010": 0,
+    "SK.SEC.001": 0,
+    "SK.OPS.001": 0,
+    "SK.OPS.010": 0
+  }
+}
