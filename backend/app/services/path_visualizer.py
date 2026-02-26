@@ -687,7 +687,21 @@ tr.path-header td {{ font-weight: 600; color: var(--primary); font-size: 13px; p
 .toc-list li {{ margin-bottom: 8px; font-size: 14px; }}
 .toc-list a {{ color: var(--primary); text-decoration: none; font-weight: 500; }}
 .toc-list a:hover {{ text-decoration: underline; }}
-@media print {{ .cover-page {{ break-after: page; }} .cover-page .print-btn {{ display: none; }} }}
+@media print {{
+    body {{ padding: 0 !important; margin: 0 !important; }}
+    .container {{ max-width: 100%; margin: 0; padding: 0; }}
+    .cover-page {{
+        min-height: 90vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        margin: 0;
+        border-radius: 0;
+        break-after: page;
+    }}
+    .cover-page .print-btn {{ display: none; }}
+}}
 /* Chapter detail styles */
 .ch-detail {{ background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 24px; }}
 .ch-detail h3 {{ font-size: 20px; font-weight: 700; color: var(--primary); margin-bottom: 8px; }}

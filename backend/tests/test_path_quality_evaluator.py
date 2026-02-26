@@ -15,9 +15,9 @@ evaluator = PathQualityEvaluator()
 # --- Load 3 profiles ---
 profiles = {}
 for fname, key in [
-    ("backend/app/data/profiles/profile_01_alex_rivera.json", "Alex Rivera"),
-    ("backend/app/data/profiles/profile_04_dana_morales.json", "Dana Morales"),
-    ("backend/app/data/profiles/profile_10_john_miller.json", "John Miller"),
+    ("app/data/profiles/profile_01_alex_rivera.json", "Alex Rivera"),
+    ("app/data/profiles/profile_04_dana_morales.json", "Dana Morales"),
+    ("app/data/profiles/profile_10_john_miller.json", "John Miller"),
 ]:
     with open(fname) as f:
         profiles[key] = json.load(f)
