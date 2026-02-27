@@ -949,59 +949,50 @@ export default function AnalysisPage() {
 
               {/* Right: what remains */}
               <div>
-                <h3 className="text-sm font-semibold text-gray-700 mb-2">
-                  Remaining After This Path
-                </h3>
-                <div className="space-y-2">
-                  {/* Skills addressed but not fully closed */}
-                  {journeyRoadmap.skills_addressed
-                    .filter(s => s.gap_remaining > 0)
-                    .map((s) => (
-                      <div key={s.skill_id} className="flex items-center justify-between p-2 bg-amber-50 rounded text-sm">
-                        <span className="text-gray-700 truncate flex-1">
-                          <span className="text-amber-500 font-mono text-[11px]">{s.skill_id}</span>{' '}
-                          {s.skill_name}
-                        </span>
-                        <span className="text-xs text-amber-600 flex-shrink-0 ml-2">
-                          L{s.after_path_level} of L{s.required_level} ({s.gap_remaining} more)
-                        </span>
+                {(() => {
+                  const REMAINING_PREVIEW = 8;
+                  const partial = journeyRoadmap.skills_addressed.filter(s => s.gap_remaining > 0);
+                  const notStarted = journeyRoadmap.skills_remaining.filter(s => !s.partial);
+                  const allRemaining = [
+                    ...partial.map(s => ({ ...s, kind: 'partial' as const })),
+                    ...notStarted.map(s => ({ ...s, kind: 'not_started' as const })),
+                  ];
+                  const totalGapLevels = partial.reduce((sum, s) => sum + s.gap_remaining, 0)
+                    + notStarted.reduce((sum, s) => sum + s.gap, 0);
+                  const visible = showAllRemaining ? allRemaining : allRemaining.slice(0, REMAINING_PREVIEW);
+                  const hiddenCount = allRemaining.length - REMAINING_PREVIEW;
+
+                  return (
+                    <>
+                      <h3 className="text-sm font-semibold text-gray-700 mb-2">
+                        Remaining ({allRemaining.length} entries, {totalGapLevels} gap-levels)
+                      </h3>
+                      <div className="space-y-1">
+                        {visible.map((s) => (
+                          <div key={s.skill_id} className={`flex items-center justify-between p-1.5 rounded text-sm ${s.kind === 'partial' ? 'bg-amber-50' : 'bg-gray-50'}`}>
+                            <span className="text-gray-700 truncate flex-1">
+                              <span className={`font-mono text-[11px] ${s.kind === 'partial' ? 'text-amber-500' : 'text-gray-400'}`}>{s.skill_id}</span>{' '}
+                              {s.skill_name}
+                            </span>
+                            <span className={`text-xs flex-shrink-0 ml-2 ${s.kind === 'partial' ? 'text-amber-600' : 'text-gray-500'}`}>
+                              {s.kind === 'partial'
+                                ? `L${s.after_path_level} → L${s.required_level} (${s.gap_remaining} more)`
+                                : `L${s.current_level} → L${s.required_level} (+${s.gap})`}
+                            </span>
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  {/* Skills not started (exclude partial — already shown in amber above) */}
-                  {(() => {
-                    const PREVIEW_COUNT = 5;
-                    const remaining = journeyRoadmap.skills_remaining.filter(s => !s.partial);
-                    if (remaining.length === 0) return null;
-                    const visible = showAllRemaining ? remaining : remaining.slice(0, PREVIEW_COUNT);
-                    const hiddenCount = remaining.length - PREVIEW_COUNT;
-                    return (
-                      <div className="p-2 bg-gray-50 rounded text-sm">
-                        <span className="text-gray-600 font-medium">
-                          + {remaining.length} skills not yet started
-                        </span>
-                        <div className="mt-1 space-y-1">
-                          {visible.map((s) => (
-                            <div key={s.skill_id} className="flex items-center justify-between text-xs text-gray-500 pl-2">
-                              <span className="truncate flex-1">
-                                <span className="text-gray-400 font-mono">{s.skill_id}</span>{' '}
-                                {s.skill_name}
-                              </span>
-                              <span className="flex-shrink-0 ml-2">L{s.current_level} → L{s.required_level} (+{s.gap})</span>
-                            </div>
-                          ))}
-                        </div>
-                        {hiddenCount > 0 && (
-                          <button
-                            onClick={() => setShowAllRemaining(!showAllRemaining)}
-                            className="mt-2 text-xs font-medium text-indigo-600 hover:text-indigo-800 transition-colors"
-                          >
-                            {showAllRemaining ? 'Show less' : `Show ${hiddenCount} more skills`}
-                          </button>
-                        )}
-                      </div>
-                    );
-                  })()}
-                </div>
+                      {hiddenCount > 0 && (
+                        <button
+                          onClick={() => setShowAllRemaining(!showAllRemaining)}
+                          className="mt-2 text-xs font-medium text-indigo-600 hover:text-indigo-800 transition-colors"
+                        >
+                          {showAllRemaining ? 'Show less' : `Show ${hiddenCount} more skills`}
+                        </button>
+                      )}
+                    </>
+                  );
+                })()}
 
                 {/* CTA */}
                 <div className="mt-3 p-2 bg-blue-50 border border-blue-200 rounded text-xs text-blue-700 flex items-start gap-1.5">
