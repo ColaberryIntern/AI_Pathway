@@ -2,16 +2,16 @@
   "id": "profile_14",
   "name": "Jenny Boavista",
   "current_role": "Program and Operations Manager",
-  "target_role": "Martech AI Product Manager",
-  "industry": "AI Consulting & Technology",
+  "target_role": "AI Operations Manager",
+  "industry": "Consulting",
   "location": "U.S.",
   "experience_years": 8,
   "ai_exposure_level": "Intermediate",
-  "tools_used": ["ChatGPT", "ClickUp", "Asana", "Jira"],
-  "technical_background": "Program and operations management across AI consulting, government healthcare, and clinical trials. PMP certified with MBA in Healthcare Management. Drives operational excellence at an AI insights firm including client success, GenAI training program coordination, and conference event strategy. Strong in formal project management (WBS, Gantt charts, risk analysis, communication plans) and contract administration. Familiar with generative AI tools for project management but has not built AI/ML systems. No coding or technical platform experience.",
+  "tools_used": ["ChatGPT", "Claude", "Gemini", "GitHub Copilot", "Midjourney", "OpenAI API", "Anthropic API"],
+  "technical_background": "Program and operations management across AI consulting, government healthcare, and clinical trials. PMP certified with MBA in Healthcare Management. Drives operational excellence at an AI insights firm including client success, GenAI training program coordination, and conference event strategy. Strong in formal project management (WBS, Gantt charts, risk analysis, communication plans) and contract administration. Uses ChatGPT, Claude, Gemini, GitHub Copilot, Midjourney, and has used OpenAI/Anthropic APIs. Basic scripting background (Excel, simple automation). No deep coding or ML engineering experience.",
   "archetype": "Career Switcher",
   "current_profile": {
-    "summary": "Program and Operations Manager at GAI Insights, an AI consulting firm, with 8 years of experience spanning AI operations, government healthcare policy, clinical trials operations, and independent PM consulting. Drives operational excellence across client success, event planning, and Generative AI enablement programs. Coordinates the design and delivery of GenAI training programs for internal teams and external clients. Organizes the Women in AI Breakfast and supports the GAI Insights Annual Conference. Previously managed pharmacy Medicaid operations at Oregon Health Authority and clinical DXA operations at Bioclinica. PMP certified with MBA in Healthcare Management. Uses ChatGPT for project management tasks. Strong in stakeholder communication, process optimization, and cross-functional collaboration but has no hands-on experience building AI systems, agents, or technical platform features.",
+    "summary": "Program and Operations Manager at GAI Insights, an AI consulting firm, with 8 years of experience spanning AI operations, government healthcare policy, clinical trials operations, and independent PM consulting. Drives operational excellence across client success, event planning, and Generative AI enablement programs. Coordinates the design and delivery of GenAI training programs for internal teams and external clients. Organizes the Women in AI Breakfast and supports the GAI Insights Annual Conference. Previously managed pharmacy Medicaid operations at Oregon Health Authority and clinical DXA operations at Bioclinica. PMP certified with MBA in Healthcare Management. Uses ChatGPT, Claude, and Gemini regularly for project management tasks. Strong in stakeholder communication, process optimization, and cross-functional collaboration but has no hands-on experience building AI systems, agents, or technical platform features.",
     "technical_skills": [
       "Project management (PMP: WBS, Gantt charts, risk analysis, communication plans)",
       "Contract administration and vendor management",
@@ -19,10 +19,12 @@
       "Event planning and logistics coordination",
       "Training program design and delivery coordination",
       "Project management tools (ClickUp, Asana, Jira)",
-      "Basic GenAI tool usage (ChatGPT for drafting and ideation)",
+      "AI tools (ChatGPT, Claude, Gemini, Copilot, Midjourney)",
+      "OpenAI API and Anthropic API usage",
       "Performance tracking and reporting",
       "Budget management and revenue reporting",
-      "Federal compliance and policy analysis"
+      "Federal compliance and policy analysis",
+      "Basic scripting (Excel, simple automation)"
     ],
     "soft_skills": [
       "Client success and relationship management",
@@ -31,96 +33,109 @@
       "Conference and event leadership",
       "AI community building (Women in AI Breakfast)"
     ],
-    "ai_experience": "Works at GAI Insights, an AI consulting firm, where she coordinates GenAI training programs and champions AI tool adoption for internal processes. Uses ChatGPT for project management tasks including drafting documents, ideation, and workflow support. Familiar with the AI tool landscape from working alongside AI practitioners and subject matter experts daily. Has not built, trained, or evaluated AI/ML models. No experience with agents, RAG systems, prompt engineering frameworks, or production AI deployment."
+    "ai_experience": "Works at GAI Insights, an AI consulting firm, where she coordinates GenAI training programs and champions AI tool adoption for internal processes. Uses ChatGPT, Claude, and Gemini regularly for project management tasks including drafting documents, ideation, and workflow support. Has used GitHub Copilot for coding assistance and Midjourney for creative work. Familiar with OpenAI and Anthropic APIs. Familiar with the AI tool landscape from working alongside AI practitioners and subject matter experts daily. Has not built, trained, or evaluated AI/ML models. No experience with agents, RAG systems, prompt engineering frameworks, or production AI deployment."
   },
-  "learning_intent": "Wants to transition from managing AI operations and programs into defining vision and strategy for AI-enabled martech platform products. Goal: gain hands-on understanding of LLM-powered agentic solutions, learn to evaluate and select AI/ML capabilities for platform integration, build expertise in AI product quality gates and evaluation frameworks, and leverage existing governance and stakeholder management strengths in a product management context. Aims to bridge the gap between operational program management and technical AI product leadership.",
+  "learning_intent": "Wants to transition into an AI Operations Manager role leading the design, automation, and optimization of business processes using AI systems and workflow automation tools. Primary learning goals: (1) Understand AI concepts and terminology, (2) Use AI tools for productivity, (3) Lead AI initiatives at work, (4) Research and experiment with cutting-edge AI. Aims to gain hands-on expertise with MCP frameworks, agent orchestration, RAG systems, and automation platforms (n8n, Zapier, Make) while leveraging existing strengths in operational excellence, governance, stakeholder management, and AI enablement training.",
   "target_jd": {
-    "title": "Martech AI Product Manager",
+    "title": "AI Operations Manager",
     "requirements": [
-      "Define vision, strategy, and roadmap for AI-enabled martech platform products",
-      "Hands-on experience building LLM-powered Agentic solutions that integrate with enterprise platforms",
-      "Work with engineering to build AI features including recommendation engines, intelligent routing, and autonomous lead scoring",
-      "Lead cross-functional teams across engineering, data science, marketing, and compliance",
-      "Define release process and quality gates for responsible AI deployment",
-      "Evaluate and select AI/ML capabilities for platform integration (RAG, agents, embeddings)",
-      "Ensure AI features comply with data governance, privacy, and security requirements",
-      "Build evaluation frameworks and test suites for AI-powered platform features at scale",
-      "Optimize AI feature performance for production: caching, latency, and cost management",
-      "Communicate AI strategy and capabilities to non-technical stakeholders and executives"
+      "Architect, deploy, and maintain AI-driven workflows to streamline operations across teams",
+      "Implement automations using n8n, Zapier, Make, and custom integrations leveraging APIs and webhooks",
+      "Build and maintain AI agent pipelines using MCP, vector databases, and orchestration frameworks",
+      "Translate business requirements into efficient, scalable automation solutions",
+      "Manage internal AI tooling ecosystem, including LLM applications, automation platforms, retrieval systems, and agent orchestration tools",
+      "Evaluate new AI tools and recommend adoption based on ROI, technical feasibility, and operational impact",
+      "Monitor system performance, troubleshoot failures, and optimize reliability of AI-driven processes",
+      "Establish KPIs and reporting dashboards to quantify operational impact of automation initiatives",
+      "Implement governance frameworks for safe and compliant AI usage",
+      "Partner with IT and Security teams to maintain data integrity, access controls, and auditability within AI systems",
+      "Lead training sessions and internal workshops on AI tools, automation best practices, and workflow design",
+      "Enable business teams to self-serve through standardized AI and automation playbooks"
     ]
   },
   "expected_skill_gaps": [
     {
       "domain": "D.AGT",
-      "description": "No experience building AI agents. Needs to understand tool definitions, single-agent loops, and state management to oversee agentic solution development for enterprise martech platforms.",
-      "skills": ["SK.AGT.001", "SK.AGT.010", "SK.AGT.003"]
-    },
-    {
-      "domain": "D.EVL",
-      "description": "No AI evaluation experience. Needs eval types, LLM-as-judge patterns, and prompt unit tests to define quality gates and build evaluation frameworks for AI platform features.",
-      "skills": ["SK.EVL.001", "SK.EVL.002", "SK.EVL.020"]
+      "description": "Critical gap. No experience building AI agents. Needs MCP protocol concepts, tool definitions, single-agent loops, error handling, multi-agent patterns, and guardrails to build and maintain AI agent pipelines for workflow automation.",
+      "skills": ["SK.AGT.020", "SK.AGT.001", "SK.AGT.010", "SK.AGT.002", "SK.AGT.011", "SK.AGT.030"]
     },
     {
       "domain": "D.RAG",
-      "description": "No RAG experience. Needs RAG fundamentals, chunking strategies, and reranking to evaluate and select knowledge-grounded AI capabilities for martech personalization and recommendations.",
-      "skills": ["SK.RAG.000", "SK.RAG.002", "SK.RAG.010"]
+      "description": "Critical gap. No RAG experience. Needs RAG fundamentals, hybrid retrieval, and chunking strategies to work with vector databases (Pinecone, Weaviate, Chroma) and embedding-based retrieval systems.",
+      "skills": ["SK.RAG.000", "SK.RAG.003", "SK.RAG.002"]
+    },
+    {
+      "domain": "D.PRQ",
+      "description": "Moderate gap. Basic scripting only (Excel automation). Needs REST API basics for webhook/API integrations and Python basics for custom automation scripting.",
+      "skills": ["SK.PRQ.020", "SK.PRQ.010"]
+    },
+    {
+      "domain": "D.EVL",
+      "description": "Gap. No evaluation or observability experience. Needs tracing and observability for monitoring AI-driven processes, and quality dashboards for establishing KPIs and reporting on automation impact.",
+      "skills": ["SK.EVL.010", "SK.EVL.011"]
+    },
+    {
+      "domain": "D.GOV",
+      "description": "Transferable policy background (Oregon Health Authority, federal compliance) but needs AI-specific governance depth. Needs policy-to-controls mapping to implement governance frameworks for safe and compliant AI usage.",
+      "skills": ["SK.GOV.002"]
     },
     {
       "domain": "D.SEC",
-      "description": "No AI security experience. Needs prompt injection mitigation knowledge to ensure customer-facing AI features meet enterprise security requirements.",
-      "skills": ["SK.SEC.001"]
+      "description": "Gap. No AI security experience. Needs data leakage prevention to partner with IT and Security teams on data integrity and access controls within AI systems.",
+      "skills": ["SK.SEC.002"]
     },
     {
       "domain": "D.OPS",
-      "description": "No production AI operations experience. Needs latency optimization and caching/batching/streaming knowledge to oversee AI feature performance in production.",
-      "skills": ["SK.OPS.001", "SK.OPS.010"]
+      "description": "Gap. No production AI operations experience. Needs latency drivers and optimization to monitor system performance and optimize reliability of AI-driven processes.",
+      "skills": ["SK.OPS.001"]
     },
     {
-      "domain": "D.PRM",
-      "description": "Basic prompt writing only. Needs structured prompting skills including prompt debugging, iteration, and JSON/schema outputs for production AI systems.",
-      "skills": ["SK.PRM.003", "SK.PRM.010"]
-    },
-    {
-      "domain": "D.COM",
-      "description": "Strong general communication but needs to deepen AI-specific strategy communication to executive and board-level stakeholders.",
-      "skills": ["SK.COM.001"]
-    },
-    {
-      "domain": "D.PRD",
-      "description": "Strong operational PM skills but needs AI-specific product strategy: use-case selection for AI features and AI enablement training at the product organization level.",
-      "skills": ["SK.PRD.001", "SK.PRD.020"]
+      "domain": "D.FND",
+      "description": "Gap. Needs embeddings and semantic similarity knowledge as a prerequisite for RAG systems and vector database work.",
+      "skills": ["SK.FND.012"]
     }
   ],
   "estimated_current_skills": {
+    "SK.PRD.020": 3,
+    "SK.PRD.021": 3,
+    "SK.PRD.001": 2,
+    "SK.PRD.022": 1,
+    "SK.COM.003": 3,
+    "SK.COM.001": 2,
+    "SK.COM.002": 2,
+    "SK.COM.004": 2,
+    "SK.FND.001": 1,
+    "SK.FND.002": 1,
+    "SK.FND.003": 1,
+    "SK.FND.012": 0,
+    "SK.FND.020": 1,
+    "SK.EVL.000": 1,
+    "SK.EVL.010": 0,
+    "SK.EVL.011": 0,
+    "SK.GOV.000": 1,
+    "SK.GOV.002": 0,
+    "SK.GOV.020": 1,
+    "SK.LRN.002": 2,
+    "SK.LRN.004": 3,
     "SK.PRM.000": 2,
     "SK.PRM.001": 1,
     "SK.PRM.003": 0,
     "SK.PRM.010": 0,
+    "SK.TOOL.000": 2,
     "SK.TOOL.001": 2,
     "SK.TOOL.021": 1,
-    "SK.FND.001": 1,
-    "SK.FND.002": 2,
-    "SK.FND.012": 0,
-    "SK.FND.020": 1,
-    "SK.PRD.001": 2,
-    "SK.PRD.002": 3,
-    "SK.PRD.011": 1,
-    "SK.PRD.020": 3,
-    "SK.COM.001": 3,
-    "SK.LRN.002": 2,
-    "SK.GOV.020": 2,
-    "SK.AGT.000": 0,
+    "SK.PRQ.010": 1,
+    "SK.PRQ.020": 0,
     "SK.AGT.001": 0,
-    "SK.AGT.003": 0,
+    "SK.AGT.002": 0,
     "SK.AGT.010": 0,
-    "SK.EVL.001": 0,
-    "SK.EVL.002": 0,
-    "SK.EVL.020": 0,
+    "SK.AGT.011": 0,
+    "SK.AGT.020": 0,
+    "SK.AGT.030": 0,
     "SK.RAG.000": 0,
     "SK.RAG.002": 0,
-    "SK.RAG.010": 0,
-    "SK.SEC.001": 0,
-    "SK.OPS.001": 0,
-    "SK.OPS.010": 0
+    "SK.RAG.003": 0,
+    "SK.SEC.002": 0,
+    "SK.OPS.001": 0
   }
 }

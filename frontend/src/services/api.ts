@@ -37,6 +37,7 @@ export const parseResume = async (file: File): Promise<{
   ai_experience?: string
   summary?: string
   archetype?: string
+  current_jd?: string
 }> => {
   const formData = new FormData()
   formData.append('file', file)

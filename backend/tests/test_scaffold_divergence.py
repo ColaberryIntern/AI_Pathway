@@ -30,6 +30,7 @@ PROFILE_FILES = [
     ("profile_11_kelly_johnson.json", "Kelly Johnson"),
     ("profile_12_kevin_park.json", "Kevin Park"),
     ("profile_13_laura_g.json", "Laura G"),
+    ("profile_14_jenny_boavista.json", "Jenny Boavista"),
 ]
 
 

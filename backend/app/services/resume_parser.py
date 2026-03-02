@@ -86,7 +86,7 @@ async def parse_resume(file_bytes: bytes, filename: str) -> dict:
 
 1. "name" — The person's full name (string or null)
 2. "current_role" — Their most recent job title (string or null)
-3. "target_role" — If the resume mentions a career objective or target role, extract it (string or null). If not explicitly stated, infer from career trajectory if possible.
+3. "target_role" — Always return null. Do not extract or infer a target role from the LinkedIn profile. The target role is set separately from the target job description.
 4. "industry" — The primary industry they work in (string or null)
 5. "experience_years" — Total years of professional experience as an integer (int or null). Calculate from work history dates if not explicit.
 6. "ai_exposure_level" — Their level of AI/ML experience. Must be one of: "None", "Basic", "Intermediate", "Advanced" (string or null).
@@ -103,8 +103,9 @@ async def parse_resume(file_bytes: bytes, filename: str) -> dict:
    - "Domain Upskiller": Staying in their domain, adding AI skills
    - "Executive": Senior/management role, needs AI strategy knowledge
    - "Technical Pivot": Technical background, moving toward AI/ML engineering
+12. "current_jd" — The job description for their most recent/current role. Extract the full responsibilities, key duties, and role description text from their current position. Include as much detail as available. If the document is a LinkedIn profile, extract from the description under the most recent experience entry. (string or null)
 
-Return ONLY a JSON object with these 11 keys. No additional text.
+Return ONLY a JSON object with these 12 keys. No additional text.
 
 RESUME TEXT:
 {text}"""
@@ -127,7 +128,7 @@ RESUME TEXT:
     return {
         "name": result.get("name") or None,
         "current_role": result.get("current_role") or None,
-        "target_role": result.get("target_role") or None,
+        "target_role": None,  # Never infer from LinkedIn PDF; set from target JD
         "industry": result.get("industry") or None,
         "experience_years": _parse_int(result.get("experience_years")),
         "ai_exposure_level": _validate_ai_level(result.get("ai_exposure_level")),
@@ -136,6 +137,7 @@ RESUME TEXT:
         "ai_experience": result.get("ai_experience") or None,
         "summary": result.get("summary") or None,
         "archetype": _validate_archetype(result.get("archetype")),
+        "current_jd": result.get("current_jd") or None,
     }
 
 

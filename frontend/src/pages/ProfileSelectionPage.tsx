@@ -72,11 +72,11 @@ export default function ProfileSelectionPage() {
         ...prev,
         ...(result.name && { name: result.name }),
         ...(result.current_role && { current_role: result.current_role }),
-        ...(result.target_role && { target_role: result.target_role }),
         ...(result.industry && { industry: result.industry }),
         ...(result.experience_years && { experience_years: String(result.experience_years) }),
         ...(result.ai_exposure_level && { ai_exposure_level: result.ai_exposure_level }),
         ...(result.archetype && { archetype: result.archetype }),
+        ...(result.current_jd && { current_jd: result.current_jd }),
         current_profile: {
           technical_skills: result.technical_skills || prev.current_profile.technical_skills,
           soft_skills: result.soft_skills || prev.current_profile.soft_skills,
@@ -236,7 +236,7 @@ export default function ProfileSelectionPage() {
               </div>
               <div>
                 <p className="text-sm font-medium text-gray-700">
-                  Upload your resume to auto-fill
+                  Upload your LinkedIn Profile PDF to auto-fill
                 </p>
                 <p className="text-xs text-gray-500 mt-1">
                   PDF or DOCX (max 10 MB) - drag & drop or click to browse
@@ -255,8 +255,7 @@ export default function ProfileSelectionPage() {
         <div className="grid md:grid-cols-2 gap-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Your Name <span className="text-gray-400 font-normal">(Optional)</span>
-            </label>
+              Your Name            </label>
             <input
               type="text"
               className="input"
@@ -269,8 +268,7 @@ export default function ProfileSelectionPage() {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Current Role <span className="text-gray-400 font-normal">(Optional)</span>
-            </label>
+              Current Role            </label>
             <input
               type="text"
               className="input"
@@ -283,8 +281,7 @@ export default function ProfileSelectionPage() {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Target Role <span className="text-gray-400 font-normal">(Optional)</span>
-            </label>
+              Target Role            </label>
             <input
               type="text"
               className="input"
@@ -297,8 +294,7 @@ export default function ProfileSelectionPage() {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Industry <span className="text-gray-400 font-normal">(Optional)</span>
-            </label>
+              Industry            </label>
             <input
               type="text"
               className="input"
@@ -311,8 +307,7 @@ export default function ProfileSelectionPage() {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Years of Experience <span className="text-gray-400 font-normal">(Optional)</span>
-            </label>
+              Years of Experience            </label>
             <input
               type="number"
               className="input"
@@ -420,8 +415,7 @@ export default function ProfileSelectionPage() {
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Learning Intent <span className="text-gray-400 font-normal">(Optional)</span>
-          </label>
+            Learning Intent          </label>
           <textarea
             className="input min-h-[100px]"
             value={customProfile.learning_intent}
@@ -436,8 +430,7 @@ export default function ProfileSelectionPage() {
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Current Job Description <span className="text-gray-400 font-normal">(Optional)</span>
-          </label>
+            Current Job Description          </label>
           <textarea
             className="input min-h-[100px]"
             value={customProfile.current_jd}

@@ -130,7 +130,7 @@ Map everything to the GenAI Skills Ontology structure."""
                 "role_analysis": {
                     "type": "object",
                     "properties": {
-                        "primary_function": {"type": "string"},
+                        "primary_function": {"type": "string", "description": "The exact job title for this role. Extract from the title field, first sentence, or 'We are looking for a [TITLE]' pattern. Do NOT use section headers or category names."},
                         "key_domains": {"type": "array", "items": {"type": "string"}},
                         "seniority_level": {"type": "string"},
                         "technical_depth": {"type": "string"}
@@ -231,6 +231,12 @@ CALIBRATION RULES:
 - Mid-level roles: core skills should be Level 2-4
 - For HIGH importance skills, assign Level 3 minimum (the role NEEDS proficiency)
 - For skills central to the role's primary function, prefer Level 4 (Builder)
+
+ROLE TITLE EXTRACTION:
+- For role_analysis.primary_function, extract the exact job title from the opening sentence or explicit title field
+  (e.g., "We are looking for an AI Operations Manager" -> "AI Operations Manager")
+- Do NOT use section headers like "Key Responsibilities" subsections as the role title
+- The role title should be the position someone would put on their business card
 
 INSTRUCTIONS:
 CRITICAL: You MUST ONLY use skill_id values from the AVAILABLE SKILLS list above.

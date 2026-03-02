@@ -135,6 +135,52 @@ ROLE_TEMPLATES: dict[str, dict[str, int]] = {
     },
 
     # ------------------------------------------------------------------
+    # AI Operations Manager
+    # ------------------------------------------------------------------
+    # Leads design, automation, and optimization of business processes
+    # using AI agents, workflow automation, and MCP frameworks.  Core
+    # competency is in agents/orchestration and operational reliability.
+    # Levels confirmed by client (Luda) based on Jenny B's target JD.
+    # Jenny's feedback: no target level below 2 ("nothing should be L1").
+    "AI Operations Manager": {
+        # D.AGT — agent architecture (CRITICAL — core of role)
+        "SK.AGT.001": 3,   # Tool definitions & validation — Practitioner
+        "SK.AGT.002": 3,   # Error handling & retries — Practitioner
+        "SK.AGT.010": 4,   # Single-agent loops — Builder
+        "SK.AGT.011": 4,   # Multi-agent patterns — Builder
+        "SK.AGT.020": 3,   # MCP protocol concepts — Practitioner
+        "SK.AGT.030": 4,   # Guardrails & approval gates — Builder
+
+        # D.RAG — retrieval systems
+        "SK.RAG.000": 2,   # What is RAG — User (raised from ont 1 per feedback)
+        "SK.RAG.002": 3,   # Chunking strategies — Practitioner
+        "SK.RAG.003": 3,   # Hybrid retrieval — Practitioner
+
+        # D.PRQ — technical prerequisites
+        "SK.PRQ.010": 2,   # Python basics — User
+        "SK.PRQ.020": 2,   # REST API basics — User
+
+        # D.EVL — evaluation & observability
+        "SK.EVL.010": 3,   # Tracing & observability — Practitioner
+        "SK.EVL.011": 4,   # Quality dashboards & alerts — Builder
+
+        # D.GOV — governance (policy background transfers)
+        "SK.GOV.002": 3,   # Policy to controls mapping — Practitioner
+
+        # D.PRD — enablement (strong alignment with current role)
+        "SK.PRD.020": 3,   # AI enablement & training strategy — Practitioner
+
+        # D.SEC — security
+        "SK.SEC.002": 3,   # Data leakage prevention — Practitioner
+
+        # D.OPS — operations
+        "SK.OPS.001": 3,   # Latency drivers & optimization — Practitioner
+
+        # D.TOOL — tool evaluation
+        "SK.TOOL.021": 3,  # Provider selection criteria — Practitioner
+    },
+
+    # ------------------------------------------------------------------
     # Healthcare Data Scientist
     # ------------------------------------------------------------------
     # Needs analytical depth, model evaluation, and domain-specific
