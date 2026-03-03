@@ -12,11 +12,13 @@ from app.models.user import User
 from app.models.goal import Goal
 from app.models.skill_gap import SkillGap
 from app.models.learning_path import LearningPath
+from app.services.ontology import get_ontology_service
 from app.schemas.analysis import (
     FullAnalysisRequest,
     FullAnalysisResponse,
     JDParseRequest,
     JDParseResponse,
+    JDSkillsRequest,
 )
 
 router = APIRouter()
@@ -61,6 +63,7 @@ async def run_full_analysis(
             "jd_text": request.target_jd_text,
             "target_role": request.target_role,
             "skip_assessment": request.skip_assessment,
+            "self_assessed_skills": request.self_assessed_skills,
             "include_resources": True,
         })
     except Exception as e:
@@ -131,6 +134,41 @@ async def parse_job_description(request: JDParseRequest):
         "state_b_skills": result.get("state_b_skills", {}),
         "industry": result.get("industry"),
         "experience_level": result.get("experience_level"),
+        "role_analysis": result.get("role_analysis", {}),
+    }
+
+
+@router.post("/parse-jd-skills")
+async def parse_jd_skills(request: JDSkillsRequest):
+    """Parse a JD and return top 10 skills with proficiency descriptions.
+
+    Used by the JD-first flow: user pastes JD, tool identifies skills,
+    user selects top 5 and self-assesses proficiency.
+    """
+    jd_parser = JDParserAgent()
+
+    try:
+        result = await jd_parser.execute({
+            "jd_text": request.jd_text,
+            "target_role": request.target_role,
+        })
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"JD parsing failed: {str(e)}")
+
+    ontology = get_ontology_service()
+    top_10 = result.get("top_10_target_skills", [])
+    enriched = []
+    for skill in top_10:
+        skill_obj = ontology.get_skill(skill.get("skill_id", ""))
+        enriched.append({
+            **skill,
+            "skill_description": skill_obj.get("description", "") if skill_obj else "",
+            "proficiency_descriptions": ontology.get_proficiency_descriptions(skill.get("skill_id", "")),
+        })
+
+    return {
+        "target_role": result.get("role_analysis", {}).get("primary_function", request.target_role or ""),
+        "top_10_skills": enriched,
         "role_analysis": result.get("role_analysis", {}),
     }
 

@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation } from '@tanstack/react-query'
-import { getProfile, runFullAnalysis, parseJDProfile, getVisualization } from '../services/api'
+import { getProfile, runFullAnalysis, parseJDProfile, parseJDSkills, getVisualization } from '../services/api'
 import {
   Loader2,
   CheckCircle,
@@ -25,25 +25,34 @@ import {
   Route,
   Info,
 } from 'lucide-react'
-import type { AnalysisResult, Profile, Top10TargetSkill, Top10SkillGap, JourneyRoadmap } from '../types'
+import type { AnalysisResult, Profile, Top10TargetSkill, Top10SkillGap, JourneyRoadmap, ParsedSkill } from '../types'
 import ArchetypeBadge from '../components/ArchetypeBadge'
 import JourneyArrow from '../components/JourneyArrow'
 import ProficiencyLegend, { getProficiencyLevel } from '../components/ProficiencyLegend'
 import DomainGrid from '../components/ontology/DomainGrid'
 import AnalysisProgress from '../components/ontology/AnalysisProgress'
 import UnifiedSkillsChart from '../components/UnifiedSkillsChart'
+import SelfAssessment from '../components/SelfAssessment'
 import { useAnalysisAnimation } from '../components/ontology/hooks/useAnalysisAnimation'
 
-type AnalysisStep = 'input' | 'analyzing' | 'complete' | 'error'
+type AnalysisStep = 'jd_input' | 'skill_selection' | 'self_assessment' | 'analyzing' | 'complete' | 'error'
 
 export default function AnalysisPage() {
   const { profileId } = useParams<{ profileId: string }>()
   const navigate = useNavigate()
-  const [step, setStep] = useState<AnalysisStep>('input')
+  const [step, setStep] = useState<AnalysisStep>('jd_input')
   const [targetJD, setTargetJD] = useState('')
   const [targetRole, setTargetRole] = useState('')
   const [result, setResult] = useState<AnalysisResult | null>(null)
   const [currentStepIndex, setCurrentStepIndex] = useState(0)
+
+  // JD-first flow state
+  const [parsedSkills, setParsedSkills] = useState<ParsedSkill[]>([])
+  const [selectedSkillIds, setSelectedSkillIds] = useState<string[]>([])
+  const [selfAssessedSkills, setSelfAssessedSkills] = useState<Record<string, number>>({})
+  const [isParsingJDSkills, setIsParsingJDSkills] = useState(false)
+  const [jdSkillsError, setJdSkillsError] = useState<string | null>(null)
+  const [detectedRole, setDetectedRole] = useState('')
 
   const [jdProfile, setJdProfile] = useState<{
     technical_skills: string[]
@@ -198,6 +207,29 @@ export default function AnalysisPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [targetJD])
 
+  const handleParseJDSkills = async () => {
+    if (!targetJD.trim() || targetJD.trim().length < 50) return
+    setIsParsingJDSkills(true)
+    setJdSkillsError(null)
+    try {
+      const result = await parseJDSkills({ jd_text: targetJD, target_role: targetRole })
+      setParsedSkills(result.top_10_skills)
+      setDetectedRole(result.target_role || targetRole)
+      if (result.target_role && !targetRole) {
+        setTargetRole(result.target_role)
+      }
+      // Pre-select top 5 by rank
+      const top5 = result.top_10_skills.slice(0, 5).map(s => s.skill_id)
+      setSelectedSkillIds(top5)
+      setSelfAssessedSkills({})
+      setStep('skill_selection')
+    } catch {
+      setJdSkillsError('Failed to parse job description. Please try again.')
+    } finally {
+      setIsParsingJDSkills(false)
+    }
+  }
+
   const handleStartAnalysis = () => {
     setStep('analyzing')
     setCurrentStepIndex(0)
@@ -211,8 +243,9 @@ export default function AnalysisPage() {
       profile_id: isCustom ? undefined : profileId,
       custom_profile: isCustom ? customProfile : undefined,
       target_jd_text: targetJD,
-      target_role: targetRole,
+      target_role: detectedRole || targetRole,
       skip_assessment: true,
+      self_assessed_skills: Object.keys(selfAssessedSkills).length > 0 ? selfAssessedSkills : undefined,
     })
   }
 
@@ -255,7 +288,7 @@ export default function AnalysisPage() {
     selectedDomains,
   } = useAnalysisAnimation(step === 'analyzing', profileDomains)
 
-  if (step === 'input') {
+  if (step === 'jd_input') {
     return (
       <div className="max-w-6xl mx-auto space-y-8">
         <div className="text-center">
@@ -589,18 +622,178 @@ export default function AnalysisPage() {
         {/* Proficiency Framework Legend - Always visible */}
         <ProficiencyLegend variant="static" />
 
-        {/* Start Analysis Button */}
+        {/* JD Skills Error */}
+        {jdSkillsError && (
+          <div className="max-w-lg mx-auto">
+            <p className="text-sm text-red-600 bg-red-50 p-3 rounded-lg border border-red-200 text-center">
+              {jdSkillsError}
+            </p>
+          </div>
+        )}
+
+        {/* Analyze JD Button */}
         <div className="flex justify-center">
           <button
-            onClick={handleStartAnalysis}
-            disabled={!targetJD.trim()}
+            onClick={handleParseJDSkills}
+            disabled={!targetJD.trim() || targetJD.trim().length < 50 || isParsingJDSkills}
             className={`btn flex items-center justify-center gap-2 text-lg px-8 py-4 ${
-              targetJD.trim()
+              targetJD.trim() && targetJD.trim().length >= 50 && !isParsingJDSkills
                 ? 'btn-primary'
                 : 'bg-gray-300 text-gray-500 cursor-not-allowed'
             }`}
           >
-            Start Analysis
+            {isParsingJDSkills ? (
+              <>
+                <Loader2 className="h-5 w-5 animate-spin" />
+                Analyzing JD...
+              </>
+            ) : (
+              <>
+                Analyze Job Description
+                <ArrowRight className="h-5 w-5" />
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  if (step === 'skill_selection') {
+    return (
+      <div className="max-w-4xl mx-auto space-y-6">
+        <div className="text-center">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            Select Top 5 Skills
+          </h1>
+          <p className="text-gray-600">
+            We identified {parsedSkills.length} key skills from the job description.
+            Select the <strong>5 most important</strong> ones for this role.
+          </p>
+          {detectedRole && (
+            <p className="text-sm text-primary-700 mt-1">
+              Detected role: <strong>{detectedRole}</strong>
+            </p>
+          )}
+        </div>
+
+        <div className="space-y-3">
+          {parsedSkills.map((skill) => {
+            const isSelected = selectedSkillIds.includes(skill.skill_id)
+            const canSelect = selectedSkillIds.length < 5 || isSelected
+
+            return (
+              <div
+                key={skill.skill_id}
+                onClick={() => {
+                  if (isSelected) {
+                    setSelectedSkillIds(prev => prev.filter(id => id !== skill.skill_id))
+                  } else if (canSelect) {
+                    setSelectedSkillIds(prev => [...prev, skill.skill_id])
+                  }
+                }}
+                className={`card cursor-pointer transition-all duration-150 border-2 ${
+                  isSelected
+                    ? 'border-primary-400 bg-primary-50 shadow-md'
+                    : canSelect
+                      ? 'border-gray-200 bg-white hover:border-gray-300'
+                      : 'border-gray-100 bg-gray-50 opacity-60 cursor-not-allowed'
+                }`}
+              >
+                <div className="flex items-start gap-3">
+                  {/* Checkbox */}
+                  <div className={`mt-0.5 w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 ${
+                    isSelected ? 'bg-primary-500 border-primary-500' : 'border-gray-300'
+                  }`}>
+                    {isSelected && (
+                      <CheckCircle className="h-4 w-4 text-white" />
+                    )}
+                  </div>
+
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-xs font-mono text-gray-400">#{skill.rank}</span>
+                      <h3 className="font-semibold text-gray-900">{skill.skill_name}</h3>
+                      <span className="text-xs bg-primary-50 text-primary-700 px-2 py-0.5 rounded-full border border-primary-200">
+                        {skill.domain_label}
+                      </span>
+                      {skill.importance === 'high' && (
+                        <span className="text-xs bg-red-50 text-red-700 px-2 py-0.5 rounded-full border border-red-200">
+                          Critical
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-sm text-gray-500 line-clamp-2">{skill.rationale}</p>
+                    <div className="mt-1 text-xs text-gray-400">
+                      Required: Level {skill.required_level}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+
+        <div className="flex items-center justify-between">
+          <button
+            onClick={() => setStep('jd_input')}
+            className="btn bg-gray-100 text-gray-700 hover:bg-gray-200"
+          >
+            Back
+          </button>
+          <div className="text-sm text-gray-500">
+            {selectedSkillIds.length}/5 selected
+          </div>
+          <button
+            onClick={() => {
+              setSelfAssessedSkills({})
+              setStep('self_assessment')
+            }}
+            disabled={selectedSkillIds.length === 0}
+            className={`btn flex items-center gap-2 ${
+              selectedSkillIds.length > 0 ? 'btn-primary' : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+            }`}
+          >
+            Continue to Self-Assessment
+            <ArrowRight className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  if (step === 'self_assessment') {
+    const selectedSkills = parsedSkills.filter(s => selectedSkillIds.includes(s.skill_id))
+    const allAssessed = selectedSkills.every(s => selfAssessedSkills[s.skill_id] !== undefined)
+
+    return (
+      <div className="max-w-3xl mx-auto space-y-6">
+        <SelfAssessment
+          skills={selectedSkills}
+          assessments={selfAssessedSkills}
+          onAssess={(skillId, level) => {
+            setSelfAssessedSkills(prev => ({ ...prev, [skillId]: level }))
+          }}
+        />
+
+        <div className="flex items-center justify-between">
+          <button
+            onClick={() => setStep('skill_selection')}
+            className="btn bg-gray-100 text-gray-700 hover:bg-gray-200"
+          >
+            Back
+          </button>
+          <div className="text-sm text-gray-500">
+            {Object.keys(selfAssessedSkills).length}/{selectedSkills.length} assessed
+          </div>
+          <button
+            onClick={handleStartAnalysis}
+            disabled={!allAssessed}
+            className={`btn flex items-center gap-2 text-lg px-6 py-3 ${
+              allAssessed ? 'btn-primary' : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+            }`}
+          >
+            Run Full Analysis
             <ArrowRight className="h-5 w-5" />
           </button>
         </div>
@@ -675,7 +868,7 @@ export default function AnalysisPage() {
         <p className="text-gray-600">
           Something went wrong during the analysis. Please try again.
         </p>
-        <button onClick={() => setStep('input')} className="btn btn-primary">
+        <button onClick={() => setStep('jd_input')} className="btn btn-primary">
           Try Again
         </button>
       </div>

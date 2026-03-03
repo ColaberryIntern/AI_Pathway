@@ -95,6 +95,16 @@ parse job descriptions, identify skill gaps, and generate personalized learning 
             # Extract state_a_skills early — needed for gap computation below
             state_a_skills = profile_result.get("state_a_skills", {})
 
+            # Override with user's self-assessed proficiency levels
+            self_assessed = task.get("self_assessed_skills") or {}
+            if self_assessed:
+                for sid, level in self_assessed.items():
+                    state_a_skills[sid] = level
+                logger.info(
+                    "Applied %d self-assessed skill overrides to state_a",
+                    len(self_assessed),
+                )
+
             # Build top-10 skill gaps: start from target skills, compare vs current
             state_a_lookup = {s["skill_id"]: s["current_level"] for s in top_10_current}
             top_10_gaps = []

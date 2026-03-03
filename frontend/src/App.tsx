@@ -5,6 +5,7 @@ import ProfileSelectionPage from './pages/ProfileSelectionPage'
 import AnalysisPage from './pages/AnalysisPage'
 import LearningPathPage from './pages/LearningPathPage'
 import DashboardPage from './pages/DashboardPage'
+import JDTestPage from './pages/JDTestPage'
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
           <Route path="analysis/:profileId" element={<AnalysisPage />} />
           <Route path="path/:pathId" element={<LearningPathPage />} />
           <Route path="dashboard/:userId" element={<DashboardPage />} />
+          <Route path="jd-test" element={<JDTestPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

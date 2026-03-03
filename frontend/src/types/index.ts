@@ -205,6 +205,25 @@ export interface JourneyRoadmap {
   skills_remaining: JourneySkillRemaining[]
 }
 
+export interface ProficiencyDescription {
+  level: number
+  label: string
+  description: string
+}
+
+export interface ParsedSkill {
+  rank: number
+  skill_id: string
+  skill_name: string
+  domain: string
+  domain_label: string
+  required_level: number
+  importance: string
+  rationale: string
+  skill_description: string
+  proficiency_descriptions: ProficiencyDescription[]
+}
+
 export interface AnalysisResult {
   user_id: string
   goal_id: string

@@ -150,6 +150,22 @@ class OntologyService:
                 return p["label"]
         return "Unknown"
 
+    def get_proficiency_descriptions(self, skill_id: str) -> list[dict]:
+        """Get proficiency level descriptions for a skill (PL 0-4).
+
+        Returns per-skill descriptions if available in the ontology,
+        otherwise falls back to the generic proficiency scale.
+        """
+        skill = self.get_skill(skill_id)
+        if skill and "proficiency_descriptions" in skill:
+            return skill["proficiency_descriptions"]
+        # Fallback: generic scale (PL 0-4 only, skip PL 5 for self-assessment)
+        return [
+            {"level": p["level"], "label": p["label"], "description": p["description"]}
+            for p in self.proficiency_scale
+            if p["level"] <= 4
+        ]
+
     def get_full_ontology(self) -> dict:
         """Get the full ontology data."""
         return self.data

@@ -70,8 +70,33 @@ export const runFullAnalysis = async (params: {
   target_jd_text: string
   target_role?: string
   skip_assessment?: boolean
+  self_assessed_skills?: Record<string, number>
 }): Promise<AnalysisResult> => {
   const { data } = await api.post('/analysis/full', params)
+  return data
+}
+
+// JD-first flow: parse JD and get top 10 skills with proficiency descriptions
+export const parseJDSkills = async (params: {
+  jd_text: string
+  target_role?: string
+}): Promise<{
+  target_role: string
+  top_10_skills: Array<{
+    rank: number
+    skill_id: string
+    skill_name: string
+    domain: string
+    domain_label: string
+    required_level: number
+    importance: string
+    rationale: string
+    skill_description: string
+    proficiency_descriptions: Array<{ level: number; label: string; description: string }>
+  }>
+  role_analysis: Record<string, unknown>
+}> => {
+  const { data } = await api.post('/analysis/parse-jd-skills', params)
   return data
 }
 

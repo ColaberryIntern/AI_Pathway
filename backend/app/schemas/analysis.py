@@ -23,6 +23,13 @@ class JDParseResponse(BaseModel):
     experience_level: str | None = None
 
 
+class JDSkillsRequest(BaseModel):
+    """Schema for JD skills parsing request (JD-first flow)."""
+
+    jd_text: str
+    target_role: str | None = None
+
+
 class FullAnalysisRequest(BaseModel):
     """Schema for full analysis request (StateA → StateB → Gap → Path)."""
 
@@ -31,6 +38,7 @@ class FullAnalysisRequest(BaseModel):
     target_jd_text: str
     target_role: str | None = None
     skip_assessment: bool = False  # Skip quiz and use profile-based assessment
+    self_assessed_skills: dict | None = None  # {skill_id: level} from self-assessment UI
 
 
 class FullAnalysisResponse(BaseModel):
