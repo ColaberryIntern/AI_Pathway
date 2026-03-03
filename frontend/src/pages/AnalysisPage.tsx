@@ -218,9 +218,9 @@ export default function AnalysisPage() {
       if (result.target_role && !targetRole) {
         setTargetRole(result.target_role)
       }
-      // Pre-select all parsed skills by rank
-      const allSkillIds = result.top_10_skills.map(s => s.skill_id)
-      setSelectedSkillIds(allSkillIds)
+      // Pre-select top 5 by rank
+      const top5 = result.top_10_skills.slice(0, 5).map(s => s.skill_id)
+      setSelectedSkillIds(top5)
       setSelfAssessedSkills({})
       setStep('skill_selection')
     } catch {
@@ -507,29 +507,6 @@ export default function AnalysisPage() {
                 </p>
               )}
 
-              {/* Analyze JD Button — inside the panel so it's always visible */}
-              <button
-                onClick={handleParseJDSkills}
-                disabled={!targetJD.trim() || targetJD.trim().length < 50 || isParsingJDSkills}
-                className={`w-full btn flex items-center justify-center gap-2 text-lg px-8 py-4 ${
-                  targetJD.trim() && targetJD.trim().length >= 50 && !isParsingJDSkills
-                    ? 'btn-primary'
-                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                }`}
-              >
-                {isParsingJDSkills ? (
-                  <>
-                    <Loader2 className="h-5 w-5 animate-spin" />
-                    Analyzing JD...
-                  </>
-                ) : (
-                  <>
-                    Analyze Job Description
-                    <ArrowRight className="h-5 w-5" />
-                  </>
-                )}
-              </button>
-
               {/* JD Parsing Loading State */}
               {isParsingJD && (
                 <div className="flex items-center justify-center gap-2 py-4 bg-white rounded-md border border-primary-200">
@@ -648,6 +625,31 @@ export default function AnalysisPage() {
             </div>
           </div>
         </div>
+
+        {/* Analyze JD Button — below the grid */}
+        <div className="flex justify-center">
+          <button
+            onClick={handleParseJDSkills}
+            disabled={!targetJD.trim() || targetJD.trim().length < 50 || isParsingJDSkills}
+            className={`btn flex items-center justify-center gap-2 text-lg px-8 py-4 ${
+              targetJD.trim() && targetJD.trim().length >= 50 && !isParsingJDSkills
+                ? 'btn-primary'
+                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+            }`}
+          >
+            {isParsingJDSkills ? (
+              <>
+                <Loader2 className="h-5 w-5 animate-spin" />
+                Analyzing JD...
+              </>
+            ) : (
+              <>
+                Analyze Job Description
+                <ArrowRight className="h-5 w-5" />
+              </>
+            )}
+          </button>
+        </div>
       </div>
     )
   }
@@ -657,11 +659,11 @@ export default function AnalysisPage() {
       <div className="max-w-4xl mx-auto space-y-6">
         <div className="text-center">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Select Skills to Assess
+            Select Top 5 Skills
           </h1>
           <p className="text-gray-600">
             We identified {parsedSkills.length} key skills from the job description.
-            Select the ones most relevant to your target role.
+            Select the <strong>5 most important</strong> ones for this role.
           </p>
           {detectedRole && (
             <p className="text-sm text-primary-700 mt-1">
@@ -673,7 +675,7 @@ export default function AnalysisPage() {
         <div className="space-y-3">
           {parsedSkills.map((skill) => {
             const isSelected = selectedSkillIds.includes(skill.skill_id)
-            const canSelect = true
+            const canSelect = selectedSkillIds.length < 5 || isSelected
 
             return (
               <div
@@ -735,7 +737,7 @@ export default function AnalysisPage() {
             Back
           </button>
           <div className="text-sm text-gray-500">
-            {selectedSkillIds.length}/{parsedSkills.length} selected
+            {selectedSkillIds.length}/5 selected
           </div>
           <button
             onClick={() => {
