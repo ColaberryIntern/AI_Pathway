@@ -218,9 +218,9 @@ export default function AnalysisPage() {
       if (result.target_role && !targetRole) {
         setTargetRole(result.target_role)
       }
-      // Pre-select top 5 by rank
-      const top5 = result.top_10_skills.slice(0, 5).map(s => s.skill_id)
-      setSelectedSkillIds(top5)
+      // Pre-select all parsed skills by rank
+      const allSkillIds = result.top_10_skills.map(s => s.skill_id)
+      setSelectedSkillIds(allSkillIds)
       setSelfAssessedSkills({})
       setStep('skill_selection')
     } catch {
@@ -657,11 +657,11 @@ export default function AnalysisPage() {
       <div className="max-w-4xl mx-auto space-y-6">
         <div className="text-center">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Select Top 5 Skills
+            Select Skills to Assess
           </h1>
           <p className="text-gray-600">
             We identified {parsedSkills.length} key skills from the job description.
-            Select the <strong>5 most important</strong> ones for this role.
+            Select the ones most relevant to your target role.
           </p>
           {detectedRole && (
             <p className="text-sm text-primary-700 mt-1">
@@ -673,7 +673,7 @@ export default function AnalysisPage() {
         <div className="space-y-3">
           {parsedSkills.map((skill) => {
             const isSelected = selectedSkillIds.includes(skill.skill_id)
-            const canSelect = selectedSkillIds.length < 5 || isSelected
+            const canSelect = true
 
             return (
               <div
@@ -735,7 +735,7 @@ export default function AnalysisPage() {
             Back
           </button>
           <div className="text-sm text-gray-500">
-            {selectedSkillIds.length}/5 selected
+            {selectedSkillIds.length}/{parsedSkills.length} selected
           </div>
           <button
             onClick={() => {

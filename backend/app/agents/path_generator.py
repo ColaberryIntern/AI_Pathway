@@ -135,6 +135,14 @@ skill topic and the learner's industry — not generic boilerplate."""
         # running concurrently for ~3x speedup on 10 chapters.
         output_schema = self._chapter_output_schema()
 
+        # Build a full prompt for quality gate (needed regardless of path)
+        prompt = self._build_generation_prompt(
+            chapters_input, industry, learning_intent, profile_summary,
+            num_chapters,
+            is_scaffold=bool(scaffold),
+            prompt_version=ENRICHMENT_PROMPT_VERSION,
+        )
+
         if scaffold:
             batches = [
                 chapters_input[i:i + BATCH_SIZE]
