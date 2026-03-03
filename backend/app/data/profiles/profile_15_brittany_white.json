@@ -1,0 +1,129 @@
+{
+  "id": "profile_15",
+  "name": "Brittany White",
+  "current_role": "Senior Product Marketing Manager",
+  "target_role": "Senior AI Product Marketing Manager",
+  "industry": "Enterprise Software / SaaS (SAP)",
+  "location": "U.S.",
+  "experience_years": 10,
+  "ai_exposure_level": "Intermediate",
+  "tools_used": ["ChatGPT", "Claude", "SAP AI Suite", "Jasper AI", "Google Gemini"],
+  "technical_background": "Senior product marketing manager at SAP with deep expertise in B2B enterprise marketing, go-to-market strategy, competitive positioning, and sales enablement for cloud and ERP products. Strong at translating complex product capabilities into customer-facing narratives. Has been using AI tools for content creation and market research but lacks hands-on experience with prompt engineering frameworks, AI agents, responsible AI deployment, or technical evaluation of AI systems. Background is marketing-first with growing AI fluency.",
+  "archetype": "Domain Upskiller",
+  "current_profile": {
+    "summary": "Senior Product Marketing Manager at SAP with 10+ years of experience in enterprise software marketing. Leads go-to-market strategy for AI-integrated product lines including SAP Business AI and Joule. Builds competitive positioning frameworks, creates sales enablement content, and manages analyst relations. Experienced in translating complex technical capabilities into business value narratives for C-suite and technical buyers. Uses ChatGPT and Claude for content drafting, market research synthesis, and competitive analysis. Familiar with AI concepts from a marketing perspective but has no hands-on experience building prompts, evaluating AI outputs systematically, or deploying AI agents.",
+    "technical_skills": [
+      "Go-to-market strategy and product launches",
+      "Competitive intelligence and analyst relations",
+      "Sales enablement content creation",
+      "B2B messaging and positioning frameworks",
+      "Market research and customer insight synthesis",
+      "SAP ecosystem and cloud product portfolio",
+      "AI-assisted content creation (ChatGPT, Claude, Jasper)",
+      "Data-driven marketing analytics",
+      "Cross-functional collaboration with product and engineering teams",
+      "Executive presentation and storytelling"
+    ],
+    "soft_skills": [
+      "Strategic communication and storytelling",
+      "Cross-functional team leadership",
+      "Stakeholder management across product, sales, and executive teams",
+      "Analyst and media relations",
+      "Customer empathy and market sensing"
+    ],
+    "ai_experience": "Uses ChatGPT and Claude regularly for content drafting, competitive analysis summaries, and market research synthesis. Has used Jasper AI for marketing copy. Familiar with SAP's AI product portfolio (Business AI, Joule) from a positioning and messaging perspective. Understands AI value propositions at a high level but has not built prompts systematically, evaluated AI outputs with rubrics, or worked with AI agents, RAG systems, or deployment pipelines."
+  },
+  "learning_intent": "Wants to deepen AI fluency to lead product marketing for AI-native enterprise products. Aims to understand how to effectively communicate AI capabilities, critically evaluate AI-generated content for accuracy, craft sophisticated prompts for marketing use cases, and ensure responsible AI messaging. Seeks to bridge the gap between marketing narrative and technical AI reality.",
+  "target_jd": {
+    "title": "Senior AI Product Marketing Manager",
+    "requirements": [
+      "Lead go-to-market strategy for SAP AI products and features including Joule and Business AI",
+      "Translate complex AI capabilities into compelling narratives for technical and business audiences",
+      "Develop competitive positioning against AI offerings from Salesforce, Microsoft, Oracle, and Google",
+      "Create sales enablement materials that accurately represent AI product capabilities and limitations",
+      "Collaborate with product management and engineering to understand AI features for accurate messaging",
+      "Build thought leadership content demonstrating SAP's AI vision and innovation",
+      "Conduct market research using AI tools to synthesize competitive intelligence and customer insights",
+      "Ensure all AI product messaging adheres to responsible AI principles and avoids overpromising",
+      "Use prompt engineering techniques to create efficient marketing workflows with AI tools",
+      "Evaluate and validate AI-generated marketing content for factual accuracy and brand consistency",
+      "Manage AI tool stack for marketing team productivity (content generation, research, analysis)",
+      "Partner with legal and compliance to ensure AI marketing claims are defensible and accurate"
+    ]
+  },
+  "expected_skill_gaps": [
+    {
+      "domain": "D.COM",
+      "description": "Strong communication base but needs AI-specific framing. Must learn to explain AI capabilities and limitations accurately to non-technical audiences without overpromising.",
+      "skills": ["SK.COM.001", "SK.COM.004"]
+    },
+    {
+      "domain": "D.CTIC",
+      "description": "Critical for evaluating AI-generated content credibility. Needs skills to verify AI outputs, identify hallucinations, and cross-reference claims before publishing.",
+      "skills": ["SK.CTIC.001", "SK.CTIC.003", "SK.CTIC.006"]
+    },
+    {
+      "domain": "D.PRM",
+      "description": "Needs structured prompt engineering beyond basic ChatGPT usage. Must learn prompt debugging, iteration, and schema-based outputs for marketing workflows.",
+      "skills": ["SK.PRM.001", "SK.PRM.003", "SK.PRM.010"]
+    },
+    {
+      "domain": "D.AGT",
+      "description": "No agent experience. Needs to understand tool definitions and AI agent concepts to evaluate and communicate SAP's agent-based AI products (Joule).",
+      "skills": ["SK.AGT.000", "SK.AGT.001"]
+    },
+    {
+      "domain": "D.PRD",
+      "description": "Needs AI product thinking to bridge marketing and product. Understanding use-case selection and responsible deployment for accurate product messaging.",
+      "skills": ["SK.PRD.000", "SK.PRD.001"]
+    },
+    {
+      "domain": "D.EVL",
+      "description": "Needs evaluation skills to systematically assess AI-generated marketing content quality and accuracy.",
+      "skills": ["SK.EVL.000", "SK.EVL.001"]
+    },
+    {
+      "domain": "D.GOV",
+      "description": "Needs AI governance awareness for responsible AI messaging and compliance with marketing claims standards.",
+      "skills": ["SK.GOV.000", "SK.GOV.001"]
+    },
+    {
+      "domain": "D.DOM",
+      "description": "Needs marketing-specific AI ethics: content generation ethics, avoiding misleading AI claims.",
+      "skills": ["SK.DOM.MKT.001"]
+    }
+  ],
+  "estimated_current_skills": {
+    "SK.COM.001": 2,
+    "SK.COM.002": 3,
+    "SK.COM.003": 2,
+    "SK.COM.004": 2,
+    "SK.COM.005": 3,
+    "SK.CTIC.001": 1,
+    "SK.CTIC.003": 1,
+    "SK.CTIC.006": 0,
+    "SK.PRM.001": 1,
+    "SK.PRM.003": 0,
+    "SK.PRM.010": 0,
+    "SK.AGT.000": 1,
+    "SK.AGT.001": 0,
+    "SK.PRD.000": 2,
+    "SK.PRD.001": 2,
+    "SK.PRD.020": 3,
+    "SK.PRD.021": 3,
+    "SK.PRD.022": 2,
+    "SK.EVL.000": 1,
+    "SK.EVL.001": 0,
+    "SK.GOV.000": 1,
+    "SK.GOV.001": 0,
+    "SK.DOM.MKT.001": 1,
+    "SK.FND.001": 1,
+    "SK.FND.002": 1,
+    "SK.FND.003": 1,
+    "SK.DIG.001": 3,
+    "SK.DIG.002": 3,
+    "SK.TOOL.000": 2,
+    "SK.TOOL.001": 2,
+    "SK.LRN.002": 2
+  }
+}

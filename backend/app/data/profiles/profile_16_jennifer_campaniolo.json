@@ -1,0 +1,124 @@
+{
+  "id": "profile_16",
+  "name": "Jennifer Campaniolo",
+  "current_role": "Content Editor",
+  "target_role": "AI Content Editor",
+  "industry": "Media / Content / Publishing",
+  "location": "U.S.",
+  "experience_years": 7,
+  "ai_exposure_level": "Basic",
+  "tools_used": ["ChatGPT", "Grammarly", "Google Docs"],
+  "technical_background": "Experienced content editor with strong skills in copyediting, fact-checking, content strategy, and editorial workflows. Has used ChatGPT and Grammarly for basic editing assistance but has no formal prompt engineering training, no experience evaluating AI outputs systematically, and no exposure to AI agents, RAG systems, or technical AI concepts beyond basic tool usage. Strong editorial judgment and communication skills that can transfer to AI content quality roles.",
+  "archetype": "Career Switcher",
+  "current_profile": {
+    "summary": "Content Editor with 7 years of experience in editorial workflows, copyediting, fact-checking, and content strategy for digital media. Manages editorial calendars, reviews content for accuracy and brand voice, and coordinates with writers and subject matter experts. Has begun using ChatGPT for brainstorming and first-draft assistance but relies on traditional editorial skills for quality control. Strong at identifying inconsistencies, verifying claims, and maintaining style guide compliance. No experience with structured prompt engineering, AI output evaluation frameworks, or AI-assisted editorial pipelines.",
+    "technical_skills": [
+      "Copyediting and proofreading (AP Style, Chicago Manual)",
+      "Fact-checking and source verification",
+      "Content strategy and editorial calendar management",
+      "SEO-optimized content creation",
+      "Content management systems (WordPress, Contentful)",
+      "Style guide development and enforcement",
+      "Google Workspace and Microsoft Office",
+      "Basic HTML for web content formatting",
+      "Grammarly and AI writing assistants (basic usage)",
+      "Editorial workflow management"
+    ],
+    "soft_skills": [
+      "Attention to detail and quality assurance",
+      "Clear written and verbal communication",
+      "Cross-team collaboration with writers and designers",
+      "Deadline management and prioritization",
+      "Constructive feedback and mentoring junior editors"
+    ],
+    "ai_experience": "Uses ChatGPT for brainstorming headlines, generating first-draft content, and rephrasing paragraphs. Uses Grammarly for grammar and style suggestions. Has not used AI for systematic content evaluation, does not know how to craft structured prompts, and has no experience with AI agents, retrieval-augmented generation, or evaluating AI-generated content for factual accuracy beyond manual review."
+  },
+  "learning_intent": "Wants to transition from traditional content editing to an AI Content Editor role where she can leverage AI tools to scale editorial workflows while maintaining quality standards. Aims to learn prompt engineering for content tasks, systematic AI output evaluation, source credibility assessment for AI-generated content, and how to communicate AI capabilities and limitations to editorial teams.",
+  "target_jd": {
+    "title": "AI Content Editor",
+    "requirements": [
+      "Edit and quality-check AI-generated content for accuracy, brand voice, and style guide compliance",
+      "Use prompt engineering techniques to generate high-quality first drafts, outlines, and content variations",
+      "Evaluate AI-generated content for factual accuracy, hallucinations, and source credibility",
+      "Develop editorial guidelines and quality rubrics for AI-assisted content workflows",
+      "Collaborate with content strategists to integrate AI tools into editorial pipelines",
+      "Train editorial team members on effective use of AI writing and editing tools",
+      "Identify and flag AI-generated content that contains misinformation, bias, or unsupported claims",
+      "Maintain content quality standards while increasing throughput through AI-assisted workflows",
+      "Communicate AI content capabilities and limitations to non-technical stakeholders",
+      "Stay current with AI content tools and recommend new tools based on editorial team needs",
+      "Understand LLM capabilities and limitations to set realistic expectations for AI content quality",
+      "Ensure AI-generated content meets ethical standards and avoids problematic outputs"
+    ]
+  },
+  "expected_skill_gaps": [
+    {
+      "domain": "D.PRM",
+      "description": "Critical gap. Basic ChatGPT usage only. Needs structured prompt engineering fundamentals, prompt debugging and iteration, and schema-based output techniques for content workflows.",
+      "skills": ["SK.PRM.000", "SK.PRM.001", "SK.PRM.003"]
+    },
+    {
+      "domain": "D.EVL",
+      "description": "Critical gap. No systematic AI evaluation experience. Needs to learn evaluation types and quality assessment methods for AI-generated content.",
+      "skills": ["SK.EVL.000", "SK.EVL.001"]
+    },
+    {
+      "domain": "D.CTIC",
+      "description": "Has transferable fact-checking skills but needs AI-specific credibility evaluation. Must learn to identify AI hallucinations, cross-reference AI claims, and recognize AI-generated content.",
+      "skills": ["SK.CTIC.001", "SK.CTIC.002", "SK.CTIC.003", "SK.CTIC.006"]
+    },
+    {
+      "domain": "D.COM",
+      "description": "Good communication base but needs AI-specific communication skills to explain AI capabilities to non-technical editorial teams.",
+      "skills": ["SK.COM.001", "SK.COM.004"]
+    },
+    {
+      "domain": "D.FND",
+      "description": "Needs foundational AI understanding. Must learn LLM fundamentals, capabilities and limitations, and how models produce content to set realistic quality expectations.",
+      "skills": ["SK.FND.001", "SK.FND.002", "SK.FND.005"]
+    },
+    {
+      "domain": "D.GOV",
+      "description": "Needs AI ethics awareness for responsible content production and editorial guidelines for AI-assisted workflows.",
+      "skills": ["SK.GOV.000"]
+    },
+    {
+      "domain": "D.DOM",
+      "description": "Needs marketing-specific content generation ethics for AI-assisted editorial work.",
+      "skills": ["SK.DOM.MKT.001"]
+    },
+    {
+      "domain": "D.TOOL",
+      "description": "Needs to expand AI tool knowledge beyond ChatGPT and Grammarly to evaluate and recommend tools for editorial teams.",
+      "skills": ["SK.TOOL.000", "SK.TOOL.001"]
+    }
+  ],
+  "estimated_current_skills": {
+    "SK.PRM.000": 1,
+    "SK.PRM.001": 1,
+    "SK.PRM.003": 0,
+    "SK.EVL.000": 0,
+    "SK.EVL.001": 0,
+    "SK.CTIC.001": 2,
+    "SK.CTIC.002": 2,
+    "SK.CTIC.003": 2,
+    "SK.CTIC.006": 0,
+    "SK.COM.001": 1,
+    "SK.COM.002": 2,
+    "SK.COM.004": 1,
+    "SK.COM.006": 3,
+    "SK.FND.001": 1,
+    "SK.FND.002": 1,
+    "SK.FND.005": 0,
+    "SK.GOV.000": 0,
+    "SK.DOM.MKT.001": 1,
+    "SK.TOOL.000": 1,
+    "SK.TOOL.001": 1,
+    "SK.DIG.001": 3,
+    "SK.DIG.002": 3,
+    "SK.DIG.003": 2,
+    "SK.DIG.004": 3,
+    "SK.LRN.002": 2,
+    "SK.PRD.020": 1
+  }
+}
