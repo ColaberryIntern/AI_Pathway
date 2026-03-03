@@ -28,7 +28,7 @@ import {
 import type { AnalysisResult, Profile, Top10TargetSkill, Top10SkillGap, JourneyRoadmap, ParsedSkill } from '../types'
 import ArchetypeBadge from '../components/ArchetypeBadge'
 import JourneyArrow from '../components/JourneyArrow'
-import ProficiencyLegend, { getProficiencyLevel } from '../components/ProficiencyLegend'
+import { getProficiencyLevel } from '../components/ProficiencyLegend'
 import DomainGrid from '../components/ontology/DomainGrid'
 import AnalysisProgress from '../components/ontology/AnalysisProgress'
 import UnifiedSkillsChart from '../components/UnifiedSkillsChart'
@@ -484,6 +484,52 @@ export default function AnalysisPage() {
                 />
               </div>
 
+              {/* Target Job Description — immediately visible */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Target Job Description
+                </label>
+                <textarea
+                  className="input min-h-[120px] bg-white"
+                  value={targetJD}
+                  onChange={(e) => setTargetJD(e.target.value)}
+                  placeholder="Paste the full job description here. Include requirements, responsibilities, and qualifications."
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  The more detailed the JD, the better the skill gap analysis.
+                </p>
+              </div>
+
+              {/* JD Skills Error */}
+              {jdSkillsError && (
+                <p className="text-sm text-red-600 bg-red-50 p-3 rounded-lg border border-red-200 text-center">
+                  {jdSkillsError}
+                </p>
+              )}
+
+              {/* Analyze JD Button — inside the panel so it's always visible */}
+              <button
+                onClick={handleParseJDSkills}
+                disabled={!targetJD.trim() || targetJD.trim().length < 50 || isParsingJDSkills}
+                className={`w-full btn flex items-center justify-center gap-2 text-lg px-8 py-4 ${
+                  targetJD.trim() && targetJD.trim().length >= 50 && !isParsingJDSkills
+                    ? 'btn-primary'
+                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                }`}
+              >
+                {isParsingJDSkills ? (
+                  <>
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                    Analyzing JD...
+                  </>
+                ) : (
+                  <>
+                    Analyze Job Description
+                    <ArrowRight className="h-5 w-5" />
+                  </>
+                )}
+              </button>
+
               {/* JD Parsing Loading State */}
               {isParsingJD && (
                 <div className="flex items-center justify-center gap-2 py-4 bg-white rounded-md border border-primary-200">
@@ -499,7 +545,7 @@ export default function AnalysisPage() {
                 </p>
               )}
 
-              {/* Rich JD Breakdown */}
+              {/* Rich JD Breakdown — shown below button after JD is parsed */}
               {jdProfile && (
                 <div className="space-y-3 pt-1">
                   {/* Seniority Badge */}
@@ -599,61 +645,8 @@ export default function AnalysisPage() {
                   )}
                 </div>
               )}
-
-              {/* Target Job Description — at bottom so skills align with left panel */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Target Job Description
-                </label>
-                <textarea
-                  className="input min-h-[120px] bg-white"
-                  value={targetJD}
-                  onChange={(e) => setTargetJD(e.target.value)}
-                  placeholder="Paste the full job description here. Include requirements, responsibilities, and qualifications."
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  The more detailed the JD, the better the skill gap analysis.
-                </p>
-              </div>
             </div>
           </div>
-        </div>
-
-        {/* Proficiency Framework Legend - Always visible */}
-        <ProficiencyLegend variant="static" />
-
-        {/* JD Skills Error */}
-        {jdSkillsError && (
-          <div className="max-w-lg mx-auto">
-            <p className="text-sm text-red-600 bg-red-50 p-3 rounded-lg border border-red-200 text-center">
-              {jdSkillsError}
-            </p>
-          </div>
-        )}
-
-        {/* Analyze JD Button */}
-        <div className="flex justify-center">
-          <button
-            onClick={handleParseJDSkills}
-            disabled={!targetJD.trim() || targetJD.trim().length < 50 || isParsingJDSkills}
-            className={`btn flex items-center justify-center gap-2 text-lg px-8 py-4 ${
-              targetJD.trim() && targetJD.trim().length >= 50 && !isParsingJDSkills
-                ? 'btn-primary'
-                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-            }`}
-          >
-            {isParsingJDSkills ? (
-              <>
-                <Loader2 className="h-5 w-5 animate-spin" />
-                Analyzing JD...
-              </>
-            ) : (
-              <>
-                Analyze Job Description
-                <ArrowRight className="h-5 w-5" />
-              </>
-            )}
-          </button>
         </div>
       </div>
     )
