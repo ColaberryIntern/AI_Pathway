@@ -1136,7 +1136,7 @@ export default function AnalysisPage() {
               {/* Right: what remains */}
               <div>
                 {(() => {
-                  const REMAINING_PREVIEW = 8;
+                  const REMAINING_PREVIEW = 3;
                   const partial = journeyRoadmap.skills_addressed.filter(s => s.gap_remaining > 0);
                   const notStarted = journeyRoadmap.skills_remaining.filter(s => !s.partial);
                   const allRemaining = [
@@ -1171,9 +1171,9 @@ export default function AnalysisPage() {
                       {hiddenCount > 0 && (
                         <button
                           onClick={() => setShowAllRemaining(!showAllRemaining)}
-                          className="mt-2 text-xs font-medium text-indigo-600 hover:text-indigo-800 transition-colors"
+                          className="mt-2 w-full text-xs font-medium text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 rounded py-1.5 px-3 transition-colors text-center"
                         >
-                          {showAllRemaining ? 'Show less' : `Show ${hiddenCount} more skills`}
+                          {showAllRemaining ? 'Show fewer skills' : `Show all ${allRemaining.length} remaining skills (+${hiddenCount} more)`}
                         </button>
                       )}
                     </>

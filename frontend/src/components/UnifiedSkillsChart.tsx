@@ -9,7 +9,7 @@ interface UnifiedSkillsChartProps {
 
 export default function UnifiedSkillsChart({
   gaps,
-  defaultVisibleCount = 5,
+  defaultVisibleCount = 3,
 }: UnifiedSkillsChartProps) {
   const [showAll, setShowAll] = useState(false)
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
