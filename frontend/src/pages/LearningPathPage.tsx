@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getLearningPath, getProgress, createProgress, updateProgress } from '../services/api'
 import {
@@ -19,11 +19,13 @@ import {
   Star,
   Copy,
   ClipboardCheck,
+  Rocket,
 } from 'lucide-react'
 import type { Chapter } from '../types'
 
 export default function LearningPathPage() {
   const { pathId } = useParams<{ pathId: string }>()
+  const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [expandedChapter, setExpandedChapter] = useState<number | null>(1)
 
@@ -114,6 +116,28 @@ export default function LearningPathPage() {
             <span>Start</span>
             <span>{path.chapters?.length || 0} Chapters Total</span>
           </div>
+        </div>
+      </div>
+
+      {/* Start Learning Path CTA */}
+      <div className="card border-2 border-emerald-200 bg-gradient-to-r from-emerald-50 to-teal-50">
+        <div className="flex items-center justify-between flex-wrap gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-xl bg-emerald-100 flex items-center justify-center">
+              <Rocket className="h-6 w-6 text-emerald-600" />
+            </div>
+            <div>
+              <h3 className="font-bold text-gray-900">Ready to start interactive lessons?</h3>
+              <p className="text-sm text-gray-600">AI-generated lessons tailored to your skill gaps with exercises, quizzes, and hands-on tasks.</p>
+            </div>
+          </div>
+          <button
+            onClick={() => navigate(`/learn/${pathId}`)}
+            className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-semibold rounded-lg hover:from-emerald-600 hover:to-teal-600 transition-all shadow-md hover:shadow-lg"
+          >
+            <Rocket className="h-5 w-5" />
+            Start My Learning Path
+          </button>
         </div>
       </div>
 
