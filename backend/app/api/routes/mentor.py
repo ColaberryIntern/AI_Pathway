@@ -3,7 +3,7 @@ from datetime import datetime
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.database import get_database
+from app.database import get_db
 from app.models.lesson import Lesson
 from app.models.module import Module
 from app.models.mentor_conversation import MentorConversation
@@ -22,7 +22,7 @@ router = APIRouter()
 async def mentor_chat(
     path_id: str,
     request: MentorChatRequest,
-    db: AsyncSession = Depends(get_database),
+    db: AsyncSession = Depends(get_db),
 ):
     """Send a message to the AI mentor and get a contextual response.
 
@@ -101,7 +101,7 @@ async def mentor_chat(
 async def get_mentor_history(
     path_id: str,
     lesson_id: str | None = None,
-    db: AsyncSession = Depends(get_database),
+    db: AsyncSession = Depends(get_db),
 ):
     """Get mentor conversation history."""
     conv_query = select(MentorConversation).where(

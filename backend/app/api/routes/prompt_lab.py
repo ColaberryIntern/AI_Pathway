@@ -3,7 +3,7 @@ import time
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.database import get_database
+from app.database import get_db
 from app.models.lesson import Lesson
 from app.models.prompt_history import PromptHistory
 from app.services.llm import get_llm_provider
@@ -32,7 +32,7 @@ MAX_RESPONSE_TOKENS = 2048
 async def execute_prompt(
     path_id: str,
     request: PromptExecutionRequest,
-    db: AsyncSession = Depends(get_database),
+    db: AsyncSession = Depends(get_db),
 ):
     """Execute a learner's prompt against the LLM and return the result.
 
@@ -101,7 +101,7 @@ async def execute_prompt(
 async def get_prompt_history(
     path_id: str,
     lesson_id: str,
-    db: AsyncSession = Depends(get_database),
+    db: AsyncSession = Depends(get_db),
 ):
     """Get prompt iteration history for a lesson."""
     lesson = await db.get(Lesson, lesson_id)
