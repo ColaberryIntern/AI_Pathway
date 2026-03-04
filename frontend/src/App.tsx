@@ -8,6 +8,8 @@ import DashboardPage from './pages/DashboardPage'
 import JDTestPage from './pages/JDTestPage'
 import LearningDashboardPage from './pages/LearningDashboardPage'
 import LessonPage from './pages/LessonPage'
+import SkillGenomePage from './pages/SkillGenomePage'
+import CuriosityFeedPage from './pages/CuriosityFeedPage'
 
 function App() {
   return (
@@ -21,6 +23,8 @@ function App() {
           <Route path="dashboard/:userId" element={<DashboardPage />} />
           <Route path="learn/:pathId" element={<LearningDashboardPage />} />
           <Route path="learn/:pathId/lesson/:lessonId" element={<LessonPage />} />
+          <Route path="genome/:userId" element={<SkillGenomePage />} />
+          <Route path="curiosity/:userId" element={<CuriosityFeedPage />} />
           <Route path="jd-test" element={<JDTestPage />} />
         </Route>
       </Routes>

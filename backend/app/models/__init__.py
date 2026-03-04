@@ -12,6 +12,9 @@ from app.models.lesson import Lesson
 from app.models.skill_mastery import SkillMastery
 from app.models.prompt_history import PromptHistory
 from app.models.mentor_conversation import MentorConversation
+from app.models.skill_genome import SkillGenomeEntry
+from app.models.lesson_reaction import LessonReaction
+from app.models.confusion_event import ConfusionEvent
 
 __all__ = [
     "User",
@@ -27,4 +30,7 @@ __all__ = [
     "SkillMastery",
     "PromptHistory",
     "MentorConversation",
+    "SkillGenomeEntry",
+    "LessonReaction",
+    "ConfusionEvent",
 ]

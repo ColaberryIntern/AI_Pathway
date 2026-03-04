@@ -14,6 +14,8 @@ import PromptTemplateCard from '../components/learning/PromptTemplateCard'
 import PromptLab from '../components/learning/PromptLab'
 import ImplementationTaskCard from '../components/learning/ImplementationTaskCard'
 import ReflectionPrompts from '../components/learning/ReflectionPrompts'
+import LessonReactions from '../components/learning/LessonReactions'
+import ConfusionRecoveryDrawer from '../components/learning/ConfusionRecoveryDrawer'
 
 export default function LessonPage() {
   const { pathId, lessonId } = useParams<{ pathId: string; lessonId: string }>()
@@ -21,6 +23,7 @@ export default function LessonPage() {
   const queryClient = useQueryClient()
   const [quizScore, setQuizScore] = useState<number | null>(null)
   const [taskSubmitted, setTaskSubmitted] = useState(false)
+  const [confusionDrawerOpen, setConfusionDrawerOpen] = useState(false)
 
   // Start/load lesson (generates content on-demand if needed)
   const {
@@ -182,6 +185,17 @@ export default function LessonPage() {
           )}
         </div>
         <h1 className="text-2xl font-bold text-gray-900">{lesson.title}</h1>
+
+        {/* Lesson Reactions */}
+        {pathId && lessonId && (
+          <div className="mt-3 pt-3 border-t border-gray-100">
+            <LessonReactions
+              pathId={pathId}
+              lessonId={lessonId}
+              onConfused={() => setConfusionDrawerOpen(true)}
+            />
+          </div>
+        )}
       </div>
 
       {/* Content sections */}
@@ -443,6 +457,16 @@ export default function LessonPage() {
           )}
         </div>
       </div>
+
+      {/* Confusion Recovery Drawer */}
+      {pathId && lessonId && (
+        <ConfusionRecoveryDrawer
+          isOpen={confusionDrawerOpen}
+          onClose={() => setConfusionDrawerOpen(false)}
+          pathId={pathId}
+          lessonId={lessonId}
+        />
+      )}
     </div>
   )
 }

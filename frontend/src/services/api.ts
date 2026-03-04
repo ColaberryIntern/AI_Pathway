@@ -2,6 +2,8 @@ import axios from 'axios'
 import type {
   Profile, LearningPath, Progress, AnalysisResult, DashboardData,
   LearningDashboard, LearningModule, Lesson, SkillMastery, ActivatePathResponse,
+  SkillGenomeResponse, SkillGenomeEntry, ReactionType, LessonReactionState,
+  ConfusionRecovery, CuriosityFeedResponse, PersonalizationResult,
 } from '../types'
 
 const api = axios.create({
@@ -301,6 +303,82 @@ export const getMentorHistory = async (
 }> => {
   const params = lessonId ? `?lesson_id=${lessonId}` : ''
   const { data } = await api.get(`/learning/${pathId}/mentor/history${params}`)
+  return data
+}
+
+// ── Skill Genome ───────────────────────────────────────────────────
+
+export const getSkillGenome = async (userId: string): Promise<SkillGenomeResponse> => {
+  const { data } = await api.get(`/genome/${userId}`)
+  return data
+}
+
+export const getSkillGenomeEntry = async (
+  userId: string,
+  skillId: string
+): Promise<SkillGenomeEntry> => {
+  const { data } = await api.get(`/genome/${userId}/${skillId}`)
+  return data
+}
+
+// ── Lesson Reactions ───────────────────────────────────────────────
+
+export const toggleReaction = async (
+  pathId: string,
+  lessonId: string,
+  reaction: ReactionType
+): Promise<LessonReactionState> => {
+  const { data } = await api.post(
+    `/learning/${pathId}/lessons/${lessonId}/react`,
+    { reaction }
+  )
+  return data
+}
+
+export const getLessonReactions = async (
+  pathId: string,
+  lessonId: string
+): Promise<LessonReactionState> => {
+  const { data } = await api.get(
+    `/learning/${pathId}/lessons/${lessonId}/reactions`
+  )
+  return data
+}
+
+// ── Confusion Recovery ─────────────────────────────────────────────
+
+export const getConfusionRecovery = async (
+  pathId: string,
+  lessonId: string,
+  section: string
+): Promise<ConfusionRecovery> => {
+  const { data } = await api.post(
+    `/learning/${pathId}/lessons/${lessonId}/confusion-recovery`,
+    { section }
+  )
+  return data
+}
+
+// ── Curiosity Feed ─────────────────────────────────────────────────
+
+export const getCuriosityFeed = async (
+  userId: string,
+  limit: number = 10
+): Promise<CuriosityFeedResponse> => {
+  const { data } = await api.get(`/genome/${userId}/curiosity-feed?limit=${limit}`)
+  return data
+}
+
+// ── Personalization ────────────────────────────────────────────────
+
+export const getPersonalization = async (
+  userId: string,
+  pathId?: string
+): Promise<PersonalizationResult> => {
+  const url = pathId
+    ? `/personalization/${userId}/path/${pathId}`
+    : `/personalization/${userId}`
+  const { data } = await api.get(url)
   return data
 }
 

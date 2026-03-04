@@ -9,6 +9,7 @@ from app.models.learning_path import LearningPath
 from app.models.prompt_history import PromptHistory
 from app.services.llm import get_llm_provider
 from app.models.module import Module
+from app.services.skill_genome import SkillGenomeService
 from app.schemas.prompt_lab import (
     PromptExecutionRequest,
     PromptExecutionResponse,
@@ -221,6 +222,18 @@ Please evaluate their implementation approach and prompt engineering strategy.""
                     strengths.append(item)
                 elif current_section == "improvements" and len(improvements) < 3:
                     improvements.append(item)
+
+    # Update Skill Genome with project evidence
+    if module:
+        try:
+            genome_svc = SkillGenomeService()
+            quality = len(strengths) / max(1, len(strengths) + len(improvements))
+            await genome_svc.update_from_project(
+                db, path.user_id, module.skill_id, feedback_quality=quality,
+            )
+            await db.commit()
+        except Exception:
+            pass  # Non-blocking — genome update failure shouldn't break feedback
 
     return ImplementationTaskFeedbackResponse(
         feedback=feedback_text,

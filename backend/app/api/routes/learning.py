@@ -10,6 +10,7 @@ from app.models.learning_path import LearningPath
 from app.models.module import Module
 from app.models.lesson import Lesson
 from app.models.skill_mastery import SkillMastery
+from app.services.skill_genome import SkillGenomeService
 from app.models.goal import Goal
 from app.agents.module_outline import ModuleOutlineAgent
 from app.agents.lesson_generator import LessonGeneratorAgent
@@ -506,6 +507,12 @@ async def complete_lesson(
     if request.quiz_score is not None:
         lesson.quiz_score = request.quiz_score
 
+    # Get path (for user_id)
+    result = await db.execute(
+        select(LearningPath).where(LearningPath.id == path_id)
+    )
+    path = result.scalars().first()
+
     # Get module
     result = await db.execute(
         select(Module).where(Module.id == lesson.module_id)
@@ -545,6 +552,20 @@ async def complete_lesson(
                 mastery.avg_quiz_score = sum(scores) / len(scores) if scores else None
 
             mastery_update = _mastery_response(mastery)
+
+    # Update global Skill Genome
+    if module:
+        try:
+            genome_svc = SkillGenomeService()
+            await genome_svc.update_from_lesson(
+                db,
+                path.user_id,
+                module.skill_id,
+                quiz_score=request.quiz_score,
+                lesson_type=lesson.lesson_type,
+            )
+        except Exception as e:
+            logger.warning("Skill Genome update failed (non-blocking): %s", e)
 
     await db.commit()
 

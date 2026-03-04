@@ -456,3 +456,70 @@ export interface ActivatePathResponse {
   total_lessons: number
   skill_masteries: SkillMastery[]
 }
+
+// ── Skill Genome Types ────────────────────────────────────────────
+
+export interface SkillGenomeEntry {
+  ontology_node_id: string
+  skill_name: string
+  domain: string | null
+  mastery_level: number
+  evidence_count: number
+  last_evidence: string | null
+  confidence: number
+  updated_at: string
+}
+
+export interface SkillGenomeResponse {
+  user_id: string
+  entries: SkillGenomeEntry[]
+  total_skills: number
+}
+
+// ── Lesson Reactions Types ────────────────────────────────────────
+
+export type ReactionType = 'helpful' | 'interesting' | 'mind_blown' | 'confused'
+
+export interface LessonReactionState {
+  reactions: ReactionType[]
+  confusion_detected: boolean
+}
+
+// ── Confusion Recovery Types ──────────────────────────────────────
+
+export interface ConfusionRecovery {
+  analogy: string
+  step_by_step: string[]
+  real_world_example: string
+  common_misconceptions: string[]
+  suggested_mentor_prompt: string
+}
+
+// ── Curiosity Feed Types ──────────────────────────────────────────
+
+export interface CuriosityFeedItem {
+  skill_id: string
+  skill_name: string
+  domain: string | null
+  domain_label: string | null
+  teaser: string
+  unlocked_by: string
+  relevance_score: number
+  has_learning_path: boolean
+}
+
+export interface CuriosityFeedResponse {
+  user_id: string
+  items: CuriosityFeedItem[]
+  total_items: number
+}
+
+// ── Personalization Types ─────────────────────────────────────────
+
+export interface PersonalizationResult {
+  struggling_skills: { skill_name: string; signal: string }[]
+  strong_skills: { skill_name: string; mastery: number }[]
+  suggested_review: { lesson_id: string; title: string; reason: string }[]
+  pace_recommendation: 'slow_down' | 'on_track' | 'can_accelerate'
+  next_focus: { skill_name: string; reason: string } | null
+}

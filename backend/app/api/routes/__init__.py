@@ -2,6 +2,8 @@
 from fastapi import APIRouter
 from app.api.routes import profiles, analysis, assessment, paths, progress, ontology
 from app.api.routes import deterministic_paths, learning, prompt_lab, mentor
+from app.api.routes import skill_genome, lesson_reactions, confusion_recovery
+from app.api.routes import curiosity_feed, personalization
 
 api_router = APIRouter()
 
@@ -15,3 +17,8 @@ api_router.include_router(deterministic_paths.router, prefix="/deterministic-pat
 api_router.include_router(learning.router, prefix="/learning", tags=["learning"])
 api_router.include_router(prompt_lab.router, prefix="/learning", tags=["prompt-lab"])
 api_router.include_router(mentor.router, prefix="/learning", tags=["mentor"])
+api_router.include_router(lesson_reactions.router, prefix="/learning", tags=["reactions"])
+api_router.include_router(confusion_recovery.router, prefix="/learning", tags=["confusion"])
+api_router.include_router(skill_genome.router, prefix="/genome", tags=["genome"])
+api_router.include_router(curiosity_feed.router, prefix="/genome", tags=["curiosity"])
+api_router.include_router(personalization.router, prefix="/personalization", tags=["personalization"])
