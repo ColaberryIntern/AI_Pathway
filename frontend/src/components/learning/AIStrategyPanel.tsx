@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Bot, CheckCircle2, Copy, ClipboardCheck, ArrowRight } from 'lucide-react'
 import type { AIStrategy } from '../../types'
+import { copyToClipboard } from '../../utils/clipboard'
 
 interface AIStrategyPanelProps {
   strategy: AIStrategy
@@ -10,7 +11,7 @@ export default function AIStrategyPanel({ strategy }: AIStrategyPanelProps) {
   const [copied, setCopied] = useState(false)
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(strategy.suggested_prompt)
+    copyToClipboard(strategy.suggested_prompt)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }

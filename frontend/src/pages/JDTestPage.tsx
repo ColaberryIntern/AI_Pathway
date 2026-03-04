@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Loader2, Copy, CheckCircle, FileText, Target } from 'lucide-react'
 import { parseJDSkills } from '../services/api'
 import type { ParsedSkill } from '../types'
+import { copyToClipboard } from '../utils/clipboard'
 
 const IMPORTANCE_COLORS: Record<string, string> = {
   high: 'bg-red-50 text-red-700 border-red-200',
@@ -51,7 +52,7 @@ export default function JDTestPage() {
         rationale: s.rationale,
       })),
     }
-    navigator.clipboard.writeText(JSON.stringify(data, null, 2))
+    copyToClipboard(JSON.stringify(data, null, 2))
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }

@@ -5,13 +5,17 @@ from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
 from app.models.lesson import Lesson
+from app.models.learning_path import LearningPath
 from app.models.prompt_history import PromptHistory
 from app.services.llm import get_llm_provider
+from app.models.module import Module
 from app.schemas.prompt_lab import (
     PromptExecutionRequest,
     PromptExecutionResponse,
     PromptHistoryItem,
     PromptHistoryResponse,
+    ImplementationTaskSubmitRequest,
+    ImplementationTaskFeedbackResponse,
 )
 
 router = APIRouter()
@@ -38,7 +42,11 @@ async def execute_prompt(
 
     Tracks prompt history for the lesson. Rate limited to MAX_ITERATIONS_PER_LESSON.
     """
-    # Validate lesson exists and belongs to path
+    # Validate path and lesson exist
+    path = await db.get(LearningPath, path_id)
+    if not path:
+        raise HTTPException(status_code=404, detail="Learning path not found")
+
     lesson = await db.get(Lesson, request.lesson_id)
     if not lesson or lesson.path_id != path_id:
         raise HTTPException(status_code=404, detail="Lesson not found")
@@ -61,20 +69,19 @@ async def execute_prompt(
     start_time = time.time()
 
     try:
-        response_text = await llm.generate(
+        llm_response = await llm.generate(
             prompt=request.prompt,
             system_prompt=PROMPT_LAB_SYSTEM,
             max_tokens=MAX_RESPONSE_TOKENS,
             temperature=0.7,
         )
+        response_text = llm_response.content
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"LLM execution failed: {str(e)}")
 
     execution_time_ms = int((time.time() - start_time) * 1000)
 
-    # Determine user_id from the lesson's path
-    # For now use a placeholder — will be replaced with auth
-    user_id = "default_user"
+    user_id = path.user_id
 
     # Save to prompt history
     iteration = current_count + 1
@@ -130,4 +137,93 @@ async def get_prompt_history(
         lesson_id=lesson_id,
         iterations=iterations,
         total_iterations=len(iterations),
+    )
+
+
+TASK_REVIEW_SYSTEM = """You are an expert AI learning coach reviewing a learner's implementation task submission.
+The learner completed a hands-on task and is submitting their prompt engineering strategy for feedback.
+
+Evaluate their work and provide:
+1. Specific strengths in their approach (2-3 bullet points)
+2. Areas for improvement (2-3 bullet points)
+3. A brief overall feedback paragraph (2-3 sentences)
+
+Be encouraging but honest. Focus on prompt engineering technique, not just correctness.
+Keep total response under 500 words."""
+
+
+@router.post(
+    "/{path_id}/implementation-task/submit",
+    response_model=ImplementationTaskFeedbackResponse,
+)
+async def submit_implementation_task(
+    path_id: str,
+    request: ImplementationTaskSubmitRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    """Submit an implementation task and get AI feedback on the learner's strategy."""
+    path = await db.get(LearningPath, path_id)
+    if not path:
+        raise HTTPException(status_code=404, detail="Learning path not found")
+
+    lesson = await db.get(Lesson, request.lesson_id)
+    if not lesson or lesson.path_id != path_id:
+        raise HTTPException(status_code=404, detail="Lesson not found")
+
+    # Build context from lesson content
+    content = lesson.content or {}
+    task_info = content.get("implementation_task", {})
+    module = await db.get(Module, lesson.module_id)
+
+    prompt = f"""TASK: {task_info.get('title', lesson.title)}
+DESCRIPTION: {task_info.get('description', '')}
+SKILL: {module.skill_name if module else 'Unknown'}
+
+LEARNER'S PROMPT HISTORY:
+{request.prompt_history_summary or '(No prompt history provided)'}
+
+LEARNER'S STRATEGY EXPLANATION:
+{request.strategy_explanation}
+
+Please evaluate their implementation approach and prompt engineering strategy."""
+
+    llm = get_llm_provider()
+    try:
+        llm_response = await llm.generate(
+            prompt=prompt,
+            system_prompt=TASK_REVIEW_SYSTEM,
+            max_tokens=1024,
+            temperature=0.5,
+        )
+        feedback_text = llm_response.content
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Feedback generation failed: {str(e)}"
+        )
+
+    # Parse strengths and improvements from the response
+    strengths = []
+    improvements = []
+    current_section = None
+    for line in feedback_text.split("\n"):
+        stripped = line.strip()
+        lower = stripped.lower()
+        if "strength" in lower or "well" in lower and ":" in lower:
+            current_section = "strengths"
+            continue
+        elif "improve" in lower or "consider" in lower and ":" in lower:
+            current_section = "improvements"
+            continue
+        elif stripped.startswith(("- ", "* ", "1.", "2.", "3.")):
+            item = stripped.lstrip("-*0123456789. ").strip()
+            if item:
+                if current_section == "strengths" and len(strengths) < 3:
+                    strengths.append(item)
+                elif current_section == "improvements" and len(improvements) < 3:
+                    improvements.append(item)
+
+    return ImplementationTaskFeedbackResponse(
+        feedback=feedback_text,
+        strengths=strengths,
+        improvements=improvements,
     )

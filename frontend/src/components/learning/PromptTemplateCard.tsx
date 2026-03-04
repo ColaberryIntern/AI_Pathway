@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { FileCode2, Copy, ClipboardCheck, ChevronDown } from 'lucide-react'
 import type { PromptTemplate } from '../../types'
+import { copyToClipboard } from '../../utils/clipboard'
 
 interface PromptTemplateCardProps {
   template: PromptTemplate
@@ -11,7 +12,7 @@ export default function PromptTemplateCard({ template }: PromptTemplateCardProps
   const [showPlaceholders, setShowPlaceholders] = useState(false)
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(template.template)
+    copyToClipboard(template.template)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }

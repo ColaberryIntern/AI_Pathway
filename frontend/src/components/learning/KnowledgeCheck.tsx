@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { CheckCircle2, XCircle, ChevronRight, Copy, ClipboardCheck, Bot } from 'lucide-react'
 import type { KnowledgeCheck as KnowledgeCheckType } from '../../types'
+import { copyToClipboard } from '../../utils/clipboard'
 
 interface KnowledgeCheckProps {
   checks: KnowledgeCheckType[]
@@ -148,7 +149,7 @@ function AIFollowupPrompt({ prompt }: { prompt: string }) {
   const [copied, setCopied] = useState(false)
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(prompt)
+    copyToClipboard(prompt)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }

@@ -1,11 +1,52 @@
-import { Hammer, Clock, FileText, MessageSquare } from 'lucide-react'
+import { useState } from 'react'
+import { useMutation } from '@tanstack/react-query'
+import {
+  Hammer, Clock, FileText, MessageSquare, Send, Loader2,
+  CheckCircle2, ThumbsUp, ArrowUpCircle,
+} from 'lucide-react'
 import type { ImplementationTask } from '../../types'
+import { submitImplementationTask } from '../../services/api'
+
+interface PromptHistoryItem {
+  iteration: number
+  prompt_text: string
+  response_text: string
+}
 
 interface ImplementationTaskCardProps {
   task: ImplementationTask
+  pathId?: string
+  lessonId?: string
+  promptHistory?: PromptHistoryItem[]
+  onSubmit?: () => void
 }
 
-export default function ImplementationTaskCard({ task }: ImplementationTaskCardProps) {
+export default function ImplementationTaskCard({
+  task, pathId, lessonId, promptHistory, onSubmit,
+}: ImplementationTaskCardProps) {
+  const [strategy, setStrategy] = useState('')
+  const [submitted, setSubmitted] = useState(false)
+
+  const submitMutation = useMutation({
+    mutationFn: () => {
+      const historySummary = (promptHistory || [])
+        .map((h) => `Iteration ${h.iteration}:\nPrompt: ${h.prompt_text}\nResponse: ${h.response_text.slice(0, 300)}...`)
+        .join('\n\n')
+
+      return submitImplementationTask(pathId!, {
+        lesson_id: lessonId!,
+        prompt_history_summary: historySummary,
+        strategy_explanation: strategy,
+      })
+    },
+    onSuccess: () => {
+      setSubmitted(true)
+      onSubmit?.()
+    },
+  })
+
+  const canSubmit = !!pathId && !!lessonId && strategy.trim().length >= 20
+
   return (
     <section className="card border-2 border-purple-200 bg-gradient-to-br from-purple-50/50 to-white">
       <div className="flex items-center gap-2 mb-4">
@@ -13,6 +54,12 @@ export default function ImplementationTaskCard({ task }: ImplementationTaskCardP
           <Hammer className="h-5 w-5 text-purple-600" />
         </div>
         <h2 className="text-lg font-bold text-gray-900">Implementation Task</h2>
+        {submitted && (
+          <span className="flex items-center gap-1 text-xs text-emerald-600 ml-auto">
+            <CheckCircle2 className="h-3.5 w-3.5" />
+            Submitted
+          </span>
+        )}
       </div>
 
       <h3 className="font-semibold text-gray-900 text-base mb-2">{task.title}</h3>
@@ -45,8 +92,8 @@ export default function ImplementationTaskCard({ task }: ImplementationTaskCardP
         <p className="text-sm text-gray-700">{task.deliverable}</p>
       </div>
 
-      {/* Submission callouts */}
-      <div className="flex flex-wrap gap-3 text-xs">
+      {/* Info badges */}
+      <div className="flex flex-wrap gap-3 text-xs mb-4">
         {task.requires_prompt_history && (
           <div className="flex items-center gap-1.5 bg-sky-50 border border-sky-200 text-sky-700 px-3 py-1.5 rounded-full font-medium">
             <MessageSquare className="h-3.5 w-3.5" />
@@ -66,6 +113,124 @@ export default function ImplementationTaskCard({ task }: ImplementationTaskCardP
           </div>
         )}
       </div>
+
+      {/* Prompt History Summary */}
+      {promptHistory && promptHistory.length > 0 && (
+        <div className="mb-4">
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+            Your Prompt Lab History ({promptHistory.length} iteration{promptHistory.length !== 1 ? 's' : ''})
+          </p>
+          <div className="space-y-1.5 max-h-32 overflow-y-auto bg-gray-50 rounded-lg p-3 border border-gray-200">
+            {promptHistory.map((h) => (
+              <div key={h.iteration} className="text-xs text-gray-600">
+                <span className="font-medium text-purple-600">v{h.iteration}:</span>{' '}
+                {h.prompt_text.slice(0, 100)}{h.prompt_text.length > 100 ? '...' : ''}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Strategy Submission */}
+      {pathId && lessonId && !submitted && (
+        <div className="border-t border-purple-100 pt-4 space-y-3">
+          <label className="text-sm font-medium text-gray-700">
+            Explain your strategy and approach
+          </label>
+          <textarea
+            value={strategy}
+            onChange={(e) => setStrategy(e.target.value)}
+            rows={4}
+            className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-gray-800 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 resize-y"
+            placeholder="Describe what prompts you used, why you chose that approach, and what you learned from the AI's responses..."
+            disabled={submitMutation.isPending}
+          />
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => submitMutation.mutate()}
+              disabled={!canSubmit || submitMutation.isPending}
+              className="btn bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700 disabled:opacity-50"
+            >
+              {submitMutation.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                  Getting Feedback...
+                </>
+              ) : (
+                <>
+                  <Send className="h-4 w-4 mr-1" />
+                  Submit for Feedback
+                </>
+              )}
+            </button>
+            {strategy.trim().length > 0 && strategy.trim().length < 20 && (
+              <span className="text-xs text-gray-400">
+                Write at least 20 characters
+              </span>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Error */}
+      {submitMutation.isError && (
+        <div className="mt-3 p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700">
+          Failed to get feedback. Please try again.
+        </div>
+      )}
+
+      {/* AI Feedback */}
+      {submitMutation.data && (
+        <div className="border-t border-purple-100 pt-4 mt-4 space-y-4">
+          <div className="flex items-center gap-2">
+            <div className="p-1.5 rounded-lg bg-emerald-100">
+              <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+            </div>
+            <h3 className="font-semibold text-gray-900">AI Feedback</h3>
+          </div>
+
+          {/* Strengths */}
+          {submitMutation.data.strengths.length > 0 && (
+            <div className="bg-emerald-50 rounded-lg p-3 border border-emerald-200">
+              <p className="text-xs font-semibold text-emerald-700 uppercase tracking-wider mb-2 flex items-center gap-1">
+                <ThumbsUp className="h-3.5 w-3.5" />
+                Strengths
+              </p>
+              <ul className="space-y-1">
+                {submitMutation.data.strengths.map((s, i) => (
+                  <li key={i} className="text-sm text-gray-700 flex items-start gap-2">
+                    <span className="text-emerald-500 mt-0.5">+</span>
+                    {s}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Improvements */}
+          {submitMutation.data.improvements.length > 0 && (
+            <div className="bg-amber-50 rounded-lg p-3 border border-amber-200">
+              <p className="text-xs font-semibold text-amber-700 uppercase tracking-wider mb-2 flex items-center gap-1">
+                <ArrowUpCircle className="h-3.5 w-3.5" />
+                Areas to Improve
+              </p>
+              <ul className="space-y-1">
+                {submitMutation.data.improvements.map((imp, i) => (
+                  <li key={i} className="text-sm text-gray-700 flex items-start gap-2">
+                    <span className="text-amber-500 mt-0.5">~</span>
+                    {imp}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Full Feedback */}
+          <div className="bg-white border border-gray-200 rounded-lg p-4 text-sm text-gray-700 whitespace-pre-wrap leading-relaxed max-h-64 overflow-y-auto">
+            {submitMutation.data.feedback}
+          </div>
+        </div>
+      )}
     </section>
   )
 }

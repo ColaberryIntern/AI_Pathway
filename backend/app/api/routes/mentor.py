@@ -3,9 +3,11 @@ from datetime import datetime
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm.attributes import flag_modified
 from app.database import get_db
 from app.models.lesson import Lesson
 from app.models.module import Module
+from app.models.learning_path import LearningPath
 from app.models.mentor_conversation import MentorConversation
 from app.agents.mentor_agent import MentorAgent
 from app.schemas.mentor import (
@@ -43,6 +45,11 @@ async def mentor_chat(
                 "concept_snapshot": content.get("concept_snapshot", content.get("explanation", "")[:200]),
             }
 
+    # Validate path exists and get user_id
+    path = await db.get(LearningPath, path_id)
+    if not path:
+        raise HTTPException(status_code=404, detail="Learning path not found")
+
     # Find or create conversation
     conv_query = select(MentorConversation).where(
         MentorConversation.path_id == path_id,
@@ -57,7 +64,7 @@ async def mentor_chat(
 
     if not conversation:
         conversation = MentorConversation(
-            user_id="default_user",  # TODO: replace with auth
+            user_id=path.user_id,
             path_id=path_id,
             lesson_id=request.lesson_id,
             messages=[],
@@ -65,8 +72,8 @@ async def mentor_chat(
         db.add(conversation)
         await db.flush()
 
-    # Get existing messages
-    messages = conversation.messages or []
+    # Get existing messages (deep copy to ensure SQLAlchemy detects mutation)
+    messages = list(conversation.messages or [])
 
     # Add user message
     now = datetime.utcnow().isoformat()
@@ -84,8 +91,9 @@ async def mentor_chat(
     mentor_response = agent_result.get("response", "I'm here to help! Could you tell me more about what you're working on?")
     messages.append({"role": "mentor", "content": mentor_response, "timestamp": datetime.utcnow().isoformat()})
 
-    # Save conversation
+    # Save conversation (flag_modified ensures SQLAlchemy writes the JSON column)
     conversation.messages = messages
+    flag_modified(conversation, "messages")
     conversation.updated_at = datetime.utcnow()
     await db.commit()
     await db.refresh(conversation)

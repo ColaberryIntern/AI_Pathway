@@ -38,6 +38,19 @@ export default function MentorChat() {
     },
   })
 
+  // Listen for open-mentor events from other components (e.g. ReflectionPrompts)
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail
+      setIsOpen(true)
+      if (detail?.message) {
+        setInput(detail.message)
+      }
+    }
+    window.addEventListener('open-mentor', handler)
+    return () => window.removeEventListener('open-mentor', handler)
+  }, [])
+
   // Auto-scroll to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })

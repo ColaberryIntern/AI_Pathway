@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Sparkles, ChevronDown } from 'lucide-react'
+import { Sparkles, ChevronDown, Bot } from 'lucide-react'
 import type { ReflectionQuestion } from '../../types'
 
 interface ReflectionPromptsProps {
@@ -41,13 +41,26 @@ export default function ReflectionPrompts({ questions }: ReflectionPromptsProps)
                 />
               </button>
               {isExpanded && q.prompt_for_deeper_thinking && (
-                <div className="px-4 pb-3 pt-0">
+                <div className="px-4 pb-3 pt-0 space-y-2">
                   <div className="bg-amber-50 rounded-lg p-3 border border-amber-100">
                     <p className="text-xs font-medium text-amber-600 mb-1">Go deeper:</p>
                     <p className="text-sm text-gray-700 italic">
                       {q.prompt_for_deeper_thinking}
                     </p>
                   </div>
+                  <button
+                    onClick={() => {
+                      window.dispatchEvent(
+                        new CustomEvent('open-mentor', {
+                          detail: { message: q.prompt_for_deeper_thinking },
+                        })
+                      )
+                    }}
+                    className="flex items-center gap-1.5 text-xs font-medium text-indigo-600 hover:text-indigo-800 transition-colors px-3 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 border border-indigo-200"
+                  >
+                    <Bot className="h-3.5 w-3.5" />
+                    Ask AI Mentor
+                  </button>
                 </div>
               )}
             </div>

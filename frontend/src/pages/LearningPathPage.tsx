@@ -22,6 +22,7 @@ import {
   Rocket,
 } from 'lucide-react'
 import type { Chapter } from '../types'
+import { copyToClipboard } from '../utils/clipboard'
 
 export default function LearningPathPage() {
   const { pathId } = useParams<{ pathId: string }>()
@@ -438,7 +439,7 @@ export default function LearningPathPage() {
                       <div
                         className="bg-gray-800 rounded-lg p-4 font-mono text-sm whitespace-pre-wrap mb-3 border border-gray-700 cursor-pointer hover:border-sky-500 transition-colors relative group"
                         onClick={() => {
-                          navigator.clipboard.writeText(chapter.exact_prompt!.prompt_text)
+                          copyToClipboard(chapter.exact_prompt!.prompt_text)
                         }}
                       >
                         <span className="absolute top-2 right-2 text-xs text-gray-500 group-hover:text-sky-400 flex items-center gap-1">

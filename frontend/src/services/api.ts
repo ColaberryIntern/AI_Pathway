@@ -257,6 +257,27 @@ export const getPromptHistory = async (
   return data
 }
 
+// ── Implementation Task ─────────────────────────────────────────────
+
+export const submitImplementationTask = async (
+  pathId: string,
+  params: {
+    lesson_id: string
+    prompt_history_summary: string
+    strategy_explanation: string
+  }
+): Promise<{
+  feedback: string
+  strengths: string[]
+  improvements: string[]
+}> => {
+  const { data } = await api.post(
+    `/learning/${pathId}/implementation-task/submit`,
+    params
+  )
+  return data
+}
+
 // ── AI Mentor ───────────────────────────────────────────────────────
 
 export const sendMentorMessage = async (
