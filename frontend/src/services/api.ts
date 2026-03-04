@@ -1,5 +1,8 @@
 import axios from 'axios'
-import type { Profile, LearningPath, Progress, AnalysisResult, DashboardData } from '../types'
+import type {
+  Profile, LearningPath, Progress, AnalysisResult, DashboardData,
+  LearningDashboard, LearningModule, Lesson, SkillMastery, ActivatePathResponse,
+} from '../types'
 
 const api = axios.create({
   baseURL: '/api',
@@ -183,6 +186,41 @@ export const searchSkills = async (query: string, domain?: string) => {
 
 export const getDomains = async () => {
   const { data } = await api.get('/ontology/domains')
+  return data
+}
+
+// ── Learning Execution ───────────────────────────────────────────────
+
+export const activateLearningPath = async (pathId: string): Promise<ActivatePathResponse> => {
+  const { data } = await api.post(`/learning/${pathId}/activate`)
+  return data
+}
+
+export const getLearningDashboard = async (pathId: string): Promise<LearningDashboard> => {
+  const { data } = await api.get(`/learning/${pathId}/dashboard`)
+  return data
+}
+
+export const getLearningModules = async (pathId: string): Promise<LearningModule[]> => {
+  const { data } = await api.get(`/learning/${pathId}/modules`)
+  return data
+}
+
+export const startLesson = async (pathId: string, lessonId: string): Promise<Lesson> => {
+  const { data } = await api.post(`/learning/${pathId}/lessons/${lessonId}/start`)
+  return data
+}
+
+export const completeLesson = async (pathId: string, lessonId: string, params: {
+  quiz_score?: number
+  exercise_completed?: boolean
+}) => {
+  const { data } = await api.put(`/learning/${pathId}/lessons/${lessonId}/complete`, params)
+  return data
+}
+
+export const getSkillMasteries = async (pathId: string): Promise<SkillMastery[]> => {
+  const { data } = await api.get(`/learning/${pathId}/skills`)
   return data
 }
 

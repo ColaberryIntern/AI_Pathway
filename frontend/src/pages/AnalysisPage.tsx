@@ -24,6 +24,7 @@ import {
   ExternalLink,
   Route,
   Info,
+  Rocket,
 } from 'lucide-react'
 import type { AnalysisResult, Profile, Top10TargetSkill, Top10SkillGap, JourneyRoadmap, ParsedSkill } from '../types'
 import ArchetypeBadge from '../components/ArchetypeBadge'
@@ -1359,7 +1360,14 @@ export default function AnalysisPage() {
       )}
 
       {/* CTA */}
-      <div className="flex justify-center gap-4">
+      <div className="flex flex-wrap justify-center gap-4">
+        <button
+          onClick={() => navigate(`/learn/${result?.learning_path_id}`)}
+          className="btn flex items-center gap-2 text-lg px-8 py-4 shadow-lg hover:shadow-xl transition-shadow bg-gradient-to-r from-emerald-500 to-teal-500 text-white hover:from-emerald-600 hover:to-teal-600"
+        >
+          <Rocket className="h-5 w-5" />
+          Start My Learning Path
+        </button>
         <button
           onClick={handleViewPath}
           className="btn btn-primary flex items-center gap-2 text-lg px-8 py-4 shadow-lg hover:shadow-xl transition-shadow"

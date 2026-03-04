@@ -38,3 +38,12 @@ class LearningPath(Base):
     progress_records: Mapped[list["Progress"]] = relationship(
         "Progress", back_populates="learning_path", cascade="all, delete-orphan"
     )
+    modules: Mapped[list["Module"]] = relationship(
+        "Module", back_populates="learning_path", cascade="all, delete-orphan"
+    )
+    lessons: Mapped[list["Lesson"]] = relationship(
+        "Lesson", back_populates="learning_path", cascade="all, delete-orphan"
+    )
+    skill_masteries: Mapped[list["SkillMastery"]] = relationship(
+        "SkillMastery", back_populates="learning_path", cascade="all, delete-orphan"
+    )

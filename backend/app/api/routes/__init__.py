@@ -1,7 +1,7 @@
 """API routes."""
 from fastapi import APIRouter
 from app.api.routes import profiles, analysis, assessment, paths, progress, ontology
-from app.api.routes import deterministic_paths
+from app.api.routes import deterministic_paths, learning
 
 api_router = APIRouter()
 
@@ -12,3 +12,4 @@ api_router.include_router(paths.router, prefix="/paths", tags=["paths"])
 api_router.include_router(progress.router, prefix="/progress", tags=["progress"])
 api_router.include_router(ontology.router, prefix="/ontology", tags=["ontology"])
 api_router.include_router(deterministic_paths.router, prefix="/deterministic-paths", tags=["deterministic-paths"])
+api_router.include_router(learning.router, prefix="/learning", tags=["learning"])

@@ -6,6 +6,8 @@ import AnalysisPage from './pages/AnalysisPage'
 import LearningPathPage from './pages/LearningPathPage'
 import DashboardPage from './pages/DashboardPage'
 import JDTestPage from './pages/JDTestPage'
+import LearningDashboardPage from './pages/LearningDashboardPage'
+import LessonPage from './pages/LessonPage'
 
 function App() {
   return (
@@ -17,6 +19,8 @@ function App() {
           <Route path="analysis/:profileId" element={<AnalysisPage />} />
           <Route path="path/:pathId" element={<LearningPathPage />} />
           <Route path="dashboard/:userId" element={<DashboardPage />} />
+          <Route path="learn/:pathId" element={<LearningDashboardPage />} />
+          <Route path="learn/:pathId/lesson/:lessonId" element={<LessonPage />} />
           <Route path="jd-test" element={<JDTestPage />} />
         </Route>
       </Routes>

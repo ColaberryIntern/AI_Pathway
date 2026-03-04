@@ -39,3 +39,6 @@ class User(Base):
     progress_records: Mapped[list["Progress"]] = relationship(
         "Progress", back_populates="user", cascade="all, delete-orphan"
     )
+    skill_masteries: Mapped[list["SkillMastery"]] = relationship(
+        "SkillMastery", back_populates="user", cascade="all, delete-orphan"
+    )

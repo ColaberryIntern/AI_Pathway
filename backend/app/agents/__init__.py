@@ -7,6 +7,8 @@ from app.agents.assessment_agent import AssessmentAgent
 from app.agents.gap_analyzer import GapAnalyzerAgent
 from app.agents.path_generator import PathGeneratorAgent
 from app.agents.content_curator import ContentCuratorAgent
+from app.agents.module_outline import ModuleOutlineAgent
+from app.agents.lesson_generator import LessonGeneratorAgent
 
 __all__ = [
     "BaseAgent",
@@ -17,4 +19,6 @@ __all__ = [
     "GapAnalyzerAgent",
     "PathGeneratorAgent",
     "ContentCuratorAgent",
+    "ModuleOutlineAgent",
+    "LessonGeneratorAgent",
 ]

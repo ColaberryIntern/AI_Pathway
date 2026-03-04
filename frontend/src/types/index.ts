@@ -302,3 +302,112 @@ export interface PathSummary {
   completion_percentage: number
   created_at: string
 }
+
+// ── Learning Execution Types ────────────────────────────────────────
+
+export interface LearningModule {
+  id: string
+  chapter_number: number
+  skill_id: string
+  skill_name: string
+  title: string
+  current_level: number
+  target_level: number
+  lesson_outline: LessonOutline[]
+  total_lessons: number
+  completed_lessons: number
+  status: 'not_started' | 'in_progress' | 'completed'
+}
+
+export interface LessonOutline {
+  lesson_number: number
+  title: string
+  type: 'concept' | 'practice' | 'assessment'
+  focus_area: string
+  estimated_minutes: number
+}
+
+export interface Lesson {
+  id: string
+  module_id: string
+  lesson_number: number
+  title: string
+  lesson_type: string
+  content: LessonContent | null
+  status: 'not_started' | 'in_progress' | 'completed'
+  quiz_score: number | null
+  exercise_attempts: number
+}
+
+export interface LessonContent {
+  explanation: string
+  code_examples: CodeExample[]
+  exercises: LessonExercise[]
+  knowledge_checks: KnowledgeCheck[]
+  hands_on_tasks: HandsOnTask[]
+}
+
+export interface CodeExample {
+  title: string
+  language: string
+  code: string
+  explanation: string
+}
+
+export interface LessonExercise {
+  id: string
+  title: string
+  instructions: string
+  starter_code: string
+  expected_output: string
+  hints: string[]
+  estimated_minutes: number
+}
+
+export interface KnowledgeCheck {
+  question: string
+  options: string[]
+  correct_answer: string
+  explanation: string
+}
+
+export interface HandsOnTask {
+  title: string
+  description: string
+  requirements: string[]
+  deliverable: string
+  estimated_minutes: number
+}
+
+export interface SkillMastery {
+  skill_id: string
+  skill_name: string
+  initial_level: number
+  current_level: number
+  target_level: number
+  lessons_completed: number
+  total_lessons: number
+  avg_quiz_score: number | null
+  progress_percentage: number
+}
+
+export interface LearningDashboard {
+  path_id: string
+  path_title: string
+  target_role: string
+  overall_progress: number
+  modules: LearningModule[]
+  skill_masteries: SkillMastery[]
+  current_module: LearningModule | null
+  next_lesson: LessonOutline | null
+  next_lesson_id: string | null
+  total_lessons_completed: number
+  total_lessons: number
+  estimated_hours_remaining: number
+}
+
+export interface ActivatePathResponse {
+  modules: LearningModule[]
+  total_lessons: number
+  skill_masteries: SkillMastery[]
+}
