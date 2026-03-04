@@ -554,19 +554,35 @@ class PathVisualizer:
             )
 
         # Build remaining rows (includes partial badges)
+        REMAINING_PREVIEW = 3
         remaining_rows = ""
         remaining_total_levels = sum(s.get('gap', 0) for s in skills_remaining)
-        for s in skills_remaining:
+        for i, s in enumerate(skills_remaining):
+            hidden_cls = " remaining-hidden" if i >= REMAINING_PREVIEW else ""
             partial_badge = ""
             if s.get("partial"):
                 partial_badge = " <span class='partial-badge'>+1 this path</span>"
             remaining_rows += (
-                f"<div class='jp-skill'>"
+                f"<div class='jp-skill{hidden_cls}'>"
                 f"<span class='skill-id'>{html.escape(s.get('skill_id', ''))}</span> "
                 f"{html.escape(s.get('skill_name', ''))}{partial_badge}"
                 f"<span class='jp-level'>L{s.get('current_level', 0)} → "
                 f"L{s.get('required_level', 0)} (+{s.get('gap', 0)})</span>"
                 f"</div>\n"
+            )
+        hidden_count = max(0, len(skills_remaining) - REMAINING_PREVIEW)
+        remaining_toggle = ""
+        if hidden_count > 0:
+            collapsed_label = (
+                f"Show all {len(skills_remaining)} remaining skills "
+                f"(+{hidden_count} more)"
+            )
+            remaining_toggle = (
+                f"<button id='remaining-toggle' onclick='toggleRemaining()' "
+                f"class='remaining-toggle-btn' "
+                f"data-collapsed='{html.escape(collapsed_label)}' "
+                f"data-expanded='Show fewer skills'>"
+                f"{collapsed_label}</button>"
             )
 
         journey_section = ""
@@ -593,6 +609,7 @@ class PathVisualizer:
             <div>
                 <h3 style="color:#8b5cf6">Remaining ({len(skills_remaining)} entries, {remaining_total_levels} gap-levels)</h3>
                 {remaining_rows}
+                {remaining_toggle}
             </div>
         </div>
     </div>"""
@@ -658,6 +675,10 @@ tr.match-row {{ background: #f0fdf4; }}
 .toggle-btn {{ background: var(--primary); color: white; border: none; padding: 6px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500; margin-top: 12px; }}
 .toggle-btn:hover {{ opacity: 0.85; }}
 .partial-badge {{ background: #fef3c7; color: #d97706; padding: 1px 6px; border-radius: 4px; font-size: 10px; font-weight: 600; margin-left: 6px; }}
+.remaining-hidden {{ display: none; }}
+.remaining-toggle-btn {{ display: block; width: 100%; margin-top: 8px; padding: 6px 12px; background: #eef2ff; color: #4f46e5; border: 1px solid #c7d2fe; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; text-align: center; }}
+.remaining-toggle-btn:hover {{ background: #e0e7ff; }}
+@media print {{ .remaining-toggle-btn {{ display: none; }} .remaining-hidden {{ display: flex; }} }}
 tr.projected-row {{ background: #faf5ff; }}
 tr.projected-row td {{ color: var(--text-muted); }}
 tr.path-header {{ background: #f1f5f9; }}
@@ -1100,6 +1121,14 @@ function toggleSummary() {{
         extra.style.display = 'none';
         btn.textContent = 'Show Full Journey Details';
     }}
+}}
+function toggleRemaining() {{
+    var els = document.querySelectorAll('.remaining-hidden');
+    var btn = document.getElementById('remaining-toggle');
+    if (!els.length || !btn) return;
+    var showing = els[0].style.display !== 'none';
+    els.forEach(function(el) {{ el.style.display = showing ? 'none' : 'flex'; }});
+    btn.textContent = showing ? btn.dataset.collapsed : btn.dataset.expanded;
 }}
 </script>
 </body>
