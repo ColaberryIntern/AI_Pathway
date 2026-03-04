@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { getProfile, runFullAnalysis, parseJDProfile, parseJDSkills, getVisualization } from '../services/api'
 import {
@@ -40,7 +40,6 @@ type AnalysisStep = 'jd_input' | 'skill_selection' | 'self_assessment' | 'analyz
 
 export default function AnalysisPage() {
   const { profileId } = useParams<{ profileId: string }>()
-  const navigate = useNavigate()
   const [step, setStep] = useState<AnalysisStep>('jd_input')
   const [targetJD, setTargetJD] = useState('')
   const [targetRole, setTargetRole] = useState('')
@@ -248,12 +247,6 @@ export default function AnalysisPage() {
       skip_assessment: true,
       self_assessed_skills: Object.keys(selfAssessedSkills).length > 0 ? selfAssessedSkills : undefined,
     })
-  }
-
-  const handleViewPath = () => {
-    if (result?.learning_path_id) {
-      navigate(`/path/${result.learning_path_id}`)
-    }
   }
 
   // Get the active profile (either from API or custom)
@@ -1362,14 +1355,14 @@ export default function AnalysisPage() {
       {/* CTA */}
       <div className="flex flex-wrap justify-center gap-4">
         <button
-          onClick={() => navigate(`/learn/${result?.learning_path_id}`)}
+          onClick={() => window.open(`/learn/${result?.learning_path_id}`, '_blank')}
           className="btn flex items-center gap-2 text-lg px-8 py-4 shadow-lg hover:shadow-xl transition-shadow bg-gradient-to-r from-emerald-500 to-teal-500 text-white hover:from-emerald-600 hover:to-teal-600"
         >
           <Rocket className="h-5 w-5" />
           Start My Learning Path
         </button>
         <button
-          onClick={handleViewPath}
+          onClick={() => window.open(`/path/${result?.learning_path_id}`, '_blank')}
           className="btn btn-primary flex items-center gap-2 text-lg px-8 py-4 shadow-lg hover:shadow-xl transition-shadow"
         >
           View Your Learning Path
