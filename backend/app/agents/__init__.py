@@ -9,6 +9,7 @@ from app.agents.path_generator import PathGeneratorAgent
 from app.agents.content_curator import ContentCuratorAgent
 from app.agents.module_outline import ModuleOutlineAgent
 from app.agents.lesson_generator import LessonGeneratorAgent
+from app.agents.mentor_agent import MentorAgent
 
 __all__ = [
     "BaseAgent",
@@ -21,4 +22,5 @@ __all__ = [
     "ContentCuratorAgent",
     "ModuleOutlineAgent",
     "LessonGeneratorAgent",
+    "MentorAgent",
 ]

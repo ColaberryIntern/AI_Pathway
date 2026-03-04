@@ -340,11 +340,55 @@ export interface Lesson {
 }
 
 export interface LessonContent {
+  // AI-native sections (present in newly generated lessons)
+  concept_snapshot?: string
+  ai_strategy?: AIStrategy
+  prompt_template?: PromptTemplate
+  implementation_task?: ImplementationTask
+  reflection_questions?: ReflectionQuestion[]
+
+  // Legacy sections (always present for backward compat)
   explanation: string
   code_examples: CodeExample[]
   exercises: LessonExercise[]
   knowledge_checks: KnowledgeCheck[]
   hands_on_tasks: HandsOnTask[]
+}
+
+// ── AI-Native Lesson Types ──────────────────────────────────────────
+
+export interface AIStrategy {
+  description: string
+  when_to_use_ai: string[]
+  human_responsibilities: string[]
+  suggested_prompt: string
+}
+
+export interface PromptTemplate {
+  template: string
+  placeholders: PromptPlaceholder[]
+  expected_output_shape: string
+}
+
+export interface PromptPlaceholder {
+  name: string
+  description: string
+  example: string
+}
+
+export interface ImplementationTask {
+  title: string
+  description: string
+  requirements: string[]
+  deliverable: string
+  requires_prompt_history: boolean
+  requires_architecture_explanation: boolean
+  estimated_minutes: number
+}
+
+export interface ReflectionQuestion {
+  question: string
+  prompt_for_deeper_thinking: string
 }
 
 export interface CodeExample {
@@ -369,6 +413,7 @@ export interface KnowledgeCheck {
   options: string[]
   correct_answer: string
   explanation: string
+  ai_followup_prompt?: string
 }
 
 export interface HandsOnTask {

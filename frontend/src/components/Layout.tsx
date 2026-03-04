@@ -1,7 +1,11 @@
-import { Outlet, Link } from 'react-router-dom'
+import { Outlet, Link, useLocation } from 'react-router-dom'
 import { Brain, Home, User, BookOpen } from 'lucide-react'
+import MentorChat from './learning/MentorChat'
 
 export default function Layout() {
+  const location = useLocation()
+  const showMentor = location.pathname.startsWith('/learn/')
+
   return (
     <div className="min-h-screen bg-gray-50">
       <nav className="bg-white border-b border-gray-200">
@@ -42,6 +46,7 @@ export default function Layout() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Outlet />
       </main>
+      {showMentor && <MentorChat />}
     </div>
   )
 }

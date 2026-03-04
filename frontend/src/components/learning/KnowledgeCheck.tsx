@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { CheckCircle2, XCircle, ChevronRight } from 'lucide-react'
+import { CheckCircle2, XCircle, ChevronRight, Copy, ClipboardCheck, Bot } from 'lucide-react'
 import type { KnowledgeCheck as KnowledgeCheckType } from '../../types'
 
 interface KnowledgeCheckProps {
@@ -124,6 +124,11 @@ export default function KnowledgeCheck({ checks, onComplete }: KnowledgeCheckPro
           </div>
         )}
 
+        {/* AI followup prompt suggestion */}
+        {showFeedback && current.ai_followup_prompt && (
+          <AIFollowupPrompt prompt={current.ai_followup_prompt} />
+        )}
+
         {/* Next button */}
         {showFeedback && (
           <button
@@ -134,6 +139,38 @@ export default function KnowledgeCheck({ checks, onComplete }: KnowledgeCheckPro
             <ChevronRight className="h-4 w-4" />
           </button>
         )}
+      </div>
+    </div>
+  )
+}
+
+function AIFollowupPrompt({ prompt }: { prompt: string }) {
+  const [copied, setCopied] = useState(false)
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(prompt)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  return (
+    <div className="mt-3 p-3 bg-sky-50 border border-sky-200 rounded-lg">
+      <div className="flex items-start gap-2">
+        <Bot className="h-4 w-4 text-sky-600 flex-shrink-0 mt-0.5" />
+        <div className="flex-1 min-w-0">
+          <p className="text-xs font-medium text-sky-700 mb-1">Ask your AI assistant:</p>
+          <p className="text-sm text-gray-700 italic">{prompt}</p>
+        </div>
+        <button
+          onClick={handleCopy}
+          className="p-1 rounded hover:bg-sky-100 transition-colors flex-shrink-0"
+        >
+          {copied ? (
+            <ClipboardCheck className="h-3.5 w-3.5 text-sky-600" />
+          ) : (
+            <Copy className="h-3.5 w-3.5 text-sky-400" />
+          )}
+        </button>
       </div>
     </div>
   )

@@ -8,6 +8,12 @@ import {
 import { startLesson, completeLesson, getLearningDashboard } from '../services/api'
 import CodeBlock from '../components/learning/CodeBlock'
 import KnowledgeCheck from '../components/learning/KnowledgeCheck'
+import ConceptSnapshot from '../components/learning/ConceptSnapshot'
+import AIStrategyPanel from '../components/learning/AIStrategyPanel'
+import PromptTemplateCard from '../components/learning/PromptTemplateCard'
+import PromptLab from '../components/learning/PromptLab'
+import ImplementationTaskCard from '../components/learning/ImplementationTaskCard'
+import ReflectionPrompts from '../components/learning/ReflectionPrompts'
 
 export default function LessonPage() {
   const { pathId, lessonId } = useParams<{ pathId: string; lessonId: string }>()
@@ -59,7 +65,6 @@ export default function LessonPage() {
   }
 
   const handleNextLesson = () => {
-    // Find the next lesson ID from dashboard
     if (dashboard?.next_lesson_id) {
       navigate(`/learn/${pathId}/lesson/${dashboard.next_lesson_id}`)
     } else {
@@ -112,6 +117,9 @@ export default function LessonPage() {
   const content = lesson.content
   const isCompleted = lesson.status === 'completed' || completeMutation.isSuccess
 
+  // Detect AI-native vs legacy content format
+  const isAINative = !!content?.concept_snapshot
+
   return (
     <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
       {/* Breadcrumb */}
@@ -145,6 +153,11 @@ export default function LessonPage() {
             {lesson.lesson_type}
           </span>
           <span className="text-xs text-gray-400">Lesson {lesson.lesson_number}</span>
+          {isAINative && (
+            <span className="text-[10px] px-1.5 py-0.5 rounded bg-gradient-to-r from-indigo-100 to-sky-100 text-indigo-600 font-medium">
+              AI-Native
+            </span>
+          )}
           {isCompleted && (
             <span className="flex items-center gap-1 text-xs text-emerald-600 ml-auto">
               <CheckCircle2 className="h-3.5 w-3.5" />
@@ -158,122 +171,202 @@ export default function LessonPage() {
       {/* Content sections */}
       {content ? (
         <div className="space-y-8">
-          {/* Explanation */}
-          {content.explanation && (
-            <section className="card">
-              <div className="flex items-center gap-2 mb-4">
-                <BookOpen className="h-5 w-5 text-indigo-600" />
-                <h2 className="text-lg font-bold text-gray-900">Explanation</h2>
-              </div>
-              <div className="prose prose-gray max-w-none text-gray-700 leading-relaxed whitespace-pre-wrap">
-                {content.explanation}
-              </div>
-            </section>
-          )}
+          {isAINative ? (
+            <>
+              {/* ── AI-NATIVE RENDERING PATH ── */}
 
-          {/* Code Examples */}
-          {content.code_examples && content.code_examples.length > 0 && (
-            <section className="space-y-4">
-              <div className="flex items-center gap-2">
-                <Code2 className="h-5 w-5 text-emerald-600" />
-                <h2 className="text-lg font-bold text-gray-900">Code Examples</h2>
-              </div>
-              {content.code_examples.map((example, i) => (
-                <div key={i} className="space-y-2">
-                  {example.explanation && (
-                    <p className="text-sm text-gray-600">{example.explanation}</p>
-                  )}
-                  <CodeBlock
-                    code={example.code}
-                    language={example.language}
-                    title={example.title}
+              {/* 1. Concept Snapshot */}
+              {content.concept_snapshot && (
+                <ConceptSnapshot snapshot={content.concept_snapshot} />
+              )}
+
+              {/* 2. AI Strategy */}
+              {content.ai_strategy && content.ai_strategy.description && (
+                <AIStrategyPanel strategy={content.ai_strategy} />
+              )}
+
+              {/* 3. Prompt Template */}
+              {content.prompt_template && content.prompt_template.template && (
+                <PromptTemplateCard template={content.prompt_template} />
+              )}
+
+              {/* 3b. Prompt Lab (interactive) */}
+              {content.prompt_template && pathId && lessonId && (
+                <PromptLab
+                  pathId={pathId}
+                  lessonId={lessonId}
+                  template={content.prompt_template}
+                />
+              )}
+
+              {/* 4. Code Examples */}
+              {content.code_examples && content.code_examples.length > 0 && (
+                <section className="space-y-4">
+                  <div className="flex items-center gap-2">
+                    <Code2 className="h-5 w-5 text-emerald-600" />
+                    <h2 className="text-lg font-bold text-gray-900">Code Examples</h2>
+                  </div>
+                  {content.code_examples.map((example, i) => (
+                    <div key={i} className="space-y-2">
+                      {example.explanation && (
+                        <p className="text-sm text-gray-600">{example.explanation}</p>
+                      )}
+                      <CodeBlock
+                        code={example.code}
+                        language={example.language}
+                        title={example.title}
+                      />
+                    </div>
+                  ))}
+                </section>
+              )}
+
+              {/* 5. Implementation Task */}
+              {content.implementation_task && content.implementation_task.title && (
+                <ImplementationTaskCard task={content.implementation_task} />
+              )}
+
+              {/* 6. Reflection */}
+              {content.reflection_questions && content.reflection_questions.length > 0 && (
+                <ReflectionPrompts questions={content.reflection_questions} />
+              )}
+
+              {/* 7. Knowledge Checks (with AI followup prompts) */}
+              {content.knowledge_checks && content.knowledge_checks.length > 0 && (
+                <section className="space-y-4">
+                  <div className="flex items-center gap-2">
+                    <Brain className="h-5 w-5 text-amber-600" />
+                    <h2 className="text-lg font-bold text-gray-900">Knowledge Check</h2>
+                  </div>
+                  <KnowledgeCheck
+                    checks={content.knowledge_checks}
+                    onComplete={(score) => setQuizScore(score)}
                   />
-                </div>
-              ))}
-            </section>
-          )}
+                </section>
+              )}
+            </>
+          ) : (
+            <>
+              {/* ── LEGACY RENDERING PATH (backward compat) ── */}
 
-          {/* Exercises */}
-          {content.exercises && content.exercises.length > 0 && (
-            <section className="space-y-4">
-              <div className="flex items-center gap-2">
-                <Dumbbell className="h-5 w-5 text-sky-600" />
-                <h2 className="text-lg font-bold text-gray-900">Exercises</h2>
-              </div>
-              {content.exercises.map((exercise, i) => (
-                <div key={i} className="card border-l-4 border-l-sky-400">
-                  <h3 className="font-semibold text-gray-900 mb-2">{exercise.title}</h3>
-                  <div className="text-sm text-gray-700 whitespace-pre-wrap mb-3">
-                    {exercise.instructions}
+              {/* Explanation */}
+              {content.explanation && (
+                <section className="card">
+                  <div className="flex items-center gap-2 mb-4">
+                    <BookOpen className="h-5 w-5 text-indigo-600" />
+                    <h2 className="text-lg font-bold text-gray-900">Explanation</h2>
                   </div>
-                  {exercise.starter_code && (
-                    <CodeBlock code={exercise.starter_code} title="Starter Code" />
-                  )}
-                  {exercise.expected_output && (
-                    <div className="mt-3 p-3 bg-gray-50 rounded-lg">
-                      <p className="text-xs font-medium text-gray-500 mb-1">Expected Output:</p>
-                      <pre className="text-sm text-gray-700 font-mono whitespace-pre-wrap">{exercise.expected_output}</pre>
-                    </div>
-                  )}
-                  {exercise.hints && exercise.hints.length > 0 && (
-                    <details className="mt-3">
-                      <summary className="text-sm text-indigo-600 cursor-pointer hover:text-indigo-800">
-                        Show hints ({exercise.hints.length})
-                      </summary>
-                      <ul className="mt-2 space-y-1 pl-4">
-                        {exercise.hints.map((hint, j) => (
-                          <li key={j} className="text-sm text-gray-600 list-disc">{hint}</li>
-                        ))}
-                      </ul>
-                    </details>
-                  )}
-                </div>
-              ))}
-            </section>
-          )}
-
-          {/* Knowledge Checks */}
-          {content.knowledge_checks && content.knowledge_checks.length > 0 && (
-            <section className="space-y-4">
-              <div className="flex items-center gap-2">
-                <Brain className="h-5 w-5 text-amber-600" />
-                <h2 className="text-lg font-bold text-gray-900">Knowledge Check</h2>
-              </div>
-              <KnowledgeCheck
-                checks={content.knowledge_checks}
-                onComplete={(score) => setQuizScore(score)}
-              />
-            </section>
-          )}
-
-          {/* Hands-On Tasks */}
-          {content.hands_on_tasks && content.hands_on_tasks.length > 0 && (
-            <section className="space-y-4">
-              <div className="flex items-center gap-2">
-                <Wrench className="h-5 w-5 text-purple-600" />
-                <h2 className="text-lg font-bold text-gray-900">Hands-On Task</h2>
-              </div>
-              {content.hands_on_tasks.map((task, i) => (
-                <div key={i} className="card border-2 border-purple-200 bg-purple-50/30">
-                  <h3 className="font-semibold text-gray-900 mb-2">{task.title}</h3>
-                  <p className="text-sm text-gray-700 mb-3">{task.description}</p>
-                  {task.requirements && task.requirements.length > 0 && (
-                    <div className="mb-3">
-                      <p className="text-xs font-medium text-gray-500 mb-1">Requirements:</p>
-                      <ul className="space-y-1 pl-4">
-                        {task.requirements.map((req, j) => (
-                          <li key={j} className="text-sm text-gray-600 list-disc">{req}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                  <div className="flex items-center gap-4 text-xs text-gray-400">
-                    <span>Deliverable: {task.deliverable}</span>
-                    {task.estimated_minutes && <span>~{task.estimated_minutes} min</span>}
+                  <div className="prose prose-gray max-w-none text-gray-700 leading-relaxed whitespace-pre-wrap">
+                    {content.explanation}
                   </div>
-                </div>
-              ))}
-            </section>
+                </section>
+              )}
+
+              {/* Code Examples */}
+              {content.code_examples && content.code_examples.length > 0 && (
+                <section className="space-y-4">
+                  <div className="flex items-center gap-2">
+                    <Code2 className="h-5 w-5 text-emerald-600" />
+                    <h2 className="text-lg font-bold text-gray-900">Code Examples</h2>
+                  </div>
+                  {content.code_examples.map((example, i) => (
+                    <div key={i} className="space-y-2">
+                      {example.explanation && (
+                        <p className="text-sm text-gray-600">{example.explanation}</p>
+                      )}
+                      <CodeBlock
+                        code={example.code}
+                        language={example.language}
+                        title={example.title}
+                      />
+                    </div>
+                  ))}
+                </section>
+              )}
+
+              {/* Exercises */}
+              {content.exercises && content.exercises.length > 0 && (
+                <section className="space-y-4">
+                  <div className="flex items-center gap-2">
+                    <Dumbbell className="h-5 w-5 text-sky-600" />
+                    <h2 className="text-lg font-bold text-gray-900">Exercises</h2>
+                  </div>
+                  {content.exercises.map((exercise, i) => (
+                    <div key={i} className="card border-l-4 border-l-sky-400">
+                      <h3 className="font-semibold text-gray-900 mb-2">{exercise.title}</h3>
+                      <div className="text-sm text-gray-700 whitespace-pre-wrap mb-3">
+                        {exercise.instructions}
+                      </div>
+                      {exercise.starter_code && (
+                        <CodeBlock code={exercise.starter_code} title="Starter Code" />
+                      )}
+                      {exercise.expected_output && (
+                        <div className="mt-3 p-3 bg-gray-50 rounded-lg">
+                          <p className="text-xs font-medium text-gray-500 mb-1">Expected Output:</p>
+                          <pre className="text-sm text-gray-700 font-mono whitespace-pre-wrap">{exercise.expected_output}</pre>
+                        </div>
+                      )}
+                      {exercise.hints && exercise.hints.length > 0 && (
+                        <details className="mt-3">
+                          <summary className="text-sm text-indigo-600 cursor-pointer hover:text-indigo-800">
+                            Show hints ({exercise.hints.length})
+                          </summary>
+                          <ul className="mt-2 space-y-1 pl-4">
+                            {exercise.hints.map((hint, j) => (
+                              <li key={j} className="text-sm text-gray-600 list-disc">{hint}</li>
+                            ))}
+                          </ul>
+                        </details>
+                      )}
+                    </div>
+                  ))}
+                </section>
+              )}
+
+              {/* Knowledge Checks */}
+              {content.knowledge_checks && content.knowledge_checks.length > 0 && (
+                <section className="space-y-4">
+                  <div className="flex items-center gap-2">
+                    <Brain className="h-5 w-5 text-amber-600" />
+                    <h2 className="text-lg font-bold text-gray-900">Knowledge Check</h2>
+                  </div>
+                  <KnowledgeCheck
+                    checks={content.knowledge_checks}
+                    onComplete={(score) => setQuizScore(score)}
+                  />
+                </section>
+              )}
+
+              {/* Hands-On Tasks */}
+              {content.hands_on_tasks && content.hands_on_tasks.length > 0 && (
+                <section className="space-y-4">
+                  <div className="flex items-center gap-2">
+                    <Wrench className="h-5 w-5 text-purple-600" />
+                    <h2 className="text-lg font-bold text-gray-900">Hands-On Task</h2>
+                  </div>
+                  {content.hands_on_tasks.map((task, i) => (
+                    <div key={i} className="card border-2 border-purple-200 bg-purple-50/30">
+                      <h3 className="font-semibold text-gray-900 mb-2">{task.title}</h3>
+                      <p className="text-sm text-gray-700 mb-3">{task.description}</p>
+                      {task.requirements && task.requirements.length > 0 && (
+                        <div className="mb-3">
+                          <p className="text-xs font-medium text-gray-500 mb-1">Requirements:</p>
+                          <ul className="space-y-1 pl-4">
+                            {task.requirements.map((req, j) => (
+                              <li key={j} className="text-sm text-gray-600 list-disc">{req}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      <div className="flex items-center gap-4 text-xs text-gray-400">
+                        <span>Deliverable: {task.deliverable}</span>
+                        {task.estimated_minutes && <span>~{task.estimated_minutes} min</span>}
+                      </div>
+                    </div>
+                  ))}
+                </section>
+              )}
+            </>
           )}
         </div>
       ) : (

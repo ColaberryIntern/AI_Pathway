@@ -10,6 +10,8 @@ from app.models.agent_log import AgentLog
 from app.models.module import Module
 from app.models.lesson import Lesson
 from app.models.skill_mastery import SkillMastery
+from app.models.prompt_history import PromptHistory
+from app.models.mentor_conversation import MentorConversation
 
 __all__ = [
     "User",
@@ -23,4 +25,6 @@ __all__ = [
     "Module",
     "Lesson",
     "SkillMastery",
+    "PromptHistory",
+    "MentorConversation",
 ]

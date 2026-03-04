@@ -224,4 +224,63 @@ export const getSkillMasteries = async (pathId: string): Promise<SkillMastery[]>
   return data
 }
 
+// ── Prompt Lab ──────────────────────────────────────────────────────
+
+export const executePrompt = async (
+  pathId: string,
+  params: { lesson_id: string; prompt: string; iteration: number }
+): Promise<{
+  response: string
+  iteration: number
+  tokens_used: number
+  execution_time_ms: number
+}> => {
+  const { data } = await api.post(`/learning/${pathId}/prompt-lab/execute`, params)
+  return data
+}
+
+export const getPromptHistory = async (
+  pathId: string,
+  lessonId: string
+): Promise<{
+  lesson_id: string
+  iterations: Array<{
+    iteration: number
+    prompt_text: string
+    response_text: string
+    execution_time_ms: number
+    created_at: string
+  }>
+  total_iterations: number
+}> => {
+  const { data } = await api.get(`/learning/${pathId}/prompt-lab/${lessonId}/history`)
+  return data
+}
+
+// ── AI Mentor ───────────────────────────────────────────────────────
+
+export const sendMentorMessage = async (
+  pathId: string,
+  params: { message: string; lesson_id?: string }
+): Promise<{
+  response: string
+  suggested_prompts: string[]
+  conversation_id: string
+}> => {
+  const { data } = await api.post(`/learning/${pathId}/mentor/chat`, params)
+  return data
+}
+
+export const getMentorHistory = async (
+  pathId: string,
+  lessonId?: string
+): Promise<{
+  conversation_id: string
+  messages: Array<{ role: string; content: string; timestamp: string }>
+}> => {
+  const params = lessonId ? `?lesson_id=${lessonId}` : ''
+  const { data } = await api.get(`/learning/${pathId}/mentor/history${params}`)
+  return data
+}
+
 export default api

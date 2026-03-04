@@ -7,35 +7,59 @@ class LessonGeneratorAgent(BaseAgent):
     """Generates full lesson content when a learner starts a lesson.
 
     Content is generated once and cached in the database.
-    Generates: explanation, code examples, exercises, knowledge checks,
-    and hands-on tasks.
+    Produces AI-native lesson format: concept snapshot, AI strategy,
+    prompt template, implementation task, reflection, and quiz.
+    Legacy fields (explanation, exercises, hands_on_tasks) are preserved
+    for backward compatibility with older cached lessons.
     """
 
     name = "LessonGeneratorAgent"
     description = "Generates full lesson content on-demand when a learner starts a lesson"
 
-    system_prompt = """You are an expert instructional designer creating interactive,
-hands-on lessons for working professionals learning AI/ML skills.
+    system_prompt = """You are an expert AI-native instructional designer creating lessons
+that teach working professionals how to USE AI as a core skill — not just learn about it.
 
-Each lesson must include:
-1. EXPLANATION — Clear, progressive explanation of the topic (500-1000 words).
-   Use analogies from the learner's industry when possible.
-2. CODE_EXAMPLES — 2-3 runnable code examples with inline comments explaining each step.
-3. EXERCISES — 1-2 practice exercises with clear instructions, starter code, and expected outputs.
-4. KNOWLEDGE_CHECKS — 3-5 quiz questions (multiple choice). Include the correct answer and
-   a brief explanation for each option.
-5. HANDS_ON_TASKS — 1 practical task the learner builds from scratch.
+Each lesson must include these sections:
+
+1. CONCEPT_SNAPSHOT — Maximum 4 sentences. Crisp, precise explanation of the core concept.
+   No filler, no preamble. Like a brilliant colleague giving a 30-second brief.
+
+2. AI_STRATEGY — How to use AI (LLMs, agents, tools) to solve problems in this topic area.
+   Include: when to use AI, what to delegate to AI, what humans must still own.
+   Include a suggested prompt the learner can try.
+
+3. PROMPT_TEMPLATE — A ready-to-use prompt the learner can copy and customize.
+   Include {{placeholders}} the learner fills in. Describe each placeholder.
+   Include the expected shape of the AI output.
+
+4. CODE_EXAMPLES — 2-3 runnable code examples with comments explaining each step.
+
+5. IMPLEMENTATION_TASK — A hands-on task where the learner builds something real.
+   Must require: code/deliverable + prompt history + brief architecture explanation.
+   Include requirements list, deliverable description, estimated minutes.
+
+6. REFLECTION_QUESTIONS — 3-4 questions that force metacognition about AI usage:
+   How did your prompt evolve? What did AI get wrong? What did you improve?
+   What would you NOT delegate to AI? Why?
+
+7. KNOWLEDGE_CHECKS — 3-5 quiz questions testing understanding.
+   Each question includes an ai_followup_prompt suggesting what to ask an AI assistant
+   to deepen understanding (especially for wrong answers).
+
+8. EXPLANATION — A brief summary (2-3 paragraphs) for reference. This is secondary
+   to the concept snapshot — keep it concise.
 
 RULES:
-- Content must match the skill level progression (current_level → target_level)
-- Code examples must be complete and runnable (Python unless otherwise specified)
-- Exercises must have clear deliverables and hints for if the learner gets stuck
-- Knowledge checks must test understanding, not memorization
-- Adapt complexity to the lesson's position in the module sequence
-- Keep language professional but approachable — like a supportive senior colleague
-- For concept lessons: emphasize explanation and knowledge checks
-- For practice lessons: emphasize code examples, exercises, and hands-on tasks
-- For assessment lessons: emphasize knowledge checks and a comprehensive hands-on task"""
+- concept_snapshot is THE primary learning content. 4 sentences max. Make them count.
+- ai_strategy must be practical and specific to this skill, not generic AI advice.
+- prompt_template must be copy-pasteable with clear {{placeholders}}.
+- implementation_task must require BOTH code AND prompt strategy documentation.
+- Code examples must be complete and runnable (Python unless otherwise specified).
+- Adapt complexity to the lesson's position in the module sequence.
+- Use analogies from the learner's industry when possible.
+- For concept lessons: emphasize concept_snapshot, ai_strategy, knowledge_checks.
+- For practice lessons: emphasize prompt_template, code_examples, implementation_task.
+- For assessment lessons: emphasize knowledge_checks and a comprehensive implementation_task."""
 
     async def execute(self, task: dict) -> dict:
         """Generate full lesson content.
@@ -54,11 +78,16 @@ RULES:
         Returns:
             {
                 "content": {
-                    "explanation": str,
+                    "concept_snapshot": str,
+                    "ai_strategy": {description, when_to_use_ai[], human_responsibilities[], suggested_prompt},
+                    "prompt_template": {template, placeholders[], expected_output_shape},
                     "code_examples": [{title, language, code, explanation}],
-                    "exercises": [{id, title, instructions, starter_code, expected_output, hints[], estimated_minutes}],
-                    "knowledge_checks": [{question, options[], correct_answer, explanation}],
-                    "hands_on_tasks": [{title, description, requirements[], deliverable, estimated_minutes}]
+                    "implementation_task": {title, description, requirements[], deliverable, ...},
+                    "reflection_questions": [{question, prompt_for_deeper_thinking}],
+                    "knowledge_checks": [{question, options[], correct_answer, explanation, ai_followup_prompt}],
+                    "explanation": str,
+                    "exercises": [...],
+                    "hands_on_tasks": [...]
                 }
             }
         """
@@ -75,7 +104,7 @@ RULES:
         preceding = module_ctx.get("preceding_lesson_titles", [])
         preceding_str = "\n".join(f"  - {t}" for t in preceding) if preceding else "  (This is the first lesson)"
 
-        prompt = f"""Generate a full lesson for a working professional learning AI/ML skills.
+        prompt = f"""Generate a full AI-native lesson for a working professional.
 
 MODULE: {module.get('title', '')}
 SKILL: {module.get('skill_name', '')} ({module.get('skill_id', '')})
@@ -91,7 +120,9 @@ CONTEXT:
 - Preceding lessons:
 {preceding_str}
 
-Generate the lesson content. Ensure it builds on what the learner has already covered
+Generate the lesson content. The learner should leave this lesson knowing how to USE AI
+to work with this concept, not just understand it theoretically.
+Ensure it builds on what the learner has already covered
 and matches the "{lesson_type}" lesson type."""
 
         output_schema = {
@@ -100,6 +131,67 @@ and matches the "{lesson_type}" lesson type."""
                 "content": {
                     "type": "object",
                     "properties": {
+                        # --- NEW AI-native sections ---
+                        "concept_snapshot": {"type": "string"},
+                        "ai_strategy": {
+                            "type": "object",
+                            "properties": {
+                                "description": {"type": "string"},
+                                "when_to_use_ai": {
+                                    "type": "array",
+                                    "items": {"type": "string"},
+                                },
+                                "human_responsibilities": {
+                                    "type": "array",
+                                    "items": {"type": "string"},
+                                },
+                                "suggested_prompt": {"type": "string"},
+                            },
+                        },
+                        "prompt_template": {
+                            "type": "object",
+                            "properties": {
+                                "template": {"type": "string"},
+                                "placeholders": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "name": {"type": "string"},
+                                            "description": {"type": "string"},
+                                            "example": {"type": "string"},
+                                        },
+                                    },
+                                },
+                                "expected_output_shape": {"type": "string"},
+                            },
+                        },
+                        "implementation_task": {
+                            "type": "object",
+                            "properties": {
+                                "title": {"type": "string"},
+                                "description": {"type": "string"},
+                                "requirements": {
+                                    "type": "array",
+                                    "items": {"type": "string"},
+                                },
+                                "deliverable": {"type": "string"},
+                                "requires_prompt_history": {"type": "boolean"},
+                                "requires_architecture_explanation": {"type": "boolean"},
+                                "estimated_minutes": {"type": "integer"},
+                            },
+                        },
+                        "reflection_questions": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "question": {"type": "string"},
+                                    "prompt_for_deeper_thinking": {"type": "string"},
+                                },
+                            },
+                        },
+                        # --- PRESERVED sections (backward compat) ---
                         "explanation": {"type": "string"},
                         "code_examples": {
                             "type": "array",
@@ -143,6 +235,7 @@ and matches the "{lesson_type}" lesson type."""
                                     },
                                     "correct_answer": {"type": "string"},
                                     "explanation": {"type": "string"},
+                                    "ai_followup_prompt": {"type": "string"},
                                 },
                             },
                         },
@@ -173,7 +266,14 @@ and matches the "{lesson_type}" lesson type."""
 
         content = result.get("content", {})
 
-        # Ensure all required sections exist (fallback to empty lists)
+        # Ensure all sections exist with defaults
+        # New AI-native sections
+        content.setdefault("concept_snapshot", "")
+        content.setdefault("ai_strategy", {})
+        content.setdefault("prompt_template", {})
+        content.setdefault("implementation_task", {})
+        content.setdefault("reflection_questions", [])
+        # Legacy sections (backward compat)
         content.setdefault("explanation", "")
         content.setdefault("code_examples", [])
         content.setdefault("exercises", [])
