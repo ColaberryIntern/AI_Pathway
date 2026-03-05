@@ -37,9 +37,20 @@ RESPONSE FORMAT:
 - Address the learner's question directly
 - Provide guidance (not answers)
 - Suggest 1-2 prompts to try (prefixed with "Try this prompt:")
-  - Each prompt should be detailed and self-contained — include context, a role instruction, and specific constraints
-  - Good: Try this prompt: "Act as a senior data engineer. Explain how choosing between open-source and proprietary AI models affects data pipeline architecture, including 3 specific trade-offs with real-world examples."
-  - Bad: Try this prompt: "Tell me about AI models"
+
+PROMPT QUALITY RULES (CRITICAL — follow these exactly):
+- Every suggested prompt MUST be at least 25 words long
+- Every prompt MUST start with a role instruction (e.g., "Act as a...", "Imagine you are a...")
+- Every prompt MUST include the specific topic, a clear task, and at least one constraint or deliverable
+- NEVER suggest short or vague prompts like "Tell me about X" or "Explain Y"
+- NEVER start a prompt with "Imagine you" and end it abruptly — always complete the full instruction
+
+Examples:
+- GOOD: Try this prompt: "Act as a senior data engineer. Explain how choosing between open-source and proprietary AI models affects data pipeline architecture, including 3 specific trade-offs with real-world examples."
+- GOOD: Try this prompt: "Imagine you are a compliance officer at a Fortune 500 company. Discuss how using a closed AI model versus an open-source model changes your risk assessment process, covering data privacy, vendor lock-in, and audit requirements."
+- BAD: Try this prompt: "Tell me about AI models"
+- BAD: Try this prompt: "Imagine you are a data scientist"
+- BAD: Try this prompt: "Explain customization"
 """
 
     async def execute(self, task: dict) -> dict:
@@ -123,7 +134,8 @@ Respond as the AI mentor. Guide them, don't give direct answers."""
             line_clean = re.sub(r'^\d+\.\s*', '', line_clean)
             if line_clean.lower().startswith("try this prompt:") or line_clean.lower().startswith("try:"):
                 prompt_text = line_clean.split(":", 1)[-1].strip().strip('"').strip("'")
-                if prompt_text:
+                # Only include prompts that are detailed enough (at least 50 chars / ~10 words)
+                if prompt_text and len(prompt_text) >= 50:
                     suggested_prompts.append(prompt_text)
 
         self._log_execution("mentor_chat", task, {"response_length": len(response_text)})
