@@ -487,6 +487,18 @@ async def start_lesson(
 
     content = gen_result.get("content", {})
 
+    # Debug: log what the LLM actually returned
+    logger.warning(
+        "Lesson gen debug (lesson_id=%s): gen_result keys=%s, "
+        "content keys=%s, snapshot_len=%d, explanation_len=%d, kc_count=%d",
+        lesson.id,
+        list(gen_result.keys()),
+        list(content.keys()) if content else "None",
+        len(content.get("concept_snapshot", "") or ""),
+        len(content.get("explanation", "") or ""),
+        len(content.get("knowledge_checks", []) or []),
+    )
+
     # Don't cache empty shells — let subsequent visits retry generation
     if not _has_substance(content):
         logger.warning(

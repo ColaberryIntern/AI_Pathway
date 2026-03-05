@@ -1,6 +1,9 @@
 """Lesson Generator Agent — generates full lesson content on-demand."""
 import json
+import logging
 from app.agents.base import BaseAgent
+
+logger = logging.getLogger(__name__)
 
 
 class LessonGeneratorAgent(BaseAgent):
@@ -273,7 +276,18 @@ and matches the "{lesson_type}" lesson type."""
             prompt, output_schema, max_tokens=16384
         )
 
+        # The schema asks the LLM to return {"content": {...}}, but LLMs
+        # sometimes omit the wrapper and return content fields at the top level.
         content = result.get("content", {})
+
+        # Fallback: if "content" wrapper is missing/empty, check top level
+        _content_keys = {"concept_snapshot", "ai_strategy", "prompt_template",
+                         "explanation", "knowledge_checks"}
+        if not any(content.get(k) for k in _content_keys):
+            if any(result.get(k) for k in _content_keys):
+                logger.info("LLM returned content at top level (no wrapper key)")
+                content = {k: v for k, v in result.items()
+                           if k not in ("duration_ms",)}
 
         # Ensure all sections exist with defaults
         # New AI-native sections
@@ -288,6 +302,13 @@ and matches the "{lesson_type}" lesson type."""
         content.setdefault("exercises", [])
         content.setdefault("knowledge_checks", [])
         content.setdefault("hands_on_tasks", [])
+
+        logger.info(
+            "Lesson generator result: content_keys=%s, snapshot_len=%d, kc_count=%d",
+            list(content.keys()),
+            len(content.get("concept_snapshot", "") or ""),
+            len(content.get("knowledge_checks", []) or []),
+        )
 
         self._log_execution("generate_lesson", task, {"content_keys": list(content.keys())})
         duration = self._end_execution()
