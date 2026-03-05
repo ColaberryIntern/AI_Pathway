@@ -42,23 +42,15 @@ function parseMessagePrompts(content: string): Array<{ type: 'text'; value: stri
 }
 
 function PromptCard({ prompt }: { prompt: string }) {
-  const [opened, setOpened] = useState(false)
-
   return (
-    <div className="my-1.5 p-2 bg-indigo-50 border border-indigo-200 rounded-lg">
-      <p className="text-xs text-indigo-800 italic mb-1.5">{prompt}</p>
-      <button
-        onClick={() => {
-          openInLLM(prompt)
-          setOpened(true)
-          setTimeout(() => setOpened(false), 3000)
-        }}
-        className="flex items-center gap-1 text-[10px] px-2 py-1 rounded-full bg-white text-indigo-600 hover:bg-indigo-100 border border-indigo-200 font-medium transition-colors"
-      >
-        <ExternalLink className="h-2.5 w-2.5" />
-        {opened ? 'Opening...' : getRunLabel()}
-      </button>
-    </div>
+    <button
+      onClick={() => openInLLM(prompt)}
+      className="my-1 inline-flex items-center gap-1 text-xs text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-lg px-2 py-1.5 cursor-pointer transition-colors"
+      title={getRunLabel()}
+    >
+      <ExternalLink className="h-3 w-3 flex-shrink-0" />
+      <span className="italic text-left">{prompt}</span>
+    </button>
   )
 }
 
@@ -261,24 +253,17 @@ export default function MentorChat() {
 
           {/* Suggested prompts */}
           {suggestedPrompts.length > 0 && (
-            <div className="px-4 py-2 border-t border-gray-100 flex gap-1 flex-wrap">
+            <div className="px-4 py-2 border-t border-gray-100 flex gap-1.5 flex-wrap">
               {suggestedPrompts.map((p, i) => (
-                <div key={i} className="flex items-center gap-0.5">
-                  <button
-                    onClick={() => setInput(p)}
-                    className="text-[10px] px-2 py-1 rounded-l-full bg-indigo-50 text-indigo-600 hover:bg-indigo-100 truncate max-w-[10rem]"
-                    title="Ask AI Mentor"
-                  >
-                    {p}
-                  </button>
-                  <button
-                    onClick={() => openInLLM(p)}
-                    className="text-[10px] px-1.5 py-1 rounded-r-full bg-indigo-50 text-indigo-400 hover:text-indigo-600 hover:bg-indigo-100 border-l border-indigo-200"
-                    title={getRunLabel()}
-                  >
-                    <ExternalLink className="h-2.5 w-2.5" />
-                  </button>
-                </div>
+                <button
+                  key={i}
+                  onClick={() => openInLLM(p)}
+                  className="flex items-center gap-1 text-[10px] px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-600 hover:bg-indigo-100 border border-indigo-200 truncate max-w-[14rem]"
+                  title={getRunLabel()}
+                >
+                  <ExternalLink className="h-2.5 w-2.5 flex-shrink-0" />
+                  {p}
+                </button>
               ))}
             </div>
           )}

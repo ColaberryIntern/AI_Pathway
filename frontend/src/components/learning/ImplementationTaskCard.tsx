@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import {
   Hammer, Clock, FileText, MessageSquare, Send, Loader2,
-  CheckCircle2, ThumbsUp, ArrowUpCircle, ChevronDown,
+  CheckCircle2, ThumbsUp, ArrowUpCircle, ChevronDown, Bot,
 } from 'lucide-react'
 import type { ImplementationTask } from '../../types'
 import { submitImplementationTask } from '../../services/api'
@@ -298,6 +298,34 @@ export default function ImplementationTaskCard({
                 {renderFeedbackMarkdown(submitMutation.data.feedback)}
               </div>
             )}
+          </div>
+
+          {/* Suggested Mentor Questions */}
+          <div className="bg-sky-50 rounded-lg p-3 border border-sky-200">
+            <p className="text-xs font-semibold text-sky-700 uppercase tracking-wider mb-2 flex items-center gap-1">
+              <Bot className="h-3.5 w-3.5" />
+              Continue learning with your AI Mentor
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {[
+                'How can I improve my prompt engineering strategy based on this feedback?',
+                'What techniques help get more focused AI responses?',
+                'Can you walk me through an example of iterating on a prompt?',
+              ].map((q, i) => (
+                <button
+                  key={i}
+                  onClick={() => {
+                    window.dispatchEvent(
+                      new CustomEvent('open-mentor', { detail: { message: q } })
+                    )
+                  }}
+                  className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-full bg-indigo-100 text-indigo-700 hover:bg-indigo-200 border border-indigo-200 font-medium transition-colors"
+                >
+                  <Bot className="h-3 w-3" />
+                  {q}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       )}

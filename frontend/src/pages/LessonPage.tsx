@@ -185,17 +185,6 @@ export default function LessonPage() {
           )}
         </div>
         <h1 className="text-2xl font-bold text-gray-900">{lesson.title}</h1>
-
-        {/* Lesson Reactions */}
-        {pathId && lessonId && (
-          <div className="mt-3 pt-3 border-t border-gray-100">
-            <LessonReactions
-              pathId={pathId}
-              lessonId={lessonId}
-              onConfused={() => setConfusionDrawerOpen(true)}
-            />
-          </div>
-        )}
       </div>
 
       {/* Content sections */}
@@ -408,6 +397,17 @@ export default function LessonPage() {
       ) : (
         <div className="card text-center py-8 text-gray-500">
           No content available for this lesson.
+        </div>
+      )}
+
+      {/* Lesson Reactions — at the bottom so students rate after reading */}
+      {pathId && lessonId && (
+        <div className="card">
+          <LessonReactions
+            pathId={pathId}
+            lessonId={lessonId}
+            onConfused={() => setConfusionDrawerOpen(true)}
+          />
         </div>
       )}
 
