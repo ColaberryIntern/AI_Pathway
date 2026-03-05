@@ -145,12 +145,19 @@ TASK_REVIEW_SYSTEM = """You are an expert AI learning coach reviewing a learner'
 The learner completed a hands-on task and is submitting their prompt engineering strategy for feedback.
 
 Evaluate their work and provide:
-1. Specific strengths in their approach (2-3 bullet points)
-2. Areas for improvement (2-3 bullet points)
-3. A brief overall feedback paragraph (2-3 sentences)
+1. Specific strengths in their approach (2-3 bullet points, under "Strengths:")
+2. Areas for improvement (2-3 bullet points, under "Improvements:")
+3. Prompt strategy tips — specific, actionable advice on how to improve their prompt for this task (2-3 bullet points, under "Prompt Strategy Tips:")
+4. A brief overall feedback paragraph (2-3 sentences)
+
+If the learner submitted a prompt attempt, analyze it specifically:
+- Does it use a clear role instruction?
+- Does it include specific constraints and deliverables?
+- Does it provide enough context for the AI to give a useful response?
+- What prompting techniques (chain-of-thought, few-shot, role-play) would improve it?
 
 Be encouraging but honest. Focus on prompt engineering technique, not just correctness.
-Keep total response under 500 words."""
+Keep total response under 600 words."""
 
 
 @router.post(
@@ -176,9 +183,17 @@ async def submit_implementation_task(
     task_info = content.get("implementation_task", {})
     module = await db.get(Module, lesson.module_id)
 
+    learner_prompt_section = (
+        f"LEARNER'S PROMPT ATTEMPT:\n{request.learner_prompt}"
+        if request.learner_prompt.strip()
+        else "LEARNER'S PROMPT ATTEMPT:\n(No prompt provided — focus feedback on their strategy explanation)"
+    )
+
     prompt = f"""TASK: {task_info.get('title', lesson.title)}
 DESCRIPTION: {task_info.get('description', '')}
 SKILL: {module.skill_name if module else 'Unknown'}
+
+{learner_prompt_section}
 
 LEARNER'S PROMPT HISTORY:
 {request.prompt_history_summary or '(No prompt history provided)'}
@@ -186,7 +201,7 @@ LEARNER'S PROMPT HISTORY:
 LEARNER'S STRATEGY EXPLANATION:
 {request.strategy_explanation}
 
-Please evaluate their implementation approach and prompt engineering strategy."""
+Please evaluate their implementation approach and prompt engineering strategy. Provide specific tips on how to improve their prompt."""
 
     llm = get_llm_provider()
     try:
@@ -202,15 +217,19 @@ Please evaluate their implementation approach and prompt engineering strategy.""
             status_code=500, detail=f"Feedback generation failed: {str(e)}"
         )
 
-    # Parse strengths and improvements from the response
+    # Parse strengths, improvements, and prompt strategy tips from the response
     strengths = []
     improvements = []
+    prompt_strategy_tips = []
     current_section = None
     for line in feedback_text.split("\n"):
         stripped = line.strip()
         lower = stripped.lower()
         if "strength" in lower or "well" in lower and ":" in lower:
             current_section = "strengths"
+            continue
+        elif "prompt strategy" in lower or "prompt tip" in lower and ":" in lower:
+            current_section = "tips"
             continue
         elif "improve" in lower or "consider" in lower and ":" in lower:
             current_section = "improvements"
@@ -222,6 +241,8 @@ Please evaluate their implementation approach and prompt engineering strategy.""
                     strengths.append(item)
                 elif current_section == "improvements" and len(improvements) < 3:
                     improvements.append(item)
+                elif current_section == "tips" and len(prompt_strategy_tips) < 3:
+                    prompt_strategy_tips.append(item)
 
     # Update Skill Genome with project evidence
     if module:
@@ -239,4 +260,5 @@ Please evaluate their implementation approach and prompt engineering strategy.""
         feedback=feedback_text,
         strengths=strengths,
         improvements=improvements,
+        prompt_strategy_tips=prompt_strategy_tips,
     )

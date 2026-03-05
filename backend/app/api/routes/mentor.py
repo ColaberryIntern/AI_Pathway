@@ -87,9 +87,15 @@ async def mentor_chat(
         "lesson_context": lesson_context,
     })
 
-    # Add mentor response
+    # Add mentor response (include suggested_prompts so they persist in history)
     mentor_response = agent_result.get("response", "I'm here to help! Could you tell me more about what you're working on?")
-    messages.append({"role": "mentor", "content": mentor_response, "timestamp": datetime.utcnow().isoformat()})
+    suggested_prompts = agent_result.get("suggested_prompts", [])
+    messages.append({
+        "role": "mentor",
+        "content": mentor_response,
+        "timestamp": datetime.utcnow().isoformat(),
+        "suggested_prompts": suggested_prompts,
+    })
 
     # Save conversation (flag_modified ensures SQLAlchemy writes the JSON column)
     conversation.messages = messages
@@ -100,7 +106,7 @@ async def mentor_chat(
 
     return MentorChatResponse(
         response=mentor_response,
-        suggested_prompts=agent_result.get("suggested_prompts", []),
+        suggested_prompts=suggested_prompts,
         conversation_id=conversation.id,
     )
 
@@ -126,16 +132,25 @@ async def get_mentor_history(
     if not conversation:
         return MentorHistoryResponse(conversation_id="", messages=[])
 
+    raw_messages = conversation.messages or []
     messages = [
         MentorMessage(
             role=m.get("role", "user"),
             content=m.get("content", ""),
             timestamp=m.get("timestamp", ""),
         )
-        for m in (conversation.messages or [])
+        for m in raw_messages
     ]
+
+    # Extract suggested_prompts from the last mentor message (if stored)
+    last_suggested_prompts = []
+    for m in reversed(raw_messages):
+        if m.get("role") == "mentor" and m.get("suggested_prompts"):
+            last_suggested_prompts = m["suggested_prompts"]
+            break
 
     return MentorHistoryResponse(
         conversation_id=conversation.id,
         messages=messages,
+        last_suggested_prompts=last_suggested_prompts,
     )

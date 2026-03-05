@@ -230,7 +230,9 @@ export default function MentorChat() {
     }
   }
 
-  // Suggested prompts: mutation data > persisted state > history extraction
+  // Suggested prompts: mutation data > persisted state > DB-stored prompts > text extraction
+  const dbPrompts = historyData?.last_suggested_prompts ?? []
+
   const historyPrompts = useMemo(() => {
     const lastAssistant = [...messages].reverse().find(m => m.role !== 'user')
     if (!lastAssistant) return []
@@ -241,7 +243,9 @@ export default function MentorChat() {
     ? sendMutation.data.suggested_prompts
     : savedPrompts.length
       ? savedPrompts
-      : historyPrompts
+      : dbPrompts.length
+        ? dbPrompts
+        : historyPrompts
 
   if (!pathId) return null
 

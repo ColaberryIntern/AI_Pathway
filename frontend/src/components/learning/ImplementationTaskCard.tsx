@@ -1,11 +1,13 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import {
   Hammer, Clock, FileText, MessageSquare, Send, Loader2,
   CheckCircle2, ThumbsUp, ArrowUpCircle, ChevronDown, Bot,
+  ExternalLink, Lightbulb,
 } from 'lucide-react'
 import type { ImplementationTask } from '../../types'
 import { submitImplementationTask } from '../../services/api'
+import { openInLLM, getRunLabel, getPreferredLLM } from '../../utils/llm'
 
 interface PromptHistoryItem {
   iteration: number
@@ -61,9 +63,17 @@ function renderBold(text: string) {
 export default function ImplementationTaskCard({
   task, pathId, lessonId, promptHistory, onSubmit,
 }: ImplementationTaskCardProps) {
+  const [promptAttempt, setPromptAttempt] = useState('')
   const [strategy, setStrategy] = useState('')
   const [submitted, setSubmitted] = useState(false)
   const [feedbackExpanded, setFeedbackExpanded] = useState(false)
+  const [llmKey, setLlmKey] = useState(getPreferredLLM)
+
+  useEffect(() => {
+    const handler = (e: Event) => setLlmKey((e as CustomEvent).detail)
+    window.addEventListener('llm-changed', handler)
+    return () => window.removeEventListener('llm-changed', handler)
+  }, [])
 
   const submitMutation = useMutation({
     mutationFn: () => {
@@ -75,6 +85,7 @@ export default function ImplementationTaskCard({
         lesson_id: lessonId!,
         prompt_history_summary: historySummary,
         strategy_explanation: strategy,
+        learner_prompt: promptAttempt,
       })
     },
     onSuccess: () => {
@@ -83,7 +94,7 @@ export default function ImplementationTaskCard({
     },
   })
 
-  const canSubmit = !!pathId && !!lessonId && strategy.trim().length >= 20
+  const canSubmit = !!pathId && !!lessonId && promptAttempt.trim().length >= 10 && strategy.trim().length >= 20
 
   return (
     <section className="card border-2 border-purple-200 bg-gradient-to-br from-purple-50/50 to-white">
@@ -146,16 +157,54 @@ export default function ImplementationTaskCard({
         )}
       </div>
 
-      {/* Strategy Submission — with integrated prompt history */}
+      {/* Prompt Attempt + Strategy Submission */}
       {pathId && lessonId && !submitted && (
         <div className="border-t border-purple-100 pt-4 space-y-4">
+          {/* Step 1: Write your prompt */}
+          <div>
+            <label className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+              <Lightbulb className="h-4 w-4 text-amber-500" />
+              Step 1: Write your prompt for this task
+            </label>
+            <p className="text-xs text-gray-500 mt-1">
+              Craft a prompt that you would use to solve this task with an AI. We'll analyze your prompting strategy and give tips.
+            </p>
+          </div>
+
+          <div className="bg-gray-900 rounded-xl p-4">
+            <textarea
+              value={promptAttempt}
+              onChange={(e) => setPromptAttempt(e.target.value)}
+              rows={4}
+              className="w-full bg-gray-800 rounded-lg border border-gray-700 px-4 py-3 text-sm text-gray-100 font-mono focus:border-purple-400 focus:ring-2 focus:ring-purple-400/30 resize-y placeholder-gray-500"
+              placeholder="Example: Act as a senior data engineer. Given a dataset of customer transactions, write a Python script that identifies the top 10 customers by revenue, handles missing values, and outputs a clean CSV..."
+              disabled={submitMutation.isPending}
+            />
+            {promptAttempt.trim().length >= 10 && (
+              <div className="flex items-center gap-3 mt-3">
+                <button
+                  onClick={() => openInLLM(promptAttempt, llmKey)}
+                  className="flex items-center gap-1.5 text-xs font-medium text-purple-400 hover:text-purple-300 transition-colors px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 border border-gray-700"
+                >
+                  <ExternalLink className="h-3.5 w-3.5" />
+                  {getRunLabel(llmKey)}
+                </button>
+                <span className="text-xs text-gray-500">Test your prompt before submitting</span>
+              </div>
+            )}
+            {promptAttempt.trim().length > 0 && promptAttempt.trim().length < 10 && (
+              <p className="text-xs text-gray-500 mt-2">Write at least 10 characters</p>
+            )}
+          </div>
+
+          {/* Step 2: Reflect on strategy */}
           <div>
             <label className="text-sm font-semibold text-gray-900 flex items-center gap-2">
               <MessageSquare className="h-4 w-4 text-purple-600" />
-              Reflect on your prompt engineering process
+              Step 2: Reflect on your prompt engineering process
             </label>
             <p className="text-xs text-gray-500 mt-1">
-              Review your prompt iterations below, then explain what you learned.
+              Explain your thought process and what strategies you used.
             </p>
           </div>
 
@@ -181,7 +230,7 @@ export default function ImplementationTaskCard({
             <p className="text-xs font-medium text-gray-600 mb-1">Answer these in your reflection:</p>
             <p className="text-xs text-gray-500 flex items-start gap-2">
               <span className="w-4 h-4 bg-purple-100 text-purple-700 rounded-full flex items-center justify-center flex-shrink-0 font-semibold text-[10px]">1</span>
-              Which prompts from your history worked best and why?
+              Why did you structure your prompt this way?
             </p>
             <p className="text-xs text-gray-500 flex items-start gap-2">
               <span className="w-4 h-4 bg-purple-100 text-purple-700 rounded-full flex items-center justify-center flex-shrink-0 font-semibold text-[10px]">2</span>
@@ -189,16 +238,16 @@ export default function ImplementationTaskCard({
             </p>
             <p className="text-xs text-gray-500 flex items-start gap-2">
               <span className="w-4 h-4 bg-purple-100 text-purple-700 rounded-full flex items-center justify-center flex-shrink-0 font-semibold text-[10px]">3</span>
-              What did you learn or change between iterations?
+              What would you change to get a better result?
             </p>
           </div>
 
           <textarea
             value={strategy}
             onChange={(e) => setStrategy(e.target.value)}
-            rows={4}
+            rows={3}
             className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-gray-800 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 resize-y"
-            placeholder="Example: I started with a direct prompt but got vague results. In iteration 2, I added a role instruction and specific constraints, which produced much better output..."
+            placeholder="Example: I used a role-play approach by assigning the AI a senior engineer persona. I included specific constraints like output format and edge cases to handle..."
             disabled={submitMutation.isPending}
           />
           <div className="flex items-center gap-3">
@@ -210,18 +259,23 @@ export default function ImplementationTaskCard({
               {submitMutation.isPending ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin mr-1" />
-                  Getting Feedback...
+                  Analyzing Strategy...
                 </>
               ) : (
                 <>
                   <Send className="h-4 w-4 mr-1" />
-                  Submit for Feedback
+                  Submit for Strategy Tips
                 </>
               )}
             </button>
-            {strategy.trim().length > 0 && strategy.trim().length < 20 && (
+            {promptAttempt.trim().length < 10 && (
               <span className="text-xs text-gray-400">
-                Write at least 20 characters
+                Write a prompt above (Step 1) first
+              </span>
+            )}
+            {promptAttempt.trim().length >= 10 && strategy.trim().length > 0 && strategy.trim().length < 20 && (
+              <span className="text-xs text-gray-400">
+                Write at least 20 characters in your reflection
               </span>
             )}
           </div>
@@ -275,6 +329,24 @@ export default function ImplementationTaskCard({
                   <li key={i} className="text-sm text-gray-700 flex items-start gap-2">
                     <span className="text-amber-500 mt-0.5">~</span>
                     {imp}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Prompt Strategy Tips */}
+          {submitMutation.data.prompt_strategy_tips.length > 0 && (
+            <div className="bg-purple-50 rounded-lg p-3 border border-purple-200">
+              <p className="text-xs font-semibold text-purple-700 uppercase tracking-wider mb-2 flex items-center gap-1">
+                <Lightbulb className="h-3.5 w-3.5" />
+                Prompt Strategy Tips
+              </p>
+              <ul className="space-y-1">
+                {submitMutation.data.prompt_strategy_tips.map((tip, i) => (
+                  <li key={i} className="text-sm text-gray-700 flex items-start gap-2">
+                    <span className="text-purple-500 mt-0.5 font-bold">&rarr;</span>
+                    {tip}
                   </li>
                 ))}
               </ul>

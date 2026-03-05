@@ -22,3 +22,4 @@ class MentorMessage(BaseModel):
 class MentorHistoryResponse(BaseModel):
     conversation_id: str
     messages: list[MentorMessage]
+    last_suggested_prompts: list[str] = []

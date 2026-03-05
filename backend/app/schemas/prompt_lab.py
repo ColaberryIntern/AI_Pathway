@@ -33,9 +33,11 @@ class ImplementationTaskSubmitRequest(BaseModel):
     lesson_id: str
     prompt_history_summary: str = ""
     strategy_explanation: str
+    learner_prompt: str = ""
 
 
 class ImplementationTaskFeedbackResponse(BaseModel):
     feedback: str
     strengths: list[str] = []
     improvements: list[str] = []
+    prompt_strategy_tips: list[str] = []

@@ -267,11 +267,13 @@ export const submitImplementationTask = async (
     lesson_id: string
     prompt_history_summary: string
     strategy_explanation: string
+    learner_prompt: string
   }
 ): Promise<{
   feedback: string
   strengths: string[]
   improvements: string[]
+  prompt_strategy_tips: string[]
 }> => {
   const { data } = await api.post(
     `/learning/${pathId}/implementation-task/submit`,
@@ -300,6 +302,7 @@ export const getMentorHistory = async (
 ): Promise<{
   conversation_id: string
   messages: Array<{ role: string; content: string; timestamp: string }>
+  last_suggested_prompts: string[]
 }> => {
   const params = lessonId ? `?lesson_id=${lessonId}` : ''
   const { data } = await api.get(`/learning/${pathId}/mentor/history${params}`)
