@@ -276,6 +276,14 @@ and matches the "{lesson_type}" lesson type."""
             prompt, output_schema, max_tokens=16384
         )
 
+        # Debug: log raw LLM result before processing
+        logger.warning(
+            "LLM raw result keys=%s, result_str_len=%d, result_preview=%.300s",
+            list(result.keys()),
+            len(str(result)),
+            str(result)[:300],
+        )
+
         # The schema asks the LLM to return {"content": {...}}, but LLMs
         # sometimes omit the wrapper and return content fields at the top level.
         content = result.get("content", {})

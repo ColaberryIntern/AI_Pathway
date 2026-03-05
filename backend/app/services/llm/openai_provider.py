@@ -110,6 +110,17 @@ Respond with ONLY the JSON object."""
 
         content = response.content.strip()
 
+        # Debug: log raw response details
+        finish_reason = (
+            response.raw_response.choices[0].finish_reason
+            if response.raw_response.choices else "unknown"
+        )
+        logger.warning(
+            "OpenAI structured response: finish_reason=%s, content_len=%d, "
+            "content_preview=%.200s",
+            finish_reason, len(content), content[:200],
+        )
+
         try:
             return json.loads(content)
         except json.JSONDecodeError as e:
