@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   Play, RotateCcw, Clock, Loader2, ChevronDown, ChevronUp, Sparkles,
@@ -28,6 +28,23 @@ export default function PromptLab({ pathId, lessonId, template }: Props) {
   const [response, setResponse] = useState<string | null>(null)
   const [showHistory, setShowHistory] = useState(false)
   const [showFillModal, setShowFillModal] = useState(false)
+  const sectionRef = useRef<HTMLElement>(null)
+
+  // Listen for filled prompts sent from PromptTemplateCard
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const incoming = (e as CustomEvent).detail?.prompt
+      if (incoming) {
+        setPrompt(incoming)
+        setResponse(null)
+        setTimeout(() => {
+          sectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        }, 50)
+      }
+    }
+    window.addEventListener('send-to-prompt-lab', handler)
+    return () => window.removeEventListener('send-to-prompt-lab', handler)
+  }, [])
 
   // Load existing history
   const { data: history } = useQuery({
@@ -78,7 +95,7 @@ export default function PromptLab({ pathId, lessonId, template }: Props) {
   const hasPlaceholders = prompt.includes('{{')
 
   return (
-    <section className="space-y-4">
+    <section ref={sectionRef} className="space-y-4">
       <div className="flex items-center gap-2">
         <Sparkles className="h-5 w-5 text-violet-600" />
         <h2 className="text-lg font-bold text-gray-900">Prompt Lab</h2>

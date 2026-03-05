@@ -1,8 +1,6 @@
-import { useState, useEffect } from 'react'
-import { FileCode2, Copy, ClipboardCheck, ChevronDown, ExternalLink } from 'lucide-react'
+import { useState } from 'react'
+import { FileCode2, ChevronDown, Sparkles } from 'lucide-react'
 import type { PromptTemplate } from '../../types'
-import { copyToClipboard } from '../../utils/clipboard'
-import { openInLLM, getRunLabel, getPreferredLLM } from '../../utils/llm'
 import { hasUnfilledPlaceholders } from '../../utils/placeholders'
 import PlaceholderFillModal from './PlaceholderFillModal'
 
@@ -11,52 +9,28 @@ interface PromptTemplateCardProps {
 }
 
 export default function PromptTemplateCard({ template }: PromptTemplateCardProps) {
-  const [copied, setCopied] = useState(false)
   const [showPlaceholders, setShowPlaceholders] = useState(false)
-  const [llmKey, setLlmKey] = useState(getPreferredLLM)
   const [showFillModal, setShowFillModal] = useState(false)
-  const [pendingAction, setPendingAction] = useState<'run' | 'copy' | null>(null)
-
-  useEffect(() => {
-    const handler = (e: Event) => setLlmKey((e as CustomEvent).detail)
-    window.addEventListener('llm-changed', handler)
-    return () => window.removeEventListener('llm-changed', handler)
-  }, [])
 
   const needsFill = template.placeholders?.length > 0 && hasUnfilledPlaceholders(template.template)
 
-  const handleRun = () => {
-    if (needsFill) {
-      setPendingAction('run')
-      setShowFillModal(true)
-    } else {
-      openInLLM(template.template, llmKey)
-    }
+  const sendToLab = (prompt: string) => {
+    window.dispatchEvent(
+      new CustomEvent('send-to-prompt-lab', { detail: { prompt } })
+    )
   }
 
-  const handleCopy = () => {
+  const handleTestInLab = () => {
     if (needsFill) {
-      setPendingAction('copy')
       setShowFillModal(true)
     } else {
-      doCopy(template.template)
+      sendToLab(template.template)
     }
-  }
-
-  const doCopy = (text: string) => {
-    copyToClipboard(text)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
   }
 
   const handleFillComplete = (filledPrompt: string) => {
     setShowFillModal(false)
-    if (pendingAction === 'run') {
-      openInLLM(filledPrompt, llmKey)
-    } else if (pendingAction === 'copy') {
-      doCopy(filledPrompt)
-    }
-    setPendingAction(null)
+    sendToLab(filledPrompt)
   }
 
   // Highlight {{placeholders}} in the template
@@ -87,25 +61,13 @@ export default function PromptTemplateCard({ template }: PromptTemplateCardProps
         <p className="text-gray-100 text-sm font-mono whitespace-pre-wrap leading-relaxed mb-3">
           {renderTemplate(template.template)}
         </p>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={handleRun}
-            className="flex items-center gap-1.5 text-xs font-medium text-sky-400 hover:text-sky-300 transition-colors px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 border border-gray-700"
-          >
-            <ExternalLink className="h-3.5 w-3.5" />
-            {getRunLabel(llmKey)}
-          </button>
-          <button
-            onClick={handleCopy}
-            className="flex items-center gap-1.5 text-xs font-medium text-gray-400 hover:text-gray-300 transition-colors px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 border border-gray-700"
-          >
-            {copied ? (
-              <><ClipboardCheck className="h-3.5 w-3.5 text-sky-400" /> Copied!</>
-            ) : (
-              <><Copy className="h-3.5 w-3.5" /> Copy</>
-            )}
-          </button>
-        </div>
+        <button
+          onClick={handleTestInLab}
+          className="flex items-center gap-1.5 text-xs font-medium text-purple-300 hover:text-purple-200 transition-colors px-3 py-1.5 rounded-lg bg-purple-600/30 hover:bg-purple-600/40 border border-purple-500/40"
+        >
+          <Sparkles className="h-3.5 w-3.5" />
+          Test in Prompt Lab
+        </button>
       </div>
 
       {/* Expected output shape */}
@@ -152,7 +114,7 @@ export default function PromptTemplateCard({ template }: PromptTemplateCardProps
 
       <PlaceholderFillModal
         isOpen={showFillModal}
-        onClose={() => { setShowFillModal(false); setPendingAction(null) }}
+        onClose={() => setShowFillModal(false)}
         onSubmit={handleFillComplete}
         templateText={template.template}
         placeholders={template.placeholders || []}
