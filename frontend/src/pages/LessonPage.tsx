@@ -24,18 +24,34 @@ export default function LessonPage() {
   const [quizScore, setQuizScore] = useState<number | null>(null)
   const [taskSubmitted, setTaskSubmitted] = useState(false)
   const [confusionDrawerOpen, setConfusionDrawerOpen] = useState(false)
+  const [regenerating, setRegenerating] = useState(false)
 
   // Start/load lesson (generates content on-demand if needed)
   const {
     data: lesson,
     isLoading,
     error,
+    refetch,
   } = useQuery({
     queryKey: ['lesson', pathId, lessonId],
     queryFn: () => startLesson(pathId!, lessonId!),
     enabled: !!pathId && !!lessonId,
     staleTime: Infinity, // Content doesn't change once generated
   })
+
+  const handleRegenerate = async () => {
+    if (!pathId || !lessonId) return
+    setRegenerating(true)
+    try {
+      const freshLesson = await startLesson(pathId, lessonId, true)
+      queryClient.setQueryData(['lesson', pathId, lessonId], freshLesson)
+    } catch {
+      // Refetch will show the error state
+      await refetch()
+    } finally {
+      setRegenerating(false)
+    }
+  }
 
   // Load dashboard for breadcrumb context
   const { data: dashboard } = useQuery({
@@ -113,11 +129,20 @@ export default function LessonPage() {
     return (
       <div className="max-w-2xl mx-auto py-16 px-4 text-center">
         <div className="card p-8 space-y-4">
-          <AlertCircle className="h-8 w-8 text-red-500 mx-auto" />
-          <p className="text-red-600">Failed to load lesson content.</p>
-          <button onClick={() => navigate(`/learn/${pathId}`)} className="btn btn-secondary">
-            Back to Dashboard
-          </button>
+          <AlertCircle className="h-8 w-8 text-amber-500 mx-auto" />
+          <p className="text-gray-700 font-medium">Lesson content generation failed</p>
+          <p className="text-sm text-gray-500">This is usually a temporary issue. Try again.</p>
+          <div className="flex items-center justify-center gap-3">
+            <button
+              onClick={() => refetch()}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+            >
+              <Wrench className="h-4 w-4" /> Retry
+            </button>
+            <button onClick={() => navigate(`/learn/${pathId}`)} className="btn btn-secondary">
+              Back to Dashboard
+            </button>
+          </div>
         </div>
       </div>
     )
@@ -127,6 +152,13 @@ export default function LessonPage() {
 
   const content = lesson.content
   const isCompleted = lesson.status === 'completed' || completeMutation.isSuccess
+
+  // Detect empty content that needs re-generation
+  const hasSubstance = !!(
+    content?.concept_snapshot ||
+    content?.explanation ||
+    content?.knowledge_checks?.length
+  )
 
   // Detect AI-native vs legacy content format
   const isAINative = !!content?.concept_snapshot
@@ -187,8 +219,28 @@ export default function LessonPage() {
         <h1 className="text-2xl font-bold text-gray-900">{lesson.title}</h1>
       </div>
 
+      {/* Empty content — offer regeneration */}
+      {content && !hasSubstance && (
+        <div className="card text-center py-8 space-y-3">
+          <AlertCircle className="h-8 w-8 text-amber-500 mx-auto" />
+          <p className="text-gray-700 font-medium">Lesson content didn't generate properly</p>
+          <p className="text-sm text-gray-500">This can happen due to a temporary LLM issue. Click below to regenerate.</p>
+          <button
+            onClick={handleRegenerate}
+            disabled={regenerating}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+          >
+            {regenerating ? (
+              <><Loader2 className="h-4 w-4 animate-spin" /> Regenerating...</>
+            ) : (
+              <><Wrench className="h-4 w-4" /> Regenerate Lesson</>
+            )}
+          </button>
+        </div>
+      )}
+
       {/* Content sections */}
-      {content ? (
+      {content && hasSubstance ? (
         <div className="space-y-8">
           {isAINative ? (
             <>
@@ -394,11 +446,11 @@ export default function LessonPage() {
             </>
           )}
         </div>
-      ) : (
+      ) : !content ? (
         <div className="card text-center py-8 text-gray-500">
           No content available for this lesson.
         </div>
-      )}
+      ) : null}
 
       {/* Lesson Reactions — at the bottom so students rate after reading */}
       {pathId && lessonId && (

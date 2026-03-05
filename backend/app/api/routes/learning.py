@@ -369,12 +369,22 @@ async def get_modules(
     return [_module_response(m, all_lessons) for m in modules]
 
 
+def _has_substance(content: dict) -> bool:
+    """Check that cached lesson content has actual educational material."""
+    return bool(
+        content.get("concept_snapshot")
+        or content.get("explanation")
+        or content.get("knowledge_checks")
+    )
+
+
 # ── POST /lessons/{lesson_id}/start ──────────────────────────────────
 
 @router.post("/{path_id}/lessons/{lesson_id}/start", response_model=LessonResponse)
 async def start_lesson(
     path_id: str,
     lesson_id: str,
+    regenerate: bool = False,
     db: AsyncSession = Depends(get_database),
 ):
     """Start a lesson — generates content on-demand if not yet cached."""
@@ -385,8 +395,13 @@ async def start_lesson(
     if not lesson:
         raise HTTPException(status_code=404, detail="Lesson not found")
 
-    # If content already exists, return immediately
-    if lesson.content is not None:
+    # Force re-generation if requested (clears stale empty content)
+    if regenerate:
+        lesson.content = None
+        await db.commit()
+
+    # If content already exists and has substance, return immediately
+    if lesson.content is not None and _has_substance(lesson.content):
         if lesson.status == "not_started":
             lesson.status = "in_progress"
             await db.commit()
@@ -442,29 +457,48 @@ async def start_lesson(
 
     logger.info("Generating content for lesson '%s' (module: %s)...", lesson.title, module.title)
 
-    generator = LessonGeneratorAgent()
-    gen_result = await generator.execute({
-        "module": {
-            "skill_id": module.skill_id,
-            "skill_name": module.skill_name,
-            "title": module.title,
-            "current_level": module.current_level,
-            "target_level": module.target_level,
-        },
-        "lesson_number": lesson.lesson_number,
-        "lesson_title": lesson.title,
-        "lesson_type": lesson.lesson_type,
-        "lesson_focus_area": focus_area,
-        "learner_context": learner_context,
-        "module_context": {
-            "total_lessons": module.total_lessons,
-            "lesson_outline": module.lesson_outline,
-            "preceding_lesson_titles": preceding_titles,
-        },
-    })
+    try:
+        generator = LessonGeneratorAgent()
+        gen_result = await generator.execute({
+            "module": {
+                "skill_id": module.skill_id,
+                "skill_name": module.skill_name,
+                "title": module.title,
+                "current_level": module.current_level,
+                "target_level": module.target_level,
+            },
+            "lesson_number": lesson.lesson_number,
+            "lesson_title": lesson.title,
+            "lesson_type": lesson.lesson_type,
+            "lesson_focus_area": focus_area,
+            "learner_context": learner_context,
+            "module_context": {
+                "total_lessons": module.total_lessons,
+                "lesson_outline": module.lesson_outline,
+                "preceding_lesson_titles": preceding_titles,
+            },
+        })
+    except Exception as e:
+        logger.error("Lesson generation failed (lesson_id=%s): %s", lesson.id, e)
+        raise HTTPException(
+            status_code=502,
+            detail=f"Lesson content generation failed: {str(e)[:200]}",
+        )
+
+    content = gen_result.get("content", {})
+
+    # Don't cache empty shells — let subsequent visits retry generation
+    if not _has_substance(content):
+        logger.warning(
+            "Lesson generation returned empty content (lesson_id=%s)", lesson.id,
+        )
+        raise HTTPException(
+            status_code=502,
+            detail="Lesson content generation returned empty content. Please retry.",
+        )
 
     # Cache generated content
-    lesson.content = gen_result.get("content", {})
+    lesson.content = content
     lesson.status = "in_progress"
     await db.commit()
     await db.refresh(lesson)

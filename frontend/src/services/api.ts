@@ -208,8 +208,9 @@ export const getLearningModules = async (pathId: string): Promise<LearningModule
   return data
 }
 
-export const startLesson = async (pathId: string, lessonId: string): Promise<Lesson> => {
-  const { data } = await api.post(`/learning/${pathId}/lessons/${lessonId}/start`)
+export const startLesson = async (pathId: string, lessonId: string, regenerate = false): Promise<Lesson> => {
+  const params = regenerate ? '?regenerate=true' : ''
+  const { data } = await api.post(`/learning/${pathId}/lessons/${lessonId}/start${params}`)
   return data
 }
 
