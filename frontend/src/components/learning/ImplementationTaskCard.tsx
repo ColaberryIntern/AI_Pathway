@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import {
   Hammer, Clock, FileText, MessageSquare, Send, Loader2,
-  CheckCircle2, ThumbsUp, ArrowUpCircle,
+  CheckCircle2, ThumbsUp, ArrowUpCircle, ChevronDown,
 } from 'lucide-react'
 import type { ImplementationTask } from '../../types'
 import { submitImplementationTask } from '../../services/api'
@@ -21,11 +21,49 @@ interface ImplementationTaskCardProps {
   onSubmit?: () => void
 }
 
+/** Render basic markdown: **bold**, numbered lists, paragraphs */
+function renderFeedbackMarkdown(text: string) {
+  const paragraphs = text.split(/\n\n+/)
+  return paragraphs.map((para, pi) => {
+    const trimmed = para.trim()
+    if (!trimmed) return null
+
+    // Check if paragraph is a numbered list
+    const listItems = trimmed.split('\n').filter((l) => /^\d+\.\s/.test(l.trim()))
+    if (listItems.length > 1) {
+      return (
+        <ol key={pi} className="list-decimal list-inside space-y-1 mb-3">
+          {listItems.map((item, li) => (
+            <li key={li} className="text-sm text-gray-700">
+              {renderBold(item.replace(/^\d+\.\s*/, ''))}
+            </li>
+          ))}
+        </ol>
+      )
+    }
+
+    return (
+      <p key={pi} className="text-sm text-gray-700 mb-2 last:mb-0">
+        {renderBold(trimmed)}
+      </p>
+    )
+  })
+}
+
+/** Replace **text** with <strong> */
+function renderBold(text: string) {
+  const parts = text.split(/\*\*(.+?)\*\*/g)
+  return parts.map((part, i) =>
+    i % 2 === 1 ? <strong key={i} className="font-semibold text-gray-900">{part}</strong> : part
+  )
+}
+
 export default function ImplementationTaskCard({
   task, pathId, lessonId, promptHistory, onSubmit,
 }: ImplementationTaskCardProps) {
   const [strategy, setStrategy] = useState('')
   const [submitted, setSubmitted] = useState(false)
+  const [feedbackExpanded, setFeedbackExpanded] = useState(false)
 
   const submitMutation = useMutation({
     mutationFn: () => {
@@ -243,9 +281,23 @@ export default function ImplementationTaskCard({
             </div>
           )}
 
-          {/* Full Feedback */}
-          <div className="bg-white border border-gray-200 rounded-lg p-4 text-sm text-gray-700 whitespace-pre-wrap leading-relaxed max-h-64 overflow-y-auto">
-            {submitMutation.data.feedback}
+          {/* Full Feedback — collapsible */}
+          <div className="border border-gray-200 rounded-lg overflow-hidden">
+            <button
+              onClick={() => setFeedbackExpanded(!feedbackExpanded)}
+              className="w-full flex items-center justify-between px-4 py-2.5 bg-gray-50 hover:bg-gray-100 transition-colors"
+            >
+              <span className="text-xs font-semibold text-gray-600 uppercase tracking-wider flex items-center gap-1">
+                <FileText className="h-3.5 w-3.5" />
+                Detailed Feedback
+              </span>
+              <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${feedbackExpanded ? 'rotate-180' : ''}`} />
+            </button>
+            {feedbackExpanded && (
+              <div className="px-4 py-3 max-h-64 overflow-y-auto leading-relaxed">
+                {renderFeedbackMarkdown(submitMutation.data.feedback)}
+              </div>
+            )}
           </div>
         </div>
       )}
