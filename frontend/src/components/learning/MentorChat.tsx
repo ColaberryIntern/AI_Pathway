@@ -5,7 +5,7 @@ import {
   X, Send, Loader2, Sparkles, Bot, ExternalLink, ClipboardCopy,
 } from 'lucide-react'
 import { sendMentorMessage, getMentorHistory } from '../../services/api'
-import { openInLLM, getRunLabel, supportsUrlPrompt } from '../../utils/llm'
+import { openInLLM, getRunLabel, supportsUrlPrompt, getPreferredLLM } from '../../utils/llm'
 import LLMChooser from './LLMChooser'
 
 interface Message {
@@ -41,13 +41,13 @@ function parseMessagePrompts(content: string): Array<{ type: 'text'; value: stri
   return segments.length > 0 ? segments : [{ type: 'text', value: content }]
 }
 
-function PromptCard({ prompt }: { prompt: string }) {
-  const label = getRunLabel()
-  const Icon = supportsUrlPrompt() ? ExternalLink : ClipboardCopy
+function PromptCard({ prompt, llmKey }: { prompt: string; llmKey: string }) {
+  const label = getRunLabel(llmKey)
+  const Icon = supportsUrlPrompt(llmKey) ? ExternalLink : ClipboardCopy
 
   return (
     <button
-      onClick={() => openInLLM(prompt)}
+      onClick={() => openInLLM(prompt, llmKey)}
       className="my-2 flex items-start gap-1.5 text-xs text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-lg px-2.5 py-2 cursor-pointer transition-colors text-left w-full"
       title={label}
     >
@@ -66,6 +66,7 @@ export default function MentorChat() {
   const [isOpen, setIsOpen] = useState(false)
   const [input, setInput] = useState('')
   const [autoSendTrigger, setAutoSendTrigger] = useState(0)
+  const [llmKey, setLlmKey] = useState(getPreferredLLM)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const lastAssistantRef = useRef<HTMLDivElement>(null)
   const prevMessageCount = useRef(0)
@@ -103,6 +104,13 @@ export default function MentorChat() {
     }
     window.addEventListener('open-mentor', handler)
     return () => window.removeEventListener('open-mentor', handler)
+  }, [])
+
+  // Re-render prompts when user switches LLM in the chooser
+  useEffect(() => {
+    const handler = (e: Event) => setLlmKey((e as CustomEvent).detail)
+    window.addEventListener('llm-changed', handler)
+    return () => window.removeEventListener('llm-changed', handler)
   }, [])
 
   // Auto-send when a message is queued from an external "Ask AI Mentor" click
@@ -240,7 +248,7 @@ export default function MentorChat() {
                     <div className="leading-relaxed">
                       {parseMessagePrompts(msg.content).map((seg, j) =>
                         seg.type === 'prompt' ? (
-                          <PromptCard key={j} prompt={seg.value} />
+                          <PromptCard key={j} prompt={seg.value} llmKey={llmKey} />
                         ) : (
                           <span key={j} className="whitespace-pre-wrap">{seg.value}</span>
                         )
@@ -274,13 +282,13 @@ export default function MentorChat() {
           {suggestedPrompts.length > 0 && (
             <div className="px-4 py-2 border-t border-gray-100 flex gap-1.5 flex-wrap">
               {suggestedPrompts.map((p, i) => {
-                const SIcon = supportsUrlPrompt() ? ExternalLink : ClipboardCopy
+                const SIcon = supportsUrlPrompt(llmKey) ? ExternalLink : ClipboardCopy
                 return (
                   <button
                     key={i}
-                    onClick={() => openInLLM(p)}
+                    onClick={() => openInLLM(p, llmKey)}
                     className="flex items-center gap-1 text-[10px] px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-600 hover:bg-indigo-100 border border-indigo-200 truncate max-w-[14rem]"
-                    title={getRunLabel()}
+                    title={getRunLabel(llmKey)}
                   >
                     <SIcon className="h-2.5 w-2.5 flex-shrink-0" />
                     {p}

@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { CheckCircle2, XCircle, ChevronRight, Bot, ExternalLink, ClipboardCopy } from 'lucide-react'
 import type { KnowledgeCheck as KnowledgeCheckType } from '../../types'
-import { openInLLM, getRunLabel, supportsUrlPrompt } from '../../utils/llm'
+import { openInLLM, getRunLabel, supportsUrlPrompt, getPreferredLLM } from '../../utils/llm'
 
 interface KnowledgeCheckProps {
   checks: KnowledgeCheckType[]
@@ -147,6 +147,13 @@ export default function KnowledgeCheck({ checks, onComplete }: KnowledgeCheckPro
 
 function AIFollowupPrompt({ prompt }: { prompt: string }) {
   const [llmOpened, setLlmOpened] = useState(false)
+  const [llmKey, setLlmKey] = useState(getPreferredLLM)
+
+  useEffect(() => {
+    const handler = (e: Event) => setLlmKey((e as CustomEvent).detail)
+    window.addEventListener('llm-changed', handler)
+    return () => window.removeEventListener('llm-changed', handler)
+  }, [])
 
   const handleAskMentor = () => {
     window.dispatchEvent(
@@ -157,10 +164,12 @@ function AIFollowupPrompt({ prompt }: { prompt: string }) {
   }
 
   const handleRunInLLM = () => {
-    openInLLM(prompt)
+    openInLLM(prompt, llmKey)
     setLlmOpened(true)
     setTimeout(() => setLlmOpened(false), 3000)
   }
+
+  const LlmIcon = supportsUrlPrompt(llmKey) ? ExternalLink : ClipboardCopy
 
   return (
     <div className="mt-3 p-3 bg-sky-50 border border-sky-200 rounded-lg">
@@ -181,8 +190,8 @@ function AIFollowupPrompt({ prompt }: { prompt: string }) {
               onClick={handleRunInLLM}
               className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-full bg-white text-gray-600 hover:bg-gray-100 border border-gray-200 font-medium transition-colors"
             >
-              {supportsUrlPrompt() ? <ExternalLink className="h-3 w-3" /> : <ClipboardCopy className="h-3 w-3" />}
-              {llmOpened ? 'Opening...' : getRunLabel()}
+              <LlmIcon className="h-3 w-3" />
+              {llmOpened ? 'Opening...' : getRunLabel(llmKey)}
             </button>
           </div>
         </div>

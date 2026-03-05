@@ -37,6 +37,7 @@ export default function LLMChooser() {
                 setSelected(opt.key)
                 setPreferredLLM(opt.key)
                 setOpen(false)
+                window.dispatchEvent(new CustomEvent('llm-changed', { detail: opt.key }))
               }}
               className={`w-full text-left px-3 py-2 text-xs hover:bg-gray-50 transition-colors flex items-center justify-between ${
                 selected === opt.key ? 'text-indigo-600 font-semibold bg-indigo-50' : 'text-gray-700'
