@@ -41,10 +41,19 @@ Each lesson must include these sections:
 6. REFLECTION_QUESTIONS — 3-4 questions that force metacognition about AI usage:
    How did your prompt evolve? What did AI get wrong? What did you improve?
    What would you NOT delegate to AI? Why?
+   Each question's prompt_for_deeper_thinking MUST be a detailed, context-rich prompt
+   (at least 30 words) that references the specific skill, lesson topic, and a concrete
+   scenario. Example: "Ask the AI: 'As a data analyst working with sales data, explain
+   how the prompt engineering technique of role-playing would change the quality of
+   insights you get compared to generic prompting, with 2 specific examples.'"
 
 7. KNOWLEDGE_CHECKS — 3-5 quiz questions testing understanding.
-   Each question includes an ai_followup_prompt suggesting what to ask an AI assistant
-   to deepen understanding (especially for wrong answers).
+   Each question's ai_followup_prompt MUST be a detailed, self-contained question
+   (at least 30 words) that gives the AI Mentor enough context to provide targeted help.
+   Include: the specific concept being tested, what the learner should explore, and a
+   concrete angle or constraint. Example: "Explain why choosing an open-source AI model
+   for healthcare data analysis requires different compliance considerations than a
+   proprietary model, covering HIPAA, data residency, and audit trail requirements."
 
 8. EXPLANATION — A brief summary (2-3 paragraphs) for reference. This is secondary
    to the concept snapshot — keep it concise.

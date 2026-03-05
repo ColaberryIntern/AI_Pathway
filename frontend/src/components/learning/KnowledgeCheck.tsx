@@ -1,7 +1,6 @@
-import { useState, useEffect } from 'react'
-import { CheckCircle2, XCircle, ChevronRight, Bot, ExternalLink, ClipboardCopy } from 'lucide-react'
+import { useState } from 'react'
+import { CheckCircle2, XCircle, ChevronRight, Bot } from 'lucide-react'
 import type { KnowledgeCheck as KnowledgeCheckType } from '../../types'
-import { openInLLM, getRunLabel, supportsUrlPrompt, getPreferredLLM } from '../../utils/llm'
 
 interface KnowledgeCheckProps {
   checks: KnowledgeCheckType[]
@@ -127,7 +126,12 @@ export default function KnowledgeCheck({ checks, onComplete }: KnowledgeCheckPro
 
         {/* AI followup prompt suggestion */}
         {showFeedback && current.ai_followup_prompt && (
-          <AIFollowupPrompt prompt={current.ai_followup_prompt} />
+          <AIFollowupPrompt
+            prompt={current.ai_followup_prompt}
+            question={current.question}
+            selectedAnswer={selectedAnswer}
+            correctAnswer={current.correct_answer}
+          />
         )}
 
         {/* Next button */}
@@ -145,31 +149,25 @@ export default function KnowledgeCheck({ checks, onComplete }: KnowledgeCheckPro
   )
 }
 
-function AIFollowupPrompt({ prompt }: { prompt: string }) {
-  const [llmOpened, setLlmOpened] = useState(false)
-  const [llmKey, setLlmKey] = useState(getPreferredLLM)
-
-  useEffect(() => {
-    const handler = (e: Event) => setLlmKey((e as CustomEvent).detail)
-    window.addEventListener('llm-changed', handler)
-    return () => window.removeEventListener('llm-changed', handler)
-  }, [])
+function AIFollowupPrompt({ prompt, question, selectedAnswer, correctAnswer }: {
+  prompt: string
+  question: string
+  selectedAnswer: string | null
+  correctAnswer: string
+}) {
+  // Build a rich contextual message for the AI Mentor
+  const wasCorrect = selectedAnswer === correctAnswer
+  const contextualPrompt = wasCorrect
+    ? `I just answered a knowledge check question correctly: "${question}" (I chose "${selectedAnswer}"). The follow-up suggestion is: "${prompt}". Can you help me explore this topic further and challenge my understanding with a deeper question?`
+    : `I got a knowledge check question wrong. The question was: "${question}". I chose "${selectedAnswer}" but the correct answer was "${correctAnswer}". The follow-up suggestion is: "${prompt}". Can you help me understand why my answer was wrong and guide me to the right understanding?`
 
   const handleAskMentor = () => {
     window.dispatchEvent(
       new CustomEvent('open-mentor', {
-        detail: { message: prompt },
+        detail: { message: contextualPrompt },
       })
     )
   }
-
-  const handleRunInLLM = () => {
-    openInLLM(prompt, llmKey)
-    setLlmOpened(true)
-    setTimeout(() => setLlmOpened(false), 3000)
-  }
-
-  const LlmIcon = supportsUrlPrompt(llmKey) ? ExternalLink : ClipboardCopy
 
   return (
     <div className="mt-3 p-3 bg-sky-50 border border-sky-200 rounded-lg">
@@ -178,22 +176,13 @@ function AIFollowupPrompt({ prompt }: { prompt: string }) {
         <div className="flex-1 min-w-0">
           <p className="text-xs font-medium text-sky-700 mb-1">Dig deeper:</p>
           <p className="text-sm text-gray-700 italic mb-2">{prompt}</p>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={handleAskMentor}
-              className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-full bg-indigo-100 text-indigo-700 hover:bg-indigo-200 border border-indigo-200 font-medium transition-colors"
-            >
-              <Bot className="h-3 w-3" />
-              Ask AI Mentor
-            </button>
-            <button
-              onClick={handleRunInLLM}
-              className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-full bg-white text-gray-600 hover:bg-gray-100 border border-gray-200 font-medium transition-colors"
-            >
-              <LlmIcon className="h-3 w-3" />
-              {llmOpened ? 'Opening...' : getRunLabel(llmKey)}
-            </button>
-          </div>
+          <button
+            onClick={handleAskMentor}
+            className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-full bg-indigo-100 text-indigo-700 hover:bg-indigo-200 border border-indigo-200 font-medium transition-colors"
+          >
+            <Bot className="h-3 w-3" />
+            Ask AI Mentor
+          </button>
         </div>
       </div>
     </div>

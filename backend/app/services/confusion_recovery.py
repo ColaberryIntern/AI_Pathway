@@ -20,7 +20,7 @@ Respond with VALID JSON matching this exact schema:
     "step_by_step": ["Step 1...", "Step 2...", "Step 3..."],
     "real_world_example": "A concrete example from industry/daily life",
     "common_misconceptions": ["Misconception 1...", "Misconception 2..."],
-    "suggested_mentor_prompt": "A question the learner can ask the AI Mentor to go deeper"
+    "suggested_mentor_prompt": "A detailed question (at least 30 words) the learner can ask the AI Mentor to go deeper. Include the specific concept, what aspect confused them, and what kind of explanation would help (e.g., a comparison, a worked example, a real-world scenario). Example: 'I'm confused about how prompt chaining works in practice. Can you walk me through a concrete example where I need to break a complex task into 3 smaller prompts, showing how the output of each feeds into the next?'"
 }
 
 Guidelines:
@@ -28,6 +28,7 @@ Guidelines:
 - The analogy should be from a completely different domain
 - Step-by-step should break down the concept into tiny, digestible pieces
 - Include 2-3 common misconceptions
+- The suggested_mentor_prompt MUST be detailed and context-rich (at least 30 words) — never a short generic question like "explain X"
 - Keep total response under 500 words
 - Return ONLY valid JSON, no markdown or extra text"""
 
@@ -109,7 +110,7 @@ Please provide an alternative explanation using a different approach, analogy, a
                     "You don't need to memorize everything — understanding the principle is enough",
                     "It's normal to feel confused the first time — mastery comes with practice",
                 ],
-                "suggested_mentor_prompt": f"Can you explain {skill_name} using a simple everyday example?",
+                "suggested_mentor_prompt": f"I'm struggling to understand {skill_name}. Can you explain it using a simple real-world analogy, then walk me through a concrete step-by-step example of how it works in practice? I'd especially like to understand when and why I would use this skill in a professional setting.",
             }
 
         # Save confusion event

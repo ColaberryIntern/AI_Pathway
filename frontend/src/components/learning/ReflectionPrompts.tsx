@@ -50,9 +50,10 @@ export default function ReflectionPrompts({ questions }: ReflectionPromptsProps)
                   </div>
                   <button
                     onClick={() => {
+                      const contextMessage = `I'm reflecting on this question: "${q.question}". The deeper thinking prompt is: "${q.prompt_for_deeper_thinking}". Can you help me think through this reflection and guide me toward insights I might be missing?`
                       window.dispatchEvent(
                         new CustomEvent('open-mentor', {
-                          detail: { message: q.prompt_for_deeper_thinking },
+                          detail: { message: contextMessage },
                         })
                       )
                     }}

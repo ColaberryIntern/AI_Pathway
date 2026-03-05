@@ -300,7 +300,7 @@ export default function ImplementationTaskCard({
             )}
           </div>
 
-          {/* Suggested Mentor Questions */}
+          {/* Suggested Mentor Questions — contextual based on task + feedback */}
           <div className="bg-sky-50 rounded-lg p-3 border border-sky-200">
             <p className="text-xs font-semibold text-sky-700 uppercase tracking-wider mb-2 flex items-center gap-1">
               <Bot className="h-3.5 w-3.5" />
@@ -308,9 +308,9 @@ export default function ImplementationTaskCard({
             </p>
             <div className="flex flex-wrap gap-2">
               {[
-                'How can I improve my prompt engineering strategy based on this feedback?',
-                'What techniques help get more focused AI responses?',
-                'Can you walk me through an example of iterating on a prompt?',
+                `I just completed the task "${task.title}" and received feedback. The deliverable was: "${task.deliverable}". Based on this, what are the most common gaps learners have and how can I address them?`,
+                `My implementation task required: ${task.requirements.slice(0, 2).join('; ')}. ${submitMutation.data.improvements.length > 0 ? `The feedback said I should improve on: "${submitMutation.data.improvements[0]}".` : ''} Can you help me understand what a stronger approach looks like and walk me through it step by step?`,
+                `I'm working on "${task.title}" and want to go deeper. What are the key concepts I should master to excel at this type of task, and what are common misconceptions that hold learners back?`,
               ].map((q, i) => (
                 <button
                   key={i}
@@ -319,10 +319,11 @@ export default function ImplementationTaskCard({
                       new CustomEvent('open-mentor', { detail: { message: q } })
                     )
                   }}
-                  className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-full bg-indigo-100 text-indigo-700 hover:bg-indigo-200 border border-indigo-200 font-medium transition-colors"
+                  className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-lg bg-indigo-100 text-indigo-700 hover:bg-indigo-200 border border-indigo-200 font-medium transition-colors text-left"
+                  title={q}
                 >
-                  <Bot className="h-3 w-3" />
-                  {q}
+                  <Bot className="h-3 w-3 flex-shrink-0" />
+                  <span className="line-clamp-2">{q}</span>
                 </button>
               ))}
             </div>

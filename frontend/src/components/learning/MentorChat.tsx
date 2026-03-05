@@ -2,10 +2,11 @@ import { useState, useRef, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
-  X, Send, Loader2, Sparkles, Bot, ExternalLink, ClipboardCopy,
+  X, Send, Loader2, Sparkles, Bot, ExternalLink, ClipboardCopy, Check,
 } from 'lucide-react'
 import { sendMentorMessage, getMentorHistory } from '../../services/api'
 import { openInLLM, getRunLabel, supportsUrlPrompt, getPreferredLLM } from '../../utils/llm'
+import { copyToClipboard } from '../../utils/clipboard'
 import LLMChooser from './LLMChooser'
 
 interface Message {
@@ -45,21 +46,39 @@ function parseMessagePrompts(content: string): Array<{ type: 'text'; value: stri
 }
 
 function PromptCard({ prompt, llmKey }: { prompt: string; llmKey: string }) {
+  const [copied, setCopied] = useState(false)
   const label = getRunLabel(llmKey)
-  const Icon = supportsUrlPrompt(llmKey) ? ExternalLink : ClipboardCopy
+
+  const handleCopy = async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    await copyToClipboard(prompt)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
 
   return (
-    <button
-      onClick={() => openInLLM(prompt, llmKey)}
-      className="my-2 flex items-start gap-1.5 text-xs text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-lg px-2.5 py-2 cursor-pointer transition-colors text-left w-full"
+    <div
+      className="my-2 text-xs text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-lg px-2.5 py-2 w-full"
       title={prompt}
     >
-      <Icon className="h-3 w-3 flex-shrink-0 mt-0.5" />
-      <span className="flex-1">
-        <span className="italic">{prompt}</span>
-        <span className="block text-[10px] text-indigo-400 mt-0.5">{label}</span>
-      </span>
-    </button>
+      <p className="italic leading-relaxed mb-1.5">{prompt}</p>
+      <div className="flex items-center gap-2">
+        <button
+          onClick={() => openInLLM(prompt, llmKey)}
+          className="flex items-center gap-1 text-[10px] font-medium text-indigo-600 hover:text-indigo-800 transition-colors"
+        >
+          <ExternalLink className="h-3 w-3" />
+          {label}
+        </button>
+        <button
+          onClick={handleCopy}
+          className="flex items-center gap-1 text-[10px] font-medium text-gray-500 hover:text-gray-700 transition-colors"
+        >
+          {copied ? <Check className="h-3 w-3 text-emerald-500" /> : <ClipboardCopy className="h-3 w-3" />}
+          {copied ? 'Copied!' : 'Copy'}
+        </button>
+      </div>
+    </div>
   )
 }
 
