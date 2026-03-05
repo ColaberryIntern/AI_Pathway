@@ -2,14 +2,64 @@ import { useState, useRef, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
-  X, Send, Loader2, Sparkles, Bot,
+  X, Send, Loader2, Sparkles, Bot, ExternalLink,
 } from 'lucide-react'
 import { sendMentorMessage, getMentorHistory } from '../../services/api'
+import { openInLLM, getPreferredLLM, getLLMOption } from '../../utils/llm'
 
 interface Message {
   role: string
   content: string
   timestamp: string
+}
+
+/**
+ * Parse an assistant message to find embedded prompts.
+ * Returns segments: text parts and extracted prompts.
+ */
+function parseMessagePrompts(content: string): Array<{ type: 'text'; value: string } | { type: 'prompt'; value: string }> {
+  // Match patterns like: "Try this prompt: '...'" or 'Try this prompt: "..."'
+  // Also: "Prompt: '...'" or "Ask: '...'"
+  const promptPattern = /(?:(?:try|use|run|ask|enter)\s+(?:this\s+)?(?:prompt|question|query)|prompt)\s*:\s*[""''](.+?)[""'']/gi
+  const segments: Array<{ type: 'text'; value: string } | { type: 'prompt'; value: string }> = []
+  let lastIndex = 0
+  let match: RegExpExecArray | null
+
+  while ((match = promptPattern.exec(content)) !== null) {
+    if (match.index > lastIndex) {
+      segments.push({ type: 'text', value: content.slice(lastIndex, match.index) })
+    }
+    segments.push({ type: 'prompt', value: match[1] })
+    lastIndex = match.index + match[0].length
+  }
+
+  if (lastIndex < content.length) {
+    segments.push({ type: 'text', value: content.slice(lastIndex) })
+  }
+
+  return segments.length > 0 ? segments : [{ type: 'text', value: content }]
+}
+
+function PromptCard({ prompt }: { prompt: string }) {
+  const [opened, setOpened] = useState(false)
+  const llm = getLLMOption(getPreferredLLM())
+
+  return (
+    <div className="my-1.5 p-2 bg-indigo-50 border border-indigo-200 rounded-lg">
+      <p className="text-xs text-indigo-800 italic mb-1.5">{prompt}</p>
+      <button
+        onClick={() => {
+          openInLLM(prompt)
+          setOpened(true)
+          setTimeout(() => setOpened(false), 3000)
+        }}
+        className="flex items-center gap-1 text-[10px] px-2 py-1 rounded-full bg-white text-indigo-600 hover:bg-indigo-100 border border-indigo-200 font-medium transition-colors"
+      >
+        <ExternalLink className="h-2.5 w-2.5" />
+        {opened ? 'Prompt copied!' : `Run in ${llm.name}`}
+      </button>
+    </div>
+  )
 }
 
 export default function MentorChat() {
@@ -152,7 +202,19 @@ export default function MentorChat() {
                       : 'bg-gray-100 text-gray-800 rounded-bl-md'
                   }`}
                 >
-                  <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
+                  {msg.role === 'assistant' ? (
+                    <div className="leading-relaxed">
+                      {parseMessagePrompts(msg.content).map((seg, j) =>
+                        seg.type === 'prompt' ? (
+                          <PromptCard key={j} prompt={seg.value} />
+                        ) : (
+                          <span key={j} className="whitespace-pre-wrap">{seg.value}</span>
+                        )
+                      )}
+                    </div>
+                  ) : (
+                    <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
+                  )}
                 </div>
               </div>
             ))}
@@ -177,13 +239,22 @@ export default function MentorChat() {
           {suggestedPrompts.length > 0 && (
             <div className="px-4 py-2 border-t border-gray-100 flex gap-1 flex-wrap">
               {suggestedPrompts.map((p, i) => (
-                <button
-                  key={i}
-                  onClick={() => setInput(p)}
-                  className="text-[10px] px-2 py-1 rounded-full bg-indigo-50 text-indigo-600 hover:bg-indigo-100 truncate max-w-[12rem]"
-                >
-                  {p}
-                </button>
+                <div key={i} className="flex items-center gap-0.5">
+                  <button
+                    onClick={() => setInput(p)}
+                    className="text-[10px] px-2 py-1 rounded-l-full bg-indigo-50 text-indigo-600 hover:bg-indigo-100 truncate max-w-[10rem]"
+                    title="Ask AI Mentor"
+                  >
+                    {p}
+                  </button>
+                  <button
+                    onClick={() => openInLLM(p)}
+                    className="text-[10px] px-1.5 py-1 rounded-r-full bg-indigo-50 text-indigo-400 hover:text-indigo-600 hover:bg-indigo-100 border-l border-indigo-200"
+                    title={`Run in ${getLLMOption(getPreferredLLM()).name}`}
+                  >
+                    <ExternalLink className="h-2.5 w-2.5" />
+                  </button>
+                </div>
               ))}
             </div>
           )}

@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { CheckCircle2, XCircle, ChevronRight, Copy, ClipboardCheck, Bot } from 'lucide-react'
+import { CheckCircle2, XCircle, ChevronRight, Bot, ExternalLink } from 'lucide-react'
 import type { KnowledgeCheck as KnowledgeCheckType } from '../../types'
-import { copyToClipboard } from '../../utils/clipboard'
+import { openInLLM, getPreferredLLM, getLLMOption } from '../../utils/llm'
 
 interface KnowledgeCheckProps {
   checks: KnowledgeCheckType[]
@@ -146,12 +146,21 @@ export default function KnowledgeCheck({ checks, onComplete }: KnowledgeCheckPro
 }
 
 function AIFollowupPrompt({ prompt }: { prompt: string }) {
-  const [copied, setCopied] = useState(false)
+  const [llmOpened, setLlmOpened] = useState(false)
+  const llm = getLLMOption(getPreferredLLM())
 
-  const handleCopy = () => {
-    copyToClipboard(prompt)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
+  const handleAskMentor = () => {
+    window.dispatchEvent(
+      new CustomEvent('open-mentor', {
+        detail: { message: prompt },
+      })
+    )
+  }
+
+  const handleRunInLLM = () => {
+    openInLLM(prompt)
+    setLlmOpened(true)
+    setTimeout(() => setLlmOpened(false), 3000)
   }
 
   return (
@@ -159,19 +168,25 @@ function AIFollowupPrompt({ prompt }: { prompt: string }) {
       <div className="flex items-start gap-2">
         <Bot className="h-4 w-4 text-sky-600 flex-shrink-0 mt-0.5" />
         <div className="flex-1 min-w-0">
-          <p className="text-xs font-medium text-sky-700 mb-1">Ask your AI assistant:</p>
-          <p className="text-sm text-gray-700 italic">{prompt}</p>
+          <p className="text-xs font-medium text-sky-700 mb-1">Dig deeper:</p>
+          <p className="text-sm text-gray-700 italic mb-2">{prompt}</p>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleAskMentor}
+              className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-full bg-indigo-100 text-indigo-700 hover:bg-indigo-200 border border-indigo-200 font-medium transition-colors"
+            >
+              <Bot className="h-3 w-3" />
+              Ask AI Mentor
+            </button>
+            <button
+              onClick={handleRunInLLM}
+              className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-full bg-white text-gray-600 hover:bg-gray-100 border border-gray-200 font-medium transition-colors"
+            >
+              <ExternalLink className="h-3 w-3" />
+              {llmOpened ? 'Prompt copied!' : `Run in ${llm.name}`}
+            </button>
+          </div>
         </div>
-        <button
-          onClick={handleCopy}
-          className="p-1 rounded hover:bg-sky-100 transition-colors flex-shrink-0"
-        >
-          {copied ? (
-            <ClipboardCheck className="h-3.5 w-3.5 text-sky-600" />
-          ) : (
-            <Copy className="h-3.5 w-3.5 text-sky-400" />
-          )}
-        </button>
       </div>
     </div>
   )

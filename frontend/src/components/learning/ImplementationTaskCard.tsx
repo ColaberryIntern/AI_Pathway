@@ -94,12 +94,6 @@ export default function ImplementationTaskCard({
 
       {/* Info badges */}
       <div className="flex flex-wrap gap-3 text-xs mb-4">
-        {task.requires_prompt_history && (
-          <div className="flex items-center gap-1.5 bg-sky-50 border border-sky-200 text-sky-700 px-3 py-1.5 rounded-full font-medium">
-            <MessageSquare className="h-3.5 w-3.5" />
-            Include prompt history
-          </div>
-        )}
         {task.requires_architecture_explanation && (
           <div className="flex items-center gap-1.5 bg-indigo-50 border border-indigo-200 text-indigo-700 px-3 py-1.5 rounded-full font-medium">
             <FileText className="h-3.5 w-3.5" />
@@ -114,35 +108,59 @@ export default function ImplementationTaskCard({
         )}
       </div>
 
-      {/* Prompt History Summary */}
-      {promptHistory && promptHistory.length > 0 && (
-        <div className="mb-4">
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
-            Your Prompt Lab History ({promptHistory.length} iteration{promptHistory.length !== 1 ? 's' : ''})
-          </p>
-          <div className="space-y-1.5 max-h-32 overflow-y-auto bg-gray-50 rounded-lg p-3 border border-gray-200">
-            {promptHistory.map((h) => (
-              <div key={h.iteration} className="text-xs text-gray-600">
-                <span className="font-medium text-purple-600">v{h.iteration}:</span>{' '}
-                {h.prompt_text.slice(0, 100)}{h.prompt_text.length > 100 ? '...' : ''}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Strategy Submission */}
+      {/* Strategy Submission — with integrated prompt history */}
       {pathId && lessonId && !submitted && (
-        <div className="border-t border-purple-100 pt-4 space-y-3">
-          <label className="text-sm font-medium text-gray-700">
-            Explain your strategy and approach
-          </label>
+        <div className="border-t border-purple-100 pt-4 space-y-4">
+          <div>
+            <label className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+              <MessageSquare className="h-4 w-4 text-purple-600" />
+              Reflect on your prompt engineering process
+            </label>
+            <p className="text-xs text-gray-500 mt-1">
+              Review your prompt iterations below, then explain what you learned.
+            </p>
+          </div>
+
+          {/* Prompt History — directly above textarea */}
+          {promptHistory && promptHistory.length > 0 && (
+            <div className="bg-purple-50 rounded-lg p-3 border border-purple-200">
+              <p className="text-xs font-semibold text-purple-700 uppercase tracking-wider mb-2">
+                Your Prompt Lab History ({promptHistory.length} iteration{promptHistory.length !== 1 ? 's' : ''})
+              </p>
+              <div className="space-y-1.5 max-h-32 overflow-y-auto">
+                {promptHistory.map((h) => (
+                  <div key={h.iteration} className="text-xs text-gray-600">
+                    <span className="font-medium text-purple-600">v{h.iteration}:</span>{' '}
+                    {h.prompt_text.slice(0, 100)}{h.prompt_text.length > 100 ? '...' : ''}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Guided questions */}
+          <div className="bg-gray-50 rounded-lg p-3 border border-gray-200 space-y-1.5">
+            <p className="text-xs font-medium text-gray-600 mb-1">Answer these in your reflection:</p>
+            <p className="text-xs text-gray-500 flex items-start gap-2">
+              <span className="w-4 h-4 bg-purple-100 text-purple-700 rounded-full flex items-center justify-center flex-shrink-0 font-semibold text-[10px]">1</span>
+              Which prompts from your history worked best and why?
+            </p>
+            <p className="text-xs text-gray-500 flex items-start gap-2">
+              <span className="w-4 h-4 bg-purple-100 text-purple-700 rounded-full flex items-center justify-center flex-shrink-0 font-semibold text-[10px]">2</span>
+              What strategy did you use (chain-of-thought, few-shot, role-play, etc.)?
+            </p>
+            <p className="text-xs text-gray-500 flex items-start gap-2">
+              <span className="w-4 h-4 bg-purple-100 text-purple-700 rounded-full flex items-center justify-center flex-shrink-0 font-semibold text-[10px]">3</span>
+              What did you learn or change between iterations?
+            </p>
+          </div>
+
           <textarea
             value={strategy}
             onChange={(e) => setStrategy(e.target.value)}
             rows={4}
             className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-gray-800 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 resize-y"
-            placeholder="Describe what prompts you used, why you chose that approach, and what you learned from the AI's responses..."
+            placeholder="Example: I started with a direct prompt but got vague results. In iteration 2, I added a role instruction and specific constraints, which produced much better output..."
             disabled={submitMutation.isPending}
           />
           <div className="flex items-center gap-3">

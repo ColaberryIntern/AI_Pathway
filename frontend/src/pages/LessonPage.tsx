@@ -16,6 +16,7 @@ import ImplementationTaskCard from '../components/learning/ImplementationTaskCar
 import ReflectionPrompts from '../components/learning/ReflectionPrompts'
 import LessonReactions from '../components/learning/LessonReactions'
 import ConfusionRecoveryDrawer from '../components/learning/ConfusionRecoveryDrawer'
+import LLMChooser from '../components/learning/LLMChooser'
 
 export default function LessonPage() {
   const { pathId, lessonId } = useParams<{ pathId: string; lessonId: string }>()
@@ -186,14 +187,15 @@ export default function LessonPage() {
         </div>
         <h1 className="text-2xl font-bold text-gray-900">{lesson.title}</h1>
 
-        {/* Lesson Reactions */}
+        {/* Lesson Reactions + LLM Chooser */}
         {pathId && lessonId && (
-          <div className="mt-3 pt-3 border-t border-gray-100">
+          <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between flex-wrap gap-2">
             <LessonReactions
               pathId={pathId}
               lessonId={lessonId}
               onConfused={() => setConfusionDrawerOpen(true)}
             />
+            <LLMChooser />
           </div>
         )}
       </div>
