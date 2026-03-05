@@ -36,21 +36,25 @@ RULES:
 RESPONSE FORMAT:
 - Address the learner's question directly
 - Provide guidance (not answers)
-- Suggest 1-2 prompts to try (prefixed with "Try this prompt:")
+- Suggest 1-2 prompts inline (prefixed with "Try this prompt:")
+- After your response, add exactly 2 follow-up prompts on new lines prefixed with "Explore further:"
+  - These MUST be DIFFERENT from the inline prompts — they should expand the topic into adjacent areas, offer a contrasting perspective, or go one level deeper
+  - Think: "What would a curious learner naturally ask next after exploring the inline prompts?"
 
 PROMPT QUALITY RULES (CRITICAL — follow these exactly):
-- Every suggested prompt MUST be at least 25 words long
+- Every suggested prompt (both inline and follow-up) MUST be at least 25 words long
 - Every prompt MUST start with a role instruction (e.g., "Act as a...", "Imagine you are a...")
 - Every prompt MUST include the specific topic, a clear task, and at least one constraint or deliverable
 - NEVER suggest short or vague prompts like "Tell me about X" or "Explain Y"
 - NEVER start a prompt with "Imagine you" and end it abruptly — always complete the full instruction
+- Follow-up prompts must NOT repeat or rephrase the inline prompts — they must explore new ground
 
-Examples:
-- GOOD: Try this prompt: "Act as a senior data engineer. Explain how choosing between open-source and proprietary AI models affects data pipeline architecture, including 3 specific trade-offs with real-world examples."
-- GOOD: Try this prompt: "Imagine you are a compliance officer at a Fortune 500 company. Discuss how using a closed AI model versus an open-source model changes your risk assessment process, covering data privacy, vendor lock-in, and audit requirements."
-- BAD: Try this prompt: "Tell me about AI models"
-- BAD: Try this prompt: "Imagine you are a data scientist"
-- BAD: Try this prompt: "Explain customization"
+Examples of inline prompts:
+- Try this prompt: "Act as a senior data engineer. Explain how choosing between open-source and proprietary AI models affects data pipeline architecture, including 3 specific trade-offs with real-world examples."
+
+Examples of follow-up prompts (exploring adjacent territory):
+- Explore further: "Act as a CTO at a mid-size startup. Compare the total cost of ownership between hosting an open-source LLM versus using a proprietary API, including compute, maintenance, and scaling considerations over 2 years."
+- Explore further: "Imagine you are a machine learning engineer. Describe how to fine-tune an open-source model for a domain-specific task, covering dataset preparation, training infrastructure, and evaluation metrics."
 """
 
     async def execute(self, task: dict) -> dict:
@@ -125,18 +129,30 @@ Respond as the AI mentor. Guide them, don't give direct answers."""
             temperature=0.7,
         )
 
-        # Extract suggested prompts from the response (simple heuristic)
+        # Extract follow-up prompts ("Explore further:") for the bottom chips.
+        # Inline prompts ("Try this prompt:") stay in the message body and are
+        # rendered by the frontend's parseMessagePrompts() — no need to extract them here.
         suggested_prompts = []
         for line in response_text.split("\n"):
             line_stripped = line.strip()
             # Strip markdown list markers: "- ", "* ", "• ", "1. ", etc.
             line_clean = line_stripped.lstrip("-*•").lstrip()
             line_clean = re.sub(r'^\d+\.\s*', '', line_clean)
-            if line_clean.lower().startswith("try this prompt:") or line_clean.lower().startswith("try:"):
+            if line_clean.lower().startswith("explore further:"):
                 prompt_text = line_clean.split(":", 1)[-1].strip().strip('"').strip("'")
-                # Only include prompts that are detailed enough (at least 50 chars / ~10 words)
                 if prompt_text and len(prompt_text) >= 50:
                     suggested_prompts.append(prompt_text)
+
+        # Fallback: if LLM didn't use "Explore further:" prefix, grab "Try this prompt:" ones
+        if not suggested_prompts:
+            for line in response_text.split("\n"):
+                line_stripped = line.strip()
+                line_clean = line_stripped.lstrip("-*•").lstrip()
+                line_clean = re.sub(r'^\d+\.\s*', '', line_clean)
+                if line_clean.lower().startswith("try this prompt:") or line_clean.lower().startswith("try:"):
+                    prompt_text = line_clean.split(":", 1)[-1].strip().strip('"').strip("'")
+                    if prompt_text and len(prompt_text) >= 50:
+                        suggested_prompts.append(prompt_text)
 
         self._log_execution("mentor_chat", task, {"response_length": len(response_text)})
         duration = self._end_execution()

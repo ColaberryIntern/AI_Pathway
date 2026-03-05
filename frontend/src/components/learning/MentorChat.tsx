@@ -15,30 +15,33 @@ interface Message {
 }
 
 /**
- * Parse an assistant message to find embedded prompts.
- * Returns segments: text parts and extracted prompts.
+ * Parse an assistant message to find embedded prompts and strip "Explore further:" lines.
+ * Returns segments: text parts and extracted inline prompts.
+ * "Explore further:" prompts are removed from display (they appear as bottom chips instead).
  */
 function parseMessagePrompts(content: string): Array<{ type: 'text'; value: string } | { type: 'prompt'; value: string }> {
-  // Match patterns like: "Try this prompt: '...'" or 'Try this prompt: "..."'
-  // Also: "Prompt: '...'" or "Ask: '...'"
+  // First strip "Explore further:" lines — those only belong in the bottom suggested chips
+  const cleaned = content.replace(/^[-*•]?\s*(?:\d+\.\s*)?explore further:\s*["''].+?["'']\s*$/gim, '').replace(/\n{3,}/g, '\n\n')
+
+  // Match inline prompts like: "Try this prompt: '...'" or "Ask: '...'"
   const promptPattern = /(?:(?:try|use|run|ask|enter)\s+(?:this\s+)?(?:prompt|question|query)|prompt)\s*:\s*[""''](.+?)[""'']/gi
   const segments: Array<{ type: 'text'; value: string } | { type: 'prompt'; value: string }> = []
   let lastIndex = 0
   let match: RegExpExecArray | null
 
-  while ((match = promptPattern.exec(content)) !== null) {
+  while ((match = promptPattern.exec(cleaned)) !== null) {
     if (match.index > lastIndex) {
-      segments.push({ type: 'text', value: content.slice(lastIndex, match.index) })
+      segments.push({ type: 'text', value: cleaned.slice(lastIndex, match.index) })
     }
     segments.push({ type: 'prompt', value: match[1] })
     lastIndex = match.index + match[0].length
   }
 
-  if (lastIndex < content.length) {
-    segments.push({ type: 'text', value: content.slice(lastIndex) })
+  if (lastIndex < cleaned.length) {
+    segments.push({ type: 'text', value: cleaned.slice(lastIndex) })
   }
 
-  return segments.length > 0 ? segments : [{ type: 'text', value: content }]
+  return segments.length > 0 ? segments : [{ type: 'text', value: cleaned }]
 }
 
 function PromptCard({ prompt, llmKey }: { prompt: string; llmKey: string }) {
