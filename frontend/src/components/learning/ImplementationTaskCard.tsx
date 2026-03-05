@@ -7,7 +7,7 @@ import {
 } from 'lucide-react'
 import type { ImplementationTask } from '../../types'
 import { submitImplementationTask } from '../../services/api'
-import { openInLLM, getRunLabel, getPreferredLLM } from '../../utils/llm'
+import { openInLLM, getOpenLabel, getPreferredLLM } from '../../utils/llm'
 
 interface ImplementationTaskCardProps {
   task: ImplementationTask
@@ -162,7 +162,7 @@ export default function ImplementationTaskCard({
               className="flex items-center gap-1.5 text-sm font-medium text-purple-600 hover:text-purple-700 transition-colors px-4 py-2 rounded-lg bg-purple-50 hover:bg-purple-100 border border-purple-200"
             >
               <ExternalLink className="h-4 w-4" />
-              {getRunLabel(llmKey)}
+              {getOpenLabel(llmKey)}
             </button>
           </div>
 

@@ -50,11 +50,17 @@ export function supportsUrlPrompt(key?: string): boolean {
   return URL_PROMPT_SUPPORTED.has(key || getPreferredLLM())
 }
 
-/** Get button label for the selected LLM */
+/** Get button label for the selected LLM (when sending a prompt) */
 export function getRunLabel(key?: string): string {
   const k = key || getPreferredLLM()
   const llm = getLLMOption(k)
   return supportsUrlPrompt(k) ? `Run in ${llm.name}` : `Copy & open ${llm.name}`
+}
+
+/** Get button label for just opening the LLM (no prompt) */
+export function getOpenLabel(key?: string): string {
+  const llm = getLLMOption(key || getPreferredLLM())
+  return `Open ${llm.name}`
 }
 
 /** Show a brief toast telling the user to paste */
@@ -82,7 +88,10 @@ function showPasteToast(llmName: string): void {
 export async function openInLLM(prompt: string, llmKey?: string): Promise<void> {
   const llm = getLLMOption(llmKey || getPreferredLLM())
 
-  if (supportsUrlPrompt(llm.key)) {
+  if (!prompt.trim()) {
+    // No prompt — just open the LLM site
+    window.open(llm.url, '_blank')
+  } else if (supportsUrlPrompt(llm.key)) {
     // Direct URL injection
     const encoded = encodeURIComponent(prompt)
     const separator = llm.url.includes('?') ? '&' : '?'
