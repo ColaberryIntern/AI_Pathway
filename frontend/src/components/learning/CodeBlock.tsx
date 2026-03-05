@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Copy, Check, Play, Loader2, Terminal, AlertTriangle } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { Copy, Check, Play, Loader2, Terminal, AlertTriangle, RotateCcw } from 'lucide-react'
 import { copyToClipboard } from '../../utils/clipboard'
 import { usePyodide } from '../../hooks/usePyodide'
 
@@ -11,18 +11,41 @@ interface CodeBlockProps {
 
 export default function CodeBlock({ code, language = 'python', title }: CodeBlockProps) {
   const [copied, setCopied] = useState(false)
+  const [editableCode, setEditableCode] = useState(code)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
   const isPython = language.toLowerCase() === 'python'
   const { status, output, error, runCode } = usePyodide()
 
+  const isModified = editableCode !== code
+
+  // Sync when code prop changes (e.g. navigating to different lesson)
+  useEffect(() => {
+    setEditableCode(code)
+  }, [code])
+
+  // Auto-resize textarea to fit content
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto'
+      textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px'
+    }
+  }, [editableCode])
+
   const handleCopy = async () => {
-    await copyToClipboard(code)
+    await copyToClipboard(editableCode)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
 
   const handleRun = () => {
-    runCode(code)
+    runCode(editableCode)
   }
+
+  const handleReset = () => {
+    setEditableCode(code)
+  }
+
+  const isImportError = error && /ModuleNotFoundError|No module named/i.test(error)
 
   return (
     <div className="rounded-lg overflow-hidden border border-gray-700">
@@ -31,8 +54,21 @@ export default function CodeBlock({ code, language = 'python', title }: CodeBloc
         <div className="flex items-center gap-2">
           {title && <span className="text-sm font-medium text-gray-300">{title}</span>}
           <span className="text-[10px] px-2 py-0.5 rounded bg-gray-700 text-gray-400">{language}</span>
+          {isModified && (
+            <span className="text-[10px] px-2 py-0.5 rounded bg-amber-900/50 text-amber-400">edited</span>
+          )}
         </div>
         <div className="flex items-center gap-2">
+          {/* Reset button — only when modified */}
+          {isModified && (
+            <button
+              onClick={handleReset}
+              className="flex items-center gap-1 text-xs font-medium text-gray-400 hover:text-gray-200 transition-colors px-2 py-1 rounded bg-gray-700 hover:bg-gray-600"
+              title="Reset to original"
+            >
+              <RotateCcw className="h-3.5 w-3.5" /> Reset
+            </button>
+          )}
           {/* Run button — Python only */}
           {isPython && (
             <button
@@ -61,10 +97,16 @@ export default function CodeBlock({ code, language = 'python', title }: CodeBloc
         </div>
       </div>
 
-      {/* Code */}
-      <pre className="p-4 bg-gray-900 overflow-x-auto">
-        <code className="text-sm text-gray-100 font-mono whitespace-pre">{code}</code>
-      </pre>
+      {/* Editable code area */}
+      <textarea
+        ref={textareaRef}
+        value={editableCode}
+        onChange={(e) => setEditableCode(e.target.value)}
+        className="w-full p-4 bg-gray-900 text-sm text-gray-100 font-mono whitespace-pre resize-y border-0 focus:outline-none focus:ring-0 min-h-[80px]"
+        spellCheck={false}
+        autoCorrect="off"
+        autoCapitalize="off"
+      />
 
       {/* Output panel */}
       {(output || error) && (
@@ -76,9 +118,18 @@ export default function CodeBlock({ code, language = 'python', title }: CodeBloc
             </span>
           </div>
           {error ? (
-            <div className="flex items-start gap-2">
-              <AlertTriangle className="h-3.5 w-3.5 text-red-400 mt-0.5 flex-shrink-0" />
-              <pre className="text-xs text-red-400 font-mono whitespace-pre-wrap">{error}</pre>
+            <div className="space-y-2">
+              <div className="flex items-start gap-2">
+                <AlertTriangle className="h-3.5 w-3.5 text-red-400 mt-0.5 flex-shrink-0" />
+                <pre className="text-xs text-red-400 font-mono whitespace-pre-wrap">{error}</pre>
+              </div>
+              {isImportError && (
+                <p className="text-xs text-gray-400 bg-gray-900 rounded p-2 border border-gray-800">
+                  This module isn't available in the browser sandbox. You can edit the code above to use
+                  available packages (numpy, pandas, scikit-learn, matplotlib, scipy), or copy the code
+                  and run it locally.
+                </p>
+              )}
             </div>
           ) : output ? (
             <>

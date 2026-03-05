@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   Play, RotateCcw, Clock, Loader2, ChevronDown, ChevronUp, Sparkles,
@@ -28,13 +28,6 @@ export default function PromptLab({ pathId, lessonId, template }: Props) {
   const [response, setResponse] = useState<string | null>(null)
   const [showHistory, setShowHistory] = useState(false)
   const [showFillModal, setShowFillModal] = useState(false)
-
-  // Pre-fill with template
-  useEffect(() => {
-    if (template?.template && !prompt) {
-      setPrompt(template.template)
-    }
-  }, [template])
 
   // Load existing history
   const { data: history } = useQuery({
@@ -77,7 +70,7 @@ export default function PromptLab({ pathId, lessonId, template }: Props) {
     setResponse(null)
   }
 
-  const handleReset = () => {
+  const handleLoadTemplate = () => {
     setPrompt(template?.template ?? '')
     setResponse(null)
   }
@@ -118,7 +111,7 @@ export default function PromptLab({ pathId, lessonId, template }: Props) {
             onChange={(e) => setPrompt(e.target.value)}
             rows={6}
             className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-mono text-gray-800 focus:border-violet-500 focus:ring-2 focus:ring-violet-200 resize-y"
-            placeholder="Write your prompt here..."
+            placeholder="Try writing your own prompt for this skill. Use the template above as inspiration, or start from scratch..."
             disabled={executeMutation.isPending}
           />
 
@@ -165,14 +158,16 @@ export default function PromptLab({ pathId, lessonId, template }: Props) {
                 Refine Prompt
               </button>
             )}
-            <button
-              onClick={handleReset}
-              className="btn btn-secondary text-xs"
-              disabled={executeMutation.isPending}
-            >
-              <RotateCcw className="h-3.5 w-3.5 mr-1" />
-              Reset to Template
-            </button>
+            {template?.template && (
+              <button
+                onClick={handleLoadTemplate}
+                className="btn btn-secondary text-xs"
+                disabled={executeMutation.isPending}
+              >
+                <RotateCcw className="h-3.5 w-3.5 mr-1" />
+                Load Template
+              </button>
+            )}
           </div>
         </div>
 

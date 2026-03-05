@@ -142,19 +142,22 @@ async def get_prompt_history(
 
 
 TASK_REVIEW_SYSTEM = """You are an expert AI learning coach reviewing a learner's implementation task submission.
-The learner completed a hands-on task and is submitting their prompt engineering strategy for feedback.
+The learner completed a hands-on task and is submitting their AI conversation for feedback.
+They may paste their full conversation with an AI (including both their prompts and the AI's responses),
+or they may submit just a single prompt attempt.
 
 Evaluate their work and provide:
 1. Specific strengths in their approach (2-3 bullet points, under "Strengths:")
 2. Areas for improvement (2-3 bullet points, under "Improvements:")
-3. Prompt strategy tips — specific, actionable advice on how to improve their prompt for this task (2-3 bullet points, under "Prompt Strategy Tips:")
+3. Prompt strategy tips — specific, actionable advice on how to improve their prompting for this task (2-3 bullet points, under "Prompt Strategy Tips:")
 4. A brief overall feedback paragraph (2-3 sentences)
 
-If the learner submitted a prompt attempt, analyze it specifically:
+Analyze their prompting approach:
 - Does it use a clear role instruction?
 - Does it include specific constraints and deliverables?
 - Does it provide enough context for the AI to give a useful response?
 - What prompting techniques (chain-of-thought, few-shot, role-play) would improve it?
+- If they submitted a multi-turn conversation, evaluate how they iterated and refined their prompts.
 
 Be encouraging but honest. Focus on prompt engineering technique, not just correctness.
 Keep total response under 600 words."""
@@ -183,25 +186,25 @@ async def submit_implementation_task(
     task_info = content.get("implementation_task", {})
     module = await db.get(Module, lesson.module_id)
 
-    learner_prompt_section = (
-        f"LEARNER'S PROMPT ATTEMPT:\n{request.learner_prompt}"
+    learner_section = (
+        f"LEARNER'S AI CONVERSATION:\n{request.learner_prompt}"
         if request.learner_prompt.strip()
-        else "LEARNER'S PROMPT ATTEMPT:\n(No prompt provided — focus feedback on their strategy explanation)"
+        else "LEARNER'S AI CONVERSATION:\n(No conversation provided)"
     )
+
+    optional_sections = ""
+    if request.prompt_history_summary and request.prompt_history_summary.strip():
+        optional_sections += f"\nLEARNER'S PROMPT HISTORY:\n{request.prompt_history_summary}\n"
+    if request.strategy_explanation and request.strategy_explanation.strip():
+        optional_sections += f"\nLEARNER'S STRATEGY EXPLANATION:\n{request.strategy_explanation}\n"
 
     prompt = f"""TASK: {task_info.get('title', lesson.title)}
 DESCRIPTION: {task_info.get('description', '')}
 SKILL: {module.skill_name if module else 'Unknown'}
 
-{learner_prompt_section}
-
-LEARNER'S PROMPT HISTORY:
-{request.prompt_history_summary or '(No prompt history provided)'}
-
-LEARNER'S STRATEGY EXPLANATION:
-{request.strategy_explanation}
-
-Please evaluate their implementation approach and prompt engineering strategy. Provide specific tips on how to improve their prompt."""
+{learner_section}
+{optional_sections}
+Please evaluate their implementation approach and prompt engineering strategy. Provide specific tips on how to improve their prompting."""
 
     llm = get_llm_provider()
     try:

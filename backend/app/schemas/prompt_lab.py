@@ -32,7 +32,7 @@ class PromptHistoryResponse(BaseModel):
 class ImplementationTaskSubmitRequest(BaseModel):
     lesson_id: str
     prompt_history_summary: str = ""
-    strategy_explanation: str
+    strategy_explanation: str = ""
     learner_prompt: str = ""
 
 

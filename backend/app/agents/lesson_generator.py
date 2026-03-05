@@ -67,6 +67,7 @@ RULES:
 - prompt_template must be copy-pasteable with clear {{placeholders}}.
 - implementation_task must require BOTH code AND prompt strategy documentation.
 - Code examples must be complete and runnable (Python unless otherwise specified).
+- Python code examples MUST only use standard library modules plus: numpy, pandas, scikit-learn, matplotlib, scipy, sympy, regex. Do NOT use transformers, torch, tensorflow, openai, langchain, or any package requiring native compilation or network access. Code runs in a browser sandbox (Pyodide/WebAssembly).
 - Adapt complexity to the lesson's position in the module sequence.
 - Use analogies from the learner's industry when possible.
 - For concept lessons: emphasize concept_snapshot, ai_strategy, knowledge_checks.

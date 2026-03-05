@@ -5,7 +5,7 @@ import {
   ArrowLeft, Loader2, AlertCircle, CheckCircle2, ChevronRight,
   BookOpen, Code2, Dumbbell, Brain, Wrench,
 } from 'lucide-react'
-import { startLesson, completeLesson, getLearningDashboard, getPromptHistory } from '../services/api'
+import { startLesson, completeLesson, getLearningDashboard } from '../services/api'
 import CodeBlock from '../components/learning/CodeBlock'
 import KnowledgeCheck from '../components/learning/KnowledgeCheck'
 import ConceptSnapshot from '../components/learning/ConceptSnapshot'
@@ -58,13 +58,6 @@ export default function LessonPage() {
     queryKey: ['learning-dashboard', pathId],
     queryFn: () => getLearningDashboard(pathId!),
     enabled: !!pathId,
-  })
-
-  // Load prompt history for implementation task card
-  const { data: promptHistoryData } = useQuery({
-    queryKey: ['prompt-history', pathId, lessonId],
-    queryFn: () => getPromptHistory(pathId!, lessonId!),
-    enabled: !!pathId && !!lessonId,
   })
 
   // Complete mutation
@@ -298,7 +291,6 @@ export default function LessonPage() {
                   task={content.implementation_task}
                   pathId={pathId}
                   lessonId={lessonId}
-                  promptHistory={promptHistoryData?.iterations}
                   onSubmit={() => setTaskSubmitted(true)}
                 />
               )}

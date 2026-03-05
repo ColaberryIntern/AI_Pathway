@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import {
-  Hammer, Clock, FileText, MessageSquare, Send, Loader2,
+  Hammer, Clock, FileText, Send, Loader2,
   CheckCircle2, ThumbsUp, ArrowUpCircle, ChevronDown, Bot,
   ExternalLink, Lightbulb,
 } from 'lucide-react'
@@ -9,17 +9,10 @@ import type { ImplementationTask } from '../../types'
 import { submitImplementationTask } from '../../services/api'
 import { openInLLM, getRunLabel, getPreferredLLM } from '../../utils/llm'
 
-interface PromptHistoryItem {
-  iteration: number
-  prompt_text: string
-  response_text: string
-}
-
 interface ImplementationTaskCardProps {
   task: ImplementationTask
   pathId?: string
   lessonId?: string
-  promptHistory?: PromptHistoryItem[]
   onSubmit?: () => void
 }
 
@@ -61,10 +54,9 @@ function renderBold(text: string) {
 }
 
 export default function ImplementationTaskCard({
-  task, pathId, lessonId, promptHistory, onSubmit,
+  task, pathId, lessonId, onSubmit,
 }: ImplementationTaskCardProps) {
-  const [promptAttempt, setPromptAttempt] = useState('')
-  const [strategy, setStrategy] = useState('')
+  const [conversation, setConversation] = useState('')
   const [submitted, setSubmitted] = useState(false)
   const [feedbackExpanded, setFeedbackExpanded] = useState(false)
   const [llmKey, setLlmKey] = useState(getPreferredLLM)
@@ -77,15 +69,11 @@ export default function ImplementationTaskCard({
 
   const submitMutation = useMutation({
     mutationFn: () => {
-      const historySummary = (promptHistory || [])
-        .map((h) => `Iteration ${h.iteration}:\nPrompt: ${h.prompt_text}\nResponse: ${h.response_text.slice(0, 300)}...`)
-        .join('\n\n')
-
       return submitImplementationTask(pathId!, {
         lesson_id: lessonId!,
-        prompt_history_summary: historySummary,
-        strategy_explanation: strategy,
-        learner_prompt: promptAttempt,
+        prompt_history_summary: '',
+        strategy_explanation: '',
+        learner_prompt: conversation,
       })
     },
     onSuccess: () => {
@@ -94,7 +82,7 @@ export default function ImplementationTaskCard({
     },
   })
 
-  const canSubmit = !!pathId && !!lessonId && promptAttempt.trim().length >= 10 && strategy.trim().length >= 20
+  const canSubmit = !!pathId && !!lessonId && conversation.trim().length >= 50
 
   return (
     <section className="card border-2 border-purple-200 bg-gradient-to-br from-purple-50/50 to-white">
@@ -157,128 +145,68 @@ export default function ImplementationTaskCard({
         )}
       </div>
 
-      {/* Prompt Attempt + Strategy Submission */}
+      {/* Get Started + Paste Conversation */}
       {pathId && lessonId && !submitted && (
         <div className="border-t border-purple-100 pt-4 space-y-4">
-          {/* Step 1: Write your prompt */}
+          {/* Open LLM */}
           <div>
             <label className="text-sm font-semibold text-gray-900 flex items-center gap-2">
               <Lightbulb className="h-4 w-4 text-amber-500" />
-              Step 1: Write your prompt for this task
+              Get Started
             </label>
-            <p className="text-xs text-gray-500 mt-1">
-              Craft a prompt that you would use to solve this task with an AI. We'll analyze your prompting strategy and give tips.
+            <p className="text-xs text-gray-500 mt-1 mb-3">
+              Open your preferred AI assistant to work on this task. When you're done, paste your conversation below.
             </p>
+            <button
+              onClick={() => openInLLM('', llmKey)}
+              className="flex items-center gap-1.5 text-sm font-medium text-purple-600 hover:text-purple-700 transition-colors px-4 py-2 rounded-lg bg-purple-50 hover:bg-purple-100 border border-purple-200"
+            >
+              <ExternalLink className="h-4 w-4" />
+              {getRunLabel(llmKey)}
+            </button>
           </div>
 
-          <div className="bg-gray-900 rounded-xl p-4">
-            <textarea
-              value={promptAttempt}
-              onChange={(e) => setPromptAttempt(e.target.value)}
-              rows={4}
-              className="w-full bg-gray-800 rounded-lg border border-gray-700 px-4 py-3 text-sm text-gray-100 font-mono focus:border-purple-400 focus:ring-2 focus:ring-purple-400/30 resize-y placeholder-gray-500"
-              placeholder="Example: Act as a senior data engineer. Given a dataset of customer transactions, write a Python script that identifies the top 10 customers by revenue, handles missing values, and outputs a clean CSV..."
-              disabled={submitMutation.isPending}
-            />
-            {promptAttempt.trim().length >= 10 && (
-              <div className="flex items-center gap-3 mt-3">
-                <button
-                  onClick={() => openInLLM(promptAttempt, llmKey)}
-                  className="flex items-center gap-1.5 text-xs font-medium text-purple-400 hover:text-purple-300 transition-colors px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 border border-gray-700"
-                >
-                  <ExternalLink className="h-3.5 w-3.5" />
-                  {getRunLabel(llmKey)}
-                </button>
-                <span className="text-xs text-gray-500">Test your prompt before submitting</span>
-              </div>
-            )}
-            {promptAttempt.trim().length > 0 && promptAttempt.trim().length < 10 && (
-              <p className="text-xs text-gray-500 mt-2">Write at least 10 characters</p>
-            )}
-          </div>
-
-          {/* Step 2: Reflect on strategy */}
+          {/* Paste conversation */}
           <div>
             <label className="text-sm font-semibold text-gray-900 flex items-center gap-2">
-              <MessageSquare className="h-4 w-4 text-purple-600" />
-              Step 2: Reflect on your prompt engineering process
+              <FileText className="h-4 w-4 text-purple-600" />
+              Paste Your AI Conversation
             </label>
             <p className="text-xs text-gray-500 mt-1">
-              Explain your thought process and what strategies you used.
-            </p>
-          </div>
-
-          {/* Prompt History — directly above textarea */}
-          {promptHistory && promptHistory.length > 0 && (
-            <div className="bg-purple-50 rounded-lg p-3 border border-purple-200">
-              <p className="text-xs font-semibold text-purple-700 uppercase tracking-wider mb-2">
-                Your Prompt Lab History ({promptHistory.length} iteration{promptHistory.length !== 1 ? 's' : ''})
-              </p>
-              <div className="space-y-1.5 max-h-32 overflow-y-auto">
-                {promptHistory.map((h) => (
-                  <div key={h.iteration} className="text-xs text-gray-600">
-                    <span className="font-medium text-purple-600">v{h.iteration}:</span>{' '}
-                    {h.prompt_text.slice(0, 100)}{h.prompt_text.length > 100 ? '...' : ''}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Guided questions */}
-          <div className="bg-gray-50 rounded-lg p-3 border border-gray-200 space-y-1.5">
-            <p className="text-xs font-medium text-gray-600 mb-1">Answer these in your reflection:</p>
-            <p className="text-xs text-gray-500 flex items-start gap-2">
-              <span className="w-4 h-4 bg-purple-100 text-purple-700 rounded-full flex items-center justify-center flex-shrink-0 font-semibold text-[10px]">1</span>
-              Why did you structure your prompt this way?
-            </p>
-            <p className="text-xs text-gray-500 flex items-start gap-2">
-              <span className="w-4 h-4 bg-purple-100 text-purple-700 rounded-full flex items-center justify-center flex-shrink-0 font-semibold text-[10px]">2</span>
-              What strategy did you use (chain-of-thought, few-shot, role-play, etc.)?
-            </p>
-            <p className="text-xs text-gray-500 flex items-start gap-2">
-              <span className="w-4 h-4 bg-purple-100 text-purple-700 rounded-full flex items-center justify-center flex-shrink-0 font-semibold text-[10px]">3</span>
-              What would you change to get a better result?
+              Include both your prompts and the AI's responses so we can analyze your prompting strategy.
             </p>
           </div>
 
           <textarea
-            value={strategy}
-            onChange={(e) => setStrategy(e.target.value)}
-            rows={3}
+            value={conversation}
+            onChange={(e) => setConversation(e.target.value)}
+            rows={6}
             className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-gray-800 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 resize-y"
-            placeholder="Example: I used a role-play approach by assigning the AI a senior engineer persona. I included specific constraints like output format and edge cases to handle..."
+            placeholder="Paste your AI conversation here. Include both your prompts and the AI's responses..."
             disabled={submitMutation.isPending}
           />
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => submitMutation.mutate()}
-              disabled={!canSubmit || submitMutation.isPending}
-              className="btn bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700 disabled:opacity-50"
-            >
-              {submitMutation.isPending ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin mr-1" />
-                  Analyzing Strategy...
-                </>
-              ) : (
-                <>
-                  <Send className="h-4 w-4 mr-1" />
-                  Submit for Strategy Tips
-                </>
-              )}
-            </button>
-            {promptAttempt.trim().length < 10 && (
-              <span className="text-xs text-gray-400">
-                Write a prompt above (Step 1) first
-              </span>
+
+          {conversation.trim().length > 0 && conversation.trim().length < 50 && (
+            <p className="text-xs text-gray-500">Paste at least 50 characters of your conversation</p>
+          )}
+
+          <button
+            onClick={() => submitMutation.mutate()}
+            disabled={!canSubmit || submitMutation.isPending}
+            className="btn bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700 disabled:opacity-50"
+          >
+            {submitMutation.isPending ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                Analyzing...
+              </>
+            ) : (
+              <>
+                <Send className="h-4 w-4 mr-1" />
+                Submit for Feedback
+              </>
             )}
-            {promptAttempt.trim().length >= 10 && strategy.trim().length > 0 && strategy.trim().length < 20 && (
-              <span className="text-xs text-gray-400">
-                Write at least 20 characters in your reflection
-              </span>
-            )}
-          </div>
+          </button>
         </div>
       )}
 
