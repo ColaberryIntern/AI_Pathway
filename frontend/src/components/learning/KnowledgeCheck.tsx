@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { CheckCircle2, XCircle, ChevronRight, Bot, ExternalLink } from 'lucide-react'
+import { CheckCircle2, XCircle, ChevronRight, Bot, ExternalLink, ClipboardCopy } from 'lucide-react'
 import type { KnowledgeCheck as KnowledgeCheckType } from '../../types'
-import { openInLLM, getRunLabel } from '../../utils/llm'
+import { openInLLM, getRunLabel, supportsUrlPrompt } from '../../utils/llm'
 
 interface KnowledgeCheckProps {
   checks: KnowledgeCheckType[]
@@ -181,7 +181,7 @@ function AIFollowupPrompt({ prompt }: { prompt: string }) {
               onClick={handleRunInLLM}
               className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-full bg-white text-gray-600 hover:bg-gray-100 border border-gray-200 font-medium transition-colors"
             >
-              <ExternalLink className="h-3 w-3" />
+              {supportsUrlPrompt() ? <ExternalLink className="h-3 w-3" /> : <ClipboardCopy className="h-3 w-3" />}
               {llmOpened ? 'Opening...' : getRunLabel()}
             </button>
           </div>
