@@ -73,6 +73,36 @@ RULES:
 - For practice lessons: emphasize prompt_template, code_examples, implementation_task.
 - For assessment lessons: emphasize knowledge_checks and a comprehensive implementation_task."""
 
+    @staticmethod
+    def _extract_from_schema_echo(schema: dict) -> dict:
+        """Extract actual content from a schema-echo LLM response.
+
+        When the LLM returns the JSON schema definition back (with content
+        embedded in 'description' fields), this extracts the real values.
+        """
+        content = {}
+        props = schema.get("properties", {})
+        # Unwrap "content" wrapper if present
+        if "content" in props and "properties" in props["content"]:
+            props = props["content"]["properties"]
+
+        for key, val in props.items():
+            if isinstance(val, dict):
+                if val.get("type") == "string" and "description" in val:
+                    content[key] = val["description"]
+                elif val.get("type") == "object" and "properties" in val:
+                    # Recurse one level for nested objects like ai_strategy
+                    inner = {}
+                    for ik, iv in val["properties"].items():
+                        if isinstance(iv, dict) and "description" in iv:
+                            inner[ik] = iv["description"]
+                    content[key] = inner if inner else {}
+                elif val.get("type") == "array":
+                    content[key] = []  # Can't reliably extract arrays
+                else:
+                    content[key] = {}
+        return content
+
     async def execute(self, task: dict) -> dict:
         """Generate full lesson content.
 
@@ -89,18 +119,8 @@ RULES:
 
         Returns:
             {
-                "content": {
-                    "concept_snapshot": str,
-                    "ai_strategy": {description, when_to_use_ai[], human_responsibilities[], suggested_prompt},
-                    "prompt_template": {template, placeholders[], expected_output_shape},
-                    "code_examples": [{title, language, code, explanation}],
-                    "implementation_task": {title, description, requirements[], deliverable, ...},
-                    "reflection_questions": [{question, prompt_for_deeper_thinking}],
-                    "knowledge_checks": [{question, options[], correct_answer, explanation, ai_followup_prompt}],
-                    "explanation": str,
-                    "exercises": [...],
-                    "hands_on_tasks": [...]
-                }
+                "content": {concept_snapshot, ai_strategy, prompt_template, ...},
+                "duration_ms": int
             }
         """
         self._start_execution()
@@ -137,138 +157,89 @@ to work with this concept, not just understand it theoretically.
 Ensure it builds on what the learner has already covered
 and matches the "{lesson_type}" lesson type."""
 
+        # Flat schema — no "content" wrapper. Reduces nesting and prevents
+        # the LLM from echoing back the schema definition instead of data.
         output_schema = {
             "type": "object",
             "properties": {
-                "content": {
+                "concept_snapshot": {"type": "string"},
+                "ai_strategy": {
                     "type": "object",
                     "properties": {
-                        # --- NEW AI-native sections ---
-                        "concept_snapshot": {"type": "string"},
-                        "ai_strategy": {
-                            "type": "object",
-                            "properties": {
-                                "description": {"type": "string"},
-                                "when_to_use_ai": {
-                                    "type": "array",
-                                    "items": {"type": "string"},
-                                },
-                                "human_responsibilities": {
-                                    "type": "array",
-                                    "items": {"type": "string"},
-                                },
-                                "suggested_prompt": {"type": "string"},
-                            },
-                        },
-                        "prompt_template": {
-                            "type": "object",
-                            "properties": {
-                                "template": {"type": "string"},
-                                "placeholders": {
-                                    "type": "array",
-                                    "items": {
-                                        "type": "object",
-                                        "properties": {
-                                            "name": {"type": "string"},
-                                            "description": {"type": "string"},
-                                            "example": {"type": "string"},
-                                        },
-                                    },
-                                },
-                                "expected_output_shape": {"type": "string"},
-                            },
-                        },
-                        "implementation_task": {
-                            "type": "object",
-                            "properties": {
-                                "title": {"type": "string"},
-                                "description": {"type": "string"},
-                                "requirements": {
-                                    "type": "array",
-                                    "items": {"type": "string"},
-                                },
-                                "deliverable": {"type": "string"},
-                                "requires_prompt_history": {"type": "boolean"},
-                                "requires_architecture_explanation": {"type": "boolean"},
-                                "estimated_minutes": {"type": "integer"},
-                            },
-                        },
-                        "reflection_questions": {
+                        "description": {"type": "string"},
+                        "when_to_use_ai": {"type": "array", "items": {"type": "string"}},
+                        "human_responsibilities": {"type": "array", "items": {"type": "string"}},
+                        "suggested_prompt": {"type": "string"},
+                    },
+                },
+                "prompt_template": {
+                    "type": "object",
+                    "properties": {
+                        "template": {"type": "string"},
+                        "placeholders": {
                             "type": "array",
                             "items": {
                                 "type": "object",
                                 "properties": {
-                                    "question": {"type": "string"},
-                                    "prompt_for_deeper_thinking": {"type": "string"},
-                                },
-                            },
-                        },
-                        # --- PRESERVED sections (backward compat) ---
-                        "explanation": {"type": "string"},
-                        "code_examples": {
-                            "type": "array",
-                            "items": {
-                                "type": "object",
-                                "properties": {
-                                    "title": {"type": "string"},
-                                    "language": {"type": "string"},
-                                    "code": {"type": "string"},
-                                    "explanation": {"type": "string"},
-                                },
-                            },
-                        },
-                        "exercises": {
-                            "type": "array",
-                            "items": {
-                                "type": "object",
-                                "properties": {
-                                    "id": {"type": "string"},
-                                    "title": {"type": "string"},
-                                    "instructions": {"type": "string"},
-                                    "starter_code": {"type": "string"},
-                                    "expected_output": {"type": "string"},
-                                    "hints": {
-                                        "type": "array",
-                                        "items": {"type": "string"},
-                                    },
-                                    "estimated_minutes": {"type": "integer"},
-                                },
-                            },
-                        },
-                        "knowledge_checks": {
-                            "type": "array",
-                            "items": {
-                                "type": "object",
-                                "properties": {
-                                    "question": {"type": "string"},
-                                    "options": {
-                                        "type": "array",
-                                        "items": {"type": "string"},
-                                    },
-                                    "correct_answer": {"type": "string"},
-                                    "explanation": {"type": "string"},
-                                    "ai_followup_prompt": {"type": "string"},
-                                },
-                            },
-                        },
-                        "hands_on_tasks": {
-                            "type": "array",
-                            "items": {
-                                "type": "object",
-                                "properties": {
-                                    "title": {"type": "string"},
+                                    "name": {"type": "string"},
                                     "description": {"type": "string"},
-                                    "requirements": {
-                                        "type": "array",
-                                        "items": {"type": "string"},
-                                    },
-                                    "deliverable": {"type": "string"},
-                                    "estimated_minutes": {"type": "integer"},
+                                    "example": {"type": "string"},
                                 },
                             },
+                        },
+                        "expected_output_shape": {"type": "string"},
+                    },
+                },
+                "implementation_task": {
+                    "type": "object",
+                    "properties": {
+                        "title": {"type": "string"},
+                        "description": {"type": "string"},
+                        "requirements": {"type": "array", "items": {"type": "string"}},
+                        "deliverable": {"type": "string"},
+                        "requires_prompt_history": {"type": "boolean"},
+                        "requires_architecture_explanation": {"type": "boolean"},
+                        "estimated_minutes": {"type": "integer"},
+                    },
+                },
+                "reflection_questions": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "question": {"type": "string"},
+                            "prompt_for_deeper_thinking": {"type": "string"},
                         },
                     },
-                }
+                },
+                "explanation": {"type": "string"},
+                "code_examples": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "title": {"type": "string"},
+                            "language": {"type": "string"},
+                            "code": {"type": "string"},
+                            "explanation": {"type": "string"},
+                        },
+                    },
+                },
+                "knowledge_checks": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "question": {"type": "string"},
+                            "options": {"type": "array", "items": {"type": "string"}},
+                            "correct_answer": {"type": "string"},
+                            "explanation": {"type": "string"},
+                            "ai_followup_prompt": {"type": "string"},
+                        },
+                    },
+                },
+                "exercises": {"type": "array", "items": {"type": "object"}},
+                "hands_on_tasks": {"type": "array", "items": {"type": "object"}},
             },
         }
 
@@ -276,26 +247,30 @@ and matches the "{lesson_type}" lesson type."""
             prompt, output_schema, max_tokens=16384
         )
 
-        # Debug: log raw LLM result before processing
-        logger.warning(
-            "LLM raw result keys=%s, result_str_len=%d, result_preview=%.300s",
-            list(result.keys()),
-            len(str(result)),
-            str(result)[:300],
-        )
-
-        # The schema asks the LLM to return {"content": {...}}, but LLMs
-        # sometimes omit the wrapper and return content fields at the top level.
-        content = result.get("content", {})
-
-        # Fallback: if "content" wrapper is missing/empty, check top level
+        # Extract content — the flat schema returns fields directly at top level.
+        # Also handle legacy "content" wrapper and schema-echo responses.
         _content_keys = {"concept_snapshot", "ai_strategy", "prompt_template",
                          "explanation", "knowledge_checks"}
-        if not any(content.get(k) for k in _content_keys):
-            if any(result.get(k) for k in _content_keys):
-                logger.info("LLM returned content at top level (no wrapper key)")
-                content = {k: v for k, v in result.items()
-                           if k not in ("duration_ms",)}
+
+        if any(isinstance(result.get(k), str) and result.get(k) for k in _content_keys):
+            # Normal case: content fields at top level with string values
+            content = result
+        elif isinstance(result.get("content"), dict):
+            # Legacy: content nested under "content" key
+            content = result["content"]
+            logger.info("LLM returned content under 'content' wrapper key")
+        elif "properties" in result:
+            # Schema-echo: LLM returned the schema definition with content in
+            # description fields. Extract actual values from the schema structure.
+            logger.warning("LLM echoed schema — extracting content from 'description' fields")
+            content = self._extract_from_schema_echo(result)
+        else:
+            content = result
+
+        logger.info(
+            "LLM result extraction: result_keys=%s, content_type=%s",
+            list(result.keys())[:5], type(content).__name__,
+        )
 
         # Ensure all sections exist with defaults
         # New AI-native sections

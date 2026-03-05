@@ -85,10 +85,12 @@ class OpenAIProvider(BaseLLMProvider):
 
 {system_prompt or ''}
 
-You must respond with valid JSON that matches this schema:
+IMPORTANT: Respond with a JSON object containing ACTUAL DATA VALUES (real strings, arrays, objects with real content). Do NOT echo back the schema definition — fill in real values for each field.
+
+The JSON structure must match this schema:
 {schema_str}
 
-Respond with ONLY the JSON object."""
+Respond with ONLY the populated JSON object with real content values."""
 
         response = await self.generate(
             prompt=prompt,

@@ -77,11 +77,12 @@ class ClaudeProvider(BaseLLMProvider):
 
 {system_prompt or ''}
 
-You must respond with valid JSON that matches this schema:
+IMPORTANT: Respond with a JSON object containing ACTUAL DATA VALUES (real strings, arrays, objects with real content). Do NOT echo back the schema definition — fill in real values for each field.
+
+The JSON structure must match this schema:
 {schema_str}
 
-Respond with ONLY the JSON object, no additional text or markdown formatting.
-IMPORTANT: Ensure your response is complete and valid JSON."""
+Respond with ONLY the populated JSON object with real content values. No additional text or markdown formatting."""
 
         response = await self.generate(
             prompt=prompt,

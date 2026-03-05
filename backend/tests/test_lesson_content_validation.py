@@ -234,5 +234,59 @@ class TestContentQuality:
             assert example.get("language"), "code_example missing language"
 
 
+# ── Schema-echo extraction ─────────────────────────────────────────────
+
+class TestSchemaEchoExtraction:
+    """Verify that schema-echo responses get content extracted correctly."""
+
+    def test_extracts_string_from_description(self):
+        from app.agents.lesson_generator import LessonGeneratorAgent
+
+        schema_echo = {
+            "type": "object",
+            "properties": {
+                "concept_snapshot": {
+                    "type": "string",
+                    "description": "AI governance frameworks provide structured approaches.",
+                },
+                "explanation": {
+                    "type": "string",
+                    "description": "A detailed explanation of governance.",
+                },
+                "knowledge_checks": {"type": "array"},
+            },
+        }
+        content = LessonGeneratorAgent._extract_from_schema_echo(schema_echo)
+        assert content["concept_snapshot"] == "AI governance frameworks provide structured approaches."
+        assert content["explanation"] == "A detailed explanation of governance."
+        assert content.get("knowledge_checks") == []
+
+    def test_extracts_from_content_wrapper(self):
+        from app.agents.lesson_generator import LessonGeneratorAgent
+
+        schema_echo = {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "object",
+                    "properties": {
+                        "concept_snapshot": {
+                            "type": "string",
+                            "description": "Permissions are crucial.",
+                        },
+                    },
+                },
+            },
+        }
+        content = LessonGeneratorAgent._extract_from_schema_echo(schema_echo)
+        assert content["concept_snapshot"] == "Permissions are crucial."
+
+    def test_empty_schema_returns_empty_dict(self):
+        from app.agents.lesson_generator import LessonGeneratorAgent
+
+        content = LessonGeneratorAgent._extract_from_schema_echo({})
+        assert content == {}
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
