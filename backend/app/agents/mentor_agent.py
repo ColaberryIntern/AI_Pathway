@@ -37,6 +37,9 @@ RESPONSE FORMAT:
 - Address the learner's question directly
 - Provide guidance (not answers)
 - Suggest 1-2 prompts to try (prefixed with "Try this prompt:")
+  - Each prompt should be detailed and self-contained — include context, a role instruction, and specific constraints
+  - Good: Try this prompt: "Act as a senior data engineer. Explain how choosing between open-source and proprietary AI models affects data pipeline architecture, including 3 specific trade-offs with real-world examples."
+  - Bad: Try this prompt: "Tell me about AI models"
 """
 
     async def execute(self, task: dict) -> dict:

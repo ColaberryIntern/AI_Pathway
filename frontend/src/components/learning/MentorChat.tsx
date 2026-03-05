@@ -2,10 +2,10 @@ import { useState, useRef, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
-  X, Send, Loader2, Sparkles, Bot, ExternalLink,
+  X, Send, Loader2, Sparkles, Bot, ExternalLink, ClipboardCopy,
 } from 'lucide-react'
 import { sendMentorMessage, getMentorHistory } from '../../services/api'
-import { openInLLM, getRunLabel } from '../../utils/llm'
+import { openInLLM, getRunLabel, getPreferredLLM, supportsUrlPrompt } from '../../utils/llm'
 import LLMChooser from './LLMChooser'
 
 interface Message {
@@ -42,14 +42,24 @@ function parseMessagePrompts(content: string): Array<{ type: 'text'; value: stri
 }
 
 function PromptCard({ prompt }: { prompt: string }) {
+  const isUrlBased = supportsUrlPrompt(getPreferredLLM())
+  const label = getRunLabel()
+
   return (
     <button
       onClick={() => openInLLM(prompt)}
-      className="my-1 inline-flex items-center gap-1 text-xs text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-lg px-2 py-1.5 cursor-pointer transition-colors"
-      title={getRunLabel()}
+      className="my-2 flex items-start gap-1.5 text-xs text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-lg px-2.5 py-2 cursor-pointer transition-colors text-left w-full"
+      title={label}
     >
-      <ExternalLink className="h-3 w-3 flex-shrink-0" />
-      <span className="italic text-left">{prompt}</span>
+      {isUrlBased ? (
+        <ExternalLink className="h-3 w-3 flex-shrink-0 mt-0.5" />
+      ) : (
+        <ClipboardCopy className="h-3 w-3 flex-shrink-0 mt-0.5" />
+      )}
+      <span className="flex-1">
+        <span className="italic">{prompt}</span>
+        <span className="block text-[10px] text-indigo-400 mt-0.5">{label}</span>
+      </span>
     </button>
   )
 }
@@ -274,7 +284,11 @@ export default function MentorChat() {
                   className="flex items-center gap-1 text-[10px] px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-600 hover:bg-indigo-100 border border-indigo-200 truncate max-w-[14rem]"
                   title={getRunLabel()}
                 >
-                  <ExternalLink className="h-2.5 w-2.5 flex-shrink-0" />
+                  {supportsUrlPrompt(getPreferredLLM()) ? (
+                    <ExternalLink className="h-2.5 w-2.5 flex-shrink-0" />
+                  ) : (
+                    <ClipboardCopy className="h-2.5 w-2.5 flex-shrink-0" />
+                  )}
                   {p}
                 </button>
               ))}
