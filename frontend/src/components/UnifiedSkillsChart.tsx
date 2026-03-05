@@ -1,25 +1,33 @@
 import { useState } from 'react'
-import { BarChart3, ChevronDown, ChevronUp, Info } from 'lucide-react'
+import { BarChart3, ChevronDown, ChevronUp, Info, GraduationCap } from 'lucide-react'
 import type { Top10SkillGap } from '../types'
 
 interface UnifiedSkillsChartProps {
   gaps: Top10SkillGap[]
-  defaultVisibleCount?: number
+  allGaps?: Top10SkillGap[]
 }
 
 export default function UnifiedSkillsChart({
   gaps,
-  defaultVisibleCount = 3,
+  allGaps,
 }: UnifiedSkillsChartProps) {
-  const [showAll, setShowAll] = useState(false)
+  const [showAllGaps, setShowAllGaps] = useState(false)
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
 
-  const sortedGaps = [...gaps]
+  // Priority skills (path skills) — always shown in full
+  const priorityGaps = [...gaps]
     .filter(g => g.gap > 0)
-    .sort((a, b) => b.gap - a.gap || a.rank - b.rank)
+    .sort((a, b) => b.gap - a.gap || (a.rank ?? 0) - (b.rank ?? 0))
 
-  const visibleGaps = showAll ? sortedGaps : sortedGaps.slice(0, defaultVisibleCount)
-  const hasMore = sortedGaps.length > defaultVisibleCount
+  // Set of path skill IDs for badge identification
+  const pathSkillIds = new Set(priorityGaps.map(g => g.skill_id))
+
+  // Remaining gaps (all gaps minus priority, only when expanded)
+  const remainingGaps = (allGaps || [])
+    .filter(g => g.gap > 0 && !pathSkillIds.has(g.skill_id))
+    .sort((a, b) => b.gap - a.gap || a.skill_id.localeCompare(b.skill_id))
+
+  const hasRemaining = remainingGaps.length > 0
 
   const toggleRationale = (skillId: string) => {
     setExpandedIds(prev => {
@@ -36,7 +44,7 @@ export default function UnifiedSkillsChart({
     return { border: 'border-l-green-400', badge: 'bg-green-100 text-green-700' }
   }
 
-  if (sortedGaps.length === 0) return null
+  if (priorityGaps.length === 0) return null
 
   return (
     <div className="card space-y-4">
@@ -64,9 +72,9 @@ export default function UnifiedSkillsChart({
         <span className="ml-auto text-gray-400">L0 – L5 scale</span>
       </div>
 
-      {/* Skill Rows */}
+      {/* Priority Skill Rows (always visible) */}
       <div className="space-y-2">
-        {visibleGaps.map((skill) => {
+        {priorityGaps.map((skill) => {
           const colors = severityColor(skill.gap)
           const isExpanded = expandedIds.has(skill.skill_id)
           const currentPct = (skill.current_level / 5) * 100
@@ -86,6 +94,10 @@ export default function UnifiedSkillsChart({
                   </span>
                   <span className="text-[10px] px-1.5 py-0.5 bg-indigo-100 text-indigo-700 rounded font-medium whitespace-nowrap flex-shrink-0">
                     {skill.domain_label || skill.domain}
+                  </span>
+                  <span className="text-[10px] px-1.5 py-0.5 bg-violet-100 text-violet-700 rounded font-medium whitespace-nowrap flex-shrink-0 flex items-center gap-0.5">
+                    <GraduationCap className="h-2.5 w-2.5" />
+                    In your path
                   </span>
                 </div>
                 <span className={`text-xs px-2 py-0.5 rounded font-bold flex-shrink-0 ${colors.badge}`}>
@@ -141,22 +153,76 @@ export default function UnifiedSkillsChart({
         })}
       </div>
 
-      {/* Show more / less */}
-      {hasMore && (
-        <button
-          onClick={() => setShowAll(!showAll)}
-          className="flex items-center gap-1 mx-auto text-sm text-indigo-600 hover:text-indigo-800 font-medium transition-colors"
-        >
-          {showAll ? (
-            <>
-              Show fewer <ChevronUp className="h-4 w-4" />
-            </>
-          ) : (
-            <>
-              Show all {sortedGaps.length} skills <ChevronDown className="h-4 w-4" />
-            </>
+      {/* Expand to show all remaining skill gaps */}
+      {hasRemaining && (
+        <>
+          <button
+            onClick={() => setShowAllGaps(!showAllGaps)}
+            className="flex items-center gap-1 mx-auto text-sm text-indigo-600 hover:text-indigo-800 font-medium transition-colors"
+          >
+            {showAllGaps ? (
+              <>
+                Hide remaining gaps <ChevronUp className="h-4 w-4" />
+              </>
+            ) : (
+              <>
+                Show all {remainingGaps.length + priorityGaps.length} skill gaps (+{remainingGaps.length} more) <ChevronDown className="h-4 w-4" />
+              </>
+            )}
+          </button>
+
+          {showAllGaps && (
+            <div className="space-y-1 pt-2 border-t border-gray-200">
+              <p className="text-xs text-gray-400 mb-2">
+                Remaining skill gaps — not addressed in this path
+              </p>
+              {remainingGaps.map((skill) => {
+                const colors = severityColor(skill.gap)
+                const currentPct = (skill.current_level / 5) * 100
+                const targetPct = (skill.required_level / 5) * 100
+
+                return (
+                  <div
+                    key={skill.skill_id}
+                    className="flex items-center gap-2 p-2 rounded bg-gray-50 border-l-2 border-gray-200"
+                  >
+                    {/* Skill info */}
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <span className="text-gray-400 font-mono text-[10px]">{skill.skill_id}</span>
+                        <span className="text-xs text-gray-700 truncate">{skill.skill_name}</span>
+                        <span className="text-[9px] px-1 py-0.5 bg-gray-100 text-gray-500 rounded flex-shrink-0">
+                          {skill.domain_label || skill.domain}
+                        </span>
+                      </div>
+                      {/* Compact inline bars */}
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[9px] text-gray-400 w-5">L{skill.current_level}</span>
+                        <div className="flex-1 h-1.5 bg-gray-200 rounded overflow-hidden relative">
+                          {currentPct > 0 && (
+                            <div
+                              className="absolute inset-y-0 left-0 bg-sky-400 rounded"
+                              style={{ width: `${currentPct}%` }}
+                            />
+                          )}
+                          <div
+                            className="absolute inset-y-0 left-0 bg-emerald-400/30 rounded"
+                            style={{ width: `${targetPct}%` }}
+                          />
+                        </div>
+                        <span className="text-[9px] text-gray-400 w-5">L{skill.required_level}</span>
+                      </div>
+                    </div>
+                    {/* Gap badge */}
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold flex-shrink-0 ${colors.badge}`}>
+                      +{skill.gap}
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
           )}
-        </button>
+        </>
       )}
     </div>
   )

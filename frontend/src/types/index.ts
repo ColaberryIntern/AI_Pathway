@@ -162,7 +162,7 @@ export interface Top10TargetSkill {
 }
 
 export interface Top10SkillGap {
-  rank: number
+  rank?: number
   skill_id: string
   skill_name: string
   domain: string
@@ -171,7 +171,7 @@ export interface Top10SkillGap {
   required_level: number
   gap: number
   importance?: string
-  rationale: string
+  rationale?: string
 }
 
 export interface JourneySkillAddressed {
@@ -254,6 +254,7 @@ export interface AnalysisResult {
     top_10_current_skills?: Top10CurrentSkill[]
     top_10_target_skills?: Top10TargetSkill[]
     top_10_skill_gaps?: Top10SkillGap[]
+    all_skill_gaps?: Top10SkillGap[]
     gap_analysis: {
       gaps: SkillGap[]
       summary: {

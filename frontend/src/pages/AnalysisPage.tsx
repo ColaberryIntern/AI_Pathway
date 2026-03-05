@@ -869,6 +869,11 @@ export default function AnalysisPage() {
   const gaps = result?.result.gap_analysis.gaps || []
   const top10Target: Top10TargetSkill[] = result?.result.top_10_target_skills || []
   const top10Gaps: Top10SkillGap[] = result?.result.top_10_skill_gaps || []
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const allSkillGaps: Top10SkillGap[] = (result?.result.all_skill_gaps || []).map((g: any) => ({
+    ...g,
+    required_level: g.required_level ?? g.target_level,
+  }))
   const journeyRoadmap: JourneyRoadmap | undefined = result?.result.journey_roadmap
   const fitScore: number = result?.result.fit_score ?? 0
   const executiveIntroduction: string = result?.result.executive_introduction ?? ''
@@ -1054,7 +1059,7 @@ export default function AnalysisPage() {
       {/* UNIFIED SKILLS GAP OVERVIEW                                      */}
       {/* ================================================================ */}
       {top10Gaps.length > 0 && (
-        <UnifiedSkillsChart gaps={top10Gaps} />
+        <UnifiedSkillsChart gaps={top10Gaps} allGaps={allSkillGaps} />
       )}
 
       {/* ================================================================ */}
