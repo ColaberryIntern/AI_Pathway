@@ -5,7 +5,8 @@ import {
   X, Send, Loader2, Sparkles, Bot, ExternalLink,
 } from 'lucide-react'
 import { sendMentorMessage, getMentorHistory } from '../../services/api'
-import { openInLLM, getPreferredLLM, getLLMOption } from '../../utils/llm'
+import { openInLLM, getRunLabel } from '../../utils/llm'
+import LLMChooser from './LLMChooser'
 
 interface Message {
   role: string
@@ -42,7 +43,6 @@ function parseMessagePrompts(content: string): Array<{ type: 'text'; value: stri
 
 function PromptCard({ prompt }: { prompt: string }) {
   const [opened, setOpened] = useState(false)
-  const llm = getLLMOption(getPreferredLLM())
 
   return (
     <div className="my-1.5 p-2 bg-indigo-50 border border-indigo-200 rounded-lg">
@@ -56,7 +56,7 @@ function PromptCard({ prompt }: { prompt: string }) {
         className="flex items-center gap-1 text-[10px] px-2 py-1 rounded-full bg-white text-indigo-600 hover:bg-indigo-100 border border-indigo-200 font-medium transition-colors"
       >
         <ExternalLink className="h-2.5 w-2.5" />
-        {opened ? 'Prompt copied!' : `Run in ${llm.name}`}
+        {opened ? 'Opening...' : getRunLabel()}
       </button>
     </div>
   )
@@ -68,6 +68,8 @@ export default function MentorChat() {
   const [isOpen, setIsOpen] = useState(false)
   const [input, setInput] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const lastAssistantRef = useRef<HTMLDivElement>(null)
+  const prevMessageCount = useRef(0)
 
   // Load existing history
   const { data: historyData } = useQuery({
@@ -101,9 +103,19 @@ export default function MentorChat() {
     return () => window.removeEventListener('open-mentor', handler)
   }, [])
 
-  // Auto-scroll to bottom
+  // Smart scroll: show start of new AI message, or bottom for user messages/typing
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    const newCount = messages.length
+    const lastMsg = messages[newCount - 1]
+
+    if (newCount > prevMessageCount.current && lastMsg?.role === 'assistant') {
+      // New assistant message — scroll to its start so user reads from the top
+      lastAssistantRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    } else {
+      // User message or typing indicator — scroll to bottom
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    }
+    prevMessageCount.current = newCount
   }, [messages, sendMutation.isPending])
 
   const handleSend = () => {
@@ -157,6 +169,11 @@ export default function MentorChat() {
             </button>
           </div>
 
+          {/* LLM Chooser strip */}
+          <div className="px-3 py-1.5 border-b border-gray-100 bg-gray-50 flex items-center justify-end">
+            <LLMChooser />
+          </div>
+
           {/* Messages */}
           <div className="flex-1 overflow-y-auto p-4 space-y-3">
             {messages.length === 0 && !sendMutation.isPending && (
@@ -190,9 +207,15 @@ export default function MentorChat() {
               </div>
             )}
 
-            {messages.map((msg, i) => (
+            {messages.map((msg, i) => {
+              // Attach ref to the last assistant message for smart scrolling
+              const isLastAssistant = msg.role === 'assistant' &&
+                i === messages.map((m) => m.role).lastIndexOf('assistant')
+
+              return (
               <div
                 key={i}
+                ref={isLastAssistant ? lastAssistantRef : undefined}
                 className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
               >
                 <div
@@ -217,7 +240,8 @@ export default function MentorChat() {
                   )}
                 </div>
               </div>
-            ))}
+              )
+            })}
 
             {/* Typing indicator */}
             {sendMutation.isPending && (
@@ -250,7 +274,7 @@ export default function MentorChat() {
                   <button
                     onClick={() => openInLLM(p)}
                     className="text-[10px] px-1.5 py-1 rounded-r-full bg-indigo-50 text-indigo-400 hover:text-indigo-600 hover:bg-indigo-100 border-l border-indigo-200"
-                    title={`Run in ${getLLMOption(getPreferredLLM()).name}`}
+                    title={getRunLabel()}
                   >
                     <ExternalLink className="h-2.5 w-2.5" />
                   </button>
