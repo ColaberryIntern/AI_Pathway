@@ -7,14 +7,21 @@ export interface LLMOption {
 }
 
 export const LLM_OPTIONS: LLMOption[] = [
-  { key: 'chatgpt', name: 'ChatGPT', url: 'https://chatgpt.com/' },
-  { key: 'claude', name: 'Claude', url: 'https://claude.ai/new' },
-  { key: 'gemini', name: 'Gemini', url: 'https://gemini.google.com/app' },
-  { key: 'copilot', name: 'Copilot', url: 'https://copilot.microsoft.com/' },
+  { key: 'chatgpt',     name: 'ChatGPT',     url: 'https://chatgpt.com/' },
+  { key: 'claude',      name: 'Claude',       url: 'https://claude.ai/new' },
+  { key: 'gemini',      name: 'Gemini',       url: 'https://gemini.google.com/app' },
+  { key: 'copilot',     name: 'Copilot',      url: 'https://copilot.microsoft.com/' },
+  { key: 'perplexity',  name: 'Perplexity',   url: 'https://www.perplexity.ai/search' },
+  { key: 'grok',        name: 'Grok',         url: 'https://x.com/i/grok' },
+  { key: 'deepseek',    name: 'DeepSeek',     url: 'https://chat.deepseek.com/' },
+  { key: 'mistral',     name: 'Mistral',      url: 'https://chat.mistral.ai/chat' },
+  { key: 'meta',        name: 'Meta AI',      url: 'https://www.meta.ai/' },
+  { key: 'poe',         name: 'Poe',          url: 'https://poe.com/' },
+  { key: 'huggingchat', name: 'HuggingChat',  url: 'https://huggingface.co/chat/' },
 ]
 
 /** LLMs where ?q= reliably injects the prompt */
-const URL_PROMPT_SUPPORTED = new Set(['chatgpt', 'claude'])
+const URL_PROMPT_SUPPORTED = new Set(['chatgpt', 'claude', 'perplexity'])
 
 const STORAGE_KEY = 'preferred_llm'
 
@@ -69,8 +76,8 @@ function showPasteToast(llmName: string): void {
 /**
  * Open the selected LLM with a prompt.
  *
- * ChatGPT & Claude  → ?q= URL parameter (prompt pre-filled automatically)
- * Copilot & Gemini  → clipboard copy + open site + toast instructing paste
+ * ChatGPT, Claude, Perplexity → ?q= URL parameter (prompt pre-filled)
+ * All others                   → clipboard copy + open site + paste toast
  */
 export async function openInLLM(prompt: string, llmKey?: string): Promise<void> {
   const llm = getLLMOption(llmKey || getPreferredLLM())

@@ -29,7 +29,7 @@ export default function LLMChooser() {
       </button>
 
       {open && (
-        <div className="absolute top-full left-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50 min-w-[160px]">
+        <div className="absolute top-full right-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50 min-w-[170px] max-h-[280px] overflow-y-auto">
           {LLM_OPTIONS.map((opt) => (
             <button
               key={opt.key}
