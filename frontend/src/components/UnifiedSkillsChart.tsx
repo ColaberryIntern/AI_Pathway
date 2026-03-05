@@ -47,7 +47,7 @@ export default function UnifiedSkillsChart({
           <h2 className="text-xl font-bold text-gray-900">Skills Gap Overview</h2>
         </div>
         <p className="text-sm text-gray-500">
-          Your current skills vs. what the target role requires
+          Priority skills addressed in your learning path
         </p>
       </div>
 

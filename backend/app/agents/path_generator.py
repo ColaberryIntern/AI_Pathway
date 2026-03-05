@@ -3,6 +3,7 @@ import asyncio
 import json
 import logging
 from app.agents.base import BaseAgent
+from app.services.ontology import get_ontology_service
 from app.services.path_quality_evaluator import PathQualityEvaluator
 
 logger = logging.getLogger(__name__)
@@ -171,7 +172,7 @@ skill topic and the learner's industry — not generic boilerplate."""
 
             if len(all_chapters) == num_chapters:
                 result = {
-                    "title": f"AI Learning Path: {all_chapters[0].get('skill_name', 'Skills')} & Beyond",
+                    "title": self._build_path_title(all_chapters),
                     "description": (
                         f"A personalized {num_chapters}-chapter learning path "
                         f"for {industry or 'technology'} professionals."
@@ -254,6 +255,33 @@ skill topic and the learner's industry — not generic boilerplate."""
         logger.info("path_generation_metrics %s", json.dumps(metrics))
 
         return result
+
+    @staticmethod
+    def _build_path_title(chapters: list[dict]) -> str:
+        """Derive a descriptive path title from chapter domain labels.
+
+        Produces titles like
+        "AI Learning Path: Evaluation & Observability, Foundations, Governance"
+        instead of the old "AI Learning Path: {first_skill} & Beyond".
+        """
+        ontology = get_ontology_service()
+        domain_labels: list[str] = []
+        seen: set[str] = set()
+        for ch in chapters:
+            sid = ch.get("primary_skill_id") or ch.get("skill_id", "")
+            parts = sid.split(".")
+            domain_id = f"D.{parts[1]}" if len(parts) >= 3 else None
+            if domain_id and domain_id not in seen:
+                seen.add(domain_id)
+                domain_obj = ontology.get_domain(domain_id)
+                if domain_obj:
+                    domain_labels.append(domain_obj["label"])
+        if not domain_labels:
+            return "AI Learning Path"
+        title = f"AI Learning Path: {', '.join(domain_labels[:3])}"
+        if len(domain_labels) > 3:
+            title += f" & {len(domain_labels) - 3} More"
+        return title
 
     def _build_generation_prompt(
         self,
@@ -960,6 +988,7 @@ Make the content:
         structure is never lost.  Chapters carry placeholder text that
         signals the content needs manual enrichment.
         """
+        title = PathGeneratorAgent._build_path_title(scaffold)
         chapters = []
         for ch in scaffold:
             chapters.append({
@@ -1038,7 +1067,7 @@ Make the content:
             })
 
         return {
-            "title": "Learning Path (awaiting enrichment)",
+            "title": title,
             "description": (
                 "Content enrichment was unsuccessful. The deterministic "
                 "chapter structure is preserved. Re-run enrichment to "

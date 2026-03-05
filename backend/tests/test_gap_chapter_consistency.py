@@ -54,8 +54,7 @@ def build_inputs(profile: dict, ontology):
 
     Mirrors the orchestrator's state_b construction:
     - Always adds explicitly-listed skills from expected_skill_gaps
-    - If a role template exists: overlay template levels, skip domain expansion
-    - If no role template: expand ALL skills from each target domain
+    - If a role template exists: overlay template levels
     """
     state_a = profile["estimated_current_skills"]
     state_b = {}
@@ -73,15 +72,8 @@ def build_inputs(profile: dict, ontology):
                 state_b[sid] = max(state_b[sid], level)
             else:
                 state_b[sid] = level
-    else:
-        # No template: expand ALL skills from each target domain
-        for gap_group in profile["expected_skill_gaps"]:
-            domain_id = gap_group.get("domain")
-            if domain_id:
-                for skill in ontology.get_skills_by_domain(domain_id):
-                    sid = skill["id"]
-                    if sid not in state_b:
-                        state_b[sid] = skill["level"]
+    # No template: specific skills are already in state_b from the
+    # loop above — no domain expansion needed.
 
     _tpl = ROLE_TEMPLATES.get(profile.get("target_role", ""))
     role_context = {
@@ -375,9 +367,11 @@ def test_mandatory_category_coverage():
         for cat in MANDATORY_CATEGORIES:
             cat_domains = set(cat["domains"])
             if not chapter_domains & cat_domains:
-                # Allow missing if template-aware and no gaps in category
-                if has_template and not (cat_domains & gap_domains):
-                    continue  # awareness-only, learner meets it
+                # Allow missing when no gaps exist in this category.
+                # If the learner already meets the required levels for all
+                # skills in a mandatory category, there is no gap to teach.
+                if not (cat_domains & gap_domains):
+                    continue
                 missing.append(cat["name"])
 
         status = "OK" if not missing else "FAIL"
@@ -392,6 +386,68 @@ def test_mandatory_category_coverage():
     print("\nPASS: All profiles cover all 4 mandatory categories.")
 
 
+def test_chapters_prioritize_expected_skills():
+    """At least 3 of 5 chapters must be relevant to expected_skill_gaps.
+
+    A chapter is "relevant" if its skill is either:
+    - directly listed in expected_skill_gaps or the role template, OR
+    - a prerequisite of any expected/template skill.
+
+    This catches regressions where state_b inflation causes completely
+    irrelevant skills to dominate the learning path.
+    """
+    ont = get_ontology_service()
+    gen = LearningPathGenerator(ontology_service=ont)
+
+    print("\n" + "=" * 80)
+    print("CHAPTER RELEVANCE TO EXPECTED SKILLS TEST")
+    print("=" * 80)
+
+    failures = []
+    for filename, name in PROFILE_FILES:
+        profile = load_profile(filename)
+        state_a, state_b, rc = build_inputs(profile, ont)
+        scaffold = gen.generate_path(state_a, state_b, role_context=rc)
+
+        # Collect all explicitly-listed gap skills from the profile
+        expected_sids: set[str] = set()
+        for gap_group in profile.get("expected_skill_gaps", []):
+            expected_sids.update(gap_group.get("skills", []))
+
+        # Also include role template skills as "expected"
+        _tpl = ROLE_TEMPLATES.get(profile.get("target_role", ""))
+        if _tpl:
+            expected_sids.update(_tpl.keys())
+
+        # Expand: prerequisites of expected skills are also relevant
+        relevant_sids = set(expected_sids)
+        for sid in expected_sids:
+            skill = ont.get_skill(sid)
+            if skill:
+                for prereq in skill.get("prerequisites", []):
+                    relevant_sids.add(prereq)
+
+        chapter_sids = [ch["primary_skill_id"] for ch in scaffold["chapters"]]
+        hits = [sid for sid in chapter_sids if sid in relevant_sids]
+        hit_count = len(hits)
+
+        status = "OK" if hit_count >= 3 else "FAIL"
+        print(f"  {name}: {hit_count}/5 chapters match expected skills [{status}]")
+        print(f"    chapters: {chapter_sids}")
+
+        if hit_count < 3:
+            failures.append(
+                f"{name}: only {hit_count}/5 chapters match expected skills "
+                f"(chapters={chapter_sids})"
+            )
+
+    assert not failures, (
+        f"FAIL: Chapters don't prioritize expected skills:\n"
+        + "\n".join(f"  - {f}" for f in failures)
+    )
+    print("\nPASS: All profiles have >= 3/5 chapters from expected skills.")
+
+
 if __name__ == "__main__":
     test_gap_chapter_skill_ids_match()
     test_gap_count_matches_chapter_count()
@@ -399,6 +455,7 @@ if __name__ == "__main__":
     test_reconciled_gaps_have_valid_fields()
     test_summary_domains_match_gap_domains()
     test_mandatory_category_coverage()
+    test_chapters_prioritize_expected_skills()
     print("\n" + "=" * 80)
     print("ALL GAP-CHAPTER CONSISTENCY TESTS PASSED")
     print("=" * 80)

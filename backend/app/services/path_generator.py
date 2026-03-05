@@ -412,6 +412,47 @@ class LearningPathGenerator:
             chapters[swap_idx] = new_chapter
             chapter_domains[swap_idx] = skill
 
+        # Remove orphaned prerequisites: chapters that were pulled in as
+        # prerequisites of a skill that was later swapped out by mandatory
+        # enforcement.  A chapter is orphaned when its skill is NOT a
+        # primary gap AND no remaining chapter depends on it.
+        # Never remove the sole representative of a mandatory category.
+        mandatory_sole_protect: set[int] = set()
+        for cat in MANDATORY_CATEGORIES:
+            cat_domains = set(cat["domains"])
+            cat_indices = [
+                idx for idx, ch in enumerate(chapters)
+                if (s := self._ontology.get_skill(ch["primary_skill_id"]))
+                and s["domain"] in cat_domains
+            ]
+            if len(cat_indices) == 1:
+                mandatory_sole_protect.add(cat_indices[0])
+
+        gap_sids = {g["skill_id"] for g in all_gaps}
+        orphans: set[int] = set()
+        for idx, ch in enumerate(chapters):
+            sid = ch["primary_skill_id"]
+            if sid in gap_sids:
+                continue  # legitimate gap skill, keep it
+            if idx in mandatory_sole_protect:
+                continue  # sole mandatory category representative
+            # Check if any other chapter in the plan depends on this skill
+            has_dependent = False
+            for other_ch in chapters:
+                other_sid = other_ch["primary_skill_id"]
+                if other_sid == sid:
+                    continue
+                other_skill = self._ontology.get_skill(other_sid)
+                if other_skill and sid in other_skill.get("prerequisites", []):
+                    has_dependent = True
+                    break
+            if not has_dependent:
+                orphans.add(idx)
+        if orphans:
+            chapters = [
+                ch for idx, ch in enumerate(chapters) if idx not in orphans
+            ]
+
         # Re-number chapters sequentially
         for i, ch in enumerate(chapters, start=1):
             ch["chapter_number"] = i

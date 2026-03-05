@@ -210,17 +210,13 @@ parse job descriptions, identify skill gaps, and generate personalized learning 
                     else:
                         valid_state_b[sid] = level
             elif "expected_skill_gaps" in profile_data:
-                # No template: expand ALL skills from each target
-                # domain so the gap engine has enough candidates
-                # to fill 5 chapters after per-skill floors.
+                # No template: add only the specific skills listed
+                # in each gap group (not the entire domain).
                 for gap_group in profile_data["expected_skill_gaps"]:
-                    domain_id = gap_group.get("domain")
-                    if domain_id:
-                        for skill in ontology.get_skills_by_domain(
-                            domain_id
-                        ):
-                            sid = skill["id"]
-                            if sid not in valid_state_b:
+                    for sid in gap_group.get("skills", []):
+                        if sid not in valid_state_b:
+                            skill = ontology.get_skill(sid)
+                            if skill:
                                 valid_state_b[sid] = skill["level"]
 
             # When a role template is active, rebuild top_10_target
@@ -357,6 +353,49 @@ parse job descriptions, identify skill gaps, and generate personalized learning 
                     }),
                 }
                 results["gap_analysis"] = gap_result
+
+                # Also reconcile top_10_skill_gaps to match scaffold
+                # chapters so the Skills Gap Overview displays the
+                # same skills as the learning path.
+                reconciled_top = []
+                for ch in scaffold_chapters:
+                    sid = ch.get(
+                        "primary_skill_id", ch.get("skill_id", "")
+                    )
+                    skill_obj = ontology.get_skill(sid)
+                    if not skill_obj:
+                        continue
+                    domain_obj = ontology.get_domain(
+                        skill_obj["domain"]
+                    )
+                    current = ch.get("current_level", 0)
+                    target = ch.get("target_level", 1)
+                    gap = target - current
+                    reconciled_top.append({
+                        "rank": ch.get("chapter_number", 0),
+                        "skill_id": sid,
+                        "skill_name": skill_obj["name"],
+                        "domain": skill_obj["domain"],
+                        "domain_label": (
+                            domain_obj["label"]
+                            if domain_obj else ""
+                        ),
+                        "required_level": target,
+                        "current_level": current,
+                        "gap": gap,
+                        "importance": (
+                            "CRITICAL" if gap >= 3
+                            else "HIGH" if gap >= 2
+                            else "MEDIUM"
+                        ),
+                        "rationale": (
+                            f"Selected for your learning path"
+                            f" \u2013 advances from L{current}"
+                            f" to L{target}"
+                        ),
+                    })
+                results["top_10_skill_gaps"] = reconciled_top
+                results["top_10_target_skills"] = reconciled_top
 
             # Step 5: Generate Learning Path (scaffold-enrichment mode)
             path_result = await self._execute_step(
