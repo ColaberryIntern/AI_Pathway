@@ -5,6 +5,8 @@ import {
 } from 'lucide-react'
 import { executePrompt, getPromptHistory } from '../../services/api'
 import type { PromptTemplate } from '../../types'
+import { hasUnfilledPlaceholders } from '../../utils/placeholders'
+import PlaceholderFillModal from './PlaceholderFillModal'
 
 interface Props {
   pathId: string
@@ -25,6 +27,7 @@ export default function PromptLab({ pathId, lessonId, template }: Props) {
   const [prompt, setPrompt] = useState('')
   const [response, setResponse] = useState<string | null>(null)
   const [showHistory, setShowHistory] = useState(false)
+  const [showFillModal, setShowFillModal] = useState(false)
 
   // Pre-fill with template
   useEffect(() => {
@@ -42,11 +45,11 @@ export default function PromptLab({ pathId, lessonId, template }: Props) {
 
   const iteration = (history?.total_iterations ?? 0) + 1
 
-  // Execute prompt mutation
+  // Execute prompt mutation — accepts optional override prompt for post-fill execution
   const executeMutation = useMutation({
-    mutationFn: () => executePrompt(pathId, {
+    mutationFn: (overridePrompt?: string) => executePrompt(pathId, {
       lesson_id: lessonId,
-      prompt,
+      prompt: overridePrompt ?? prompt,
       iteration,
     }),
     onSuccess: (data) => {
@@ -57,7 +60,17 @@ export default function PromptLab({ pathId, lessonId, template }: Props) {
 
   const handleRun = () => {
     if (!prompt.trim()) return
-    executeMutation.mutate()
+    if (hasUnfilledPlaceholders(prompt) && template?.placeholders?.length) {
+      setShowFillModal(true)
+      return
+    }
+    executeMutation.mutate(undefined)
+  }
+
+  const handleFillComplete = (filledPrompt: string) => {
+    setShowFillModal(false)
+    setPrompt(filledPrompt)
+    executeMutation.mutate(filledPrompt)
   }
 
   const handleRefine = () => {
@@ -220,6 +233,14 @@ export default function PromptLab({ pathId, lessonId, template }: Props) {
           </div>
         )}
       </div>
+
+      <PlaceholderFillModal
+        isOpen={showFillModal}
+        onClose={() => setShowFillModal(false)}
+        onSubmit={handleFillComplete}
+        templateText={prompt}
+        placeholders={template?.placeholders || []}
+      />
     </section>
   )
 }

@@ -3,6 +3,8 @@ import { FileCode2, Copy, ClipboardCheck, ChevronDown, ExternalLink } from 'luci
 import type { PromptTemplate } from '../../types'
 import { copyToClipboard } from '../../utils/clipboard'
 import { openInLLM, getRunLabel, getPreferredLLM } from '../../utils/llm'
+import { hasUnfilledPlaceholders } from '../../utils/placeholders'
+import PlaceholderFillModal from './PlaceholderFillModal'
 
 interface PromptTemplateCardProps {
   template: PromptTemplate
@@ -12,6 +14,8 @@ export default function PromptTemplateCard({ template }: PromptTemplateCardProps
   const [copied, setCopied] = useState(false)
   const [showPlaceholders, setShowPlaceholders] = useState(false)
   const [llmKey, setLlmKey] = useState(getPreferredLLM)
+  const [showFillModal, setShowFillModal] = useState(false)
+  const [pendingAction, setPendingAction] = useState<'run' | 'copy' | null>(null)
 
   useEffect(() => {
     const handler = (e: Event) => setLlmKey((e as CustomEvent).detail)
@@ -19,10 +23,40 @@ export default function PromptTemplateCard({ template }: PromptTemplateCardProps
     return () => window.removeEventListener('llm-changed', handler)
   }, [])
 
+  const needsFill = template.placeholders?.length > 0 && hasUnfilledPlaceholders(template.template)
+
+  const handleRun = () => {
+    if (needsFill) {
+      setPendingAction('run')
+      setShowFillModal(true)
+    } else {
+      openInLLM(template.template, llmKey)
+    }
+  }
+
   const handleCopy = () => {
-    copyToClipboard(template.template)
+    if (needsFill) {
+      setPendingAction('copy')
+      setShowFillModal(true)
+    } else {
+      doCopy(template.template)
+    }
+  }
+
+  const doCopy = (text: string) => {
+    copyToClipboard(text)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
+  }
+
+  const handleFillComplete = (filledPrompt: string) => {
+    setShowFillModal(false)
+    if (pendingAction === 'run') {
+      openInLLM(filledPrompt, llmKey)
+    } else if (pendingAction === 'copy') {
+      doCopy(filledPrompt)
+    }
+    setPendingAction(null)
   }
 
   // Highlight {{placeholders}} in the template
@@ -55,7 +89,7 @@ export default function PromptTemplateCard({ template }: PromptTemplateCardProps
         </p>
         <div className="flex items-center gap-3">
           <button
-            onClick={() => openInLLM(template.template, llmKey)}
+            onClick={handleRun}
             className="flex items-center gap-1.5 text-xs font-medium text-sky-400 hover:text-sky-300 transition-colors px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 border border-gray-700"
           >
             <ExternalLink className="h-3.5 w-3.5" />
@@ -115,6 +149,14 @@ export default function PromptTemplateCard({ template }: PromptTemplateCardProps
           )}
         </div>
       )}
+
+      <PlaceholderFillModal
+        isOpen={showFillModal}
+        onClose={() => { setShowFillModal(false); setPendingAction(null) }}
+        onSubmit={handleFillComplete}
+        templateText={template.template}
+        placeholders={template.placeholders || []}
+      />
     </section>
   )
 }
