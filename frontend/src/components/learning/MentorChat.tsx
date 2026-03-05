@@ -45,19 +45,58 @@ function parseMessagePrompts(content: string): Array<{ type: 'text'; value: stri
   return segments.length > 0 ? segments : [{ type: 'text', value: cleaned }]
 }
 
-/** Extract "Explore further:" prompts from an assistant message for bottom chips. */
+/** Extract suggested prompts from an assistant message for bottom chips.
+ *  Uses 3-tier approach matching backend logic:
+ *  1. "Explore further:" prefixed lines
+ *  2. "Try this prompt:" / "Ask:" prefixed lines
+ *  3. Any quoted string 30+ chars with a role instruction
+ */
 function extractSuggestedPrompts(content: string): string[] {
   const prompts: string[] = []
+  const rolePattern = /\b(?:act as|imagine you|as a|you are|suppose you|pretend you|take the role|playing the role|from the perspective)\b/i
+
+  const cleanLine = (line: string) =>
+    line.trim().replace(/^[\s\-*•]+/, '').replace(/^\d+\.\s*/, '').replace(/\*\*/g, '')
+
+  const stripQuotes = (t: string) =>
+    t.replace(/^["''\u201c\u2018]+|["''\u201d\u2019]+$/g, '').trim()
+
+  // Tier 1: "Explore further:" prefix
   for (const line of content.split('\n')) {
-    // Strip markdown list markers + bold
-    const cleaned = line.trim().replace(/^[\s\-*•]+/, '').replace(/^\d+\.\s*/, '').replace(/\*\*/g, '')
+    const cleaned = cleanLine(line)
     const match = cleaned.match(/^explore\s+further\s*:\s*(.*)/i)
     if (match) {
-      const text = match[1].trim().replace(/^["''\u201c\u2018]+|["''\u201d\u2019]+$/g, '').trim()
+      const text = stripQuotes(match[1])
       if (text.length >= 20) prompts.push(text)
     }
   }
-  return prompts
+
+  // Tier 2: "Try this prompt:" / "Ask:" prefix
+  if (!prompts.length) {
+    for (const line of content.split('\n')) {
+      const cleaned = cleanLine(line)
+      const match = cleaned.match(/^(?:try(?:\s+this)?\s+prompt|ask|suggested?\s+prompt)\s*:\s*(.*)/i)
+      if (match) {
+        const text = stripQuotes(match[1])
+        if (text.length >= 20) prompts.push(text)
+      }
+    }
+  }
+
+  // Tier 3: Any quoted string with a role instruction
+  if (!prompts.length) {
+    const quotePattern = /[""\u201c\u2018]([^""\u201d\u2019]{30,})[""\u201d\u2019]/g
+    let m: RegExpExecArray | null
+    while ((m = quotePattern.exec(content)) !== null) {
+      const candidate = m[1].trim()
+      if (rolePattern.test(candidate)) {
+        prompts.push(candidate)
+        if (prompts.length >= 2) break
+      }
+    }
+  }
+
+  return prompts.slice(0, 2)
 }
 
 function PromptCard({ prompt, llmKey }: { prompt: string; llmKey: string }) {
@@ -104,6 +143,7 @@ export default function MentorChat() {
   const [input, setInput] = useState('')
   const [autoSendTrigger, setAutoSendTrigger] = useState(0)
   const [llmKey, setLlmKey] = useState(getPreferredLLM)
+  const [savedPrompts, setSavedPrompts] = useState<string[]>([])
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const lastAssistantRef = useRef<HTMLDivElement>(null)
   const prevMessageCount = useRef(0)
@@ -122,9 +162,12 @@ export default function MentorChat() {
   const sendMutation = useMutation({
     mutationFn: (message: string) =>
       sendMentorMessage(pathId!, { message, lesson_id: lessonId }),
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['mentor-history', pathId, lessonId] })
       setInput('')
+      if (data.suggested_prompts?.length) {
+        setSavedPrompts(data.suggested_prompts)
+      }
     },
   })
 
@@ -187,7 +230,7 @@ export default function MentorChat() {
     }
   }
 
-  // Suggested prompts: prefer fresh mutation data, fall back to extracting from last assistant message
+  // Suggested prompts: mutation data > persisted state > history extraction
   const historyPrompts = useMemo(() => {
     const lastAssistant = [...messages].reverse().find(m => m.role !== 'user')
     if (!lastAssistant) return []
@@ -196,7 +239,9 @@ export default function MentorChat() {
 
   const suggestedPrompts = sendMutation.data?.suggested_prompts?.length
     ? sendMutation.data.suggested_prompts
-    : historyPrompts
+    : savedPrompts.length
+      ? savedPrompts
+      : historyPrompts
 
   if (!pathId) return null
 
