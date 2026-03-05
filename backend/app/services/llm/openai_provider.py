@@ -1,8 +1,11 @@
 """OpenAI LLM provider implementation."""
 import json
+import logging
 from openai import AsyncOpenAI
 from app.services.llm.base import BaseLLMProvider, LLMResponse
 from app.config import get_settings
+
+logger = logging.getLogger(__name__)
 
 
 class OpenAIProvider(BaseLLMProvider):
@@ -96,4 +99,30 @@ Respond with ONLY the JSON object."""
             json_mode=True,
         )
 
-        return json.loads(response.content.strip())
+        # Warn if response was truncated due to token limit
+        if (
+            response.raw_response.choices
+            and response.raw_response.choices[0].finish_reason == "length"
+        ):
+            logger.warning(
+                "OpenAI response truncated (hit max_tokens=%d)", max_tokens,
+            )
+
+        content = response.content.strip()
+
+        try:
+            return json.loads(content)
+        except json.JSONDecodeError as e:
+            # Try to repair truncated JSON (same logic as Claude provider)
+            repaired = content.rstrip(",")
+            open_braces = repaired.count("{") - repaired.count("}")
+            open_brackets = repaired.count("[") - repaired.count("]")
+            repaired += "]" * open_brackets
+            repaired += "}" * open_braces
+
+            try:
+                return json.loads(repaired)
+            except json.JSONDecodeError:
+                raise ValueError(
+                    f"Failed to parse OpenAI response as JSON: {str(e)[:100]}"
+                )
