@@ -1,7 +1,8 @@
-import { useState } from 'react'
-import { FileCode2, Copy, ClipboardCheck, ChevronDown } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { FileCode2, Copy, ClipboardCheck, ChevronDown, ExternalLink } from 'lucide-react'
 import type { PromptTemplate } from '../../types'
 import { copyToClipboard } from '../../utils/clipboard'
+import { openInLLM, getRunLabel, getPreferredLLM } from '../../utils/llm'
 
 interface PromptTemplateCardProps {
   template: PromptTemplate
@@ -10,6 +11,13 @@ interface PromptTemplateCardProps {
 export default function PromptTemplateCard({ template }: PromptTemplateCardProps) {
   const [copied, setCopied] = useState(false)
   const [showPlaceholders, setShowPlaceholders] = useState(false)
+  const [llmKey, setLlmKey] = useState(getPreferredLLM)
+
+  useEffect(() => {
+    const handler = (e: Event) => setLlmKey((e as CustomEvent).detail)
+    window.addEventListener('llm-changed', handler)
+    return () => window.removeEventListener('llm-changed', handler)
+  }, [])
 
   const handleCopy = () => {
     copyToClipboard(template.template)
@@ -41,20 +49,29 @@ export default function PromptTemplateCard({ template }: PromptTemplateCardProps
       </div>
 
       {/* Template display */}
-      <div className="bg-gray-900 rounded-xl p-4 relative group mb-4">
-        <p className="text-gray-100 text-sm font-mono whitespace-pre-wrap leading-relaxed">
+      <div className="bg-gray-900 rounded-xl p-4 mb-4">
+        <p className="text-gray-100 text-sm font-mono whitespace-pre-wrap leading-relaxed mb-3">
           {renderTemplate(template.template)}
         </p>
-        <button
-          onClick={handleCopy}
-          className="absolute top-3 right-3 p-1.5 rounded-md bg-gray-800 hover:bg-gray-700 transition-colors"
-        >
-          {copied ? (
-            <ClipboardCheck className="h-4 w-4 text-sky-400" />
-          ) : (
-            <Copy className="h-4 w-4 text-gray-400" />
-          )}
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => openInLLM(template.template, llmKey)}
+            className="flex items-center gap-1.5 text-xs font-medium text-sky-400 hover:text-sky-300 transition-colors px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 border border-gray-700"
+          >
+            <ExternalLink className="h-3.5 w-3.5" />
+            {getRunLabel(llmKey)}
+          </button>
+          <button
+            onClick={handleCopy}
+            className="flex items-center gap-1.5 text-xs font-medium text-gray-400 hover:text-gray-300 transition-colors px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 border border-gray-700"
+          >
+            {copied ? (
+              <><ClipboardCheck className="h-3.5 w-3.5 text-sky-400" /> Copied!</>
+            ) : (
+              <><Copy className="h-3.5 w-3.5" /> Copy</>
+            )}
+          </button>
+        </div>
       </div>
 
       {/* Expected output shape */}

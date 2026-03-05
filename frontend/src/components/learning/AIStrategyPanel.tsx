@@ -1,7 +1,8 @@
-import { useState } from 'react'
-import { Bot, CheckCircle2, Copy, ClipboardCheck, ArrowRight } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Bot, CheckCircle2, Copy, ClipboardCheck, ArrowRight, ExternalLink } from 'lucide-react'
 import type { AIStrategy } from '../../types'
 import { copyToClipboard } from '../../utils/clipboard'
+import { openInLLM, getRunLabel, getPreferredLLM } from '../../utils/llm'
 
 interface AIStrategyPanelProps {
   strategy: AIStrategy
@@ -9,6 +10,13 @@ interface AIStrategyPanelProps {
 
 export default function AIStrategyPanel({ strategy }: AIStrategyPanelProps) {
   const [copied, setCopied] = useState(false)
+  const [llmKey, setLlmKey] = useState(getPreferredLLM)
+
+  useEffect(() => {
+    const handler = (e: Event) => setLlmKey((e as CustomEvent).detail)
+    window.addEventListener('llm-changed', handler)
+    return () => window.removeEventListener('llm-changed', handler)
+  }, [])
 
   const handleCopy = () => {
     copyToClipboard(strategy.suggested_prompt)
@@ -61,21 +69,30 @@ export default function AIStrategyPanel({ strategy }: AIStrategyPanelProps) {
 
       {/* Suggested prompt */}
       {strategy.suggested_prompt && (
-        <div className="bg-gray-900 rounded-xl p-4 relative group">
+        <div className="bg-gray-900 rounded-xl p-4">
           <p className="text-xs font-medium text-teal-400 mb-2">Try this prompt:</p>
-          <p className="text-gray-100 text-sm font-mono whitespace-pre-wrap leading-relaxed">
+          <p className="text-gray-100 text-sm font-mono whitespace-pre-wrap leading-relaxed mb-3">
             {strategy.suggested_prompt}
           </p>
-          <button
-            onClick={handleCopy}
-            className="absolute top-3 right-3 p-1.5 rounded-md bg-gray-800 hover:bg-gray-700 transition-colors"
-          >
-            {copied ? (
-              <ClipboardCheck className="h-4 w-4 text-teal-400" />
-            ) : (
-              <Copy className="h-4 w-4 text-gray-400" />
-            )}
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => openInLLM(strategy.suggested_prompt, llmKey)}
+              className="flex items-center gap-1.5 text-xs font-medium text-teal-400 hover:text-teal-300 transition-colors px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 border border-gray-700"
+            >
+              <ExternalLink className="h-3.5 w-3.5" />
+              {getRunLabel(llmKey)}
+            </button>
+            <button
+              onClick={handleCopy}
+              className="flex items-center gap-1.5 text-xs font-medium text-gray-400 hover:text-gray-300 transition-colors px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 border border-gray-700"
+            >
+              {copied ? (
+                <><ClipboardCheck className="h-3.5 w-3.5 text-teal-400" /> Copied!</>
+              ) : (
+                <><Copy className="h-3.5 w-3.5" /> Copy</>
+              )}
+            </button>
+          </div>
         </div>
       )}
     </section>
