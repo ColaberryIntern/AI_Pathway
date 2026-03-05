@@ -62,6 +62,7 @@ export default function MentorChat() {
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const lastAssistantRef = useRef<HTMLDivElement>(null)
   const prevMessageCount = useRef(0)
+  const autoSendRef = useRef<string | null>(null)
 
   // Load existing history
   const { data: historyData } = useQuery({
@@ -89,19 +90,29 @@ export default function MentorChat() {
       setIsOpen(true)
       if (detail?.message) {
         setInput(detail.message)
+        autoSendRef.current = detail.message
       }
     }
     window.addEventListener('open-mentor', handler)
     return () => window.removeEventListener('open-mentor', handler)
   }, [])
 
+  // Auto-send when a message is queued from an external "Ask AI Mentor" click
+  useEffect(() => {
+    if (autoSendRef.current && !sendMutation.isPending) {
+      const msg = autoSendRef.current
+      autoSendRef.current = null
+      sendMutation.mutate(msg)
+    }
+  }, [isOpen]) // eslint-disable-line react-hooks/exhaustive-deps
+
   // Smart scroll: show start of new AI message, or bottom for user messages/typing
   useEffect(() => {
     const newCount = messages.length
     const lastMsg = messages[newCount - 1]
 
-    if (newCount > prevMessageCount.current && lastMsg?.role === 'assistant') {
-      // New assistant message — scroll to its start so user reads from the top
+    if (newCount > prevMessageCount.current && lastMsg?.role !== 'user') {
+      // New mentor message — scroll to its start so user reads from the top
       lastAssistantRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
     } else {
       // User message or typing indicator — scroll to bottom
@@ -200,14 +211,14 @@ export default function MentorChat() {
             )}
 
             {messages.map((msg, i) => {
-              // Attach ref to the last assistant message for smart scrolling
-              const isLastAssistant = msg.role === 'assistant' &&
-                i === messages.map((m) => m.role).lastIndexOf('assistant')
+              // Attach ref to the last mentor message for smart scrolling
+              const isLastMentor = msg.role !== 'user' &&
+                i === messages.reduce((last, m, idx) => m.role !== 'user' ? idx : last, -1)
 
               return (
               <div
                 key={i}
-                ref={isLastAssistant ? lastAssistantRef : undefined}
+                ref={isLastMentor ? lastAssistantRef : undefined}
                 className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
               >
                 <div
@@ -217,7 +228,7 @@ export default function MentorChat() {
                       : 'bg-gray-100 text-gray-800 rounded-bl-md'
                   }`}
                 >
-                  {msg.role === 'assistant' ? (
+                  {msg.role !== 'user' ? (
                     <div className="leading-relaxed">
                       {parseMessagePrompts(msg.content).map((seg, j) =>
                         seg.type === 'prompt' ? (

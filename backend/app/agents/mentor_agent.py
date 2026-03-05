@@ -1,4 +1,5 @@
 """Mentor Agent — AI learning coach that guides learners via Socratic method."""
+import re
 from app.agents.base import BaseAgent
 
 
@@ -114,8 +115,11 @@ Respond as the AI mentor. Guide them, don't give direct answers."""
         suggested_prompts = []
         for line in response_text.split("\n"):
             line_stripped = line.strip()
-            if line_stripped.lower().startswith("try this prompt:") or line_stripped.lower().startswith("- try:"):
-                prompt_text = line_stripped.split(":", 1)[-1].strip().strip('"').strip("'")
+            # Strip markdown list markers: "- ", "* ", "• ", "1. ", etc.
+            line_clean = line_stripped.lstrip("-*•").lstrip()
+            line_clean = re.sub(r'^\d+\.\s*', '', line_clean)
+            if line_clean.lower().startswith("try this prompt:") or line_clean.lower().startswith("try:"):
+                prompt_text = line_clean.split(":", 1)[-1].strip().strip('"').strip("'")
                 if prompt_text:
                     suggested_prompts.append(prompt_text)
 
