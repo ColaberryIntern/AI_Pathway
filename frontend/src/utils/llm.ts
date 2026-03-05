@@ -1,5 +1,3 @@
-import { copyToClipboard } from './clipboard'
-
 export interface LLMOption {
   key: string
   name: string
@@ -35,62 +33,20 @@ export function getLLMOption(key: string): LLMOption {
   return LLM_OPTIONS.find((o) => o.key === key) || LLM_OPTIONS[0]
 }
 
-/** ChatGPT supports ?q= for native prompt pre-fill; others require clipboard */
-export function supportsUrlPrompt(key: string): boolean {
-  return key === 'chatgpt'
-}
-
-/** Get button label depending on whether the LLM supports URL prompt */
+/** Get button label for the selected LLM */
 export function getRunLabel(key?: string): string {
   const k = key || getPreferredLLM()
   const llm = getLLMOption(k)
-  return supportsUrlPrompt(k) ? `Run in ${llm.name}` : `Copy & open ${llm.name}`
+  return `Run in ${llm.name}`
 }
 
-/** Show a brief toast notification when prompt is copied to clipboard */
-function showCopiedToast(llmName: string): void {
-  const toast = document.createElement('div')
-  toast.textContent = `Prompt copied! Paste it in ${llmName}`
-  toast.style.cssText = [
-    'position:fixed',
-    'bottom:5rem',
-    'right:1.5rem',
-    'z-index:9999',
-    'padding:0.625rem 1rem',
-    'border-radius:0.75rem',
-    'background:#312e81',
-    'color:#fff',
-    'font-size:0.8125rem',
-    'font-weight:500',
-    'box-shadow:0 4px 12px rgba(0,0,0,0.15)',
-    'opacity:0',
-    'transition:opacity 0.2s ease',
-  ].join(';')
-
-  document.body.appendChild(toast)
-
-  // Fade in
-  requestAnimationFrame(() => { toast.style.opacity = '1' })
-
-  // Fade out and remove after 3 seconds
-  setTimeout(() => {
-    toast.style.opacity = '0'
-    setTimeout(() => toast.remove(), 300)
-  }, 3000)
-}
-
+/**
+ * Open the selected LLM with a prompt pre-filled via ?q= URL parameter.
+ * All supported LLMs (ChatGPT, Claude, Gemini, Copilot) accept ?q=.
+ */
 export async function openInLLM(prompt: string, llmKey?: string): Promise<void> {
   const llm = getLLMOption(llmKey || getPreferredLLM())
-
-  // ChatGPT supports ?q= natively — opens with prompt pre-filled
-  if (supportsUrlPrompt(llm.key)) {
-    const encoded = encodeURIComponent(prompt)
-    window.open(`${llm.url}?q=${encoded}`, '_blank')
-    return
-  }
-
-  // Claude, Gemini, Copilot: copy to clipboard + open + show toast
-  await copyToClipboard(prompt)
-  showCopiedToast(llm.name)
-  window.open(llm.url, '_blank')
+  const encoded = encodeURIComponent(prompt)
+  const separator = llm.url.includes('?') ? '&' : '?'
+  window.open(`${llm.url}${separator}q=${encoded}`, '_blank')
 }
