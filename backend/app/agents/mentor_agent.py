@@ -134,24 +134,31 @@ Respond as the AI mentor. Guide them, don't give direct answers."""
         # rendered by the frontend's parseMessagePrompts() — no need to extract them here.
         suggested_prompts = []
         for line in response_text.split("\n"):
-            line_stripped = line.strip()
-            # Strip markdown list markers: "- ", "* ", "• ", "1. ", etc.
-            line_clean = line_stripped.lstrip("-*•").lstrip()
-            line_clean = re.sub(r'^\d+\.\s*', '', line_clean)
-            if line_clean.lower().startswith("explore further:"):
-                prompt_text = line_clean.split(":", 1)[-1].strip().strip('"').strip("'")
-                if prompt_text and len(prompt_text) >= 50:
+            # Strip markdown list markers, bold, whitespace
+            cleaned = line.strip()
+            cleaned = re.sub(r'^[\s\-*•]+', '', cleaned)
+            cleaned = re.sub(r'^\d+\.\s*', '', cleaned)
+            cleaned = cleaned.replace('**', '')
+            m = re.match(r'explore\s+further\s*:\s*(.*)', cleaned, re.IGNORECASE)
+            if m:
+                prompt_text = m.group(1).strip()
+                # Strip surrounding quotes (straight + smart)
+                prompt_text = re.sub(r'^["\'\u201c\u2018]+|["\'\u201d\u2019]+$', '', prompt_text).strip()
+                if prompt_text and len(prompt_text) >= 20:
                     suggested_prompts.append(prompt_text)
 
         # Fallback: if LLM didn't use "Explore further:" prefix, grab "Try this prompt:" ones
         if not suggested_prompts:
             for line in response_text.split("\n"):
-                line_stripped = line.strip()
-                line_clean = line_stripped.lstrip("-*•").lstrip()
-                line_clean = re.sub(r'^\d+\.\s*', '', line_clean)
-                if line_clean.lower().startswith("try this prompt:") or line_clean.lower().startswith("try:"):
-                    prompt_text = line_clean.split(":", 1)[-1].strip().strip('"').strip("'")
-                    if prompt_text and len(prompt_text) >= 50:
+                cleaned = line.strip()
+                cleaned = re.sub(r'^[\s\-*•]+', '', cleaned)
+                cleaned = re.sub(r'^\d+\.\s*', '', cleaned)
+                cleaned = cleaned.replace('**', '')
+                m = re.match(r'(?:try(?:\s+this)?\s+prompt|ask)\s*:\s*(.*)', cleaned, re.IGNORECASE)
+                if m:
+                    prompt_text = m.group(1).strip()
+                    prompt_text = re.sub(r'^["\'\u201c\u2018]+|["\'\u201d\u2019]+$', '', prompt_text).strip()
+                    if prompt_text and len(prompt_text) >= 20:
                         suggested_prompts.append(prompt_text)
 
         self._log_execution("mentor_chat", task, {"response_length": len(response_text)})

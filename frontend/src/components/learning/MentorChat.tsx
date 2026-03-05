@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useMemo } from 'react'
 import { useParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
@@ -43,6 +43,21 @@ function parseMessagePrompts(content: string): Array<{ type: 'text'; value: stri
   }
 
   return segments.length > 0 ? segments : [{ type: 'text', value: cleaned }]
+}
+
+/** Extract "Explore further:" prompts from an assistant message for bottom chips. */
+function extractSuggestedPrompts(content: string): string[] {
+  const prompts: string[] = []
+  for (const line of content.split('\n')) {
+    // Strip markdown list markers + bold
+    const cleaned = line.trim().replace(/^[\s\-*•]+/, '').replace(/^\d+\.\s*/, '').replace(/\*\*/g, '')
+    const match = cleaned.match(/^explore\s+further\s*:\s*(.*)/i)
+    if (match) {
+      const text = match[1].trim().replace(/^["''\u201c\u2018]+|["''\u201d\u2019]+$/g, '').trim()
+      if (text.length >= 20) prompts.push(text)
+    }
+  }
+  return prompts
 }
 
 function PromptCard({ prompt, llmKey }: { prompt: string; llmKey: string }) {
@@ -172,8 +187,16 @@ export default function MentorChat() {
     }
   }
 
-  // Suggested prompts from last response
-  const suggestedPrompts = sendMutation.data?.suggested_prompts ?? []
+  // Suggested prompts: prefer fresh mutation data, fall back to extracting from last assistant message
+  const historyPrompts = useMemo(() => {
+    const lastAssistant = [...messages].reverse().find(m => m.role !== 'user')
+    if (!lastAssistant) return []
+    return extractSuggestedPrompts(lastAssistant.content)
+  }, [messages])
+
+  const suggestedPrompts = sendMutation.data?.suggested_prompts?.length
+    ? sendMutation.data.suggested_prompts
+    : historyPrompts
 
   if (!pathId) return null
 
