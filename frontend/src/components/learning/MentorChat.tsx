@@ -59,6 +59,7 @@ export default function MentorChat() {
   const queryClient = useQueryClient()
   const [isOpen, setIsOpen] = useState(false)
   const [input, setInput] = useState('')
+  const [autoSendTrigger, setAutoSendTrigger] = useState(0)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const lastAssistantRef = useRef<HTMLDivElement>(null)
   const prevMessageCount = useRef(0)
@@ -91,6 +92,7 @@ export default function MentorChat() {
       if (detail?.message) {
         setInput(detail.message)
         autoSendRef.current = detail.message
+        setAutoSendTrigger((n) => n + 1)
       }
     }
     window.addEventListener('open-mentor', handler)
@@ -104,7 +106,7 @@ export default function MentorChat() {
       autoSendRef.current = null
       sendMutation.mutate(msg)
     }
-  }, [isOpen]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [autoSendTrigger]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Smart scroll: show start of new AI message, or bottom for user messages/typing
   useEffect(() => {
