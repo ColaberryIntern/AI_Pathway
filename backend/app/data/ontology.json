@@ -1,6 +1,6 @@
 {
-  "version": "1.0.0",
-  "export_date": "2025-12-28",
+  "version": "2.0.0",
+  "export_date": "2026-03-06",
   "proficiency_scale": [
     {"level": 0, "label": "Unaware", "description": "Has not heard of it"},
     {"level": 1, "label": "Aware", "description": "Can explain basics"},
@@ -10,13 +10,14 @@
     {"level": 5, "label": "Architect", "description": "Designs systems"}
   ],
   "layers": [
-    {"id": "L.FOUNDATION", "label": "Foundation", "color": "#22c55e", "domains": ["D.DIG", "D.TIC"]},
-    {"id": "L.THEORY", "label": "Theory", "color": "#6366f1", "domains": ["D.FND"]},
-    {"id": "L.APPLICATION", "label": "Application", "color": "#06b6d4", "domains": ["D.PRM", "D.RAG", "D.AGT", "D.MOD", "D.MUL", "D.EVL", "D.SEC", "D.OPS"]},
-    {"id": "L.TOOLS", "label": "Tools", "color": "#10b981", "domains": ["D.TOOL"]},
-    {"id": "L.TECH_PREREQ", "label": "Tech Prerequisites", "color": "#f59e0b", "domains": ["D.PRQ"]},
-    {"id": "L.DOMAIN", "label": "Domain", "color": "#ec4899", "domains": ["D.GOV", "D.DOM"]},
-    {"id": "L.SOFT", "label": "Soft/Strategy", "color": "#8b5cf6", "domains": ["D.PRD", "D.COM", "D.LRN"]}
+    {"id": "L.FOUNDATION", "label": "Foundation", "color": "#10B981", "domains": ["D.DIG", "D.CTIC"]},
+    {"id": "L.THEORY", "label": "Theory", "color": "#6366F1", "domains": ["D.FND"]},
+    {"id": "L.APPLICATION", "label": "Application", "color": "#06B6D4", "domains": ["D.PRM", "D.RAG", "D.AGT", "D.MOD", "D.MUL", "D.EVL", "D.SEC", "D.OPS"]},
+    {"id": "L.TOOLS", "label": "Tools", "color": "#8B5CF6", "domains": ["D.TOOL"]},
+    {"id": "L.TECH_PREREQ", "label": "Technical Prerequisites", "color": "#F59E0B", "domains": ["D.PRQ"]},
+    {"id": "L.DOMAIN", "label": "Domain & Governance", "color": "#EC4899", "domains": ["D.GOV", "D.DOM"]},
+    {"id": "L.SOFT", "label": "Strategy & Growth", "color": "#10B981", "domains": ["D.PRD", "D.COM", "D.LRN"]},
+    {"id": "L.EMERGING", "label": "Emerging (2025–26)", "color": "#EC4899", "domains": ["D.RSN", "D.ACODE", "D.COMP", "D.PROTO"]}
   ],
   "domains": [
     {"id": "D.DIG", "label": "Digital Literacy", "description": "Basic digital skills for everyone", "layer": "L.FOUNDATION"},
@@ -36,7 +37,11 @@
     {"id": "D.DOM", "label": "Domain Applications", "description": "Industry-specific AI", "layer": "L.DOMAIN"},
     {"id": "D.PRD", "label": "Product & UX", "description": "AI product management", "layer": "L.SOFT"},
     {"id": "D.COM", "label": "Communication & Collaboration", "description": "Working with AI teams", "layer": "L.SOFT"},
-    {"id": "D.LRN", "label": "Learning & Adaptation", "description": "Continuous AI learning", "layer": "L.SOFT"}
+    {"id": "D.LRN", "label": "Learning & Adaptation", "description": "Continuous AI learning", "layer": "L.SOFT"},
+    {"id": "D.RSN", "label": "Extended Reasoning", "description": "Reasoning models & deep research", "layer": "L.EMERGING"},
+    {"id": "D.ACODE", "label": "Agentic Coding", "description": "Vibe coding, CLI agents, AI IDEs", "layer": "L.EMERGING"},
+    {"id": "D.COMP", "label": "Computer Use Agents", "description": "Browser & desktop automation", "layer": "L.EMERGING"},
+    {"id": "D.PROTO", "label": "Agent Protocols", "description": "A2A, context engineering, security", "layer": "L.EMERGING"}
   ],
   "skills": [
     {"id": "SK.DIG.001", "name": "Web browsing & search fundamentals", "domain": "D.DIG", "level": 1, "prerequisites": []},
@@ -89,6 +94,8 @@
     {"id": "SK.RAG.012", "name": "Lost in the middle mitigation", "domain": "D.RAG", "level": 4, "prerequisites": ["SK.RAG.011"]},
     {"id": "SK.RAG.020", "name": "Faithfulness evaluation", "domain": "D.RAG", "level": 4, "prerequisites": ["SK.PRM.021", "SK.RAG.010"]},
     {"id": "SK.RAG.021", "name": "Golden sets & regression testing", "domain": "D.RAG", "level": 4, "prerequisites": ["SK.RAG.020"]},
+    {"id": "SK.RAG.022", "name": "Agentic RAG patterns", "domain": "D.RAG", "level": 4, "prerequisites": ["SK.RAG.003", "SK.AGT.001"]},
+    {"id": "SK.RAG.023", "name": "Temporal & time-aware RAG", "domain": "D.RAG", "level": 3, "prerequisites": ["SK.RAG.003"]},
     {"id": "SK.AGT.000", "name": "What are AI agents", "domain": "D.AGT", "level": 1, "prerequisites": ["SK.FND.004"]},
     {"id": "SK.AGT.001", "name": "Tool definitions & validation", "domain": "D.AGT", "level": 3, "prerequisites": ["SK.PRM.010", "SK.PRQ.020"]},
     {"id": "SK.AGT.002", "name": "Error handling & retries", "domain": "D.AGT", "level": 3, "prerequisites": ["SK.AGT.001", "SK.PRQ.021"]},
@@ -114,6 +121,8 @@
     {"id": "SK.MUL.011", "name": "Video understanding", "domain": "D.MUL", "level": 3, "prerequisites": ["SK.PRM.021"]},
     {"id": "SK.MUL.012", "name": "Text-to-speech applications", "domain": "D.MUL", "level": 2, "prerequisites": ["SK.FND.000"]},
     {"id": "SK.MUL.013", "name": "Document/PDF understanding", "domain": "D.MUL", "level": 2, "prerequisites": ["SK.PRM.001"]},
+    {"id": "SK.MUL.014", "name": "Native audio/video generation (Kling, Sora, Veo)", "domain": "D.MUL", "level": 2, "prerequisites": ["SK.FND.011"]},
+    {"id": "SK.MUL.015", "name": "Multimodal RAG", "domain": "D.MUL", "level": 4, "prerequisites": ["SK.RAG.003", "SK.MUL.001"]},
     {"id": "SK.EVL.000", "name": "Why AI evaluation matters", "domain": "D.EVL", "level": 1, "prerequisites": ["SK.FND.002"]},
     {"id": "SK.EVL.001", "name": "Eval types (offline/online/red team)", "domain": "D.EVL", "level": 2, "prerequisites": ["SK.FND.002"]},
     {"id": "SK.EVL.002", "name": "LLM-as-judge patterns", "domain": "D.EVL", "level": 3, "prerequisites": ["SK.PRM.011", "SK.EVL.001"]},
@@ -147,6 +156,9 @@
     {"id": "SK.TOOL.021", "name": "Provider selection criteria", "domain": "D.TOOL", "level": 3, "prerequisites": ["SK.FND.003", "SK.GOV.001"]},
     {"id": "SK.TOOL.030", "name": "Docker for AI apps", "domain": "D.TOOL", "level": 3, "prerequisites": ["SK.PRQ.022"]},
     {"id": "SK.TOOL.031", "name": "Kubernetes awareness", "domain": "D.TOOL", "level": 4, "prerequisites": ["SK.TOOL.030"]},
+    {"id": "SK.TOOL.032", "name": "Claude Code & CLI coding agents", "domain": "D.TOOL", "level": 3, "prerequisites": ["SK.PRQ.000", "SK.TOOL.002"]},
+    {"id": "SK.TOOL.033", "name": "Agentic IDEs (Cursor, Windsurf)", "domain": "D.TOOL", "level": 2, "prerequisites": ["SK.TOOL.002"]},
+    {"id": "SK.TOOL.034", "name": "Deep research tools (Perplexity, ChatGPT DR)", "domain": "D.TOOL", "level": 2, "prerequisites": ["SK.TOOL.001"]},
     {"id": "SK.PRQ.000", "name": "Command line basics", "domain": "D.PRQ", "level": 1, "prerequisites": []},
     {"id": "SK.PRQ.001", "name": "Version control (Git basics)", "domain": "D.PRQ", "level": 2, "prerequisites": ["SK.PRQ.000"]},
     {"id": "SK.PRQ.010", "name": "Python basics", "domain": "D.PRQ", "level": 2, "prerequisites": ["SK.PRQ.000"]},
@@ -165,6 +177,8 @@
     {"id": "SK.GOV.010", "name": "AI regulations landscape (EU AI Act)", "domain": "D.GOV", "level": 2, "prerequisites": ["SK.GOV.000"]},
     {"id": "SK.GOV.020", "name": "PII/PHI handling & retention", "domain": "D.GOV", "level": 2, "prerequisites": ["SK.FND.020"]},
     {"id": "SK.GOV.021", "name": "Data minimization & anonymization", "domain": "D.GOV", "level": 3, "prerequisites": ["SK.GOV.020"]},
+    {"id": "SK.GOV.022", "name": "AI-generated content disclosure", "domain": "D.GOV", "level": 2, "prerequisites": ["SK.GOV.000"]},
+    {"id": "SK.GOV.023", "name": "EU AI Act enforcement readiness", "domain": "D.GOV", "level": 3, "prerequisites": ["SK.GOV.010"]},
     {"id": "SK.DOM.HC.001", "name": "Healthcare: Clinical risk awareness", "domain": "D.DOM", "level": 3, "prerequisites": ["SK.GOV.001", "SK.PRM.021"]},
     {"id": "SK.DOM.HC.002", "name": "Healthcare: Evidence synthesis", "domain": "D.DOM", "level": 3, "prerequisites": ["SK.RAG.020"]},
     {"id": "SK.DOM.LGL.001", "name": "Legal: Disclaimer & advice boundaries", "domain": "D.DOM", "level": 3, "prerequisites": ["SK.GOV.001", "SK.PRD.010"]},
@@ -191,13 +205,37 @@
     {"id": "SK.LRN.002", "name": "Evaluating new AI tools", "domain": "D.LRN", "level": 2, "prerequisites": ["SK.TOOL.000"]},
     {"id": "SK.LRN.003", "name": "Building personal AI workflows", "domain": "D.LRN", "level": 2, "prerequisites": ["SK.PRM.001"]},
     {"id": "SK.LRN.004", "name": "Teaching others AI skills", "domain": "D.LRN", "level": 3, "prerequisites": ["SK.COM.001"]},
-    {"id": "SK.LRN.005", "name": "Experimenting safely with AI", "domain": "D.LRN", "level": 2, "prerequisites": ["SK.FND.020", "SK.SEC.000"]}
+    {"id": "SK.LRN.005", "name": "Experimenting safely with AI", "domain": "D.LRN", "level": 2, "prerequisites": ["SK.FND.020", "SK.SEC.000"]},
+    {"id": "SK.RSN.000", "name": "What are reasoning models (o3, R1, extended thinking)", "domain": "D.RSN", "level": 1, "prerequisites": ["SK.FND.004"]},
+    {"id": "SK.RSN.001", "name": "Extended thinking & test-time compute", "domain": "D.RSN", "level": 2, "prerequisites": ["SK.RSN.000"]},
+    {"id": "SK.RSN.002", "name": "Reasoning model selection & routing", "domain": "D.RSN", "level": 3, "prerequisites": ["SK.RSN.001", "SK.FND.003"]},
+    {"id": "SK.RSN.003", "name": "Deep research agents", "domain": "D.RSN", "level": 3, "prerequisites": ["SK.RSN.001", "SK.AGT.000"]},
+    {"id": "SK.RSN.004", "name": "Chain-of-thought verification", "domain": "D.RSN", "level": 3, "prerequisites": ["SK.RSN.001", "SK.PRM.005"]},
+    {"id": "SK.RSN.005", "name": "Inference cost budgeting for reasoning models", "domain": "D.RSN", "level": 3, "prerequisites": ["SK.RSN.002", "SK.OPS.002"]},
+    {"id": "SK.ACODE.000", "name": "Vibe coding & natural language development", "domain": "D.ACODE", "level": 1, "prerequisites": ["SK.FND.000"]},
+    {"id": "SK.ACODE.001", "name": "CLI coding agent usage (Claude Code)", "domain": "D.ACODE", "level": 2, "prerequisites": ["SK.ACODE.000", "SK.PRQ.000"]},
+    {"id": "SK.ACODE.002", "name": "Agentic IDE mastery (Cursor, Windsurf)", "domain": "D.ACODE", "level": 2, "prerequisites": ["SK.ACODE.000", "SK.TOOL.002"]},
+    {"id": "SK.ACODE.003", "name": "AI-assisted code review", "domain": "D.ACODE", "level": 2, "prerequisites": ["SK.ACODE.000"]},
+    {"id": "SK.ACODE.004", "name": "AI-generated test suites", "domain": "D.ACODE", "level": 3, "prerequisites": ["SK.ACODE.001"]},
+    {"id": "SK.ACODE.005", "name": "Autonomous debugging with AI", "domain": "D.ACODE", "level": 3, "prerequisites": ["SK.ACODE.001"]},
+    {"id": "SK.ACODE.006", "name": "Code architecture with AI", "domain": "D.ACODE", "level": 4, "prerequisites": ["SK.ACODE.004", "SK.ACODE.005"]},
+    {"id": "SK.ACODE.007", "name": "AI code quality & slop prevention", "domain": "D.ACODE", "level": 3, "prerequisites": ["SK.ACODE.001"]},
+    {"id": "SK.COMP.000", "name": "Computer use agent concepts", "domain": "D.COMP", "level": 1, "prerequisites": ["SK.AGT.000"]},
+    {"id": "SK.COMP.001", "name": "Browser automation with AI", "domain": "D.COMP", "level": 3, "prerequisites": ["SK.COMP.000", "SK.AGT.001"]},
+    {"id": "SK.COMP.002", "name": "Desktop automation with AI", "domain": "D.COMP", "level": 3, "prerequisites": ["SK.COMP.000", "SK.AGT.001"]},
+    {"id": "SK.COMP.003", "name": "Operator-style task delegation", "domain": "D.COMP", "level": 3, "prerequisites": ["SK.COMP.001"]},
+    {"id": "SK.COMP.004", "name": "Computer use safety & governance", "domain": "D.COMP", "level": 3, "prerequisites": ["SK.COMP.000", "SK.SEC.010"]},
+    {"id": "SK.PROTO.000", "name": "Agent-to-Agent (A2A) protocol", "domain": "D.PROTO", "level": 2, "prerequisites": ["SK.AGT.020"]},
+    {"id": "SK.PROTO.001", "name": "Agent cards & capability discovery", "domain": "D.PROTO", "level": 2, "prerequisites": ["SK.PROTO.000"]},
+    {"id": "SK.PROTO.002", "name": "Context engineering", "domain": "D.PROTO", "level": 3, "prerequisites": ["SK.PROTO.000", "SK.PRM.010"]},
+    {"id": "SK.PROTO.003", "name": "Multi-protocol agent systems (MCP + A2A)", "domain": "D.PROTO", "level": 4, "prerequisites": ["SK.PROTO.002", "SK.AGT.020"]},
+    {"id": "SK.PROTO.004", "name": "Agent protocol security", "domain": "D.PROTO", "level": 3, "prerequisites": ["SK.PROTO.000", "SK.SEC.010"]}
   ],
   "roles": [
     {"id": "ROLE.BEGINNER", "label": "AI Curious Beginner", "focus_domains": ["D.DIG", "D.CTIC", "D.FND", "D.PRM"], "color": "#22c55e"},
     {"id": "ROLE.KNOWLEDGE", "label": "Knowledge Worker", "focus_domains": ["D.DIG", "D.CTIC", "D.FND", "D.PRM", "D.MUL", "D.COM"], "color": "#3b82f6"},
     {"id": "ROLE.AI_PM", "label": "AI Product Manager", "focus_domains": ["D.PRD", "D.PRM", "D.EVL", "D.GOV", "D.COM"], "color": "#8b5cf6"},
-    {"id": "ROLE.LLM_ENGINEER", "label": "LLM Engineer", "focus_domains": ["D.PRQ", "D.PRM", "D.RAG", "D.AGT", "D.EVL", "D.SEC", "D.OPS", "D.TOOL"], "color": "#06b6d4"},
-    {"id": "ROLE.AI_ARCHITECT", "label": "AI Architect", "focus_domains": ["D.AGT", "D.EVL", "D.SEC", "D.GOV", "D.OPS", "D.MOD"], "color": "#ec4899"}
+    {"id": "ROLE.LLM_ENGINEER", "label": "LLM Engineer", "focus_domains": ["D.PRQ", "D.PRM", "D.RAG", "D.AGT", "D.EVL", "D.SEC", "D.OPS", "D.TOOL", "D.ACODE"], "color": "#06b6d4"},
+    {"id": "ROLE.AI_ARCHITECT", "label": "AI Architect", "focus_domains": ["D.AGT", "D.EVL", "D.SEC", "D.GOV", "D.OPS", "D.MOD", "D.RSN", "D.PROTO"], "color": "#ec4899"}
   ]
 }
