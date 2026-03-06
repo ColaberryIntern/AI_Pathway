@@ -2,8 +2,8 @@
  * Pyodide Web Worker — executes Python code in-browser via WebAssembly.
  *
  * Messages:
- *   { type: 'init', id }       → Load Pyodide from CDN
- *   { type: 'run', code, id }  → Execute Python code, return stdout/stderr
+ *   { type: 'init', id }       → Load Pyodide + micropip from CDN
+ *   { type: 'run', code, id }  → Auto-install imports, then execute code
  */
 
 /* global importScripts, loadPyodide */
@@ -23,6 +23,8 @@ self.onmessage = async function (e) {
       pyodide = await loadPyodide({
         indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.25.1/full/',
       })
+      // Pre-load micropip so we can install pure-python packages on demand
+      await pyodide.loadPackage('micropip')
       self.postMessage({ type: 'init-complete', id })
     } catch (err) {
       self.postMessage({ type: 'init-error', error: err.message, id })
@@ -36,6 +38,9 @@ self.onmessage = async function (e) {
       return
     }
     try {
+      // Auto-detect imports in the code and install required packages
+      await pyodide.loadPackagesFromImports(code)
+
       // Redirect stdout/stderr to capture output
       pyodide.runPython(`
 import sys
@@ -46,7 +51,7 @@ sys.stdout = __stdout_capture
 sys.stderr = __stderr_capture
 `)
       // Execute user code
-      pyodide.runPython(code)
+      await pyodide.runPythonAsync(code)
 
       const stdout = pyodide.runPython('__stdout_capture.getvalue()')
       const stderr = pyodide.runPython('__stderr_capture.getvalue()')
