@@ -148,6 +148,7 @@ export default function MentorChat() {
   const lastAssistantRef = useRef<HTMLDivElement>(null)
   const prevMessageCount = useRef(0)
   const autoSendRef = useRef<string | null>(null)
+  const autoSendModeRef = useRef<string | undefined>(undefined)
 
   // Load existing history
   const { data: historyData } = useQuery({
@@ -160,18 +161,20 @@ export default function MentorChat() {
 
   // Send message mutation
   const sendMutation = useMutation({
-    mutationFn: (message: string) =>
-      sendMentorMessage(pathId!, { message, lesson_id: lessonId }),
+    mutationFn: (params: { message: string; mode?: string }) =>
+      sendMentorMessage(pathId!, { message: params.message, lesson_id: lessonId, mode: params.mode }),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['mentor-history', pathId, lessonId] })
       setInput('')
       if (data.suggested_prompts?.length) {
         setSavedPrompts(data.suggested_prompts)
       }
+      // Notify other components (e.g. ImplementationTaskCard) that the mentor responded
+      window.dispatchEvent(new CustomEvent('mentor-responded'))
     },
   })
 
-  // Listen for open-mentor events from other components (e.g. ReflectionPrompts)
+  // Listen for open-mentor events from other components (e.g. ReflectionPrompts, ImplementationTaskCard)
   useEffect(() => {
     const handler = (e: Event) => {
       const detail = (e as CustomEvent).detail
@@ -179,6 +182,7 @@ export default function MentorChat() {
       if (detail?.message) {
         setInput(detail.message)
         autoSendRef.current = detail.message
+        autoSendModeRef.current = detail.mode  // e.g. 'implementation-briefing'
         setAutoSendTrigger((n) => n + 1)
       }
     }
@@ -197,8 +201,10 @@ export default function MentorChat() {
   useEffect(() => {
     if (autoSendRef.current && !sendMutation.isPending) {
       const msg = autoSendRef.current
+      const mode = autoSendModeRef.current
       autoSendRef.current = null
-      sendMutation.mutate(msg)
+      autoSendModeRef.current = undefined
+      sendMutation.mutate({ message: msg, mode })
     }
   }, [autoSendTrigger]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -220,7 +226,7 @@ export default function MentorChat() {
   const handleSend = () => {
     const msg = input.trim()
     if (!msg || sendMutation.isPending) return
-    sendMutation.mutate(msg)
+    sendMutation.mutate({ message: msg })
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
