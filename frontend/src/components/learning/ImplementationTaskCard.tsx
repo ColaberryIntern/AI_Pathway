@@ -56,6 +56,7 @@ export default function ImplementationTaskCard({
         mode: 'implementation-briefing',
         taskContext: {
           title: task.title,
+          description: task.description,
           deliverable: task.deliverable,
           requirements: task.requirements,
         },
