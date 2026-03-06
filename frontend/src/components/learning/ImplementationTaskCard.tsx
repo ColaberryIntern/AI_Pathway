@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react'
 import {
-  Hammer, Bot, ExternalLink, CheckCircle2, Circle,
+  Hammer, Bot, CheckCircle2, Circle, Send,
 } from 'lucide-react'
 import type { ImplementationTask } from '../../types'
-import { openInLLM, getRunLabel, getPreferredLLM } from '../../utils/llm'
 
 interface ImplementationTaskCardProps {
   task: ImplementationTask
@@ -14,23 +13,17 @@ interface ImplementationTaskCardProps {
 
 const STEPS = [
   { label: 'Review Assignment', description: 'Read the task details above' },
-  { label: 'Get AI Mentor Briefing', description: 'Your mentor will prepare a structured plan' },
-  { label: 'Open AI Workspace', description: 'Start building with your preferred AI tool' },
+  { label: 'Get AI Mentor Briefing', description: 'Your mentor will prepare a plan and open your workspace' },
+  { label: 'Mark Complete', description: 'Submit when you\'ve finished the task' },
 ]
 
 export default function ImplementationTaskCard({
-  task, pathId, lessonId,
+  task, pathId, lessonId, onSubmit,
 }: ImplementationTaskCardProps) {
   // Step 1 is always done (they're reading the card), so start at step 2
   const [completedStep, setCompletedStep] = useState(1)
   const [briefingRequested, setBriefingRequested] = useState(false)
-  const [llmKey, setLlmKey] = useState(getPreferredLLM)
-
-  useEffect(() => {
-    const handler = (e: Event) => setLlmKey((e as CustomEvent).detail)
-    window.addEventListener('llm-changed', handler)
-    return () => window.removeEventListener('llm-changed', handler)
-  }, [])
+  const [submitted, setSubmitted] = useState(false)
 
   // Listen for mentor-responded to advance to step 3
   useEffect(() => {
@@ -47,7 +40,7 @@ export default function ImplementationTaskCard({
     if (!pathId || !lessonId) return
     setBriefingRequested(true)
 
-    const taskContext = [
+    const taskMessage = [
       `I need help with this implementation task:`,
       ``,
       `Title: ${task.title}`,
@@ -58,23 +51,22 @@ export default function ImplementationTaskCard({
     ].join('\n')
 
     window.dispatchEvent(new CustomEvent('open-mentor', {
-      detail: { message: taskContext, mode: 'implementation-briefing' },
+      detail: {
+        message: taskMessage,
+        mode: 'implementation-briefing',
+        taskContext: {
+          title: task.title,
+          deliverable: task.deliverable,
+          requirements: task.requirements,
+        },
+      },
     }))
   }
 
-  const handleOpenWorkspace = () => {
-    const prompt = [
-      `Help me build: ${task.title}`,
-      ``,
-      `Deliverable: ${task.deliverable}`,
-      ``,
-      `Key requirements:`,
-      ...task.requirements.map((r, i) => `${i + 1}. ${r}`),
-      ``,
-      `Guide me step by step. Start with the first step.`,
-    ].join('\n')
-
-    openInLLM(prompt, llmKey)
+  const handleMarkComplete = () => {
+    setSubmitted(true)
+    setCompletedStep(3)
+    onSubmit?.()
   }
 
   return (
@@ -85,6 +77,12 @@ export default function ImplementationTaskCard({
           <Hammer className="h-5 w-5 text-purple-600" />
         </div>
         <h2 className="text-lg font-bold text-gray-900">Implementation Task</h2>
+        {submitted && (
+          <span className="flex items-center gap-1 text-xs text-emerald-600 ml-auto">
+            <CheckCircle2 className="h-3.5 w-3.5" />
+            Complete
+          </span>
+        )}
       </div>
 
       {/* Title & Description */}
@@ -176,19 +174,19 @@ export default function ImplementationTaskCard({
                         </span>
                       )}
 
-                      {/* Step 3: Workspace button */}
-                      {stepNum === 3 && isActive && (
+                      {/* Step 3: Mark Complete button */}
+                      {stepNum === 3 && isActive && !submitted && (
                         <button
-                          onClick={handleOpenWorkspace}
-                          className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-700 hover:to-purple-700 transition-all shadow-sm"
+                          onClick={handleMarkComplete}
+                          className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-gradient-to-r from-emerald-600 to-green-600 text-white hover:from-emerald-700 hover:to-green-700 transition-all shadow-sm"
                         >
-                          <ExternalLink className="h-3.5 w-3.5" />
-                          {getRunLabel(llmKey)}
+                          <Send className="h-3.5 w-3.5" />
+                          Mark as Complete
                         </button>
                       )}
                     </div>
 
-                    {/* Description — only for active/future steps */}
+                    {/* Description — only for non-complete steps */}
                     {!isComplete && (
                       <p className={`text-xs mt-0.5 ${isActive ? 'text-gray-500' : 'text-gray-300'}`}>
                         {step.description}
