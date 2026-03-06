@@ -387,6 +387,15 @@ export interface ImplementationTask {
   estimated_minutes: number
 }
 
+export interface ImplementationGradeResult {
+  score: number
+  passed: boolean
+  feedback: string
+  strengths: string[]
+  improvements: string[]
+  attempt_number: number
+}
+
 export interface ReflectionQuestion {
   question: string
   prompt_for_deeper_thinking: string

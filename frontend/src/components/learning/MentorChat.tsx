@@ -466,7 +466,12 @@ export default function MentorChat() {
   const handleOpenWorkspace = () => {
     const ctx = taskContextRef.current
     if (!ctx) return
-    const prompt = buildWorkspacePrompt(ctx)
+    // Include the mentor's briefing response so the external LLM has context
+    const lastMentorMsg = [...messages].reverse().find(m => m.role !== 'user')
+    const briefing = lastMentorMsg
+      ? `\n\nMENTOR BRIEFING:\nYour AI Mentor provided the following guidance:\n${lastMentorMsg.content}`
+      : ''
+    const prompt = buildWorkspacePrompt(ctx) + briefing
     openInLLM(prompt, llmKey)
   }
 

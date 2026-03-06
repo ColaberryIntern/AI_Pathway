@@ -41,3 +41,12 @@ class ImplementationTaskFeedbackResponse(BaseModel):
     strengths: list[str] = []
     improvements: list[str] = []
     prompt_strategy_tips: list[str] = []
+
+
+class ImplementationTaskGradeResponse(BaseModel):
+    score: int
+    passed: bool
+    feedback: str
+    strengths: list[str] = []
+    improvements: list[str] = []
+    attempt_number: int

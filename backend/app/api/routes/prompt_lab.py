@@ -1,13 +1,17 @@
 """Prompt Lab API routes — LLM proxy for interactive prompt execution."""
+import json
+import logging
 import time
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Form, File, UploadFile
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
 from app.models.lesson import Lesson
 from app.models.learning_path import LearningPath
 from app.models.prompt_history import PromptHistory
+from app.models.implementation_submission import ImplementationSubmission
 from app.services.llm import get_llm_provider
+from app.services.resume_parser import extract_text
 from app.models.module import Module
 from app.services.skill_genome import SkillGenomeService
 from app.schemas.prompt_lab import (
@@ -15,9 +19,10 @@ from app.schemas.prompt_lab import (
     PromptExecutionResponse,
     PromptHistoryItem,
     PromptHistoryResponse,
-    ImplementationTaskSubmitRequest,
-    ImplementationTaskFeedbackResponse,
+    ImplementationTaskGradeResponse,
 )
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -141,127 +146,206 @@ async def get_prompt_history(
     )
 
 
-TASK_REVIEW_SYSTEM = """You are an expert AI learning coach reviewing a learner's implementation task submission.
-The learner completed a hands-on task and is submitting their AI conversation for feedback.
-They may paste their full conversation with an AI (including both their prompts and the AI's responses),
-or they may submit just a single prompt attempt.
+TASK_GRADING_SYSTEM = """You are an expert AI learning assessor grading a learner's implementation task submission.
 
-Evaluate their work and provide:
-1. Specific strengths in their approach (2-3 bullet points, under "Strengths:")
-2. Areas for improvement (2-3 bullet points, under "Improvements:")
-3. Prompt strategy tips — specific, actionable advice on how to improve their prompting for this task (2-3 bullet points, under "Prompt Strategy Tips:")
-4. A brief overall feedback paragraph (2-3 sentences)
+The learner was given a specific task with requirements. They are submitting their work artifacts
+(text, code, documents, screenshots) for grading.
 
-Analyze their prompting approach:
-- Does it use a clear role instruction?
-- Does it include specific constraints and deliverables?
-- Does it provide enough context for the AI to give a useful response?
-- What prompting techniques (chain-of-thought, few-shot, role-play) would improve it?
-- If they submitted a multi-turn conversation, evaluate how they iterated and refined their prompts.
+You must evaluate their submission against the task requirements and return a JSON object with:
 
-Be encouraging but honest. Focus on prompt engineering technique, not just correctness.
-Keep total response under 600 words."""
+{
+  "score": <integer 0-100>,
+  "passed": <boolean, true if score >= 70>,
+  "feedback": "<2-3 sentence overall assessment>",
+  "strengths": ["<strength 1>", "<strength 2>"],
+  "improvements": ["<improvement 1>", "<improvement 2>"]
+}
+
+Grading criteria:
+- Does the submission address ALL stated requirements? (40 points)
+- Quality and completeness of the deliverable (30 points)
+- Evidence of understanding (not just copy-paste) (20 points)
+- Presentation and clarity (10 points)
+
+Be encouraging but rigorous. A score of 70+ means the learner demonstrated adequate understanding.
+If the submission is empty or clearly unrelated, score 0-20.
+If it partially addresses requirements, score 40-69.
+If it fully addresses requirements with good quality, score 70-90.
+Reserve 90+ for exceptional work that goes beyond requirements.
+
+Return ONLY the JSON object. No additional text."""
+
+MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB per file
+MAX_CONTENT_LENGTH = 12_000  # chars sent to LLM
+PASS_THRESHOLD = 70
+ALLOWED_EXTENSIONS = {
+    ".pdf", ".docx", ".doc",
+    ".py", ".js", ".ts", ".jsx", ".tsx", ".json", ".yaml", ".yml",
+    ".md", ".txt", ".html", ".css", ".csv", ".xml", ".sql",
+    ".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp",
+}
 
 
 @router.post(
     "/{path_id}/implementation-task/submit",
-    response_model=ImplementationTaskFeedbackResponse,
+    response_model=ImplementationTaskGradeResponse,
 )
 async def submit_implementation_task(
     path_id: str,
-    request: ImplementationTaskSubmitRequest,
+    lesson_id: str = Form(...),
+    artifact_text: str = Form(""),
+    files: list[UploadFile] = File(default=[]),
     db: AsyncSession = Depends(get_db),
 ):
-    """Submit an implementation task and get AI feedback on the learner's strategy."""
+    """Submit implementation task artifacts for AI grading.
+
+    Accepts text and/or file uploads. Extracts text from files,
+    grades against task requirements, and returns structured feedback.
+    """
+    # Validate path and lesson
     path = await db.get(LearningPath, path_id)
     if not path:
         raise HTTPException(status_code=404, detail="Learning path not found")
 
-    lesson = await db.get(Lesson, request.lesson_id)
+    lesson = await db.get(Lesson, lesson_id)
     if not lesson or lesson.path_id != path_id:
         raise HTTPException(status_code=404, detail="Lesson not found")
 
-    # Build context from lesson content
+    # Count previous attempts
+    count_result = await db.execute(
+        select(func.count(ImplementationSubmission.id)).where(
+            ImplementationSubmission.lesson_id == lesson_id,
+            ImplementationSubmission.path_id == path_id,
+        )
+    )
+    attempt_number = (count_result.scalar() or 0) + 1
+
+    # Extract text from uploaded files
+    file_names: list[str] = []
+    extracted_parts: list[str] = []
+
+    for f in files:
+        if not f.filename:
+            continue
+        ext = "." + f.filename.rsplit(".", 1)[-1].lower() if "." in f.filename else ""
+        if ext not in ALLOWED_EXTENSIONS:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Unsupported file type: {ext}. Allowed: PDF, DOCX, code files, images.",
+            )
+        contents = await f.read()
+        if len(contents) > MAX_FILE_SIZE:
+            raise HTTPException(
+                status_code=400,
+                detail=f"File {f.filename} exceeds 10MB limit.",
+            )
+        file_names.append(f.filename)
+        try:
+            text = extract_text(contents, f.filename)
+            if text.strip():
+                extracted_parts.append(f"--- {f.filename} ---\n{text}")
+        except Exception as e:
+            logger.warning("Failed to extract text from %s: %s", f.filename, e)
+            extracted_parts.append(f"--- {f.filename} ---\n[Could not extract text]")
+
+    # Combine all content
+    all_extracted = "\n\n".join(extracted_parts)
+    combined_content = ""
+    if artifact_text.strip():
+        combined_content += f"PASTED TEXT:\n{artifact_text.strip()}\n\n"
+    if all_extracted:
+        combined_content += f"UPLOADED FILES:\n{all_extracted}"
+
+    if not combined_content.strip():
+        raise HTTPException(
+            status_code=400,
+            detail="No content submitted. Please paste text or upload files.",
+        )
+
+    # Truncate to stay within LLM context limits
+    combined_content = combined_content[:MAX_CONTENT_LENGTH]
+
+    # Build grading prompt from task info
     content = lesson.content or {}
     task_info = content.get("implementation_task", {})
     module = await db.get(Module, lesson.module_id)
 
-    learner_section = (
-        f"LEARNER'S AI CONVERSATION:\n{request.learner_prompt}"
-        if request.learner_prompt.strip()
-        else "LEARNER'S AI CONVERSATION:\n(No conversation provided)"
-    )
+    requirements = task_info.get("requirements", [])
+    req_list = "\n".join(f"{i+1}. {r}" for i, r in enumerate(requirements))
 
-    optional_sections = ""
-    if request.prompt_history_summary and request.prompt_history_summary.strip():
-        optional_sections += f"\nLEARNER'S PROMPT HISTORY:\n{request.prompt_history_summary}\n"
-    if request.strategy_explanation and request.strategy_explanation.strip():
-        optional_sections += f"\nLEARNER'S STRATEGY EXPLANATION:\n{request.strategy_explanation}\n"
-
-    prompt = f"""TASK: {task_info.get('title', lesson.title)}
+    grading_prompt = f"""TASK: {task_info.get('title', lesson.title)}
 DESCRIPTION: {task_info.get('description', '')}
-SKILL: {module.skill_name if module else 'Unknown'}
+DELIVERABLE: {task_info.get('deliverable', '')}
+REQUIREMENTS:
+{req_list}
 
-{learner_section}
-{optional_sections}
-Please evaluate their implementation approach and prompt engineering strategy. Provide specific tips on how to improve their prompting."""
+LEARNER'S SUBMISSION (Attempt #{attempt_number}):
+{combined_content}
 
+Grade this submission against the requirements above."""
+
+    # Call LLM for grading
     llm = get_llm_provider()
     try:
         llm_response = await llm.generate(
-            prompt=prompt,
-            system_prompt=TASK_REVIEW_SYSTEM,
+            prompt=grading_prompt,
+            system_prompt=TASK_GRADING_SYSTEM,
             max_tokens=1024,
-            temperature=0.5,
+            temperature=0.3,
+            json_mode=True,
         )
-        feedback_text = llm_response.content
+        grade = json.loads(llm_response.content)
+    except json.JSONDecodeError:
+        logger.error("LLM returned non-JSON grading response: %s", llm_response.content[:200])
+        grade = {
+            "score": 0,
+            "passed": False,
+            "feedback": "Grading failed — please try again.",
+            "strengths": [],
+            "improvements": [],
+        }
     except Exception as e:
         raise HTTPException(
-            status_code=500, detail=f"Feedback generation failed: {str(e)}"
+            status_code=500, detail=f"Grading failed: {str(e)}"
         )
 
-    # Parse strengths, improvements, and prompt strategy tips from the response
-    strengths = []
-    improvements = []
-    prompt_strategy_tips = []
-    current_section = None
-    for line in feedback_text.split("\n"):
-        stripped = line.strip()
-        lower = stripped.lower()
-        if "strength" in lower or "well" in lower and ":" in lower:
-            current_section = "strengths"
-            continue
-        elif "prompt strategy" in lower or "prompt tip" in lower and ":" in lower:
-            current_section = "tips"
-            continue
-        elif "improve" in lower or "consider" in lower and ":" in lower:
-            current_section = "improvements"
-            continue
-        elif stripped.startswith(("- ", "* ", "1.", "2.", "3.")):
-            item = stripped.lstrip("-*0123456789. ").strip()
-            if item:
-                if current_section == "strengths" and len(strengths) < 3:
-                    strengths.append(item)
-                elif current_section == "improvements" and len(improvements) < 3:
-                    improvements.append(item)
-                elif current_section == "tips" and len(prompt_strategy_tips) < 3:
-                    prompt_strategy_tips.append(item)
+    score = int(grade.get("score", 0))
+    passed = score >= PASS_THRESHOLD
+
+    # Save submission record
+    submission = ImplementationSubmission(
+        lesson_id=lesson_id,
+        path_id=path_id,
+        user_id=path.user_id,
+        attempt_number=attempt_number,
+        artifact_text=artifact_text[:10_000],
+        file_names=file_names,
+        extracted_content=all_extracted[:10_000],
+        score=score,
+        passed=passed,
+        feedback=grade.get("feedback", ""),
+        strengths=grade.get("strengths", [])[:3],
+        improvements=grade.get("improvements", [])[:3],
+    )
+    db.add(submission)
+    await db.commit()
 
     # Update Skill Genome with project evidence
     if module:
         try:
             genome_svc = SkillGenomeService()
-            quality = len(strengths) / max(1, len(strengths) + len(improvements))
             await genome_svc.update_from_project(
-                db, path.user_id, module.skill_id, feedback_quality=quality,
+                db, path.user_id, module.skill_id, feedback_quality=score / 100.0,
             )
             await db.commit()
         except Exception:
-            pass  # Non-blocking — genome update failure shouldn't break feedback
+            pass  # Non-blocking
 
-    return ImplementationTaskFeedbackResponse(
-        feedback=feedback_text,
-        strengths=strengths,
-        improvements=improvements,
-        prompt_strategy_tips=prompt_strategy_tips,
+    return ImplementationTaskGradeResponse(
+        score=score,
+        passed=passed,
+        feedback=grade.get("feedback", ""),
+        strengths=grade.get("strengths", [])[:3],
+        improvements=grade.get("improvements", [])[:3],
+        attempt_number=attempt_number,
     )

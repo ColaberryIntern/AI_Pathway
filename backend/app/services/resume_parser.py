@@ -37,18 +37,30 @@ def _extract_text_docx(file_bytes: bytes) -> str:
     return "\n".join(parts)
 
 
-def extract_text(file_bytes: bytes, filename: str) -> str:
-    """Extract plain text from a resume file.
+CODE_EXTENSIONS = {
+    ".py", ".js", ".ts", ".jsx", ".tsx", ".json", ".yaml", ".yml",
+    ".md", ".txt", ".html", ".css", ".csv", ".xml", ".sql",
+}
 
-    Supports .pdf and .docx formats.
+IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp"}
+
+
+def extract_text(file_bytes: bytes, filename: str) -> str:
+    """Extract plain text from a file.
+
+    Supports PDF, DOCX, code/text files, and images (metadata only).
     """
     ext = Path(filename).suffix.lower()
     if ext == ".pdf":
         return _extract_text_pdf(file_bytes)
     elif ext in (".docx", ".doc"):
         return _extract_text_docx(file_bytes)
+    elif ext in CODE_EXTENSIONS:
+        return file_bytes.decode("utf-8", errors="replace")
+    elif ext in IMAGE_EXTENSIONS:
+        return f"[Uploaded image: {filename}]"
     else:
-        raise ValueError(f"Unsupported file format: {ext}. Please upload a PDF or DOCX file.")
+        raise ValueError(f"Unsupported file format: {ext}.")
 
 
 async def parse_resume(file_bytes: bytes, filename: str) -> dict:

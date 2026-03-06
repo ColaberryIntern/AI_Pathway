@@ -1,8 +1,10 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import {
-  Hammer, Bot, CheckCircle2, Circle, Send,
+  Hammer, Bot, CheckCircle2, Circle, Send, Upload, FileText, Loader2,
+  AlertCircle, X, RotateCcw,
 } from 'lucide-react'
-import type { ImplementationTask } from '../../types'
+import type { ImplementationTask, ImplementationGradeResult } from '../../types'
+import { submitImplementationTask } from '../../services/api'
 
 interface ImplementationTaskCardProps {
   task: ImplementationTask
@@ -14,8 +16,10 @@ interface ImplementationTaskCardProps {
 const STEPS = [
   { label: 'Review Assignment', description: 'Read the task details above' },
   { label: 'Get AI Mentor Briefing', description: 'Your mentor will prepare a plan and open your workspace' },
-  { label: 'Mark Complete', description: 'Submit when you\'ve finished the task' },
+  { label: 'Submit & Get Graded', description: 'Upload your work for AI grading' },
 ]
+
+const ACCEPTED_TYPES = '.pdf,.docx,.doc,.py,.js,.ts,.jsx,.tsx,.json,.yaml,.yml,.md,.txt,.html,.css,.csv,.xml,.sql,.png,.jpg,.jpeg,.gif,.webp,.bmp'
 
 export default function ImplementationTaskCard({
   task, pathId, lessonId, onSubmit,
@@ -24,6 +28,14 @@ export default function ImplementationTaskCard({
   const [completedStep, setCompletedStep] = useState(1)
   const [briefingRequested, setBriefingRequested] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+
+  // Submission state
+  const [artifactText, setArtifactText] = useState('')
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([])
+  const [grading, setGrading] = useState(false)
+  const [gradeResult, setGradeResult] = useState<ImplementationGradeResult | null>(null)
+  const [gradeError, setGradeError] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Listen for mentor-responded to advance to step 3
   useEffect(() => {
@@ -64,11 +76,46 @@ export default function ImplementationTaskCard({
     }))
   }
 
-  const handleMarkComplete = () => {
-    setSubmitted(true)
-    setCompletedStep(3)
-    onSubmit?.()
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || [])
+    const valid = files.filter(f => f.size <= 10 * 1024 * 1024) // 10MB limit
+    setUploadedFiles(prev => [...prev, ...valid])
+    if (fileInputRef.current) fileInputRef.current.value = ''
   }
+
+  const removeFile = (index: number) => {
+    setUploadedFiles(prev => prev.filter((_, i) => i !== index))
+  }
+
+  const handleSubmitForGrading = async () => {
+    if (!pathId || !lessonId) return
+    setGrading(true)
+    setGradeError(null)
+    try {
+      const result = await submitImplementationTask(pathId, {
+        lesson_id: lessonId,
+        artifact_text: artifactText,
+        files: uploadedFiles,
+      })
+      setGradeResult(result)
+      if (result.passed) {
+        setSubmitted(true)
+        setCompletedStep(3)
+        onSubmit?.()
+      }
+    } catch {
+      setGradeError('Grading failed. Please try again.')
+    } finally {
+      setGrading(false)
+    }
+  }
+
+  const handleResubmit = () => {
+    setGradeResult(null)
+    setGradeError(null)
+  }
+
+  const canSubmit = !grading && (artifactText.trim().length > 0 || uploadedFiles.length > 0)
 
   return (
     <section className="card border-2 border-purple-200 bg-gradient-to-br from-purple-50/50 to-white">
@@ -130,70 +177,230 @@ export default function ImplementationTaskCard({
               const isActive = completedStep === stepNum - 1 || (stepNum === 2 && briefingRequested)
 
               return (
-                <div key={stepNum} className="flex items-start gap-3">
-                  {/* Step indicator */}
-                  <div className="flex flex-col items-center">
-                    {isComplete ? (
-                      <CheckCircle2 className="h-6 w-6 text-emerald-500 flex-shrink-0" />
-                    ) : isActive ? (
-                      <div className="h-6 w-6 rounded-full border-2 border-purple-500 bg-purple-50 flex items-center justify-center flex-shrink-0">
-                        <span className="text-xs font-bold text-purple-600">{stepNum}</span>
-                      </div>
-                    ) : (
-                      <Circle className="h-6 w-6 text-gray-300 flex-shrink-0" />
-                    )}
-                    {/* Connector line */}
-                    {stepNum < STEPS.length && (
-                      <div className={`w-0.5 h-4 mt-1 ${isComplete ? 'bg-emerald-300' : 'bg-gray-200'}`} />
-                    )}
-                  </div>
-
-                  {/* Step content */}
-                  <div className="flex-1 pb-1">
-                    <div className="flex items-center gap-3">
-                      <span className={`text-sm font-semibold ${
-                        isComplete ? 'text-emerald-700' : isActive ? 'text-gray-900' : 'text-gray-400'
-                      }`}>
-                        {step.label}
-                      </span>
-
-                      {/* Step 2: Briefing button */}
-                      {stepNum === 2 && isActive && !briefingRequested && (
-                        <button
-                          onClick={handleGetBriefing}
-                          className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700 transition-all shadow-sm"
-                        >
-                          <Bot className="h-3.5 w-3.5" />
-                          Ask AI Mentor
-                        </button>
+                <div key={stepNum}>
+                  <div className="flex items-start gap-3">
+                    {/* Step indicator */}
+                    <div className="flex flex-col items-center">
+                      {isComplete ? (
+                        <CheckCircle2 className="h-6 w-6 text-emerald-500 flex-shrink-0" />
+                      ) : isActive ? (
+                        <div className="h-6 w-6 rounded-full border-2 border-purple-500 bg-purple-50 flex items-center justify-center flex-shrink-0">
+                          <span className="text-xs font-bold text-purple-600">{stepNum}</span>
+                        </div>
+                      ) : (
+                        <Circle className="h-6 w-6 text-gray-300 flex-shrink-0" />
                       )}
-
-                      {/* Step 2: Waiting for briefing */}
-                      {stepNum === 2 && briefingRequested && (
-                        <span className="text-xs text-purple-600 font-medium animate-pulse">
-                          Mentor is preparing your briefing...
-                        </span>
-                      )}
-
-                      {/* Step 3: Mark Complete button */}
-                      {stepNum === 3 && isActive && !submitted && (
-                        <button
-                          onClick={handleMarkComplete}
-                          className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-gradient-to-r from-emerald-600 to-green-600 text-white hover:from-emerald-700 hover:to-green-700 transition-all shadow-sm"
-                        >
-                          <Send className="h-3.5 w-3.5" />
-                          Mark as Complete
-                        </button>
+                      {/* Connector line */}
+                      {stepNum < STEPS.length && (
+                        <div className={`w-0.5 h-4 mt-1 ${isComplete ? 'bg-emerald-300' : 'bg-gray-200'}`} />
                       )}
                     </div>
 
-                    {/* Description — only for non-complete steps */}
-                    {!isComplete && (
-                      <p className={`text-xs mt-0.5 ${isActive ? 'text-gray-500' : 'text-gray-300'}`}>
-                        {step.description}
-                      </p>
-                    )}
+                    {/* Step content */}
+                    <div className="flex-1 pb-1">
+                      <div className="flex items-center gap-3">
+                        <span className={`text-sm font-semibold ${
+                          isComplete ? 'text-emerald-700' : isActive ? 'text-gray-900' : 'text-gray-400'
+                        }`}>
+                          {step.label}
+                        </span>
+
+                        {/* Step 2: Briefing button */}
+                        {stepNum === 2 && isActive && !briefingRequested && (
+                          <button
+                            onClick={handleGetBriefing}
+                            className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700 transition-all shadow-sm"
+                          >
+                            <Bot className="h-3.5 w-3.5" />
+                            Ask AI Mentor
+                          </button>
+                        )}
+
+                        {/* Step 2: Waiting for briefing */}
+                        {stepNum === 2 && briefingRequested && (
+                          <span className="text-xs text-purple-600 font-medium animate-pulse">
+                            Mentor is preparing your briefing...
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Description — only for non-complete steps */}
+                      {!isComplete && (
+                        <p className={`text-xs mt-0.5 ${isActive ? 'text-gray-500' : 'text-gray-300'}`}>
+                          {step.description}
+                        </p>
+                      )}
+                    </div>
                   </div>
+
+                  {/* Step 3: Submission form (renders below the step header) */}
+                  {stepNum === 3 && isActive && !submitted && !gradeResult && (
+                    <div className="ml-9 mt-3 space-y-3">
+                      {/* Text area */}
+                      <div>
+                        <label className="text-xs font-medium text-gray-600 mb-1 block">
+                          Paste your work
+                        </label>
+                        <textarea
+                          value={artifactText}
+                          onChange={e => setArtifactText(e.target.value)}
+                          placeholder="Paste your ChatGPT/Claude conversation, code output, analysis results..."
+                          rows={5}
+                          className="w-full rounded-lg border border-gray-300 p-3 text-sm focus:border-purple-500 focus:ring-1 focus:ring-purple-200 resize-y"
+                        />
+                      </div>
+
+                      {/* File upload zone */}
+                      <div>
+                        <label className="text-xs font-medium text-gray-600 mb-1 block">
+                          Upload files (optional)
+                        </label>
+                        <div
+                          onClick={() => fileInputRef.current?.click()}
+                          className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:border-purple-400 hover:bg-purple-50/30 transition-colors"
+                        >
+                          <Upload className="h-5 w-5 text-gray-400 mx-auto mb-1" />
+                          <p className="text-xs text-gray-500">Click to browse or drag files</p>
+                          <p className="text-[10px] text-gray-400 mt-0.5">PDF, DOCX, code files, screenshots (max 10MB each)</p>
+                          <input
+                            ref={fileInputRef}
+                            type="file"
+                            multiple
+                            accept={ACCEPTED_TYPES}
+                            onChange={handleFileSelect}
+                            className="hidden"
+                          />
+                        </div>
+
+                        {/* Uploaded file list */}
+                        {uploadedFiles.length > 0 && (
+                          <div className="mt-2 space-y-1">
+                            {uploadedFiles.map((f, i) => (
+                              <div key={i} className="flex items-center gap-2 text-xs text-gray-600 bg-gray-50 rounded-lg px-2.5 py-1.5">
+                                <FileText className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />
+                                <span className="truncate flex-1">{f.name}</span>
+                                <span className="text-[10px] text-gray-400 flex-shrink-0">
+                                  {(f.size / 1024).toFixed(0)}KB
+                                </span>
+                                <button
+                                  onClick={() => removeFile(i)}
+                                  className="p-0.5 text-gray-400 hover:text-red-500 transition-colors"
+                                >
+                                  <X className="h-3 w-3" />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Error */}
+                      {gradeError && (
+                        <p className="text-xs text-red-600 bg-red-50 rounded-lg px-3 py-2">
+                          {gradeError}
+                        </p>
+                      )}
+
+                      {/* Submit button */}
+                      <button
+                        onClick={handleSubmitForGrading}
+                        disabled={!canSubmit}
+                        className="flex items-center justify-center gap-2 w-full text-sm font-medium px-4 py-2.5 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
+                      >
+                        {grading ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            Grading your submission...
+                          </>
+                        ) : (
+                          <>
+                            <Send className="h-4 w-4" />
+                            Submit for AI Grading
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Step 3: Grading results */}
+                  {stepNum === 3 && gradeResult && (
+                    <div className="ml-9 mt-3">
+                      <div className={`rounded-lg p-4 border ${
+                        gradeResult.passed
+                          ? 'bg-emerald-50 border-emerald-200'
+                          : 'bg-amber-50 border-amber-200'
+                      }`}>
+                        {/* Score + badge */}
+                        <div className="flex items-center gap-3 mb-3">
+                          <span className={`text-2xl font-bold ${
+                            gradeResult.passed ? 'text-emerald-600' : 'text-amber-600'
+                          }`}>
+                            {gradeResult.score}/100
+                          </span>
+                          <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
+                            gradeResult.passed
+                              ? 'bg-emerald-100 text-emerald-700'
+                              : 'bg-amber-100 text-amber-700'
+                          }`}>
+                            {gradeResult.passed ? 'PASSED' : 'NOT YET'}
+                          </span>
+                          <span className="text-[10px] text-gray-400 ml-auto">
+                            Attempt #{gradeResult.attempt_number}
+                          </span>
+                        </div>
+
+                        {/* Feedback */}
+                        <p className="text-sm text-gray-700 mb-3 leading-relaxed">
+                          {gradeResult.feedback}
+                        </p>
+
+                        {/* Strengths */}
+                        {gradeResult.strengths.length > 0 && (
+                          <div className="mb-2">
+                            <p className="text-xs font-semibold text-emerald-700 uppercase tracking-wider mb-1">
+                              Strengths
+                            </p>
+                            <ul className="space-y-1">
+                              {gradeResult.strengths.map((s, i) => (
+                                <li key={i} className="flex items-start gap-1.5 text-sm text-gray-700">
+                                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 mt-0.5 flex-shrink-0" />
+                                  {s}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+
+                        {/* Improvements */}
+                        {gradeResult.improvements.length > 0 && (
+                          <div className="mb-3">
+                            <p className="text-xs font-semibold text-amber-700 uppercase tracking-wider mb-1">
+                              Areas to Improve
+                            </p>
+                            <ul className="space-y-1">
+                              {gradeResult.improvements.map((s, i) => (
+                                <li key={i} className="flex items-start gap-1.5 text-sm text-gray-700">
+                                  <AlertCircle className="h-3.5 w-3.5 text-amber-500 mt-0.5 flex-shrink-0" />
+                                  {s}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+
+                        {/* Resubmit button (only if failed) */}
+                        {!gradeResult.passed && (
+                          <button
+                            onClick={handleResubmit}
+                            className="flex items-center gap-1.5 text-xs font-medium text-purple-600 hover:text-purple-800 transition-colors mt-1"
+                          >
+                            <RotateCcw className="h-3.5 w-3.5" />
+                            Revise & Resubmit
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )
             })}

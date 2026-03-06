@@ -15,6 +15,7 @@ from app.models.mentor_conversation import MentorConversation
 from app.models.skill_genome import SkillGenomeEntry
 from app.models.lesson_reaction import LessonReaction
 from app.models.confusion_event import ConfusionEvent
+from app.models.implementation_submission import ImplementationSubmission
 
 __all__ = [
     "User",
@@ -33,4 +34,5 @@ __all__ = [
     "SkillGenomeEntry",
     "LessonReaction",
     "ConfusionEvent",
+    "ImplementationSubmission",
 ]

@@ -4,6 +4,7 @@ import type {
   LearningDashboard, LearningModule, Lesson, SkillMastery, ActivatePathResponse,
   SkillGenomeResponse, SkillGenomeEntry, ReactionType, LessonReactionState,
   ConfusionRecovery, CuriosityFeedResponse, PersonalizationResult,
+  ImplementationGradeResult,
 } from '../types'
 
 const api = axios.create({
@@ -266,19 +267,20 @@ export const submitImplementationTask = async (
   pathId: string,
   params: {
     lesson_id: string
-    prompt_history_summary: string
-    strategy_explanation: string
-    learner_prompt: string
+    artifact_text: string
+    files: File[]
   }
-): Promise<{
-  feedback: string
-  strengths: string[]
-  improvements: string[]
-  prompt_strategy_tips: string[]
-}> => {
+): Promise<ImplementationGradeResult> => {
+  const formData = new FormData()
+  formData.append('lesson_id', params.lesson_id)
+  formData.append('artifact_text', params.artifact_text)
+  for (const file of params.files) {
+    formData.append('files', file)
+  }
   const { data } = await api.post(
     `/learning/${pathId}/implementation-task/submit`,
-    params
+    formData,
+    { headers: { 'Content-Type': 'multipart/form-data' } }
   )
   return data
 }
