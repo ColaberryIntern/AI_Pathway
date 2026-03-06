@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import {
   Hammer, Bot, CheckCircle2, Circle, Send, Upload, FileText, Loader2,
   AlertCircle, X, RotateCcw,
@@ -13,10 +13,16 @@ interface ImplementationTaskCardProps {
   onSubmit?: () => void
 }
 
+interface UploadSlot {
+  id: string
+  heading: string
+  label: string
+}
+
 const STEPS = [
   { label: 'Review Assignment', description: 'Read the task details above' },
   { label: 'Get AI Mentor Briefing', description: 'Your mentor will prepare a plan and open your workspace' },
-  { label: 'Submit & Get Graded', description: 'Upload your work for AI grading' },
+  { label: 'Submit & Get Graded', description: 'Upload your required artifacts for AI grading' },
 ]
 
 const ACCEPTED_TYPES = '.pdf,.docx,.doc,.py,.js,.ts,.jsx,.tsx,.json,.yaml,.yml,.md,.txt,.html,.css,.csv,.xml,.sql,.png,.jpg,.jpeg,.gif,.webp,.bmp'
@@ -29,13 +35,34 @@ export default function ImplementationTaskCard({
   const [briefingRequested, setBriefingRequested] = useState(false)
   const [submitted, setSubmitted] = useState(false)
 
-  // Submission state
-  const [artifactText, setArtifactText] = useState('')
-  const [uploadedFiles, setUploadedFiles] = useState<File[]>([])
+  // Build required upload slots from task data
+  const requiredUploads = useMemo<UploadSlot[]>(() => {
+    const slots: UploadSlot[] = [
+      { id: 'deliverable', heading: 'Deliverable', label: task.deliverable },
+    ]
+    if (task.requires_prompt_history) {
+      slots.push({
+        id: 'prompt_history',
+        heading: 'Prompt History',
+        label: 'Screenshot or export of your AI conversation',
+      })
+    }
+    if (task.requires_architecture_explanation) {
+      slots.push({
+        id: 'architecture',
+        heading: 'Architecture Explanation',
+        label: 'Document explaining your design approach',
+      })
+    }
+    return slots
+  }, [task.deliverable, task.requires_prompt_history, task.requires_architecture_explanation])
+
+  // Per-slot file state
+  const [slotFiles, setSlotFiles] = useState<Record<string, File[]>>({})
   const [grading, setGrading] = useState(false)
   const [gradeResult, setGradeResult] = useState<ImplementationGradeResult | null>(null)
   const [gradeError, setGradeError] = useState<string | null>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
+  const slotInputRefs = useRef<Record<string, HTMLInputElement | null>>({})
 
   // Listen for mentor-responded to advance to step 3
   useEffect(() => {
@@ -76,15 +103,19 @@ export default function ImplementationTaskCard({
     }))
   }
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSlotFileSelect = (slotId: string, e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
     const valid = files.filter(f => f.size <= 10 * 1024 * 1024) // 10MB limit
-    setUploadedFiles(prev => [...prev, ...valid])
-    if (fileInputRef.current) fileInputRef.current.value = ''
+    setSlotFiles(prev => ({ ...prev, [slotId]: [...(prev[slotId] || []), ...valid] }))
+    const ref = slotInputRefs.current[slotId]
+    if (ref) ref.value = ''
   }
 
-  const removeFile = (index: number) => {
-    setUploadedFiles(prev => prev.filter((_, i) => i !== index))
+  const removeSlotFile = (slotId: string, index: number) => {
+    setSlotFiles(prev => ({
+      ...prev,
+      [slotId]: (prev[slotId] || []).filter((_, i) => i !== index),
+    }))
   }
 
   const handleSubmitForGrading = async () => {
@@ -92,10 +123,11 @@ export default function ImplementationTaskCard({
     setGrading(true)
     setGradeError(null)
     try {
+      const allFiles = Object.values(slotFiles).flat()
       const result = await submitImplementationTask(pathId, {
         lesson_id: lessonId,
-        artifact_text: artifactText,
-        files: uploadedFiles,
+        artifact_text: '',
+        files: allFiles,
       })
       setGradeResult(result)
       if (result.passed) {
@@ -113,9 +145,11 @@ export default function ImplementationTaskCard({
   const handleResubmit = () => {
     setGradeResult(null)
     setGradeError(null)
+    setSlotFiles({})
   }
 
-  const canSubmit = !grading && (artifactText.trim().length > 0 || uploadedFiles.length > 0)
+  const allSlotsFilled = requiredUploads.every(slot => (slotFiles[slot.id]?.length ?? 0) > 0)
+  const canSubmit = !grading && allSlotsFilled
 
   return (
     <section className="card border-2 border-purple-200 bg-gradient-to-br from-purple-50/50 to-white">
@@ -233,66 +267,85 @@ export default function ImplementationTaskCard({
                     </div>
                   </div>
 
-                  {/* Step 3: Submission form (renders below the step header) */}
+                  {/* Step 3: Named upload slots (renders below the step header) */}
                   {stepNum === 3 && isActive && !submitted && !gradeResult && (
-                    <div className="ml-9 mt-3 space-y-3">
-                      {/* Text area */}
-                      <div>
-                        <label className="text-xs font-medium text-gray-600 mb-1 block">
-                          Paste your work
-                        </label>
-                        <textarea
-                          value={artifactText}
-                          onChange={e => setArtifactText(e.target.value)}
-                          placeholder="Paste your ChatGPT/Claude conversation, code output, analysis results..."
-                          rows={5}
-                          className="w-full rounded-lg border border-gray-300 p-3 text-sm focus:border-purple-500 focus:ring-1 focus:ring-purple-200 resize-y"
-                        />
-                      </div>
+                    <div className="ml-9 mt-3 space-y-4">
+                      {requiredUploads.map(slot => {
+                        const files = slotFiles[slot.id] || []
+                        const filled = files.length > 0
 
-                      {/* File upload zone */}
-                      <div>
-                        <label className="text-xs font-medium text-gray-600 mb-1 block">
-                          Upload files (optional)
-                        </label>
-                        <div
-                          onClick={() => fileInputRef.current?.click()}
-                          className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:border-purple-400 hover:bg-purple-50/30 transition-colors"
-                        >
-                          <Upload className="h-5 w-5 text-gray-400 mx-auto mb-1" />
-                          <p className="text-xs text-gray-500">Click to browse or drag files</p>
-                          <p className="text-[10px] text-gray-400 mt-0.5">PDF, DOCX, code files, screenshots (max 10MB each)</p>
-                          <input
-                            ref={fileInputRef}
-                            type="file"
-                            multiple
-                            accept={ACCEPTED_TYPES}
-                            onChange={handleFileSelect}
-                            className="hidden"
-                          />
-                        </div>
+                        return (
+                          <div key={slot.id} className={`rounded-lg border-2 p-3 transition-colors ${
+                            filled ? 'border-emerald-300 bg-emerald-50/30' : 'border-gray-200 bg-white'
+                          }`}>
+                            {/* Slot heading with check */}
+                            <div className="flex items-center gap-2 mb-1">
+                              {filled ? (
+                                <CheckCircle2 className="h-4 w-4 text-emerald-500 flex-shrink-0" />
+                              ) : (
+                                <Circle className="h-4 w-4 text-gray-300 flex-shrink-0" />
+                              )}
+                              <span className="text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                                {slot.heading}
+                              </span>
+                            </div>
+                            <p className="text-xs text-gray-500 mb-2 ml-6">{slot.label}</p>
 
-                        {/* Uploaded file list */}
-                        {uploadedFiles.length > 0 && (
-                          <div className="mt-2 space-y-1">
-                            {uploadedFiles.map((f, i) => (
-                              <div key={i} className="flex items-center gap-2 text-xs text-gray-600 bg-gray-50 rounded-lg px-2.5 py-1.5">
-                                <FileText className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />
-                                <span className="truncate flex-1">{f.name}</span>
-                                <span className="text-[10px] text-gray-400 flex-shrink-0">
-                                  {(f.size / 1024).toFixed(0)}KB
-                                </span>
+                            {/* Upload area or file list */}
+                            {!filled ? (
+                              <div
+                                onClick={() => slotInputRefs.current[slot.id]?.click()}
+                                className="ml-6 border-2 border-dashed border-gray-300 rounded-lg p-3 text-center cursor-pointer hover:border-purple-400 hover:bg-purple-50/30 transition-colors"
+                              >
+                                <Upload className="h-4 w-4 text-gray-400 mx-auto mb-1" />
+                                <p className="text-xs text-gray-500">Click to upload</p>
+                                <p className="text-[10px] text-gray-400 mt-0.5">PDF, DOCX, code files, screenshots (max 10MB)</p>
+                                <input
+                                  ref={el => { slotInputRefs.current[slot.id] = el }}
+                                  type="file"
+                                  multiple
+                                  accept={ACCEPTED_TYPES}
+                                  onChange={e => handleSlotFileSelect(slot.id, e)}
+                                  className="hidden"
+                                />
+                              </div>
+                            ) : (
+                              <div className="ml-6 space-y-1">
+                                {files.map((f, i) => (
+                                  <div key={i} className="flex items-center gap-2 text-xs text-gray-600 bg-white rounded-lg px-2.5 py-1.5 border border-emerald-200">
+                                    <FileText className="h-3.5 w-3.5 text-emerald-500 flex-shrink-0" />
+                                    <span className="truncate flex-1">{f.name}</span>
+                                    <span className="text-[10px] text-gray-400 flex-shrink-0">
+                                      {(f.size / 1024).toFixed(0)}KB
+                                    </span>
+                                    <button
+                                      onClick={() => removeSlotFile(slot.id, i)}
+                                      className="p-0.5 text-gray-400 hover:text-red-500 transition-colors"
+                                    >
+                                      <X className="h-3 w-3" />
+                                    </button>
+                                  </div>
+                                ))}
+                                {/* Add more files to this slot */}
                                 <button
-                                  onClick={() => removeFile(i)}
-                                  className="p-0.5 text-gray-400 hover:text-red-500 transition-colors"
+                                  onClick={() => slotInputRefs.current[slot.id]?.click()}
+                                  className="text-[10px] text-purple-600 hover:text-purple-800 font-medium ml-1"
                                 >
-                                  <X className="h-3 w-3" />
+                                  + Add another file
+                                  <input
+                                    ref={el => { slotInputRefs.current[slot.id] = el }}
+                                    type="file"
+                                    multiple
+                                    accept={ACCEPTED_TYPES}
+                                    onChange={e => handleSlotFileSelect(slot.id, e)}
+                                    className="hidden"
+                                  />
                                 </button>
                               </div>
-                            ))}
+                            )}
                           </div>
-                        )}
-                      </div>
+                        )
+                      })}
 
                       {/* Error */}
                       {gradeError && (
@@ -301,7 +354,7 @@ export default function ImplementationTaskCard({
                         </p>
                       )}
 
-                      {/* Submit button */}
+                      {/* Submit button — disabled until all slots filled */}
                       <button
                         onClick={handleSubmitForGrading}
                         disabled={!canSubmit}
@@ -319,6 +372,12 @@ export default function ImplementationTaskCard({
                           </>
                         )}
                       </button>
+
+                      {!allSlotsFilled && (
+                        <p className="text-[10px] text-gray-400 text-center">
+                          Upload all required artifacts to enable submission
+                        </p>
+                      )}
                     </div>
                   )}
 
