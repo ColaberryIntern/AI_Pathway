@@ -287,7 +287,7 @@ export const submitImplementationTask = async (
 
 export const sendMentorMessage = async (
   pathId: string,
-  params: { message: string; lesson_id?: string }
+  params: { message: string; lesson_id?: string; mode?: string }
 ): Promise<{
   response: string
   suggested_prompts: string[]

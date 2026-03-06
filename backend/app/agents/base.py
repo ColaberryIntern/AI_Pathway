@@ -43,11 +43,12 @@ class BaseAgent(ABC):
         context: list[dict] | None = None,
         temperature: float = 0.7,
         json_mode: bool = False,
+        system_prompt: str | None = None,
     ) -> str:
         """Make a call to the LLM."""
         response = await self.llm.generate(
             prompt=prompt,
-            system_prompt=self.system_prompt,
+            system_prompt=system_prompt if system_prompt is not None else self.system_prompt,
             context=context,
             temperature=temperature,
             json_mode=json_mode,

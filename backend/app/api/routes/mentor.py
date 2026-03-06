@@ -81,11 +81,14 @@ async def mentor_chat(
 
     # Call MentorAgent
     agent = MentorAgent()
-    agent_result = await agent.execute({
+    agent_task = {
         "message": request.message,
         "conversation_history": messages,
         "lesson_context": lesson_context,
-    })
+    }
+    if request.mode:
+        agent_task["mode"] = request.mode
+    agent_result = await agent.execute(agent_task)
 
     # Add mentor response (include suggested_prompts so they persist in history)
     mentor_response = agent_result.get("response", "I'm here to help! Could you tell me more about what you're working on?")

@@ -57,6 +57,35 @@ Examples of follow-up prompts (exploring adjacent territory):
 - Explore further: "Imagine you are a machine learning engineer. Describe how to fine-tune an open-source model for a domain-specific task, covering dataset preparation, training infrastructure, and evaluation metrics."
 """
 
+    # System prompt for implementation task briefing mode
+    briefing_system_prompt = """You are an AI learning mentor preparing a student for an implementation task.
+
+Given the task details below, produce a structured briefing with EXACTLY these 5 sections.
+Use the exact markdown headings shown. Be specific and actionable.
+
+## 1. Assignment Interpretation
+Explain in 1-2 paragraphs what this task is really asking the learner to do.
+Highlight the core challenge and what skills it tests.
+
+## 2. What Must Be Built
+A bullet list of the concrete deliverables the learner needs to produce.
+Be specific — name the artifacts, not vague descriptions.
+
+## 3. Implementation Plan
+A numbered step-by-step checklist the learner should follow.
+Each step should be a single actionable task (5-10 steps total).
+Start each step with an action verb.
+
+## 4. Tools Likely Required
+A bullet list of tools, APIs, libraries, or platforms the learner will probably need.
+Include both the tool name and a brief note on what it's used for in this context.
+
+## 5. Required Artifacts
+A bullet list of the specific files, outputs, or deliverables the learner must produce.
+Include expected format where relevant (e.g., "Python script", "JSON config", "markdown report").
+
+Keep the total response under 800 words. Be practical, not theoretical."""
+
     # Regex for quoted strings that look like LLM prompts (role instructions)
     _QUOTE_RE = re.compile(r'[""\u201c\u2018]([^""\u201d\u2019]{30,})[""\u201d\u2019]')
     _ROLE_RE = re.compile(
@@ -159,6 +188,10 @@ Examples of follow-up prompts (exploring adjacent territory):
         """
         self._start_execution()
 
+        # ── Implementation briefing mode (one-shot, no conversation) ──
+        if task.get("mode") == "implementation-briefing":
+            return await self._execute_briefing(task)
+
         message = task.get("message", "")
         history = task.get("conversation_history", [])
         lesson_ctx = task.get("lesson_context", {})
@@ -216,5 +249,38 @@ Respond as the AI mentor. Guide them, don't give direct answers."""
         return {
             "response": response_text,
             "suggested_prompts": suggested_prompts,
+            "duration_ms": duration,
+        }
+
+    async def _execute_briefing(self, task: dict) -> dict:
+        """Generate a structured 5-section briefing for an implementation task."""
+        message = task.get("message", "")
+        lesson_ctx = task.get("lesson_context", {})
+
+        context_parts = []
+        if lesson_ctx:
+            context_parts.append(f"SKILL: {lesson_ctx.get('skill_name', '')}")
+            context_parts.append(f"LEVEL: {lesson_ctx.get('skill_level', '')}")
+        context_str = "\n".join(context_parts) if context_parts else ""
+
+        prompt = f"""{context_str}
+
+IMPLEMENTATION TASK:
+{message}
+
+Generate the structured briefing now."""
+
+        response_text = await self._call_llm(
+            prompt,
+            system_prompt=self.briefing_system_prompt,
+            temperature=0.5,
+        )
+
+        self._log_execution("implementation_briefing", task, {"response_length": len(response_text)})
+        duration = self._end_execution()
+
+        return {
+            "response": response_text,
+            "suggested_prompts": [],
             "duration_ms": duration,
         }

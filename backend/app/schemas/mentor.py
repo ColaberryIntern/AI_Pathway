@@ -5,6 +5,7 @@ from pydantic import BaseModel
 class MentorChatRequest(BaseModel):
     message: str
     lesson_id: str | None = None
+    mode: str | None = None  # "implementation-briefing" for structured task briefing
 
 
 class MentorChatResponse(BaseModel):
