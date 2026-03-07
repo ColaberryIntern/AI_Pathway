@@ -50,3 +50,4 @@ class ImplementationTaskGradeResponse(BaseModel):
     attempt_number: int
     file_names: list[str] = []
     extracted_content: str = ""
+    download_urls: list[str] = []

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import {
   Hammer, Bot, CheckCircle2, Circle, Send, Upload, FileText, Loader2,
-  AlertCircle, X, RotateCcw, Eye, EyeOff, Zap,
+  AlertCircle, X, RotateCcw, Eye, EyeOff, Zap, Download,
 } from 'lucide-react'
 import type { ImplementationTask, ImplementationGradeResult } from '../../types'
 import { submitImplementationTask, simulateImplementationTask } from '../../services/api'
@@ -470,6 +470,31 @@ export default function ImplementationTaskCard({
                                 </li>
                               ))}
                             </ul>
+                          </div>
+                        )}
+
+                        {/* Download files */}
+                        {gradeResult.download_urls && gradeResult.download_urls.length > 0 && (
+                          <div className="border-t border-gray-200 pt-2 mt-2 mb-2">
+                            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
+                              Download Files
+                            </p>
+                            <div className="space-y-1">
+                              {gradeResult.download_urls.map((url, i) => {
+                                const filename = url.split('/').pop() || `file-${i}`
+                                return (
+                                  <a
+                                    key={i}
+                                    href={url}
+                                    download
+                                    className="flex items-center gap-2 text-xs text-indigo-600 hover:text-indigo-800 bg-indigo-50 rounded-lg px-2.5 py-1.5 border border-indigo-200 transition-colors"
+                                  >
+                                    <Download className="h-3.5 w-3.5 flex-shrink-0" />
+                                    <span className="truncate">{decodeURIComponent(filename)}</span>
+                                  </a>
+                                )
+                              })}
+                            </div>
                           </div>
                         )}
 

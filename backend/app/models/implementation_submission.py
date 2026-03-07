@@ -36,6 +36,7 @@ class ImplementationSubmission(Base):
     feedback: Mapped[str] = mapped_column(Text, default="")
     strengths: Mapped[list] = mapped_column(JSON, default=list)
     improvements: Mapped[list] = mapped_column(JSON, default=list)
+    generated_files: Mapped[dict] = mapped_column(JSON, default=dict)
     created_at: Mapped[datetime] = mapped_column(
         DateTime, default=datetime.utcnow, nullable=False
     )

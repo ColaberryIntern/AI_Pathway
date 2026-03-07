@@ -395,6 +395,7 @@ export interface ImplementationGradeResult {
   attempt_number: number
   file_names?: string[]
   extracted_content?: string
+  download_urls?: string[]
 }
 
 export interface ReflectionQuestion {

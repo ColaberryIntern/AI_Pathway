@@ -300,8 +300,8 @@ export default function MentorChat() {
       if (data.suggested_prompts?.length) {
         setSavedPrompts(data.suggested_prompts)
       }
-      // Show workspace bar if this was an implementation briefing
-      if (autoSendModeRef.current === 'implementation-briefing' || taskContextRef.current) {
+      // Show workspace bar only for implementation briefings
+      if (autoSendModeRef.current === 'implementation-briefing') {
         setShowWorkspaceBar(true)
       }
       // Notify other components (e.g. ImplementationTaskCard) that the mentor responded
@@ -321,6 +321,10 @@ export default function MentorChat() {
         // Store task context for workspace button
         if (detail.mode === 'implementation-briefing' && detail.taskContext) {
           taskContextRef.current = detail.taskContext
+        } else {
+          // Clear stale implementation context when opening from other sources
+          taskContextRef.current = null
+          setShowWorkspaceBar(false)
         }
         setAutoSendTrigger((n) => n + 1)
       }
@@ -577,8 +581,8 @@ export default function MentorChat() {
             </div>
           )}
 
-          {/* Suggested prompts */}
-          {suggestedPrompts.length > 0 && (
+          {/* Suggested prompts — hidden during implementation task (workspace bar takes priority) */}
+          {suggestedPrompts.length > 0 && !showWorkspaceBar && (
             <div className="px-4 py-2 border-t border-gray-100 flex gap-1.5 flex-wrap">
               <div className={`${messageAreaClasses} flex gap-1.5 flex-wrap`}>
                 {suggestedPrompts.map((p, i) => {

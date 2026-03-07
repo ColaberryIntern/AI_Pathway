@@ -353,6 +353,91 @@ Grade this submission against the requirements above."""
     )
 
 
+def _generate_simulated_files(task_info: dict, lesson_title: str) -> dict[str, str]:
+    """Generate realistic deliverable files based on the task description.
+
+    Returns a dict mapping filename → file content.
+    """
+    title = task_info.get("title", lesson_title)
+    description = task_info.get("description", "")
+    deliverable = task_info.get("deliverable", "")
+    requirements = task_info.get("requirements", [])
+    req_comments = "\n".join(f"# - {r}" for r in requirements)
+
+    deliverable_lower = deliverable.lower()
+    files: dict[str, str] = {}
+
+    # Determine file type from deliverable description
+    if any(kw in deliverable_lower for kw in ["python", "script", ".py", "code", "function", "program"]):
+        slug = title.lower().replace(" ", "_").replace("-", "_")[:40]
+        filename = f"{slug}.py"
+        files[filename] = f'''"""
+{title}
+{'=' * len(title)}
+
+{description}
+
+Requirements:
+{req_comments}
+
+Deliverable: {deliverable}
+"""
+
+import json
+
+
+def main():
+    """Main implementation for: {title}"""
+    print(f"Running: {title}")
+
+    # TODO: This is a simulated deliverable.
+    # In a real submission, the learner implements the full solution here.
+
+    results = {{
+        "task": "{title}",
+        "status": "completed",
+        "requirements_met": {json.dumps(requirements)},
+    }}
+
+    print(json.dumps(results, indent=2))
+    return results
+
+
+if __name__ == "__main__":
+    main()
+'''
+    else:
+        # Default to markdown document
+        slug = title.lower().replace(" ", "-").replace("_", "-")[:40]
+        filename = f"{slug}.md"
+        req_list = "\n".join(f"- [x] {r}" for r in requirements)
+        files[filename] = f"""# {title}
+
+## Overview
+
+{description}
+
+## Deliverable
+
+{deliverable}
+
+## Requirements Checklist
+
+{req_list}
+
+## Implementation
+
+This is a simulated deliverable for testing the grading flow.
+In a real submission, the learner would provide their completed work here.
+
+## Conclusion
+
+All requirements have been addressed as outlined above.
+"""
+
+    return files
+
+
 @router.post(
     "/{path_id}/implementation-task/simulate",
     response_model=ImplementationTaskGradeResponse,
@@ -364,8 +449,8 @@ async def simulate_implementation_task(
 ):
     """Simulate a passing submission for demo/testing purposes.
 
-    Creates a submission record with canned feedback so the product owner
-    can walk through the full grading flow without uploading real files.
+    Generates realistic deliverable files and canned feedback so the product
+    owner can walk through the full grading flow without uploading real files.
     """
     path = await db.get(LearningPath, path_id)
     if not path:
@@ -384,16 +469,13 @@ async def simulate_implementation_task(
     )
     attempt_number = (count_result.scalar() or 0) + 1
 
-    # Build simulated content from task info
+    # Generate files based on task info
     content = lesson.content or {}
     task_info = content.get("implementation_task", {})
-    sim_content = (
-        f"[SIMULATED SUBMISSION]\n\n"
-        f"Task: {task_info.get('title', lesson.title)}\n"
-        f"Deliverable: {task_info.get('deliverable', 'N/A')}\n\n"
-        f"This is a simulated submission for testing the grading flow. "
-        f"In a real submission, the learner would upload their completed "
-        f"deliverable files here."
+    generated_files = _generate_simulated_files(task_info, lesson.title)
+    file_names = list(generated_files.keys())
+    sim_content = "\n\n".join(
+        f"--- {fn} ---\n{fc}" for fn, fc in generated_files.items()
     )
 
     feedback = (
@@ -417,16 +499,22 @@ async def simulate_implementation_task(
         user_id=path.user_id,
         attempt_number=attempt_number,
         artifact_text="[SIMULATED]",
-        file_names=["simulated_deliverable.md"],
+        file_names=file_names,
         extracted_content=sim_content,
         score=85,
         passed=True,
         feedback=feedback,
         strengths=strengths,
         improvements=improvements,
+        generated_files=generated_files,
     )
     db.add(submission)
     await db.commit()
+
+    download_urls = [
+        f"/api/learning/{path_id}/implementation-task/submissions/{submission.id}/files/{fn}"
+        for fn in file_names
+    ]
 
     return ImplementationTaskGradeResponse(
         score=85,
@@ -435,6 +523,43 @@ async def simulate_implementation_task(
         strengths=strengths,
         improvements=improvements,
         attempt_number=attempt_number,
-        file_names=["simulated_deliverable.md"],
+        file_names=file_names,
         extracted_content=sim_content,
+        download_urls=download_urls,
+    )
+
+
+@router.get("/{path_id}/implementation-task/submissions/{submission_id}/files/{filename}")
+async def download_submission_file(
+    path_id: str,
+    submission_id: str,
+    filename: str,
+    db: AsyncSession = Depends(get_db),
+):
+    """Download a generated file from a submission."""
+    from fastapi.responses import Response
+
+    submission = await db.get(ImplementationSubmission, submission_id)
+    if not submission or submission.path_id != path_id:
+        raise HTTPException(status_code=404, detail="Submission not found")
+
+    generated = submission.generated_files or {}
+    if filename not in generated:
+        raise HTTPException(status_code=404, detail="File not found")
+
+    file_content = generated[filename]
+    ext = filename.rsplit(".", 1)[-1].lower() if "." in filename else "txt"
+    content_types = {
+        "py": "text/x-python",
+        "md": "text/markdown",
+        "txt": "text/plain",
+        "json": "application/json",
+        "js": "text/javascript",
+    }
+    content_type = content_types.get(ext, "application/octet-stream")
+
+    return Response(
+        content=file_content,
+        media_type=content_type,
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
