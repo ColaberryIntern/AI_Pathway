@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import {
   Hammer, Bot, CheckCircle2, Circle, Send, Upload, FileText, Loader2,
-  AlertCircle, X, RotateCcw, Eye, EyeOff, Zap, Download,
+  AlertCircle, X, RotateCcw, Eye, EyeOff, Zap, Download, ExternalLink,
 } from 'lucide-react'
 import type { ImplementationTask, ImplementationGradeResult } from '../../types'
 import { submitImplementationTask, simulateImplementationTask } from '../../services/api'
@@ -38,6 +38,15 @@ export default function ImplementationTaskCard({
 
   // Build required upload slots from task data
   const requiredUploads = useMemo<UploadSlot[]>(() => {
+    // Use evidence_requirements if available (new lessons)
+    if (task.evidence_requirements?.length) {
+      return task.evidence_requirements.map((ev, i) => ({
+        id: `evidence-${i}`,
+        heading: ev.name,
+        label: ev.description,
+      }))
+    }
+    // Fallback for legacy lessons
     const slots: UploadSlot[] = [
       { id: 'deliverable', heading: 'Deliverable', label: task.deliverable },
     ]
@@ -49,7 +58,7 @@ export default function ImplementationTaskCard({
       })
     }
     return slots
-  }, [task.deliverable, task.requires_architecture_explanation])
+  }, [task])
 
   // Per-slot file state
   const [slotFiles, setSlotFiles] = useState<Record<string, File[]>>({})
@@ -203,6 +212,44 @@ export default function ImplementationTaskCard({
               </li>
             ))}
           </ul>
+        </div>
+      )}
+
+      {/* Tools Needed */}
+      {task.tools && task.tools.length > 0 && (
+        <div className="mb-4">
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+            Tools Needed
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {task.tools.map((tool, i) => {
+              const Tag = tool.url ? 'a' : 'span'
+              const linkProps = tool.url
+                ? { href: tool.url, target: '_blank' as const, rel: 'noopener noreferrer' }
+                : {}
+              return (
+                <Tag
+                  key={i}
+                  {...linkProps}
+                  className={`inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full border font-medium ${
+                    tool.is_free
+                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                      : 'bg-amber-50 text-amber-700 border-amber-200'
+                  } ${tool.url ? 'hover:underline cursor-pointer' : ''}`}
+                >
+                  {tool.url && <ExternalLink className="h-3 w-3 flex-shrink-0" />}
+                  {tool.name}
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+                    tool.is_free
+                      ? 'bg-emerald-100 text-emerald-600'
+                      : 'bg-amber-100 text-amber-600'
+                  }`}>
+                    {tool.is_free ? 'Free' : 'Paid'}
+                  </span>
+                </Tag>
+              )
+            })}
+          </div>
         </div>
       )}
 

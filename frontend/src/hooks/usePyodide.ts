@@ -15,6 +15,7 @@ export type PyodideStatus = 'idle' | 'loading' | 'ready' | 'running' | 'error'
 export interface PyodideResult {
   stdout: string
   stderr: string
+  images?: string[]
 }
 
 // Module-scoped singleton — shared across all hook instances
@@ -80,6 +81,7 @@ export function usePyodide() {
             const result: PyodideResult = {
               stdout: e.data.stdout,
               stderr: e.data.stderr,
+              images: e.data.images,
             }
             setOutput(result)
             setStatus('ready')

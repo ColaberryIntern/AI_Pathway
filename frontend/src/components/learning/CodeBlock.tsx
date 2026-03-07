@@ -143,7 +143,19 @@ export default function CodeBlock({ code, language = 'python', title }: CodeBloc
                   {output.stderr}
                 </pre>
               )}
-              {!output.stdout && !output.stderr && (
+              {output.images && output.images.length > 0 && (
+                <div className="mt-2 space-y-2">
+                  {output.images.map((img, i) => (
+                    <img
+                      key={i}
+                      src={`data:image/png;base64,${img}`}
+                      alt={`Plot ${i + 1}`}
+                      className="max-w-full rounded border border-gray-700"
+                    />
+                  ))}
+                </div>
+              )}
+              {!output.stdout && !output.stderr && (!output.images || output.images.length === 0) && (
                 <p className="text-xs text-gray-500 italic">
                   Code executed successfully (no output)
                 </p>

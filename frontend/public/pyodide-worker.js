@@ -43,7 +43,7 @@ self.onmessage = async function (e) {
       // Auto-detect imports in the code and install required packages
       await pyodide.loadPackagesFromImports(code)
 
-      // Redirect stdout/stderr to capture output
+      // Set matplotlib to non-interactive backend and redirect stdout/stderr
       pyodide.runPython(`
 import sys
 from io import StringIO
@@ -51,6 +51,8 @@ __stdout_capture = StringIO()
 __stderr_capture = StringIO()
 sys.stdout = __stdout_capture
 sys.stderr = __stderr_capture
+import matplotlib
+matplotlib.use('agg')
 `)
       // Execute user code
       await pyodide.runPythonAsync(code)
@@ -58,12 +60,27 @@ sys.stderr = __stderr_capture
       const stdout = pyodide.runPython('__stdout_capture.getvalue()')
       const stderr = pyodide.runPython('__stderr_capture.getvalue()')
 
+      // Extract any matplotlib figures as base64 PNG images
+      const imagesJson = pyodide.runPython(`
+import matplotlib.pyplot as _plt
+import base64 as _b64, io as _io, json as _json
+_figures = []
+for _fig_num in _plt.get_fignums():
+    _buf = _io.BytesIO()
+    _plt.figure(_fig_num).savefig(_buf, format='png', bbox_inches='tight', dpi=100)
+    _buf.seek(0)
+    _figures.append(_b64.b64encode(_buf.read()).decode())
+_plt.close('all')
+_json.dumps(_figures)
+`)
+      const images = JSON.parse(imagesJson)
+
       // Restore standard streams
       pyodide.runPython(`
 sys.stdout = sys.__stdout__
 sys.stderr = sys.__stderr__
 `)
-      self.postMessage({ type: 'result', stdout, stderr, id })
+      self.postMessage({ type: 'result', stdout, stderr, images, id })
     } catch (err) {
       // Restore standard streams on error too
       try {

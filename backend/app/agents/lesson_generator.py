@@ -40,6 +40,15 @@ Each lesson must include these sections:
 5. IMPLEMENTATION_TASK — A hands-on task where the learner builds something real.
    Must require: code/deliverable + brief architecture explanation.
    Include requirements list, deliverable description, estimated minutes.
+   Include a "tools" array listing each tool, API, or platform needed.
+   Each tool must include: name, url (tool homepage), is_free (boolean).
+   Mark free/open-source tools as is_free=true, paid/commercial tools as is_free=false.
+   Include an "evidence_requirements" array describing what proof the learner must submit.
+   Each evidence item needs: name (short label), description (what to submit), format ("screenshot"|"file"|"code").
+   Always require proof that demonstrates the output is correct — e.g., screenshots of
+   successful execution output, API responses with status 200, SSIS packages showing success,
+   terminal output showing expected results. Do NOT just ask for "a script" — ask for the
+   script AND a screenshot proving it ran correctly.
 
 6. REFLECTION_QUESTIONS — 3-4 questions that force metacognition about AI usage:
    How did your prompt evolve? What did AI get wrong? What did you improve?
@@ -200,6 +209,28 @@ and matches the "{lesson_type}" lesson type."""
                         "deliverable": {"type": "string"},
                         "requires_architecture_explanation": {"type": "boolean"},
                         "estimated_minutes": {"type": "integer"},
+                        "tools": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {"type": "string"},
+                                    "url": {"type": "string"},
+                                    "is_free": {"type": "boolean"},
+                                },
+                            },
+                        },
+                        "evidence_requirements": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {"type": "string"},
+                                    "description": {"type": "string"},
+                                    "format": {"type": "string"},
+                                },
+                            },
+                        },
                     },
                 },
                 "reflection_questions": {

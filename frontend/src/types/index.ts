@@ -384,6 +384,8 @@ export interface ImplementationTask {
   deliverable: string
   requires_architecture_explanation: boolean
   estimated_minutes: number
+  tools?: { name: string; url?: string; is_free: boolean }[]
+  evidence_requirements?: { name: string; description: string; format: string }[]
 }
 
 export interface ImplementationGradeResult {
