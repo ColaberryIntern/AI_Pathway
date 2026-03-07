@@ -59,7 +59,7 @@ Each lesson must include these sections:
    how the prompt engineering technique of role-playing would change the quality of
    insights you get compared to generic prompting, with 2 specific examples.'"
 
-7. KNOWLEDGE_CHECKS — 3-5 quiz questions testing understanding.
+7. KNOWLEDGE_CHECKS — Exactly 5 quiz questions testing understanding.
    Each question's ai_followup_prompt MUST be a detailed, self-contained question
    (at least 30 words) that gives the AI Mentor enough context to provide targeted help.
    Include: the specific concept being tested, what the learner should explore, and a

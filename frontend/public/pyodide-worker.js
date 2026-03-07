@@ -27,6 +27,9 @@ self.onmessage = async function (e) {
       await pyodide.loadPackage('micropip')
       // Pre-load common scientific packages so code examples work immediately
       await pyodide.loadPackage(['numpy', 'pandas', 'scipy', 'matplotlib', 'scikit-learn'])
+      // Install requests via micropip (pure-python package, not in Pyodide built-ins)
+      const micropip = pyodide.pyimport('micropip')
+      await micropip.install('requests')
       self.postMessage({ type: 'init-complete', id })
     } catch (err) {
       self.postMessage({ type: 'init-error', error: err.message, id })

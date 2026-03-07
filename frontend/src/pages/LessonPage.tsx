@@ -67,8 +67,9 @@ export default function LessonPage() {
         quiz_score: quizScore ?? undefined,
         exercise_completed: true,
       }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['learning-dashboard', pathId] })
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['learning-dashboard', pathId] })
+      await queryClient.refetchQueries({ queryKey: ['learning-dashboard', pathId] })
     },
   })
 
@@ -78,14 +79,15 @@ export default function LessonPage() {
   const currentLessonIndex = allModuleLessons.findIndex(
     (l) => l.lesson_number === lesson?.lesson_number
   )
-  const hasNextLesson = currentLessonIndex < allModuleLessons.length - 1
+  const hasNextLesson = currentLessonIndex < allModuleLessons.length - 1 ||
+    (dashboard?.next_lesson_id != null && dashboard.next_lesson_id !== lessonId)
 
   const handleComplete = () => {
     completeMutation.mutate()
   }
 
   const handleNextLesson = () => {
-    if (dashboard?.next_lesson_id) {
+    if (dashboard?.next_lesson_id && dashboard.next_lesson_id !== lessonId) {
       navigate(`/learn/${pathId}/lesson/${dashboard.next_lesson_id}`)
     } else {
       navigate(`/learn/${pathId}`)

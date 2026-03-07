@@ -497,6 +497,13 @@ async def start_lesson(
             detail="Lesson content generation returned empty content. Please retry.",
         )
 
+    # Validate and auto-fix Python code examples
+    try:
+        from app.services.code_validator import validate_and_fix_code_examples
+        content = await validate_and_fix_code_examples(content, agent.llm.generate)
+    except Exception as e:
+        logger.warning("Code validation step failed (non-fatal): %s", e)
+
     # Cache generated content
     lesson.content = content
     lesson.status = "in_progress"
