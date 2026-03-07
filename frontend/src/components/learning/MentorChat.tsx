@@ -24,28 +24,25 @@ interface Message {
  * "Explore further:" prompts are removed from display (they appear as bottom chips instead).
  */
 function parseMessagePrompts(content: string): Array<{ type: 'text'; value: string } | { type: 'prompt'; value: string }> {
-  // First strip "Explore further:" lines — those only belong in the bottom suggested chips
-  const cleaned = content.replace(/^[-*•]?\s*(?:\d+\.\s*)?explore further:\s*["''].+?["'']\s*$/gim, '').replace(/\n{3,}/g, '\n\n')
-
-  // Match inline prompts like: "Try this prompt: '...'" or "Ask: '...'"
-  const promptPattern = /(?:(?:try|use|run|ask|enter)\s+(?:this\s+)?(?:prompt|question|query)|prompt)\s*:\s*[""''](.+?)[""'']/gi
+  // Match "Explore further:", "Try this prompt:", "Ask:" etc. with quoted prompts
+  const promptLinePattern = /^[-*•]?\s*(?:\d+\.\s*)?(?:explore\s+further|try(?:\s+this)?\s+prompt|ask|suggested?\s+prompt)\s*:\s*["''\u201c\u2018](.+?)["''\u201d\u2019]\s*$/gim
   const segments: Array<{ type: 'text'; value: string } | { type: 'prompt'; value: string }> = []
   let lastIndex = 0
   let match: RegExpExecArray | null
 
-  while ((match = promptPattern.exec(cleaned)) !== null) {
+  while ((match = promptLinePattern.exec(content)) !== null) {
     if (match.index > lastIndex) {
-      segments.push({ type: 'text', value: cleaned.slice(lastIndex, match.index) })
+      segments.push({ type: 'text', value: content.slice(lastIndex, match.index) })
     }
     segments.push({ type: 'prompt', value: match[1] })
     lastIndex = match.index + match[0].length
   }
 
-  if (lastIndex < cleaned.length) {
-    segments.push({ type: 'text', value: cleaned.slice(lastIndex) })
+  if (lastIndex < content.length) {
+    segments.push({ type: 'text', value: content.slice(lastIndex) })
   }
 
-  return segments.length > 0 ? segments : [{ type: 'text', value: cleaned }]
+  return segments.length > 0 ? segments : [{ type: 'text', value: content }]
 }
 
 /** Extract suggested prompts from an assistant message for bottom chips.

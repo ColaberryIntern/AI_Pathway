@@ -48,10 +48,24 @@ async def get_db() -> AsyncSession:
             await session.close()
 
 
+def _add_missing_columns(conn):
+    """Add columns that were introduced after initial table creation."""
+    import sqlalchemy as sa
+
+    inspector = sa.inspect(conn)
+    if inspector.has_table("implementation_submissions"):
+        columns = [c["name"] for c in inspector.get_columns("implementation_submissions")]
+        if "generated_files" not in columns:
+            conn.execute(sa.text(
+                "ALTER TABLE implementation_submissions ADD COLUMN generated_files JSON DEFAULT '{}'"
+            ))
+
+
 async def init_db():
     """Initialize database tables."""
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        await conn.run_sync(_add_missing_columns)
 
 
 async def close_db():
