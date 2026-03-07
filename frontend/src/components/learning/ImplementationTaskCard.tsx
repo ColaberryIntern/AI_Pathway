@@ -10,6 +10,7 @@ interface ImplementationTaskCardProps {
   task: ImplementationTask
   pathId?: string
   lessonId?: string
+  lessonTitle?: string
   onSubmit?: () => void
 }
 
@@ -28,7 +29,7 @@ const STEPS = [
 const ACCEPTED_TYPES = '.pdf,.docx,.doc,.py,.js,.ts,.jsx,.tsx,.json,.yaml,.yml,.md,.txt,.html,.css,.csv,.xml,.sql,.png,.jpg,.jpeg,.gif,.webp,.bmp'
 
 export default function ImplementationTaskCard({
-  task, pathId, lessonId, onSubmit,
+  task, pathId, lessonId, lessonTitle, onSubmit,
 }: ImplementationTaskCardProps) {
   // Step 1 is always done (they're reading the card), so start at step 2
   const [completedStep, setCompletedStep] = useState(1)
@@ -98,6 +99,7 @@ export default function ImplementationTaskCard({
           description: task.description,
           deliverable: task.deliverable,
           requirements: task.requirements,
+          lessonTitle,
         },
       },
     }))

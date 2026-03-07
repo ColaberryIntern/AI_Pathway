@@ -291,6 +291,7 @@ export default function LessonPage() {
                   task={content.implementation_task}
                   pathId={pathId}
                   lessonId={lessonId}
+                  lessonTitle={lesson.title}
                   onSubmit={() => setTaskSubmitted(true)}
                 />
               )}
