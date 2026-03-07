@@ -285,6 +285,20 @@ export const submitImplementationTask = async (
   return data
 }
 
+export const simulateImplementationTask = async (
+  pathId: string,
+  params: { lesson_id: string }
+): Promise<ImplementationGradeResult> => {
+  const formData = new FormData()
+  formData.append('lesson_id', params.lesson_id)
+  const { data } = await api.post(
+    `/learning/${pathId}/implementation-task/simulate`,
+    formData,
+    { headers: { 'Content-Type': 'multipart/form-data' } }
+  )
+  return data
+}
+
 // ── AI Mentor ───────────────────────────────────────────────────────
 
 export const sendMentorMessage = async (

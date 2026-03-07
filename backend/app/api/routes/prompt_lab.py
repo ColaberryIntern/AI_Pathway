@@ -348,4 +348,93 @@ Grade this submission against the requirements above."""
         strengths=grade.get("strengths", [])[:3],
         improvements=grade.get("improvements", [])[:3],
         attempt_number=attempt_number,
+        file_names=file_names,
+        extracted_content=all_extracted[:10_000],
+    )
+
+
+@router.post(
+    "/{path_id}/implementation-task/simulate",
+    response_model=ImplementationTaskGradeResponse,
+)
+async def simulate_implementation_task(
+    path_id: str,
+    lesson_id: str = Form(...),
+    db: AsyncSession = Depends(get_db),
+):
+    """Simulate a passing submission for demo/testing purposes.
+
+    Creates a submission record with canned feedback so the product owner
+    can walk through the full grading flow without uploading real files.
+    """
+    path = await db.get(LearningPath, path_id)
+    if not path:
+        raise HTTPException(status_code=404, detail="Learning path not found")
+
+    lesson = await db.get(Lesson, lesson_id)
+    if not lesson or lesson.path_id != path_id:
+        raise HTTPException(status_code=404, detail="Lesson not found")
+
+    # Count previous attempts
+    count_result = await db.execute(
+        select(func.count(ImplementationSubmission.id)).where(
+            ImplementationSubmission.lesson_id == lesson_id,
+            ImplementationSubmission.path_id == path_id,
+        )
+    )
+    attempt_number = (count_result.scalar() or 0) + 1
+
+    # Build simulated content from task info
+    content = lesson.content or {}
+    task_info = content.get("implementation_task", {})
+    sim_content = (
+        f"[SIMULATED SUBMISSION]\n\n"
+        f"Task: {task_info.get('title', lesson.title)}\n"
+        f"Deliverable: {task_info.get('deliverable', 'N/A')}\n\n"
+        f"This is a simulated submission for testing the grading flow. "
+        f"In a real submission, the learner would upload their completed "
+        f"deliverable files here."
+    )
+
+    feedback = (
+        "Strong demonstration of the core concepts. The submission addresses "
+        "all stated requirements and shows clear understanding of the material. "
+        "Minor improvements could be made in documentation clarity."
+    )
+    strengths = [
+        "All requirements addressed systematically",
+        "Clear evidence of understanding, not just copy-paste",
+        "Well-organized deliverable structure",
+    ]
+    improvements = [
+        "Could include more detailed explanations of design decisions",
+        "Consider adding edge case handling or error scenarios",
+    ]
+
+    submission = ImplementationSubmission(
+        lesson_id=lesson_id,
+        path_id=path_id,
+        user_id=path.user_id,
+        attempt_number=attempt_number,
+        artifact_text="[SIMULATED]",
+        file_names=["simulated_deliverable.md"],
+        extracted_content=sim_content,
+        score=85,
+        passed=True,
+        feedback=feedback,
+        strengths=strengths,
+        improvements=improvements,
+    )
+    db.add(submission)
+    await db.commit()
+
+    return ImplementationTaskGradeResponse(
+        score=85,
+        passed=True,
+        feedback=feedback,
+        strengths=strengths,
+        improvements=improvements,
+        attempt_number=attempt_number,
+        file_names=["simulated_deliverable.md"],
+        extracted_content=sim_content,
     )

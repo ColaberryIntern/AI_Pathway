@@ -382,7 +382,6 @@ export interface ImplementationTask {
   description: string
   requirements: string[]
   deliverable: string
-  requires_prompt_history: boolean
   requires_architecture_explanation: boolean
   estimated_minutes: number
 }
@@ -394,6 +393,8 @@ export interface ImplementationGradeResult {
   strengths: string[]
   improvements: string[]
   attempt_number: number
+  file_names?: string[]
+  extracted_content?: string
 }
 
 export interface ReflectionQuestion {

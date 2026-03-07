@@ -38,7 +38,7 @@ Each lesson must include these sections:
 4. CODE_EXAMPLES — 2-3 runnable code examples with comments explaining each step.
 
 5. IMPLEMENTATION_TASK — A hands-on task where the learner builds something real.
-   Must require: code/deliverable + prompt history + brief architecture explanation.
+   Must require: code/deliverable + brief architecture explanation.
    Include requirements list, deliverable description, estimated minutes.
 
 6. REFLECTION_QUESTIONS — 3-4 questions that force metacognition about AI usage:
@@ -65,7 +65,7 @@ RULES:
 - concept_snapshot is THE primary learning content. 4 sentences max. Make them count.
 - ai_strategy must be practical and specific to this skill, not generic AI advice.
 - prompt_template must be copy-pasteable with clear {{placeholders}}.
-- implementation_task must require BOTH code AND prompt strategy documentation.
+- implementation_task must require code AND may optionally include an architecture explanation.
 - Code examples must be complete and runnable (Python unless otherwise specified).
 - Python code examples MUST only use standard library modules plus: numpy, pandas, scikit-learn, matplotlib, scipy, sympy, regex. Do NOT use transformers, torch, tensorflow, openai, langchain, or any package requiring native compilation or network access. Code runs in a browser sandbox (Pyodide/WebAssembly).
 - Adapt complexity to the lesson's position in the module sequence.
@@ -198,7 +198,6 @@ and matches the "{lesson_type}" lesson type."""
                         "description": {"type": "string"},
                         "requirements": {"type": "array", "items": {"type": "string"}},
                         "deliverable": {"type": "string"},
-                        "requires_prompt_history": {"type": "boolean"},
                         "requires_architecture_explanation": {"type": "boolean"},
                         "estimated_minutes": {"type": "integer"},
                     },

@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import {
   Hammer, Bot, CheckCircle2, Circle, Send, Upload, FileText, Loader2,
-  AlertCircle, X, RotateCcw,
+  AlertCircle, X, RotateCcw, Eye, EyeOff, Zap,
 } from 'lucide-react'
 import type { ImplementationTask, ImplementationGradeResult } from '../../types'
-import { submitImplementationTask } from '../../services/api'
+import { submitImplementationTask, simulateImplementationTask } from '../../services/api'
 
 interface ImplementationTaskCardProps {
   task: ImplementationTask
@@ -41,13 +41,6 @@ export default function ImplementationTaskCard({
     const slots: UploadSlot[] = [
       { id: 'deliverable', heading: 'Deliverable', label: task.deliverable },
     ]
-    if (task.requires_prompt_history) {
-      slots.push({
-        id: 'prompt_history',
-        heading: 'Prompt History',
-        label: 'Screenshot or export of your AI conversation',
-      })
-    }
     if (task.requires_architecture_explanation) {
       slots.push({
         id: 'architecture',
@@ -56,13 +49,14 @@ export default function ImplementationTaskCard({
       })
     }
     return slots
-  }, [task.deliverable, task.requires_prompt_history, task.requires_architecture_explanation])
+  }, [task.deliverable, task.requires_architecture_explanation])
 
   // Per-slot file state
   const [slotFiles, setSlotFiles] = useState<Record<string, File[]>>({})
   const [grading, setGrading] = useState(false)
   const [gradeResult, setGradeResult] = useState<ImplementationGradeResult | null>(null)
   const [gradeError, setGradeError] = useState<string | null>(null)
+  const [showSubmission, setShowSubmission] = useState(false)
   const slotInputRefs = useRef<Record<string, HTMLInputElement | null>>({})
 
   // Listen for mentor-responded to advance to step 3
@@ -148,6 +142,26 @@ export default function ImplementationTaskCard({
     setGradeResult(null)
     setGradeError(null)
     setSlotFiles({})
+    setShowSubmission(false)
+  }
+
+  const handleSimulate = async () => {
+    if (!pathId || !lessonId) return
+    setGrading(true)
+    setGradeError(null)
+    try {
+      const result = await simulateImplementationTask(pathId, { lesson_id: lessonId })
+      setGradeResult(result)
+      if (result.passed) {
+        setSubmitted(true)
+        setCompletedStep(3)
+        onSubmit?.()
+      }
+    } catch {
+      setGradeError('Simulation failed. Please try again.')
+    } finally {
+      setGrading(false)
+    }
   }
 
   const allSlotsFilled = requiredUploads.every(slot => (slotFiles[slot.id]?.length ?? 0) > 0)
@@ -380,6 +394,16 @@ export default function ImplementationTaskCard({
                           Upload all required artifacts to enable submission
                         </p>
                       )}
+
+                      {/* Simulate button for demo/testing */}
+                      <button
+                        onClick={handleSimulate}
+                        disabled={grading}
+                        className="flex items-center justify-center gap-2 w-full text-xs font-medium px-4 py-1.5 rounded-lg border border-gray-300 text-gray-500 hover:bg-gray-50 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                      >
+                        <Zap className="h-3.5 w-3.5" />
+                        Simulate Submission (Demo)
+                      </button>
                     </div>
                   )}
 
@@ -446,6 +470,31 @@ export default function ImplementationTaskCard({
                                 </li>
                               ))}
                             </ul>
+                          </div>
+                        )}
+
+                        {/* View Submission toggle */}
+                        {gradeResult.extracted_content && (
+                          <div className="border-t border-gray-200 pt-2 mt-2">
+                            <button
+                              onClick={() => setShowSubmission(!showSubmission)}
+                              className="flex items-center gap-1.5 text-xs font-medium text-gray-500 hover:text-gray-700 transition-colors"
+                            >
+                              {showSubmission ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                              {showSubmission ? 'Hide Submission' : 'View Submission'}
+                            </button>
+                            {showSubmission && (
+                              <div className="mt-2 bg-gray-50 rounded-lg p-3 border border-gray-200 max-h-64 overflow-y-auto">
+                                {gradeResult.file_names && gradeResult.file_names.length > 0 && (
+                                  <p className="text-xs text-gray-500 mb-2">
+                                    Files: {gradeResult.file_names.join(', ')}
+                                  </p>
+                                )}
+                                <pre className="text-xs text-gray-700 whitespace-pre-wrap font-mono">
+                                  {gradeResult.extracted_content}
+                                </pre>
+                              </div>
+                            )}
                           </div>
                         )}
 

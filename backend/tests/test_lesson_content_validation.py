@@ -99,7 +99,6 @@ def _make_valid_content() -> dict:
             "description": "Create a reusable checklist.",
             "requirements": ["Cover data privacy", "Include model documentation"],
             "deliverable": "A markdown checklist",
-            "requires_prompt_history": True,
             "requires_architecture_explanation": False,
             "estimated_minutes": 30,
         },
