@@ -41,6 +41,11 @@ server {
             add_header Cache-Control "no-cache, no-store, must-revalidate";
         }
 
+        # Don't aggressively cache unhashed worker scripts
+        location = /pyodide-worker.js {
+            add_header Cache-Control "no-cache";
+        }
+
         # Cache hashed static assets
         location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2)$ {
             expires 1y;

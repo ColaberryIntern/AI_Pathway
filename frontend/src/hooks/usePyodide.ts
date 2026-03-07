@@ -8,6 +8,8 @@
 
 import { useState, useRef, useCallback } from 'react'
 
+declare const __APP_VERSION__: string
+
 export type PyodideStatus = 'idle' | 'loading' | 'ready' | 'running' | 'error'
 
 export interface PyodideResult {
@@ -40,7 +42,7 @@ export function usePyodide() {
 
     setStatus('loading')
     initPromise = new Promise<void>((resolve, reject) => {
-      workerInstance = new Worker('/pyodide-worker.js')
+      workerInstance = new Worker(`/pyodide-worker.js?v=${__APP_VERSION__}`)
       const initId = ++idCounter.current
 
       const handler = (e: MessageEvent) => {
