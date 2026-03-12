@@ -83,8 +83,8 @@ export default function HomePage() {
               color: 'indigo',
             },
             {
-              title: '153+ Skills Ontology',
-              description: 'Based on a comprehensive GenAI skills ontology covering 18 domains from foundations to advanced applications.',
+              title: '186+ Skills Ontology',
+              description: 'Based on a comprehensive GenAI skills ontology covering 22 domains from foundations to emerging AI capabilities.',
               color: 'sky',
             },
             {

@@ -258,17 +258,6 @@ export default function CurrentProfilePanel({
         </div>
       </div>
 
-      {/* Learning Intent */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Learning Intent</label>
-        <textarea
-          className="input min-h-[100px]"
-          value={customProfile.learning_intent}
-          onChange={(e) => onProfileChange({ learning_intent: e.target.value })}
-          placeholder="What do you want to achieve? What skills do you want to develop?"
-        />
-      </div>
-
       {/* Current Job Description */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">Current Job Description</label>

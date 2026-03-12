@@ -281,6 +281,7 @@ export default function LessonPage() {
                         code={example.code}
                         language={example.language}
                         title={example.title}
+                        validated={example.validated}
                       />
                     </div>
                   ))}
@@ -350,6 +351,7 @@ export default function LessonPage() {
                         code={example.code}
                         language={example.language}
                         title={example.title}
+                        validated={example.validated}
                       />
                     </div>
                   ))}

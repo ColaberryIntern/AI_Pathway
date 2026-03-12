@@ -3,9 +3,11 @@ import { Target } from 'lucide-react'
 interface TargetGoalPanelProps {
   targetJD: string
   onTargetJDChange: (value: string) => void
+  learningIntent: string
+  onLearningIntentChange: (value: string) => void
 }
 
-export default function TargetGoalPanel({ targetJD, onTargetJDChange }: TargetGoalPanelProps) {
+export default function TargetGoalPanel({ targetJD, onTargetJDChange, learningIntent, onLearningIntentChange }: TargetGoalPanelProps) {
   return (
     <div className="bg-white rounded-xl p-7 shadow-sm border border-gray-100 space-y-6">
       {/* Panel header */}
@@ -33,6 +35,17 @@ export default function TargetGoalPanel({ targetJD, onTargetJDChange }: TargetGo
         <p className="text-xs text-gray-500 mt-1">
           The more detailed the job description, the better the skill gap analysis.
         </p>
+      </div>
+
+      {/* Learning Intent */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Learning Intent</label>
+        <textarea
+          className="input min-h-[100px]"
+          value={learningIntent}
+          onChange={(e) => onLearningIntentChange(e.target.value)}
+          placeholder="What do you want to achieve? What skills do you want to develop?"
+        />
       </div>
     </div>
   )

@@ -1,6 +1,6 @@
 import DomainCard, { type Domain, type DomainState } from './DomainCard'
 
-// 18 domains organized by layer (from ontology_chart.html)
+// 22 domains organized by layer (v2.0 ontology)
 const DOMAINS: Domain[] = [
   // Foundation Layer
   { id: 'D.DIG', label: 'Digital Literacy', layer: 'L.FOUNDATION', skills: 8 },
@@ -11,28 +11,34 @@ const DOMAINS: Domain[] = [
 
   // Application Layer
   { id: 'D.PRM', label: 'Prompting & HITL', layer: 'L.APPLICATION', skills: 12 },
-  { id: 'D.RAG', label: 'RAG Systems', layer: 'L.APPLICATION', skills: 9 },
+  { id: 'D.RAG', label: 'RAG Systems', layer: 'L.APPLICATION', skills: 11 },
   { id: 'D.AGT', label: 'Agents & Orchestration', layer: 'L.APPLICATION', skills: 11 },
   { id: 'D.MOD', label: 'Model Adaptation', layer: 'L.APPLICATION', skills: 6 },
-  { id: 'D.MUL', label: 'Multimodal AI', layer: 'L.APPLICATION', skills: 8 },
+  { id: 'D.MUL', label: 'Multimodal AI', layer: 'L.APPLICATION', skills: 10 },
   { id: 'D.EVL', label: 'Evaluation', layer: 'L.APPLICATION', skills: 8 },
   { id: 'D.SEC', label: 'Safety & Security', layer: 'L.APPLICATION', skills: 7 },
   { id: 'D.OPS', label: 'LLMOps', layer: 'L.APPLICATION', skills: 8 },
 
   // Tools Layer
-  { id: 'D.TOOL', label: 'Tools & Frameworks', layer: 'L.TOOLS', skills: 10 },
+  { id: 'D.TOOL', label: 'Tools & Frameworks', layer: 'L.TOOLS', skills: 13 },
 
   // Tech Prerequisites Layer
   { id: 'D.PRQ', label: 'Tech Prerequisites', layer: 'L.TECH_PREREQ', skills: 12 },
 
   // Domain Layer
-  { id: 'D.GOV', label: 'Governance', layer: 'L.DOMAIN', skills: 6 },
+  { id: 'D.GOV', label: 'Governance', layer: 'L.DOMAIN', skills: 8 },
   { id: 'D.DOM', label: 'Domain Apps', layer: 'L.DOMAIN', skills: 8 },
 
   // Soft/Strategy Layer
   { id: 'D.PRD', label: 'Product & UX', layer: 'L.SOFT', skills: 8 },
   { id: 'D.COM', label: 'Communication', layer: 'L.SOFT', skills: 6 },
   { id: 'D.LRN', label: 'Learning & Adaptation', layer: 'L.SOFT', skills: 5 },
+
+  // Emerging Layer (2025–26)
+  { id: 'D.RSN', label: 'Extended Reasoning', layer: 'L.EMERGING', skills: 6 },
+  { id: 'D.ACODE', label: 'Agentic Coding', layer: 'L.EMERGING', skills: 8 },
+  { id: 'D.COMP', label: 'Computer Use Agents', layer: 'L.EMERGING', skills: 5 },
+  { id: 'D.PROTO', label: 'Agent Protocols', layer: 'L.EMERGING', skills: 5 },
 ]
 
 interface DomainGridProps {

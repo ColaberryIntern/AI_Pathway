@@ -7,9 +7,10 @@ interface CodeBlockProps {
   code: string
   language?: string
   title?: string
+  validated?: boolean
 }
 
-export default function CodeBlock({ code, language = 'python', title }: CodeBlockProps) {
+export default function CodeBlock({ code, language = 'python', title, validated }: CodeBlockProps) {
   const [copied, setCopied] = useState(false)
   const [editableCode, setEditableCode] = useState(code)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -69,8 +70,8 @@ export default function CodeBlock({ code, language = 'python', title }: CodeBloc
               <RotateCcw className="h-3.5 w-3.5" /> Reset
             </button>
           )}
-          {/* Run button — Python only */}
-          {isPython && (
+          {/* Run button — Python only, hidden when validation failed */}
+          {isPython && validated !== false && (
             <button
               onClick={handleRun}
               disabled={status === 'loading' || status === 'running'}

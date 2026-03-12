@@ -410,6 +410,7 @@ export interface CodeExample {
   language: string
   code: string
   explanation: string
+  validated?: boolean
 }
 
 export interface LessonExercise {

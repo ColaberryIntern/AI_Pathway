@@ -210,6 +210,8 @@ export default function ProfileSelectionPage() {
           <TargetGoalPanel
             targetJD={targetJD}
             onTargetJDChange={setTargetJD}
+            learningIntent={customProfile.learning_intent}
+            onLearningIntentChange={(value) => handleProfileChange({ learning_intent: value })}
           />
         </div>
 

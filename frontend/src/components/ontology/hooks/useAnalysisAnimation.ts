@@ -1,10 +1,11 @@
 import { useState, useEffect, useMemo } from 'react'
 
-// All domain IDs for sweep animation
+// All 22 domain IDs for sweep animation (v2.0 ontology)
 const ALL_DOMAINS = [
   'D.DIG', 'D.CTIC', 'D.FND', 'D.PRM', 'D.RAG', 'D.AGT',
   'D.MOD', 'D.MUL', 'D.EVL', 'D.SEC', 'D.OPS', 'D.TOOL',
   'D.PRQ', 'D.GOV', 'D.DOM', 'D.PRD', 'D.COM', 'D.LRN',
+  'D.RSN', 'D.ACODE', 'D.COMP', 'D.PROTO',
 ]
 
 // Default domains when no profile data is available
@@ -28,7 +29,7 @@ export interface ProfileDomains {
  *
  * Step 0 (0-3s)  — Profile Analysis: highlights the user's current skill domains
  * Step 1 (3-6s)  — JD Parsing: highlights the user's target gap domains
- * Step 2 (6-9s)  — Gap Analysis: sweeps all 18 domains
+ * Step 2 (6-9s)  — Gap Analysis: sweeps all 22 domains
  * Step 3 (9-12s) — Path Generation: spotlights target domains one by one
  */
 function buildSequence(profileDomains?: ProfileDomains): AnimationFrame[] {
@@ -90,7 +91,7 @@ function buildSequence(profileDomains?: ProfileDomains): AnimationFrame[] {
       highlightedDomains: ALL_DOMAINS.slice(0, i),
       activeDomain: domain,
       completedDomains: completedAfterStep1,
-      delay: 6000 + i * 150,
+      delay: 6000 + i * 120,
     })
   })
   frames.push({

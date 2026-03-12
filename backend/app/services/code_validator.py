@@ -110,10 +110,17 @@ async def validate_and_fix_code_examples(content: dict, llm_generate) -> dict:
 
         code = example.get("code", "")
         if not code or len(code) < 10:
+            content["code_examples"][i]["validated"] = False
+            continue
+
+        # Skip validation for network/file I/O code — can't guarantee it works in Pyodide
+        if _SKIP_PATTERNS.search(code):
+            content["code_examples"][i]["validated"] = False
             continue
 
         error = await _test_run_python(code)
         if not error:
+            content["code_examples"][i]["validated"] = True
             continue
 
         logger.info("Code example %d (%s) failed: %s", i, example.get("title", ""), error[:200])
@@ -128,10 +135,12 @@ async def validate_and_fix_code_examples(content: dict, llm_generate) -> dict:
             if not new_error:
                 logger.info("Code example %d fixed on attempt %d", i, attempt + 1)
                 content["code_examples"][i]["code"] = fixed_code
+                content["code_examples"][i]["validated"] = True
                 break
             error = new_error  # Try again with new error
             code = fixed_code
         else:
             logger.warning("Code example %d could not be auto-fixed", i)
+            content["code_examples"][i]["validated"] = False
 
     return content

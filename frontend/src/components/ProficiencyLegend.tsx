@@ -7,11 +7,12 @@ interface ProficiencyLegendProps {
 }
 
 const proficiencyLevels = [
-  { level: 'L0', name: 'No knowledge', description: 'No exposure to the concept or skill' },
-  { level: 'L1', name: 'Awareness', description: 'Basic understanding of concepts' },
-  { level: 'L2', name: 'Practical', description: 'Can apply with guidance' },
-  { level: 'L3', name: 'Independent', description: 'Can execute independently' },
-  { level: 'L4', name: 'Expert', description: 'Can teach and lead others' },
+  { level: 'L0', name: 'Unaware', description: 'Has not encountered this skill or concept' },
+  { level: 'L1', name: 'Aware', description: 'Can explain the concept; knows it exists' },
+  { level: 'L2', name: 'User', description: 'Can apply with guidance; knows the basics' },
+  { level: 'L3', name: 'Practitioner', description: 'Applies independently; adapts to context' },
+  { level: 'L4', name: 'Builder', description: 'Ships solutions; handles edge cases' },
+  { level: 'L5', name: 'Architect', description: 'Designs systems; sets standards; teaches others' },
 ]
 
 export function getProficiencyLevel(aiExposure: string | undefined): string {
@@ -44,7 +45,7 @@ export default function ProficiencyLegend({
     return (
       <div className="flex items-center gap-1 text-xs text-gray-500" title="Proficiency Framework">
         <Info className="h-3 w-3" />
-        <span>L0-L4 scale</span>
+        <span>L0-L5 scale</span>
       </div>
     )
   }
@@ -68,7 +69,7 @@ export default function ProficiencyLegend({
           <Info className="h-4 w-4 text-gray-500" />
           <span className="font-medium text-gray-700">Proficiency Framework</span>
         </div>
-        <div className="grid grid-cols-5 gap-3">
+        <div className="grid grid-cols-6 gap-3">
           {proficiencyLevels.map((p) => (
             <div key={p.level} className="text-sm">
               <span className="font-semibold text-gray-900">{p.level}</span>
@@ -77,7 +78,7 @@ export default function ProficiencyLegend({
           ))}
         </div>
         <p className="text-xs text-gray-500 mt-2">
-          Skills are rated on a 0-4 scale, from no knowledge to expert/teaching capability.
+          Skills are rated on a 0-5 scale, from no knowledge to expert/teaching capability.
         </p>
       </div>
     )
@@ -102,7 +103,7 @@ export default function ProficiencyLegend({
 
       {isExpanded && (
         <div className="px-4 py-3 bg-white">
-          <div className="grid grid-cols-1 sm:grid-cols-5 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-6 gap-2">
             {proficiencyLevels.map((p) => (
               <div key={p.level} className="text-sm">
                 <span className="font-semibold text-gray-900">{p.level}</span>
@@ -111,7 +112,7 @@ export default function ProficiencyLegend({
             ))}
           </div>
           <p className="text-xs text-gray-500 mt-2">
-            Skills are rated on a 0-4 scale, from no knowledge to expert/teaching capability.
+            Skills are rated on a 0-5 scale, from no knowledge to expert/teaching capability.
           </p>
         </div>
       )}
