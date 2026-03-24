@@ -156,9 +156,17 @@ async def parse_jd_skills(request: JDSkillsRequest):
         raise HTTPException(status_code=500, detail=f"JD parsing failed: {str(e)}")
 
     ontology = get_ontology_service()
-    top_10 = result.get("top_10_target_skills", [])
+    top_skills = result.get("top_10_target_skills", [])
+
+    # Post-process: filter out low-importance skills when we have enough
+    # high/medium ones.  This prevents the LLM from padding to 10 with
+    # marginally relevant skills (e.g. ML-engineering skills for an L&D role).
+    high_medium = [s for s in top_skills if s.get("importance") in ("high", "medium", "critical")]
+    if len(high_medium) >= 3:
+        top_skills = high_medium
+
     enriched = []
-    for skill in top_10:
+    for skill in top_skills:
         skill_obj = ontology.get_skill(skill.get("skill_id", ""))
         enriched.append({
             **skill,

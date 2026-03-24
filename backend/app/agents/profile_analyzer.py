@@ -1,6 +1,6 @@
 """Profile Analyzer Agent - Extracts State A from user profile.
 
-Identifies the user's top 10 current AI-related skills mapped to the
+Identifies the user's current AI-related skills (3-10) mapped to the
 GenAI Skills Ontology, each with a rationale explaining *why* the skill
 was identified based on the user's resume, role, and intake answers.
 """
@@ -16,8 +16,11 @@ class ProfileAnalyzerAgent(BaseAgent):
     description = "Analyzes user profiles to extract current role, skills, and AI exposure level"
 
     system_prompt = """You are an expert career analyst specializing in AI skills assessment.
-Your task is to analyze a user's professional profile and determine their top 10 current
+Your task is to analyze a user's professional profile and determine their current
 skills based on the GenAI Skills Ontology.
+
+Return between 3 and 10 skills — only include skills with clear evidence from the profile.
+Do NOT pad to 10. If the profile only clearly demonstrates 4 skills, return 4.
 
 For each skill, assign a proficiency level (0-5):
 - 0: Unaware - Has not heard of it
@@ -89,9 +92,9 @@ the user's profile (job title, responsibilities, tools used, or background)."""
                         },
                         "required": ["rank", "skill_id", "skill_name", "domain", "current_level", "rationale"]
                     },
-                    "minItems": 10,
+                    "minItems": 3,
                     "maxItems": 10,
-                    "description": "Exactly 10 skills ranked by relevance to the user's current role"
+                    "description": "3-10 skills ranked by relevance. Only include skills with clear evidence — do not pad to 10."
                 },
                 "state_a_skills": {
                     "type": "object",
@@ -217,7 +220,11 @@ the user's profile (job title, responsibilities, tools used, or background)."""
         if intake_parts:
             intake_section = "\nIntake Answers:\n" + "\n".join(intake_parts) + "\n"
 
-        return f"""Analyze this professional profile and identify their TOP 10 current AI-related skills.
+        return f"""Analyze this professional profile and identify their current AI-related skills.
+
+IMPORTANT: Return between 3 and 10 skills. Only include skills with clear evidence from the
+profile. If the profile only clearly demonstrates 5 skills, return 5. Do NOT pad to 10 with
+marginally relevant skills.
 
 PROFILE:
 Name: {profile.get('name', 'Unknown')}
@@ -256,11 +263,12 @@ CRITICAL: You MUST ONLY use skill_id values from the AVAILABLE SKILLS list above
 Do NOT invent new skill IDs. Every skill_id in your response must exactly match one from that list.
 If a user capability doesn't map perfectly to an ontology skill, choose the closest match.
 
-1. Select exactly 10 skills from the ontology that best represent this user's current capabilities.
+1. Select 3-10 skills from the ontology that best represent this user's current capabilities.
+   Only include skills with clear supporting evidence. Quality over quantity.
 2. For each skill, assess their current proficiency level (0-5) using the PROFICIENCY SCALE above.
 3. For each skill, write a rationale (1-2 sentences) explaining WHY you identified this skill,
    referencing specific evidence from their role, experience, tools used, or background.
-4. Rank the 10 skills from most relevant (rank 1) to least relevant (rank 10).
+4. Rank the skills from most relevant (rank 1) to least relevant.
 5. Also populate state_a_skills with the same skill_id → level mapping.
 6. Be conservative — only assign higher levels with clear evidence from the profile.
    However, do not underestimate: experienced professionals who USE AI tools daily

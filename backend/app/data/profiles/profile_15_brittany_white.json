@@ -3,52 +3,44 @@
   "name": "Brittany White",
   "current_role": "Senior Product Marketing Manager",
   "target_role": "Senior AI Product Marketing Manager",
-  "industry": "Enterprise Software / SaaS (SAP)",
+  "industry": "Marketing & Creative",
   "location": "U.S.",
   "experience_years": 10,
-  "ai_exposure_level": "Intermediate",
-  "tools_used": ["ChatGPT", "Claude", "SAP AI Suite", "Jasper AI", "Google Gemini"],
-  "technical_background": "Senior product marketing manager at SAP with deep expertise in B2B enterprise marketing, go-to-market strategy, competitive positioning, and sales enablement for cloud and ERP products. Strong at translating complex product capabilities into customer-facing narratives. Has been using AI tools for content creation and market research but lacks hands-on experience with prompt engineering frameworks, AI agents, responsible AI deployment, or technical evaluation of AI systems. Background is marketing-first with growing AI fluency.",
+  "ai_exposure_level": "Advanced",
+  "tools_used": ["ChatGPT", "Claude", "Google Gemini", "Perplexity", "Midjourney", "DALL-E", "Stable Diffusion"],
+  "technical_background": "Basic Tech Literacy — comfortable with technology and tools but does not code. Skilled Practitioner who understands AI concepts and uses advanced features across multiple AI tools for creative production, content creation, and design work.",
   "archetype": "Domain Upskiller",
   "current_profile": {
-    "summary": "Senior Product Marketing Manager at SAP with 10+ years of experience in enterprise software marketing. Leads go-to-market strategy for AI-integrated product lines including SAP Business AI and Joule. Builds competitive positioning frameworks, creates sales enablement content, and manages analyst relations. Experienced in translating complex technical capabilities into business value narratives for C-suite and technical buyers. Uses ChatGPT and Claude for content drafting, market research synthesis, and competitive analysis. Familiar with AI concepts from a marketing perspective but has no hands-on experience building prompts, evaluating AI outputs systematically, or deploying AI agents.",
+    "summary": "Product Manager with 10+ years of experience in marketing and creative industries. Skilled AI Practitioner who actively uses ChatGPT, Claude, Midjourney, DALL-E, and Stable Diffusion for creative production, content creation, and design work. Understands AI concepts deeply and uses advanced features. Comfortable with technology but does not code. Background in brand development and creative strategy with strong interest in leveraging generative AI for business growth.",
     "technical_skills": [
-      "Go-to-market strategy and product launches",
-      "Competitive intelligence and analyst relations",
-      "Sales enablement content creation",
-      "B2B messaging and positioning frameworks",
-      "Market research and customer insight synthesis",
-      "SAP ecosystem and cloud product portfolio",
-      "AI-assisted content creation (ChatGPT, Claude, Jasper)",
-      "Data-driven marketing analytics",
-      "Cross-functional collaboration with product and engineering teams",
-      "Executive presentation and storytelling"
+      "AI-powered creative production (Midjourney, DALL-E, Stable Diffusion)",
+      "AI-assisted content creation (ChatGPT, Claude)",
+      "AI-powered research (Perplexity, Google Gemini)",
+      "Brand development and creative strategy",
+      "Design-driven business growth",
+      "Content creation and ideation",
+      "Market-facing creative work",
+      "Cross-functional collaboration"
     ],
     "soft_skills": [
-      "Strategic communication and storytelling",
-      "Cross-functional team leadership",
-      "Stakeholder management across product, sales, and executive teams",
-      "Analyst and media relations",
-      "Customer empathy and market sensing"
+      "Creative leadership",
+      "Brand storytelling",
+      "Entrepreneurial thinking",
+      "Client communication",
+      "Strategic ideation"
     ],
-    "ai_experience": "Uses ChatGPT and Claude regularly for content drafting, competitive analysis summaries, and market research synthesis. Has used Jasper AI for marketing copy. Familiar with SAP's AI product portfolio (Business AI, Joule) from a positioning and messaging perspective. Understands AI value propositions at a high level but has not built prompts systematically, evaluated AI outputs with rubrics, or worked with AI agents, RAG systems, or deployment pipelines."
+    "ai_experience": "Skilled Practitioner who uses 5+ AI tools regularly. Actively uses ChatGPT, Claude, Perplexity, and Google Gemini for research, writing, and content creation. Extensively uses Midjourney, DALL-E, and Stable Diffusion for AI image generation and creative production. Understands AI concepts and uses advanced features but has not built custom prompts systematically or evaluated AI outputs with formal rubrics."
   },
-  "learning_intent": "Wants to deepen AI fluency to lead product marketing for AI-native enterprise products. Aims to understand how to effectively communicate AI capabilities, critically evaluate AI-generated content for accuracy, craft sophisticated prompts for marketing use cases, and ensure responsible AI messaging. Seeks to bridge the gap between marketing narrative and technical AI reality.",
+  "learning_intent": "Wants to leverage AI for creative production, brand development, and design-driven business growth. Focused on using generative AI tools to accelerate ideation, content creation, and market-facing creative work. Interested in roles aligned with AI-enabled creative leadership.",
   "target_jd": {
-    "title": "Senior AI Product Marketing Manager",
+    "title": "AI-Enabled Creative Entrepreneur",
     "requirements": [
-      "Lead go-to-market strategy for SAP AI products and features including Joule and Business AI",
-      "Translate complex AI capabilities into compelling narratives for technical and business audiences",
-      "Develop competitive positioning against AI offerings from Salesforce, Microsoft, Oracle, and Google",
-      "Create sales enablement materials that accurately represent AI product capabilities and limitations",
-      "Collaborate with product management and engineering to understand AI features for accurate messaging",
-      "Build thought leadership content demonstrating SAP's AI vision and innovation",
-      "Conduct market research using AI tools to synthesize competitive intelligence and customer insights",
-      "Ensure all AI product messaging adheres to responsible AI principles and avoids overpromising",
-      "Use prompt engineering techniques to create efficient marketing workflows with AI tools",
-      "Evaluate and validate AI-generated marketing content for factual accuracy and brand consistency",
-      "Manage AI tool stack for marketing team productivity (content generation, research, analysis)",
-      "Partner with legal and compliance to ensure AI marketing claims are defensible and accurate"
+      "Leverage generative AI tools for creative production and brand development",
+      "Use AI image generation (Midjourney, DALL-E, Stable Diffusion) for design-driven business growth",
+      "Accelerate ideation and content creation using AI tools",
+      "Develop market-facing creative work enhanced by AI",
+      "Build AI-enabled creative leadership capabilities",
+      "Evaluate and curate AI-generated creative outputs for quality and brand consistency"
     ]
   },
   "expected_skill_gaps": [

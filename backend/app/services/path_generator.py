@@ -69,6 +69,7 @@ class LearningPathGenerator:
         state_a: dict[str, int],
         state_b: dict[str, int],
         role_context: dict[str, Any] | None = None,
+        skill_importance: dict[str, str] | None = None,
     ) -> dict[str, Any]:
         """Generate a learning path of up to 5 chapters.
 
@@ -146,7 +147,10 @@ class LearningPathGenerator:
             state_b, expanded_a, priority_skills,
         )
 
-        gaps = self._gap_engine.compute_gap(expanded_a, state_b, role_context)
+        gaps = self._gap_engine.compute_gap(
+            expanded_a, state_b, role_context,
+            skill_importance=skill_importance,
+        )
 
         # ==============================================================
         # Phase 1 — Select primary candidates

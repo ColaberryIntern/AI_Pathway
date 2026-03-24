@@ -148,15 +148,31 @@ parse job descriptions, identify skill gaps, and generate personalized learning 
                 results["steps"].append({"step": "assessment", "status": "skipped"})
 
             # Step 4: Gap Analysis
+            # Build learner background summary for Momentum scoring
+            _profile = task.get("profile", {})
+            _cp = _profile.get("current_profile", {})
+            _bg_parts = []
+            if _cp.get("summary"):
+                _bg_parts.append(_cp["summary"])
+            if _profile.get("technical_background"):
+                _bg_parts.append(f"Technical background: {_profile['technical_background']}")
+            if _profile.get("tools_used"):
+                _tools = _profile["tools_used"]
+                if isinstance(_tools, list):
+                    _tools = ", ".join(_tools)
+                _bg_parts.append(f"AI tools used: {_tools}")
+            _learner_bg = " | ".join(_bg_parts) if _bg_parts else ""
+
             gap_result = await self._execute_step(
                 "gap_analysis",
                 self.gap_analyzer,
                 {
                     "state_a_skills": state_a_skills,
                     "state_b_skills": jd_result.get("state_b_skills", {}),
-                    "learning_intent": task.get("profile", {}).get("learning_intent", ""),
-                    "industry": task.get("profile", {}).get("industry", ""),
+                    "learning_intent": _profile.get("learning_intent", ""),
+                    "industry": _profile.get("industry", ""),
                     "jd_requirements": jd_result.get("extracted_requirements", []),
+                    "learner_background": _learner_bg,
                 }
             )
             results["gap_analysis"] = gap_result
@@ -303,15 +319,28 @@ parse job descriptions, identify skill gaps, and generate personalized learning 
                 _tpl = ROLE_TEMPLATES.get(
                     profile_data.get("target_role", "")
                 )
+                # Extract primary domains from JD parser's role_analysis
+                primary_domains = jd_result.get("role_analysis", {}).get("key_domains", [])
+
                 role_context = {
                     "target_role": profile_data.get("target_role", ""),
                     "target_domains": target_domains,
+                    "primary_domains": primary_domains,
                     "priority_skills": set(_tpl.keys()) if _tpl else set(),
                 }
+
+            # Build skill_importance dict from JD parser's importance ratings
+            skill_importance: dict[str, str] = {}
+            for skill in jd_result.get("top_10_target_skills", []):
+                sid = skill.get("skill_id")
+                imp = skill.get("importance", "medium")
+                if sid:
+                    skill_importance[sid] = imp
 
             deterministic = LearningPathGenerator(ontology_service=ontology)
             scaffold_result = deterministic.generate_path(
                 valid_state_a, valid_state_b, role_context=role_context,
+                skill_importance=skill_importance,
             )
             results["steps"].append({
                 "step": "deterministic_scaffold", "status": "completed",

@@ -15,14 +15,41 @@ class GapAnalyzerAgent(BaseAgent):
 the gap between a learner's current skills (State A) and their target skills (State B),
 then prioritize which gaps to address first.
 
-Consider these factors when prioritizing:
-1. Job criticality - How important is this skill for the target role?
-2. Prerequisites - What skills must be learned first?
-3. Learning intent - What did the user say they want to focus on?
-4. Difficulty estimation - How big is the jump?
-5. Quick wins - Are there skills that can be gained quickly?
+Use this 5-FACTOR PRIORITY SCORING to rank each skill:
 
-Create a prioritized list that balances immediate value with logical learning progression."""
+PRIORITY SCORE = (Importance × 4) + (Breadth × 3) + (Momentum × 3) + (Connectivity × 2) + (Career Signal × 2)
+
+Score each factor 1-3:
+
+1. IMPORTANCE (weight 4) — How critical is this skill for the target role?
+   3 = Core deliverable of the role; can't succeed without it
+   2 = Important supporting skill; needed regularly
+   1 = Nice to have; peripheral to the role
+
+2. BREADTH (weight 3) — How many scenarios does this skill apply to?
+   3 = Used across most daily tasks and contexts
+   2 = Used in specific but recurring situations
+   1 = Narrow/niche application
+
+3. MOMENTUM (weight 3) — How much existing foundation does the learner have?
+   3 = Strong transferable skills; quick to build on
+   2 = Some related experience; moderate ramp-up
+   1 = Starting from scratch; long ramp-up
+
+4. CONNECTIVITY (weight 2) — How much does this skill enable other skills?
+   3 = Prerequisite for or amplifies 3+ other skills
+   2 = Connects to 1-2 other skills
+   1 = Standalone skill
+
+5. CAREER SIGNAL (weight 2) — How visible is this skill to hiring managers?
+   3 = Directly mentioned in JD; easy to demonstrate
+   2 = Implied by the JD; can be shown in portfolio
+   1 = Background skill; hard to demonstrate
+
+DIVERSITY RULE: No more than 2 skills from the same domain category in the final top 5.
+If a collision occurs, keep the highest scorer and pull in the next non-duplicate.
+
+Create a prioritized list using these scores. Show the score breakdown for each skill."""
 
     async def execute(self, task: dict) -> dict:
         """Analyze gaps between State A and State B skills.
@@ -50,6 +77,7 @@ Create a prioritized list that balances immediate value with logical learning pr
         learning_intent = task.get("learning_intent", "")
         industry = task.get("industry", "")
         jd_requirements = task.get("jd_requirements", [])
+        learner_background = task.get("learner_background", "")
 
         # Calculate raw gaps
         raw_gaps = self._calculate_raw_gaps(state_a, state_b)
@@ -82,7 +110,8 @@ Create a prioritized list that balances immediate value with logical learning pr
 
         # Use LLM to prioritize
         prompt = self._build_prioritization_prompt(
-            skill_details, learning_intent, industry, jd_requirements
+            skill_details, learning_intent, industry, jd_requirements,
+            learner_background=learner_background,
         )
 
         output_schema = {
@@ -158,12 +187,18 @@ Create a prioritized list that balances immediate value with logical learning pr
         learning_intent: str,
         industry: str,
         jd_requirements: list,
+        *,
+        learner_background: str = "",
     ) -> str:
         """Build the prioritization prompt."""
         gaps_str = json.dumps(skill_gaps, indent=2)
         requirements_str = json.dumps(jd_requirements[:10], indent=2) if jd_requirements else "Not provided"
 
-        return f"""Prioritize these skill gaps for a learning path.
+        bg_section = ""
+        if learner_background:
+            bg_section = f"\nLEARNER BACKGROUND (use for Momentum scoring — what transferable skills exist):\n{learner_background}\n"
+
+        return f"""Prioritize these skill gaps for a learning path using the 5-factor scoring system.
 
 SKILL GAPS TO PRIORITIZE:
 {gaps_str}
@@ -173,15 +208,20 @@ USER'S LEARNING INTENT:
 
 INDUSTRY CONTEXT:
 {industry or 'General'}
-
-JOB REQUIREMENTS (for importance weighting):
+{bg_section}
+JOB REQUIREMENTS (use for Importance and Career Signal scoring):
 {requirements_str}
 
-Consider:
-1. Which skills are most critical for the target role?
-2. What prerequisites are needed before learning advanced skills?
-3. What aligns best with the user's stated learning intent?
-4. What provides quick wins to build momentum?
-5. What's the logical learning sequence?
+For EACH skill gap, score these 5 factors (1-3 each):
+- Importance (×4): How critical for the target role?
+- Breadth (×3): How many scenarios does this skill apply to?
+- Momentum (×3): How much existing foundation does this learner have? (Use their background above)
+- Connectivity (×2): How much does this skill enable other skills?
+- Career Signal (×2): How visible is this skill to hiring managers?
 
-Return the top 10 gaps in priority order (1 = highest priority)."""
+Priority Score = (Importance × 4) + (Breadth × 3) + (Momentum × 3) + (Connectivity × 2) + (Career Signal × 2)
+
+DIVERSITY RULE: No more than 2 skills from the same domain category in the final ranking.
+
+Return the most important gaps in priority order (1 = highest priority).
+Only include gaps that are genuinely important for the transition — do not pad to a fixed number."""

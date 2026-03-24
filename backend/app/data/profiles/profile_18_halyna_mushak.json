@@ -1,0 +1,79 @@
+{
+  "id": "profile_18",
+  "name": "Halyna Mushak",
+  "current_role": "Marketing / Demand Generation Professional",
+  "target_role": "AI-Enabled Demand Generation Leader",
+  "industry": "Education & Training",
+  "location": "U.S.",
+  "experience_years": 8,
+  "ai_exposure_level": "Intermediate",
+  "tools_used": ["ChatGPT", "Perplexity", "Midjourney", "DALL-E", "Stable Diffusion", "Copilot"],
+  "technical_background": "Basic Tech Literacy — comfortable with technology and tools but does not code. Regular AI user who wants to understand tools better.",
+  "archetype": "Domain Upskiller",
+  "current_profile": {
+    "summary": "Marketing and demand generation professional in the Education & Training industry. Regular AI user who uses ChatGPT, Perplexity, and AI image generation tools (Midjourney, DALL-E, Stable Diffusion) as well as Copilot. Comfortable with technology but has no coding experience. Interested in using AI for data analysis and extracting insights to make better decisions in demand generation.",
+    "technical_skills": [
+      "Demand generation strategy",
+      "Marketing analytics and reporting",
+      "Campaign management",
+      "AI-assisted content creation (ChatGPT)",
+      "AI-powered research (Perplexity)",
+      "AI image generation (Midjourney, DALL-E, Stable Diffusion)",
+      "Microsoft Copilot",
+      "Marketing automation tools"
+    ],
+    "soft_skills": [
+      "Strategic marketing planning",
+      "Data-driven decision making",
+      "Cross-functional collaboration",
+      "Performance analysis",
+      "Stakeholder communication"
+    ],
+    "ai_experience": "Regular User — uses AI tools regularly but wants to understand them better. Actively uses ChatGPT for content and communications, Perplexity for research, Midjourney/DALL-E/Stable Diffusion for AI image generation, and Microsoft Copilot for productivity. Has not used AI for systematic data analysis, has no experience with prompt engineering frameworks, AI agents, or RAG systems."
+  },
+  "learning_intent": "Wants to use AI for Data Analysis & Insights — specifically to analyze data, extract insights, and make better decisions in demand generation and marketing.",
+  "expected_skill_gaps": [
+    {
+      "domain": "D.PRM",
+      "description": "Needs structured prompt engineering for data analysis tasks beyond basic ChatGPT usage.",
+      "skills": ["SK.PRM.001", "SK.PRM.003", "SK.PRM.010"]
+    },
+    {
+      "domain": "D.FND",
+      "description": "Needs foundational AI understanding for effective data analysis with AI tools.",
+      "skills": ["SK.FND.001", "SK.FND.002"]
+    },
+    {
+      "domain": "D.EVL",
+      "description": "Needs evaluation skills to verify AI-generated insights and data analysis quality.",
+      "skills": ["SK.EVL.000", "SK.EVL.001"]
+    },
+    {
+      "domain": "D.GOV",
+      "description": "Needs AI governance awareness for responsible use of AI in data analysis.",
+      "skills": ["SK.GOV.000"]
+    },
+    {
+      "domain": "D.TOOL",
+      "description": "Needs expanded AI tool knowledge for data analysis and insights workflows.",
+      "skills": ["SK.TOOL.000", "SK.TOOL.001"]
+    }
+  ],
+  "estimated_current_skills": {
+    "SK.PRM.001": 2,
+    "SK.PRM.003": 1,
+    "SK.PRM.010": 0,
+    "SK.FND.001": 1,
+    "SK.FND.002": 1,
+    "SK.EVL.000": 0,
+    "SK.EVL.001": 0,
+    "SK.GOV.000": 0,
+    "SK.TOOL.000": 2,
+    "SK.TOOL.001": 1,
+    "SK.DIG.001": 2,
+    "SK.DIG.002": 2,
+    "SK.COM.001": 2,
+    "SK.LRN.002": 2,
+    "SK.MUL.001": 2
+  }
+}

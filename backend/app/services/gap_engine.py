@@ -1,4 +1,4 @@
-"""Skill Gap Engine — Phase 3.1
+"""Skill Gap Engine — Phase 3.2
 
 Computes the delta between a learner's current skill levels (State A)
 and a target skill profile (State B), returning a prioritised list of
@@ -12,14 +12,18 @@ Scoring formula
 ::
 
     priority_score = (3 × delta)
+                   + (3 × criticality)
                    + (2 × role_relevance)
                    - (0.5 × skill_level)
 
-- **delta** (weight 3) — the proficiency distance is the strongest
-  signal; larger gaps need attention first.
-- **role_relevance** (weight 2) — binary flag (1 when the skill's
-  domain is in the target role's focus domains, else 0).  This pulls
-  persona-relevant skills above generic ones.
+- **delta** (weight 3) — the proficiency distance; larger gaps need
+  attention first.
+- **criticality** (weight 3) — from the JD parser's importance rating:
+  high=3, medium=1, low=0.  Ensures "must have" skills outrank
+  "nice to have" skills even when deltas are equal.
+- **role_relevance** (weight 2) — graduated: 2 for primary domains
+  (from role_analysis.key_domains), 1 for broader target domains,
+  0 otherwise.
 - **skill_level** (weight −0.5) — mild penalty for very advanced
   skills so that foundational gaps are addressed before architect-tier
   ones when deltas are equal.
@@ -54,6 +58,7 @@ class SkillGapEngine:
         state_a: dict[str, int],
         state_b: dict[str, int],
         role_context: dict[str, Any] | None = None,
+        skill_importance: dict[str, str] | None = None,
     ) -> list[dict[str, Any]]:
         """Return a sorted list of skill gaps where delta > 0.
 
@@ -78,12 +83,18 @@ class SkillGapEngine:
             Optional role hint used for relevance scoring::
 
                 {
-                    "target_role":    str,          # e.g. "AI Product Manager"
-                    "target_domains": list[str],    # e.g. ["D.PRD", "D.EVL"]
+                    "target_role":    str,
+                    "target_domains": list[str],
+                    "primary_domains": list[str],   # from role_analysis.key_domains
                 }
 
             When *None*, role_relevance is 0 for every skill (pure
             delta-based ranking, backward compatible).
+        skill_importance : dict[str, str] | None
+            Optional mapping of ``{skill_id: "high"|"medium"|"low"}``
+            from the JD parser's importance ratings.  Used to compute
+            a criticality score so that "must have" skills outrank
+            "nice to have" skills even when deltas are equal.
 
         Returns
         -------
@@ -99,7 +110,8 @@ class SkillGapEngine:
                     "delta":           int,
                     "skill_level":     int,
                     "prerequisites":   list[str],
-                    "role_relevance":  int,          # 1 or 0
+                    "role_relevance":  int,          # 0, 1, or 2
+                    "criticality":     int,          # 0, 1, or 3
                     "priority_score":  float,
                 }
 
@@ -116,8 +128,12 @@ class SkillGapEngine:
         self._validate_skill_ids(state_b, label="state_b")
 
         target_domains: set[str] = set()
+        primary_domains: set[str] = set()
         if role_context:
             target_domains = set(role_context.get("target_domains") or [])
+            primary_domains = set(role_context.get("primary_domains") or [])
+
+        _IMPORTANCE_TO_CRITICALITY = {"high": 3, "medium": 1, "low": 0}
 
         # Professional floor: any working professional (L2+ in anything)
         # is at least Aware (L1) of all skills.  Prevents L0 display.
@@ -163,10 +179,25 @@ class SkillGapEngine:
             if delta <= 0:
                 continue
 
-            role_relevance = 1 if skill["domain"] in target_domains else 0
+            # Graduated role relevance: primary domains (from
+            # role_analysis.key_domains) score 2, broader target
+            # domains score 1, everything else 0.
+            if skill["domain"] in primary_domains:
+                role_relevance = 2
+            elif skill["domain"] in target_domains:
+                role_relevance = 1
+            else:
+                role_relevance = 0
+
+            # Criticality from JD parser's importance rating
+            criticality = 0
+            if skill_importance:
+                imp = skill_importance.get(skill_id, "medium")
+                criticality = _IMPORTANCE_TO_CRITICALITY.get(imp, 1)
 
             priority_score = (
                 (3 * delta)
+                + (3 * criticality)
                 + (2 * role_relevance)
                 - (0.5 * skill["level"])
             )
@@ -182,6 +213,7 @@ class SkillGapEngine:
                     "skill_level": skill["level"],
                     "prerequisites": skill.get("prerequisites", []),
                     "role_relevance": role_relevance,
+                    "criticality": criticality,
                     "priority_score": priority_score,
                 }
             )

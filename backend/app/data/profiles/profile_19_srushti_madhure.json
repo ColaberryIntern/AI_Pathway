@@ -1,0 +1,89 @@
+{
+  "id": "profile_19",
+  "name": "Srushti Madhure",
+  "current_role": "Product Analyst",
+  "target_role": "AI Product Analyst",
+  "industry": "Healthcare & Life Sciences",
+  "location": "U.S.",
+  "experience_years": 5,
+  "ai_exposure_level": "Intermediate",
+  "tools_used": ["ChatGPT", "Claude", "Google Gemini", "Perplexity"],
+  "technical_background": "Some Coding — has done basic scripting or taken coding courses. Regular AI user who wants to understand tools better.",
+  "archetype": "Domain Upskiller",
+  "current_profile": {
+    "summary": "Product Analyst in Healthcare & Life Sciences. Regular AI user who uses ChatGPT, Claude, Google Gemini, and Perplexity regularly but wants to understand them better. Has some coding experience (basic scripting or coding courses). Interested in using AI for process automation — specifically automating repetitive tasks and workflows in the healthcare product domain.",
+    "technical_skills": [
+      "Product analysis and requirements gathering",
+      "Data analysis and reporting",
+      "Basic scripting and coding",
+      "Healthcare domain knowledge",
+      "AI tool usage (ChatGPT, Claude, Gemini, Perplexity)",
+      "Process mapping and optimization",
+      "SQL and data querying",
+      "Product lifecycle management"
+    ],
+    "soft_skills": [
+      "Analytical thinking",
+      "Cross-functional collaboration",
+      "Requirements documentation",
+      "Stakeholder communication",
+      "Problem solving"
+    ],
+    "ai_experience": "Regular User — uses ChatGPT, Claude, Google Gemini, and Perplexity regularly for research, analysis, and productivity tasks. Has some coding background. Has not built AI automations, has no experience with AI agents, RAG systems, or systematic prompt engineering. Wants to understand AI tools better to automate healthcare workflows."
+  },
+  "learning_intent": "Wants to use AI for Process Automation — specifically to automate repetitive tasks and workflows in the healthcare product domain. Interested in understanding how AI can streamline product analysis and healthcare operations.",
+  "expected_skill_gaps": [
+    {
+      "domain": "D.PRM",
+      "description": "Needs prompt engineering for automation tasks and structured outputs.",
+      "skills": ["SK.PRM.001", "SK.PRM.003", "SK.PRM.010"]
+    },
+    {
+      "domain": "D.AGT",
+      "description": "Needs agent knowledge for building AI-powered automation workflows.",
+      "skills": ["SK.AGT.000", "SK.AGT.001", "SK.AGT.010"]
+    },
+    {
+      "domain": "D.FND",
+      "description": "Needs deeper foundational AI understanding for automation design.",
+      "skills": ["SK.FND.001", "SK.FND.002"]
+    },
+    {
+      "domain": "D.EVL",
+      "description": "Needs evaluation skills to verify AI automation outputs in healthcare.",
+      "skills": ["SK.EVL.000", "SK.EVL.001"]
+    },
+    {
+      "domain": "D.GOV",
+      "description": "Needs AI governance for healthcare compliance (PII/PHI handling).",
+      "skills": ["SK.GOV.000", "SK.GOV.020"]
+    },
+    {
+      "domain": "D.DOM",
+      "description": "Needs domain-specific AI knowledge for healthcare applications.",
+      "skills": ["SK.DOM.HC.001"]
+    }
+  ],
+  "estimated_current_skills": {
+    "SK.PRM.001": 2,
+    "SK.PRM.003": 1,
+    "SK.PRM.010": 0,
+    "SK.FND.001": 1,
+    "SK.FND.002": 1,
+    "SK.AGT.000": 1,
+    "SK.AGT.001": 0,
+    "SK.AGT.010": 0,
+    "SK.EVL.000": 0,
+    "SK.EVL.001": 0,
+    "SK.GOV.000": 0,
+    "SK.GOV.020": 0,
+    "SK.DOM.HC.001": 0,
+    "SK.TOOL.000": 2,
+    "SK.TOOL.001": 1,
+    "SK.DIG.001": 2,
+    "SK.DIG.002": 2,
+    "SK.PRQ.010": 2,
+    "SK.COM.001": 2,
+    "SK.LRN.002": 2
+  }
+}

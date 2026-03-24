@@ -1,6 +1,6 @@
 """JD Parser Agent - Extracts State B from job descriptions.
 
-Identifies the top 10 skills required by the target job, each mapped
+Identifies the skills required by the target job (3-10), each mapped
 to the GenAI Skills Ontology with a rationale explaining *why* the
 skill is needed based on the job description text.
 """
@@ -16,8 +16,8 @@ class JDParserAgent(BaseAgent):
     description = "Parses job descriptions to extract required skills and proficiency levels"
 
     system_prompt = """You are an expert job description analyst specializing in AI/ML roles.
-Your task is to analyze job descriptions and extract the TOP 10 required skills mapped to
-the GenAI Skills Ontology.
+Your task is to analyze job descriptions and extract the required skills (3-10) mapped to
+the GenAI Skills Ontology. Only include skills clearly required by the JD — do not pad to 10.
 
 PROFICIENCY SCALE (use this when assigning required levels):
 - Level 1 (Aware): Can explain the concept. Entry-level familiarity.
@@ -105,9 +105,9 @@ Map everything to the GenAI Skills Ontology structure."""
                         },
                         "required": ["rank", "skill_id", "skill_name", "domain", "required_level", "importance", "rationale"]
                     },
-                    "minItems": 10,
+                    "minItems": 3,
                     "maxItems": 10,
-                    "description": "Exactly 10 skills ranked by importance to the target role"
+                    "description": "3-10 skills ranked by importance. Only include skills clearly required by the JD — do not pad to 10."
                 },
                 "state_b_skills": {
                     "type": "object",
@@ -205,7 +205,9 @@ Map everything to the GenAI Skills Ontology structure."""
         else:
             skills_context = "(No skills available)"
 
-        return f"""Analyze this job description and identify the TOP 10 required skills.
+        return f"""Analyze this job description and identify the required skills (3-10).
+IMPORTANT: Only include skills clearly required by the JD. If the JD only requires 4 skills,
+return 4. Do NOT add marginally relevant skills to reach 10.
 
 TARGET ROLE: {target_role or 'Not specified'}
 
@@ -243,13 +245,14 @@ CRITICAL: You MUST ONLY use skill_id values from the AVAILABLE SKILLS list above
 Do NOT invent new skill IDs. Every skill_id in your response must exactly match one from that list.
 If a JD requirement doesn't map perfectly to an ontology skill, choose the closest match.
 
-1. Select exactly 10 skills from the ontology that are most critical for this role.
+1. Select 3-10 skills from the ontology that are genuinely required for this role.
+   Only include skills with clear evidence from the JD. Quality over quantity.
 2. For each skill, determine the required proficiency level (1-5) using the CALIBRATION RULES above.
    Do NOT default to low levels — match the level to the JD's actual demands.
 3. For each skill, rate its importance (high/medium/low).
 4. For each skill, write a rationale (1-2 sentences) explaining WHY this skill is needed,
    referencing specific text or requirements from the job description.
-5. Rank the 10 skills from most important (rank 1) to least important (rank 10).
+5. Rank the skills from most important (rank 1) to least important.
 6. Also populate state_b_skills with the same skill_id → required_level mapping.
 7. Also populate extracted_requirements with the same data for backward compatibility.
 
@@ -259,5 +262,15 @@ at Practitioner level (L3), as the role needs independent evaluation capability.
 
 Include both explicit requirements and implied skills from the responsibilities.
 Focus on AI/GenAI related skills but also include relevant prerequisites and soft skills.
-Prioritize skills from agentic (D.AGT), evaluation (D.EVL), RAG (D.RAG), operations (D.OPS),
-and security (D.SEC) domains when the JD mentions those capabilities."""
+
+TECHNICAL DEPTH MATCHING:
+- Match the technical depth of recommended skills to the role's actual needs.
+- For non-technical roles (L&D, marketing, HR, management, strategy): Do NOT recommend
+  ML-engineering skills like "Hugging Face ecosystem", "Prompt vs fine-tune decision",
+  "LLM-as-judge patterns", model training, or infrastructure skills unless the JD explicitly
+  requires them. These roles need AI USER skills, not AI BUILDER skills.
+- For technical roles (engineering, data science, ML): include deeper technical skills.
+- When in doubt, check: does the JD say "build/implement/deploy" (→ technical) or
+  "use/leverage/apply" (→ user-level)?
+
+Only recommend skills the person in this role would actually USE day-to-day."""
