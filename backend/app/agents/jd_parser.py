@@ -270,7 +270,19 @@ TECHNICAL DEPTH MATCHING:
   "LLM-as-judge patterns", model training, or infrastructure skills unless the JD explicitly
   requires them. These roles need AI USER skills, not AI BUILDER skills.
 - For technical roles (engineering, data science, ML): include deeper technical skills.
-- When in doubt, check: does the JD say "build/implement/deploy" (→ technical) or
-  "use/leverage/apply" (→ user-level)?
+- When in doubt, check: does the JD say "build/implement/deploy" (technical) or
+  "use/leverage/apply" (user-level)?
+
+DOMAIN COVERAGE - LOOK FOR THESE IMPLIED SKILLS:
+Do NOT only match explicit keywords. Also surface skills implied by the role's responsibilities:
+- If the JD mentions "quality", "accuracy", "standards", "metrics", or "performance measurement"
+  -> include an Evaluation skill (D.EVL) such as output quality evaluation or eval types
+- If the JD mentions "ethical", "responsible AI", "compliance", "disclosure", "guidelines", or "standards"
+  -> include a Governance skill (D.GOV) such as AI-generated content disclosure or AI governance fundamentals
+- If the JD mentions "iterative", "drafting", "editing", "refining", or "revision workflow"
+  -> include Draft-critique-revise (D.PRM) as a prompting workflow skill
+- If the JD mentions "content creation" + "AI tools"
+  -> include IP/copyright awareness (D.FND) since AI-generated content carries IP risks
+- Avoid recommending 3+ skills from the same domain. Spread across domains for breadth.
 
 Only recommend skills the person in this role would actually USE day-to-day."""
