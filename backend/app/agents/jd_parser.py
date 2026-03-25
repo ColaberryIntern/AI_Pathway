@@ -248,16 +248,31 @@ If a JD requirement doesn't map perfectly to an ontology skill, choose the close
 1. Select 3-10 skills from the ontology that are genuinely required for this role.
    Only include skills with clear evidence from the JD. Quality over quantity.
 2. For each skill, determine the required proficiency level (1-5) using the CALIBRATION RULES above.
-   Do NOT default to low levels — match the level to the JD's actual demands.
+   Do NOT default to low levels -- match the level to the JD's actual demands.
 3. For each skill, rate its importance (high/medium/low).
 4. For each skill, write a rationale (1-2 sentences) explaining WHY this skill is needed,
    referencing specific text or requirements from the job description.
 5. Rank the skills from most important (rank 1) to least important.
-6. Also populate state_b_skills with the same skill_id → required_level mapping.
+6. Also populate state_b_skills with the same skill_id -> required_level mapping.
 7. Also populate extracted_requirements with the same data for backward compatibility.
 
+SKILL SELECTION PRIORITY (follow this order):
+- FIRST: Practical AI workflow skills -- how the person actually DOES their work with AI day-to-day.
+  Examples: prompt debugging & iteration, draft-critique-revise, grounding & citations,
+  cross-functional AI collaboration, facilitating AI workshops, evaluating AI outputs.
+  These describe HOW the person works, not just WHAT the role is.
+- SECOND: Domain-specific applied skills -- specialized knowledge for the industry/function.
+  Examples: learning design with AI, healthcare clinical risk, marketing ethics.
+- THIRD: Generic management/strategy skills -- only if genuinely AI-specific.
+  "Stakeholder management" and "Teaching others AI skills" are generic to any role.
+  Prefer the AI-specific version: e.g., "AI enablement & training strategy" over generic
+  "stakeholder management" when both apply.
+- AVOID: Skills that any professional already has from general work experience
+  (basic communication, general project management, basic stakeholder engagement)
+  unless the JD requires an AI-SPECIFIC version of that skill.
+
 Example rationale: "The JD requires 'Define evaluation criteria, launch experiments, and
-iterate based on performance' — this directly maps to Eval Types (offline/online/red team)
+iterate based on performance' -- this directly maps to Eval Types (offline/online/red team)
 at Practitioner level (L3), as the role needs independent evaluation capability."
 
 Include both explicit requirements and implied skills from the responsibilities.
@@ -279,8 +294,12 @@ Do NOT only match explicit keywords. Also surface skills implied by the role's r
   -> include an Evaluation skill (D.EVL) such as output quality evaluation or eval types
 - If the JD mentions "ethical", "responsible AI", "compliance", "disclosure", "guidelines", or "standards"
   -> include a Governance skill (D.GOV) such as AI-generated content disclosure or AI governance fundamentals
-- If the JD mentions "iterative", "drafting", "editing", "refining", or "revision workflow"
-  -> include Draft-critique-revise (D.PRM) as a prompting workflow skill
+- If the JD mentions "iterative", "drafting", "editing", "refining", "writing", or "content development"
+  -> include Draft-critique-revise (D.PRM) as a practical AI workflow skill
+- If the JD mentions "collaborate", "partner with", "cross-functional", "work with stakeholders"
+  -> include Cross-functional AI collaboration (D.COM) rather than generic stakeholder management
+- If the JD mentions "facilitate", "deliver training", "workshops", "live sessions", or "virtual training"
+  -> include Facilitating AI workshops (D.COM) as a practical delivery skill
 - If the JD mentions "content creation" + "AI tools"
   -> include IP/copyright awareness (D.FND) since AI-generated content carries IP risks
 - Avoid recommending 3+ skills from the same domain. Spread across domains for breadth.
