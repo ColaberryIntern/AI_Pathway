@@ -24,10 +24,17 @@ class JDParseResponse(BaseModel):
 
 
 class JDSkillsRequest(BaseModel):
-    """Schema for JD skills parsing request (JD-first flow)."""
+    """Schema for JD skills parsing request (JD-first flow).
+
+    When learner_profile is provided, runs a 3-step chain:
+    1. Analyze JD against ontology -> extract 10 skills
+    2. Re-rank against learner's background -> identify true gaps
+    3. Apply scoring rubric -> produce final ranked top 5
+    """
 
     jd_text: str
     target_role: str | None = None
+    learner_profile: dict | None = None  # Full profile for 3-step chain
 
 
 class FullAnalysisRequest(BaseModel):

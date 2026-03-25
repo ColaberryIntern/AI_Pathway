@@ -212,36 +212,41 @@ export default function AnalysisPage() {
     setIsParsingJDSkills(true)
     setJdSkillsError(null)
     try {
-      const result = await parseJDSkills({ jd_text: targetJD, target_role: targetRole })
+      // Pass learner profile for 3-step chain (JD -> learner context -> rubric)
+      const learnerProfile = activeProfile ? {
+        name: activeProfile.name,
+        current_role: activeProfile.current_role,
+        industry: activeProfile.industry,
+        experience_years: activeProfile.experience_years,
+        ai_exposure_level: activeProfile.ai_exposure_level,
+        tools_used: activeProfile.tools_used,
+        technical_background: activeProfile.technical_background,
+        learning_intent: activeProfile.learning_intent,
+        current_profile: activeProfile.current_profile,
+        estimated_current_skills: activeProfile.estimated_current_skills,
+      } : undefined
+
+      const result = await parseJDSkills({
+        jd_text: targetJD,
+        target_role: targetRole,
+        learner_profile: learnerProfile,
+      })
       setParsedSkills(result.top_10_skills)
       setDetectedRole(result.target_role || targetRole)
       if (result.target_role && !targetRole) {
         setTargetRole(result.target_role)
       }
-      // Pre-select top 5 factoring in learner's existing skills.
-      // Skills where the learner already has high proficiency (Momentum)
-      // are deprioritized in favor of genuine gaps.
-      const currentSkills = activeProfile?.estimated_current_skills as Record<string, number> | undefined
-      const scored = result.top_10_skills.map((s, idx) => {
-        const currentLevel = currentSkills?.[s.skill_id] ?? 0
-        const requiredLevel = s.required_level ?? 3
-        const gap = Math.max(0, requiredLevel - currentLevel)
-        // JD rank bonus (earlier = higher), gap bonus, penalize if learner already proficient
-        const score = (10 - idx) + (gap * 3) - (currentLevel >= requiredLevel ? 10 : 0)
-        return { skill_id: s.skill_id, domain: s.domain, score }
-      })
-      // Apply diversity rule: max 2 from same domain
-      const selected: string[] = []
-      const domainCount: Record<string, number> = {}
-      const sorted = [...scored].sort((a, b) => b.score - a.score)
-      for (const s of sorted) {
-        if (selected.length >= 5) break
-        const dc = domainCount[s.domain] ?? 0
-        if (dc >= 2) continue
-        selected.push(s.skill_id)
-        domainCount[s.domain] = dc + 1
+
+      // When backend re-ranked with the rubric, the first 5 skills
+      // are already the best picks for this learner. Just select them.
+      if (result.reranked) {
+        const top5 = result.top_10_skills.slice(0, 5).map(s => s.skill_id)
+        setSelectedSkillIds(top5)
+      } else {
+        // Fallback: simple pre-selection by rank
+        const top5 = result.top_10_skills.slice(0, 5).map(s => s.skill_id)
+        setSelectedSkillIds(top5)
       }
-      setSelectedSkillIds(selected)
       setSelfAssessedSkills({})
       setStep('skill_selection')
     } catch {

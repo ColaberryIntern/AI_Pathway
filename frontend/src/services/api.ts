@@ -82,10 +82,13 @@ export const runFullAnalysis = async (params: {
   return data
 }
 
-// JD-first flow: parse JD and get top 10 skills with proficiency descriptions
+// JD-first flow: parse JD and get skills with proficiency descriptions.
+// When learner_profile is provided, runs 3-step chain (JD -> learner context -> rubric)
+// that returns skills pre-ranked for this specific learner.
 export const parseJDSkills = async (params: {
   jd_text: string
   target_role?: string
+  learner_profile?: Record<string, unknown>
 }): Promise<{
   target_role: string
   top_10_skills: Array<{
@@ -99,8 +102,11 @@ export const parseJDSkills = async (params: {
     rationale: string
     skill_description: string
     proficiency_descriptions: Array<{ level: number; label: string; description: string }>
+    scores?: { importance: number; breadth: number; momentum: number; connectivity: number; career_signal: number }
+    total_score?: number
   }>
   role_analysis: Record<string, unknown>
+  reranked?: boolean
 }> => {
   const { data } = await api.post('/analysis/parse-jd-skills', params)
   return data

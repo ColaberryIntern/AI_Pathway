@@ -1,5 +1,6 @@
 """Analysis API routes - main workflow endpoints."""
 import json
+import logging
 from pathlib import Path
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from fastapi.responses import HTMLResponse
@@ -8,11 +9,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.deps import get_database, get_agent_orchestrator
 from app.agents.orchestrator import Orchestrator
 from app.agents.jd_parser import JDParserAgent
+from app.agents.base import BaseAgent
 from app.models.user import User
 from app.models.goal import Goal
 from app.models.skill_gap import SkillGap
 from app.models.learning_path import LearningPath
 from app.services.ontology import get_ontology_service
+from app.services.llm import get_llm_provider
 from app.schemas.analysis import (
     FullAnalysisRequest,
     FullAnalysisResponse,
@@ -20,6 +23,8 @@ from app.schemas.analysis import (
     JDParseResponse,
     JDSkillsRequest,
 )
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -138,13 +143,94 @@ async def parse_job_description(request: JDParseRequest):
     }
 
 
+_RERANK_SYSTEM_PROMPT = """You are an expert AI skills prioritization advisor.
+
+You will receive:
+1. A list of 10 skills extracted from a job description
+2. The learner's background (LinkedIn profile summary, current skills, tools used)
+3. A scoring rubric
+
+Your job: re-rank the 10 skills into a final TOP 5 for THIS specific learner using the rubric.
+
+SCORING RUBRIC - Score each factor 1-3:
+Priority Score = (Importance x 4) + (Breadth x 3) + (Momentum x 3) + (Connectivity x 2) + (Career Signal x 2)
+
+1. IMPORTANCE (x4): How critical for the target role?
+   3 = Core deliverable; can't succeed without it
+   2 = Important supporting skill
+   1 = Nice to have; peripheral
+
+2. BREADTH (x3): How many scenarios does this skill apply to?
+   3 = Used across most daily tasks
+   2 = Used in specific but recurring situations
+   1 = Narrow/niche application
+
+3. MOMENTUM (x3): How much existing foundation does THIS LEARNER have?
+   3 = Strong transferable skills from their background; quick to build on
+   2 = Some related experience; moderate ramp-up
+   1 = Starting from scratch; long ramp-up
+
+4. CONNECTIVITY (x2): How much does this skill enable other skills?
+   3 = Prerequisite for or amplifies 3+ other skills
+   2 = Connects to 1-2 other skills
+   1 = Standalone skill
+
+5. CAREER SIGNAL (x2): How visible is this skill to hiring managers?
+   3 = Directly mentioned in JD; easy to demonstrate
+   2 = Implied by JD; can be shown in portfolio
+   1 = Background skill; hard to demonstrate
+
+DIVERSITY RULE: No more than 2 skills from the same domain in the final top 5.
+
+CRITICAL: Consider what the learner ALREADY knows from their background.
+Skills they already have strong transferable experience in should be DEPRIORITIZED
+(low Momentum potential = low learning ROI). Focus on genuine gaps where
+training creates the most value.
+
+Return a JSON object with:
+{
+  "top_5": [
+    {
+      "rank": 1,
+      "skill_id": "SK.XXX.XXX",
+      "skill_name": "...",
+      "domain": "D.XXX",
+      "domain_label": "...",
+      "required_level": 3,
+      "importance": "high",
+      "rationale": "Why this skill was selected for THIS learner specifically",
+      "scores": {
+        "importance": 3,
+        "breadth": 3,
+        "momentum": 3,
+        "connectivity": 2,
+        "career_signal": 3
+      },
+      "total_score": 42
+    }
+  ],
+  "deprioritized": [
+    {
+      "skill_id": "SK.XXX.XXX",
+      "skill_name": "...",
+      "reason": "Why this was dropped for THIS learner"
+    }
+  ]
+}"""
+
+
 @router.post("/parse-jd-skills")
 async def parse_jd_skills(request: JDSkillsRequest):
-    """Parse a JD and return top 10 skills with proficiency descriptions.
+    """Parse a JD and return skills with proficiency descriptions.
 
-    Used by the JD-first flow: user pastes JD, tool identifies skills,
-    user selects top 5 and self-assesses proficiency.
+    When learner_profile is provided, runs a 3-step chain:
+    1. Analyze JD against ontology -> extract 10 skills
+    2. Re-rank against learner's background using 5-factor rubric
+    3. Return final ranked skills (top 5 pre-selected)
+
+    Without learner_profile, returns JD-only analysis (original behavior).
     """
+    # ── Step 1: Extract skills from JD ──────────────────────────────
     jd_parser = JDParserAgent()
 
     try:
@@ -158,15 +244,34 @@ async def parse_jd_skills(request: JDSkillsRequest):
     ontology = get_ontology_service()
     top_skills = result.get("top_10_target_skills", [])
 
-    # Post-process: filter out low-importance skills when we have enough
-    # high/medium ones.  This prevents the LLM from padding to 10 with
-    # marginally relevant skills (e.g. ML-engineering skills for an L&D role).
+    # Filter out low-importance padding
     high_medium = [s for s in top_skills if s.get("importance") in ("high", "medium", "critical")]
     if len(high_medium) >= 3:
         top_skills = high_medium
 
+    # ── Step 2: Re-rank with learner profile (3-step chain) ─────────
+    reranked_top5 = None
+    if request.learner_profile and top_skills:
+        try:
+            reranked_top5 = await _rerank_skills_for_learner(
+                top_skills, request.learner_profile, result.get("role_analysis", {}),
+            )
+        except Exception as e:
+            logger.warning("Re-ranking failed, falling back to JD-only: %s", e)
+
+    # ── Step 3: Enrich with ontology metadata ───────────────────────
+    # If re-ranking succeeded, use its ordering; otherwise use JD order
+    if reranked_top5:
+        # Merge re-ranked top 5 back with remaining skills
+        top5_ids = {s["skill_id"] for s in reranked_top5}
+        remaining = [s for s in top_skills if s["skill_id"] not in top5_ids]
+        # Re-ranked top 5 first, then remaining skills
+        ordered_skills = reranked_top5 + remaining
+    else:
+        ordered_skills = top_skills
+
     enriched = []
-    for skill in top_skills:
+    for skill in ordered_skills:
         skill_obj = ontology.get_skill(skill.get("skill_id", ""))
         enriched.append({
             **skill,
@@ -178,7 +283,95 @@ async def parse_jd_skills(request: JDSkillsRequest):
         "target_role": result.get("role_analysis", {}).get("primary_function", request.target_role or ""),
         "top_10_skills": enriched,
         "role_analysis": result.get("role_analysis", {}),
+        "reranked": reranked_top5 is not None,
     }
+
+
+async def _rerank_skills_for_learner(
+    skills: list[dict],
+    learner_profile: dict,
+    role_analysis: dict,
+) -> list[dict]:
+    """Step 2+3 of the chain: re-rank skills using learner context + rubric.
+
+    Makes a single LLM call with the 10 skills, learner background, and
+    scoring rubric. Returns the top 5 in priority order.
+    """
+    # Build learner background summary
+    cp = learner_profile.get("current_profile", {})
+    bg_parts = []
+    if cp.get("summary"):
+        bg_parts.append(f"Background: {cp['summary']}")
+    if cp.get("ai_experience"):
+        bg_parts.append(f"AI Experience: {cp['ai_experience']}")
+    if learner_profile.get("technical_background"):
+        bg_parts.append(f"Technical Background: {learner_profile['technical_background']}")
+    if learner_profile.get("tools_used"):
+        tools = learner_profile["tools_used"]
+        if isinstance(tools, list):
+            tools = ", ".join(tools)
+        bg_parts.append(f"AI Tools Used: {tools}")
+    if learner_profile.get("learning_intent"):
+        bg_parts.append(f"Learning Intent: {learner_profile['learning_intent']}")
+    if learner_profile.get("experience_years"):
+        bg_parts.append(f"Years of Experience: {learner_profile['experience_years']}")
+    if learner_profile.get("ai_exposure_level"):
+        bg_parts.append(f"AI Knowledge Level: {learner_profile['ai_exposure_level']}")
+
+    learner_bg = "\n".join(bg_parts) if bg_parts else "No background provided"
+
+    # Format the 10 skills
+    skills_text = ""
+    for s in skills:
+        skills_text += (
+            f"#{s.get('rank', '?')} {s.get('skill_name', '?')} "
+            f"({s.get('domain_label', s.get('domain', '?'))}) "
+            f"- Importance: {s.get('importance', '?')} "
+            f"- Required Level: {s.get('required_level', '?')}\n"
+            f"   Rationale: {s.get('rationale', 'N/A')}\n\n"
+        )
+
+    prompt = f"""Here are {len(skills)} skills extracted from the job description for the role of "{role_analysis.get('primary_function', 'Unknown')}":
+
+{skills_text}
+
+Here is the learner's background:
+{learner_bg}
+
+Using the scoring rubric in your system prompt, score each of the {len(skills)} skills
+for THIS SPECIFIC LEARNER and return the top 5 with score breakdowns.
+
+Remember: skills the learner already has strong transferable experience in should be
+DEPRIORITIZED. Focus on genuine gaps where training creates the most value for
+this person transitioning to this role."""
+
+    llm = get_llm_provider()
+    response = await llm.generate(
+        prompt=prompt,
+        system_prompt=_RERANK_SYSTEM_PROMPT,
+        max_tokens=2048,
+        temperature=0.3,
+        json_mode=True,
+    )
+
+    reranked = json.loads(response.content)
+    top5 = reranked.get("top_5", [])
+
+    # Validate skill IDs exist in the original list
+    valid_ids = {s["skill_id"] for s in skills}
+    validated = []
+    for i, s in enumerate(top5[:5], 1):
+        sid = s.get("skill_id", "")
+        if sid in valid_ids:
+            # Merge with original skill data (preserve domain_label etc.)
+            original = next((o for o in skills if o["skill_id"] == sid), {})
+            merged = {**original, **s, "rank": i}
+            validated.append(merged)
+
+    if len(validated) < 3:
+        raise ValueError(f"Re-ranking returned too few valid skills ({len(validated)})")
+
+    return validated
 
 
 @router.get("/gap/{user_id}")
