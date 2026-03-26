@@ -144,7 +144,9 @@ export default function LearningDashboardPage() {
           </div>
           {/* Overall progress */}
           <div className="text-right">
-            <div className="text-3xl font-bold">{dashboard.overall_progress.toFixed(0)}%</div>
+            <div className="text-lg font-semibold">
+              {dashboard.total_lessons_completed ?? 0} of {dashboard.total_lessons ?? 0} lessons
+            </div>
             <div className="w-40 h-3 bg-indigo-800/50 rounded-full mt-1 overflow-hidden">
               <div
                 className="h-full bg-white rounded-full transition-all duration-700"

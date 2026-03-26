@@ -1,18 +1,247 @@
 import { useState, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
-import { getProfiles, parseResume } from '../services/api'
-import { User, Upload, Briefcase, Target, ChevronRight, Clock, Sparkles, ChevronDown } from 'lucide-react'
-import type { Profile } from '../types'
-import ArchetypeBadge from '../components/ArchetypeBadge'
-import JourneyArrow from '../components/JourneyArrow'
-import { getProficiencyLevel } from '../components/ProficiencyLegend'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import {
+  getProfiles, createProfile, deleteProfile, parseResume,
+  type ProfileListItem,
+} from '../services/api'
+import {
+  User, Upload, Plus, Trash2, ChevronRight, BookOpen,
+  Briefcase, Target, BarChart3, Loader2, X, FileText,
+} from 'lucide-react'
 import CurrentProfilePanel from '../components/profile/CurrentProfilePanel'
 import TargetGoalPanel from '../components/profile/TargetGoalPanel'
+import JourneyArrow from '../components/JourneyArrow'
 
 export default function ProfileSelectionPage() {
   const navigate = useNavigate()
-  const [selectedProfile, setSelectedProfile] = useState<string | null>(null)
+  const queryClient = useQueryClient()
+  const [showCreateForm, setShowCreateForm] = useState(false)
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
+
+  const { data: profiles, isLoading } = useQuery({
+    queryKey: ['profiles'],
+    queryFn: getProfiles,
+  })
+
+  const deleteMutation = useMutation({
+    mutationFn: deleteProfile,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['profiles'] })
+      setDeleteConfirm(null)
+    },
+  })
+
+  const handleOpenProfile = (p: ProfileListItem) => {
+    if (p.has_learning_path && p.learning_path_id) {
+      navigate(`/learn/${p.learning_path_id}`)
+    } else if (p.has_analysis && p.goal_id) {
+      navigate(`/analysis/${p.id}`)
+    } else {
+      navigate(`/analysis/${p.id}`)
+    }
+  }
+
+  return (
+    <div className="max-w-6xl mx-auto space-y-8">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Your Profiles</h1>
+          <p className="text-gray-600 mt-1">
+            Create and manage learner profiles. Each profile tracks skills, learning paths, and progress.
+          </p>
+        </div>
+        <button
+          onClick={() => setShowCreateForm(true)}
+          className="btn btn-primary flex items-center gap-2"
+        >
+          <Plus className="h-4 w-4" />
+          New Profile
+        </button>
+      </div>
+
+      {/* Create Form */}
+      {showCreateForm && (
+        <CreateProfileForm
+          onCreated={(id) => {
+            setShowCreateForm(false)
+            queryClient.invalidateQueries({ queryKey: ['profiles'] })
+            navigate(`/analysis/${id}`)
+          }}
+          onCancel={() => setShowCreateForm(false)}
+        />
+      )}
+
+      {/* Profile Grid */}
+      {isLoading ? (
+        <div className="text-center py-16">
+          <div className="inline-flex items-center gap-2 text-gray-500">
+            <Loader2 className="h-5 w-5 animate-spin" />
+            Loading profiles...
+          </div>
+        </div>
+      ) : !profiles?.length && !showCreateForm ? (
+        <div className="text-center py-16 space-y-4">
+          <div className="mx-auto w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center">
+            <User className="h-8 w-8 text-indigo-600" />
+          </div>
+          <h2 className="text-xl font-semibold text-gray-900">No profiles yet</h2>
+          <p className="text-gray-500">Create your first profile to get started with personalized AI skill analysis.</p>
+          <button
+            onClick={() => setShowCreateForm(true)}
+            className="btn btn-primary flex items-center gap-2 mx-auto"
+          >
+            <Plus className="h-4 w-4" />
+            Create Profile
+          </button>
+        </div>
+      ) : (
+        <div className="grid md:grid-cols-2 gap-6">
+          {profiles?.map((p) => (
+            <div
+              key={p.id}
+              className="card hover:shadow-lg hover:-translate-y-0.5 transition-all cursor-pointer"
+              onClick={() => handleOpenProfile(p)}
+            >
+              {/* Status badge */}
+              <div className="flex items-center justify-between mb-4">
+                <ProfileStatusBadge profile={p} />
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setDeleteConfirm(p.id)
+                    }}
+                    className="p-1.5 text-gray-400 hover:text-red-500 rounded-lg hover:bg-red-50 transition-colors"
+                    title="Delete profile"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Name & avatar */}
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-indigo-100 to-sky-100 rounded-full flex items-center justify-center flex-shrink-0">
+                  <User className="h-6 w-6 text-indigo-600" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900 text-lg">{p.name}</h3>
+                  <p className="text-sm text-gray-500">{p.industry}</p>
+                </div>
+              </div>
+
+              {/* Journey: current -> target */}
+              <div className="bg-gray-50 rounded-lg p-3 mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="text-xs uppercase tracking-wide text-gray-400 mb-1 flex items-center gap-1">
+                      <Briefcase className="h-3 w-3" />
+                      Current
+                    </div>
+                    <div className="text-sm font-medium text-gray-700 truncate">{p.current_role}</div>
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-xs uppercase tracking-wide text-gray-400 mb-1 flex items-center gap-1">
+                      <Target className="h-3 w-3" />
+                      Target
+                    </div>
+                    <div className="text-sm font-medium text-indigo-700 truncate">{p.target_role || 'Not set'}</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Progress (if learning path exists) */}
+              {p.has_learning_path && (
+                <div className="flex items-center gap-3 text-sm">
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-gray-600">{p.lessons_completed} of {p.total_lessons} lessons</span>
+                    </div>
+                    <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-indigo-500 rounded-full transition-all duration-500"
+                        style={{ width: `${p.overall_progress}%` }}
+                      />
+                    </div>
+                  </div>
+                  <BookOpen className="h-4 w-4 text-indigo-500 flex-shrink-0" />
+                </div>
+              )}
+
+              {/* Created date */}
+              <div className="text-xs text-gray-400 mt-3 pt-3 border-t border-gray-100">
+                Created {p.created_at ? new Date(p.created_at).toLocaleDateString() : 'recently'}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Delete confirmation modal */}
+      {deleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-xl p-6 max-w-sm mx-4 shadow-2xl">
+            <h3 className="font-semibold text-gray-900 mb-2">Delete Profile?</h3>
+            <p className="text-sm text-gray-600 mb-4">
+              This will permanently delete the profile, analysis results, learning path, and all progress. This cannot be undone.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setDeleteConfirm(null)}
+                className="btn bg-gray-100 text-gray-700 hover:bg-gray-200"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => deleteMutation.mutate(deleteConfirm)}
+                disabled={deleteMutation.isPending}
+                className="btn bg-red-600 text-white hover:bg-red-700"
+              >
+                {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function ProfileStatusBadge({ profile }: { profile: ProfileListItem }) {
+  if (profile.has_learning_path) {
+    return (
+      <span className="flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+        <BookOpen className="h-3 w-3" />
+        Learning
+      </span>
+    )
+  }
+  if (profile.has_analysis) {
+    return (
+      <span className="flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+        <BarChart3 className="h-3 w-3" />
+        Analyzed
+      </span>
+    )
+  }
+  return (
+    <span className="flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full bg-gray-50 text-gray-600 border border-gray-200">
+      <FileText className="h-3 w-3" />
+      New
+    </span>
+  )
+}
+
+function CreateProfileForm({
+  onCreated,
+  onCancel,
+}: {
+  onCreated: (id: string) => void
+  onCancel: () => void
+}) {
   const [customProfile, setCustomProfile] = useState({
     name: '',
     current_role: '',
@@ -37,22 +266,9 @@ export default function ProfileSelectionPage() {
   const [isParsingResume, setIsParsingResume] = useState(false)
   const [resumeError, setResumeError] = useState<string | null>(null)
   const [resumeParsed, setResumeParsed] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [isDragOver, setIsDragOver] = useState(false)
-
-  const { data: profiles, isLoading } = useQuery({
-    queryKey: ['profiles'],
-    queryFn: getProfiles,
-  })
-
-  const handleSelectProfile = (profileId: string) => {
-    setSelectedProfile(profileId)
-  }
-
-  const handleDoubleClick = (profileId: string) => {
-    setSelectedProfile(profileId)
-    navigate(`/analysis/${profileId}`)
-  }
 
   const handleResumeUpload = useCallback(async (file: File) => {
     const ext = file.name.split('.').pop()?.toLowerCase()
@@ -117,292 +333,104 @@ export default function ProfileSelectionPage() {
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
-  const handleCustomContinue = () => {
-    if (targetJD.trim()) {
-      // Store custom profile in session storage for the analysis page
-      sessionStorage.setItem('customProfile', JSON.stringify(customProfile))
-      sessionStorage.setItem('targetJD', targetJD)
-      navigate('/analysis/custom')
-    }
-  }
-
-  const handleExampleContinue = () => {
-    if (selectedProfile) {
-      navigate(`/analysis/${selectedProfile}`)
-    }
-  }
-
-  const scrollToExamples = () => {
-    document.getElementById('example-profiles')?.scrollIntoView({ behavior: 'smooth' })
-  }
-
   const handleProfileChange = (updates: Partial<typeof customProfile>) => {
     setCustomProfile(prev => ({ ...prev, ...updates }))
   }
 
-  const isCustomValid = targetJD.trim().length > 0
+  const handleSaveAndContinue = async () => {
+    if (!customProfile.name.trim() || !targetJD.trim()) return
+    setIsSaving(true)
+    try {
+      const result = await createProfile({
+        ...customProfile,
+        experience_years: customProfile.experience_years ? parseInt(customProfile.experience_years) : undefined,
+        target_jd_text: targetJD,
+      })
+      onCreated(result.id)
+    } catch {
+      setResumeError('Failed to save profile. Please try again.')
+      setIsSaving(false)
+    }
+  }
+
+  const isValid = customProfile.name.trim().length > 0 && targetJD.trim().length > 0
 
   return (
-    <div className="max-w-6xl mx-auto space-y-12">
-      {/* Header */}
-      <div className="text-center space-y-4">
-        <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">
-          Choose Your Starting Point
-        </h1>
-        <p className="text-gray-600 text-lg">
-          Create your profile or choose from 12 example profiles
-        </p>
-
-        {/* Navigation buttons */}
-        <div className="flex justify-center gap-4 pt-4">
-          <button className="btn btn-primary flex items-center gap-2">
-            <Upload className="h-4 w-4" />
-            Custom Profile
-          </button>
-          <button
-            onClick={scrollToExamples}
-            className="btn btn-secondary flex items-center gap-2"
-          >
-            <User className="h-4 w-4" />
-            Example Profiles
-            <ChevronDown className="h-4 w-4" />
-          </button>
-        </div>
-      </div>
-
-      {/* Section 1: Custom Profile Form — 2-Panel Layout */}
-      <section className="space-y-6">
+    <section className="card border-2 border-indigo-200 bg-indigo-50/30 space-y-6">
+      <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-gradient-to-br from-indigo-100 to-sky-100 rounded-xl flex items-center justify-center">
             <Upload className="h-5 w-5 text-indigo-600" />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-gray-900">Create Your Custom Profile</h2>
+            <h2 className="text-xl font-bold text-gray-900">Create New Profile</h2>
             <p className="text-sm text-gray-500">
-              Tell us about your current background and your target job so we can analyze your skill gap.
+              Upload a resume or fill in manually, then paste the target job description.
             </p>
           </div>
         </div>
-
-        {/* 2-Panel Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto_1fr] gap-8 items-start">
-          <CurrentProfilePanel
-            customProfile={customProfile}
-            onProfileChange={handleProfileChange}
-            resumeFile={resumeFile}
-            isParsingResume={isParsingResume}
-            resumeError={resumeError}
-            resumeParsed={resumeParsed}
-            isDragOver={isDragOver}
-            fileInputRef={fileInputRef}
-            onResumeUpload={handleResumeUpload}
-            onDrop={handleDrop}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onClearResume={clearResume}
-          />
-
-          {/* Arrow — desktop only */}
-          <div className="hidden lg:flex items-center justify-center pt-16">
-            <JourneyArrow variant="horizontal" size="lg" />
-          </div>
-
-          <TargetGoalPanel
-            targetJD={targetJD}
-            onTargetJDChange={setTargetJD}
-            learningIntent={customProfile.learning_intent}
-            onLearningIntentChange={(value) => handleProfileChange({ learning_intent: value })}
-          />
-        </div>
-
-        {/* Continue button — centered */}
-        <div className="flex justify-center pt-4">
-          <button
-            onClick={handleCustomContinue}
-            disabled={!isCustomValid}
-            className={`btn flex items-center gap-2 text-lg px-8 py-3 ${
-              isCustomValid
-                ? 'btn-primary'
-                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-            }`}
-          >
-            Continue to Skill Gap Analysis
-            <ChevronRight className="h-5 w-5" />
-          </button>
-        </div>
-      </section>
-
-      {/* Divider */}
-      <div className="flex items-center gap-4">
-        <div className="flex-1 h-px bg-gray-200" />
-        <span className="text-gray-400 font-medium px-4">OR</span>
-        <div className="flex-1 h-px bg-gray-200" />
+        <button
+          onClick={onCancel}
+          className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-white transition-colors"
+        >
+          <X className="h-5 w-5" />
+        </button>
       </div>
 
-      {/* Section 2: Example Profiles */}
-      <section id="example-profiles" className="scroll-mt-8 space-y-6">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-indigo-100 to-sky-100 rounded-xl flex items-center justify-center">
-            <User className="h-5 w-5 text-indigo-600" />
-          </div>
-          <div>
-            <h2 className="text-xl font-bold text-gray-900">Choose an Example Profile</h2>
-            <p className="text-sm text-gray-500">Select from pre-defined profiles with realistic backgrounds</p>
-          </div>
+      {/* 2-Panel Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto_1fr] gap-8 items-start">
+        <CurrentProfilePanel
+          customProfile={customProfile}
+          onProfileChange={handleProfileChange}
+          resumeFile={resumeFile}
+          isParsingResume={isParsingResume}
+          resumeError={resumeError}
+          resumeParsed={resumeParsed}
+          isDragOver={isDragOver}
+          fileInputRef={fileInputRef}
+          onResumeUpload={handleResumeUpload}
+          onDrop={handleDrop}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onClearResume={clearResume}
+        />
+
+        <div className="hidden lg:flex items-center justify-center pt-16">
+          <JourneyArrow variant="horizontal" size="lg" />
         </div>
 
-        {isLoading ? (
-          <div className="text-center py-12">
-            <div className="inline-flex items-center gap-2 text-gray-500">
-              <div className="w-5 h-5 border-2 border-gray-300 border-t-indigo-500 rounded-full animate-spin" />
-              Loading profiles...
-            </div>
-          </div>
-        ) : (
-          <div className="grid md:grid-cols-2 gap-6">
-            {profiles?.map((profile: Profile) => (
-              <ProfileCard
-                key={profile.id}
-                profile={profile}
-                isSelected={selectedProfile === profile.id}
-                onSelect={() => handleSelectProfile(profile.id)}
-                onDoubleClick={() => handleDoubleClick(profile.id)}
-              />
-            ))}
-          </div>
-        )}
-      </section>
+        <TargetGoalPanel
+          targetJD={targetJD}
+          onTargetJDChange={setTargetJD}
+          learningIntent={customProfile.learning_intent}
+          onLearningIntentChange={(value) => handleProfileChange({ learning_intent: value })}
+        />
+      </div>
 
-      {/* Floating Continue button when example selected */}
-      {selectedProfile && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
-          <button
-            onClick={handleExampleContinue}
-            className="btn btn-primary flex items-center gap-2 text-lg px-8 py-4 shadow-xl hover:shadow-2xl transition-all"
-          >
-            Continue to Analysis
-            <ChevronRight className="h-5 w-5" />
-          </button>
-        </div>
-      )}
-
-      {/* Bottom padding when floating button is visible */}
-      {selectedProfile && <div className="h-24" />}
-    </div>
-  )
-}
-
-interface ProfileCardProps {
-  profile: Profile
-  isSelected: boolean
-  onSelect: () => void
-  onDoubleClick: () => void
-}
-
-function ProfileCard({ profile, isSelected, onSelect, onDoubleClick }: ProfileCardProps) {
-  const proficiencyLevel = getProficiencyLevel(profile.ai_exposure_level)
-
-  return (
-    <div
-      onClick={onSelect}
-      onDoubleClick={onDoubleClick}
-      className={`card cursor-pointer transition-all hover:shadow-lg hover:-translate-y-0.5 ${
-        isSelected
-          ? 'border-2 border-indigo-500 ring-2 ring-indigo-100 shadow-lg'
-          : 'hover:border-gray-200'
-      }`}
-    >
-      {/* Header row: Archetype badge, Experience, AI Level */}
-      <div className="flex items-center justify-between mb-4">
-        <ArchetypeBadge archetype={profile.archetype} />
-        <div className="flex items-center gap-3 text-sm text-gray-500">
-          {profile.experience_years && (
-            <span className="flex items-center gap-1">
-              <Clock className="h-4 w-4" />
-              {profile.experience_years} yrs
-            </span>
+      {/* Save & Continue button */}
+      <div className="flex justify-center pt-4">
+        <button
+          onClick={handleSaveAndContinue}
+          disabled={!isValid || isSaving}
+          className={`btn flex items-center gap-2 text-lg px-8 py-3 ${
+            isValid && !isSaving
+              ? 'btn-primary'
+              : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+          }`}
+        >
+          {isSaving ? (
+            <>
+              <Loader2 className="h-5 w-5 animate-spin" />
+              Saving...
+            </>
+          ) : (
+            <>
+              Save & Continue to Analysis
+              <ChevronRight className="h-5 w-5" />
+            </>
           )}
-          <span className="flex items-center gap-1 font-medium text-indigo-600">
-            <Sparkles className="h-4 w-4" />
-            {proficiencyLevel} AI
-          </span>
-        </div>
+        </button>
       </div>
-
-      {/* Name */}
-      <div className="flex items-center gap-3 mb-5">
-        <div className="w-12 h-12 bg-gradient-to-br from-indigo-100 to-sky-100 rounded-full flex items-center justify-center flex-shrink-0">
-          <User className="h-6 w-6 text-indigo-600" />
-        </div>
-        <h3 className="font-semibold text-gray-900 text-xl">
-          {profile.name}
-        </h3>
-      </div>
-
-      {/* Journey: Point A → Point B */}
-      <div className="bg-gray-50 rounded-lg p-4 mb-5">
-        <div className="flex items-start gap-4">
-          {/* Where You Are */}
-          <div className="flex-1">
-            <div className="text-xs uppercase tracking-wide text-gray-400 mb-2 flex items-center gap-1">
-              <Briefcase className="h-3.5 w-3.5" />
-              Where you are
-            </div>
-            <div className="text-base font-medium text-gray-700">
-              {profile.current_role}
-            </div>
-          </div>
-
-          {/* Arrow */}
-          <div className="pt-6">
-            <JourneyArrow variant="icon" size="lg" />
-          </div>
-
-          {/* Where You're Going */}
-          <div className="flex-1">
-            <div className="text-xs uppercase tracking-wide text-gray-400 mb-2 flex items-center gap-1">
-              <Target className="h-3.5 w-3.5" />
-              Where you're going
-            </div>
-            <div className="text-base font-medium text-indigo-700">
-              {profile.target_role}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Learning Intent */}
-      {profile.learning_intent && (
-        <p className="text-sm text-gray-600 italic mb-4 leading-relaxed">
-          "{profile.learning_intent}"
-        </p>
-      )}
-
-      {/* Technical Skills Tags */}
-      {profile.current_profile?.technical_skills && profile.current_profile.technical_skills.length > 0 && (
-        <div className="flex flex-wrap gap-2 mb-4">
-          {profile.current_profile.technical_skills.map((skill, i) => (
-            <span
-              key={i}
-              className="text-sm bg-gray-100 text-gray-700 px-3 py-1 rounded-md"
-            >
-              {skill}
-            </span>
-          ))}
-        </div>
-      )}
-
-      {/* Industry */}
-      <div className="text-sm text-gray-500 border-t border-gray-100 pt-3 mt-auto">
-        {profile.industry}
-      </div>
-
-      {/* Selection indicator */}
-      {isSelected && (
-        <div className="text-xs text-indigo-600 text-center mt-3 font-medium">
-          Selected - Double-click or press Continue
-        </div>
-      )}
-    </div>
+    </section>
   )
 }

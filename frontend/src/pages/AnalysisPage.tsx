@@ -13,7 +13,6 @@ import {
   User,
   Briefcase,
   Clock,
-  Sparkles,
   MapPin,
   Code,
   Users,
@@ -27,9 +26,7 @@ import {
   Rocket,
 } from 'lucide-react'
 import type { AnalysisResult, Profile, Top10TargetSkill, Top10SkillGap, JourneyRoadmap, ParsedSkill } from '../types'
-import ArchetypeBadge from '../components/ArchetypeBadge'
 import JourneyArrow from '../components/JourneyArrow'
-import { getProficiencyLevel } from '../components/ProficiencyLegend'
 import DomainGrid from '../components/ontology/DomainGrid'
 import AnalysisProgress from '../components/ontology/AnalysisProgress'
 import UnifiedSkillsChart from '../components/UnifiedSkillsChart'
@@ -91,9 +88,12 @@ export default function AnalysisPage() {
       }
     } else if (profile) {
       setTargetRole(profile.target_role || '')
-      // Pre-fill JD from profile if available
-      if (profile.target_jd?.requirements) {
-        setTargetJD(profile.target_jd.requirements.join('\n• '))
+      // Pre-fill JD: prefer full prose text, fall back to bullet points
+      const profileAny = profile as unknown as Record<string, unknown>
+      if (profileAny.target_jd_text) {
+        setTargetJD(profileAny.target_jd_text as string)
+      } else if (profile.target_jd?.requirements) {
+        setTargetJD(profile.target_jd.requirements.join('\n'))
       }
     }
   }, [isCustom, profile])
@@ -277,7 +277,7 @@ export default function AnalysisPage() {
 
   // Get the active profile (either from API or custom)
   const activeProfile = isCustom ? customProfileData : profile
-  const proficiencyLevel = getProficiencyLevel(activeProfile?.ai_exposure_level)
+  // proficiencyLevel removed - labels were considered offensive per Luda's feedback
 
   // Extract profile domains for personalized animation
   const profileDomains = useMemo(() => {
@@ -354,19 +354,14 @@ export default function AnalysisPage() {
                   </div>
                 </div>
 
-                {/* Archetype and Stats Row */}
+                {/* Stats Row */}
                 <div className="flex flex-wrap items-center gap-3">
-                  <ArchetypeBadge archetype={activeProfile.archetype} />
                   {activeProfile.experience_years && (
                     <span className="flex items-center gap-1 text-sm text-gray-600 bg-white px-2 py-1 rounded-md">
                       <Clock className="h-4 w-4" />
                       {activeProfile.experience_years} years experience
                     </span>
                   )}
-                  <span className="flex items-center gap-1 text-sm font-medium text-primary-700 bg-primary-50 px-2 py-1 rounded-md">
-                    <Sparkles className="h-4 w-4" />
-                    {proficiencyLevel} AI Proficiency
-                  </span>
                   {activeProfile.technical_background && activeProfile.technical_background !== '' && (
                     <span className="flex items-center gap-1 text-sm text-gray-600 bg-white px-2 py-1 rounded-md">
                       <Code className="h-4 w-4" />
@@ -459,7 +454,7 @@ export default function AnalysisPage() {
                       <FileText className="h-4 w-4" />
                       Summary
                     </h4>
-                    <p className="text-sm text-gray-600 bg-white p-2.5 rounded-md border border-gray-200 line-clamp-4">
+                    <p className="text-sm text-gray-600 bg-white p-2.5 rounded-md border border-gray-200 max-h-48 overflow-y-auto">
                       {activeProfile.current_profile.summary}
                     </p>
                   </div>
@@ -635,7 +630,7 @@ export default function AnalysisPage() {
                         <FileText className="h-4 w-4" />
                         Role Summary
                       </h4>
-                      <p className="text-sm text-gray-600 bg-white p-2.5 rounded-md border border-primary-200 line-clamp-4">
+                      <p className="text-sm text-gray-600 bg-white p-2.5 rounded-md border border-primary-200 max-h-48 overflow-y-auto">
                         {jdProfile.summary}
                       </p>
                     </div>

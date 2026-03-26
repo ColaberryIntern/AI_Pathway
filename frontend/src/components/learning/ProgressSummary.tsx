@@ -1,4 +1,4 @@
-import { BookCheck, Clock, TrendingUp, Layers } from 'lucide-react'
+import { BookCheck, TrendingUp, Layers } from 'lucide-react'
 
 interface ProgressSummaryProps {
   lessonsCompleted: number
@@ -11,7 +11,6 @@ interface ProgressSummaryProps {
 export default function ProgressSummary({
   lessonsCompleted,
   totalLessons,
-  estimatedHoursRemaining,
   overallProgress,
   totalModules,
 }: ProgressSummaryProps) {
@@ -19,12 +18,12 @@ export default function ProgressSummary({
     {
       icon: BookCheck,
       label: 'Lessons Completed',
-      value: `${lessonsCompleted}/${totalLessons}`,
+      value: `${lessonsCompleted} of ${totalLessons}`,
       color: 'text-emerald-600 bg-emerald-100',
     },
     {
       icon: TrendingUp,
-      label: 'Overall Progress',
+      label: 'Progress',
       value: `${overallProgress.toFixed(0)}%`,
       color: 'text-sky-600 bg-sky-100',
     },
@@ -34,16 +33,10 @@ export default function ProgressSummary({
       value: `${totalModules}`,
       color: 'text-indigo-600 bg-indigo-100',
     },
-    {
-      icon: Clock,
-      label: 'Hours Remaining',
-      value: `~${estimatedHoursRemaining}h`,
-      color: 'text-amber-600 bg-amber-100',
-    },
   ]
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+    <div className="grid grid-cols-3 gap-3">
       {stats.map((s) => (
         <div key={s.label} className="card p-3 flex items-center gap-3">
           <div className={`p-2 rounded-lg ${s.color}`}>

@@ -7,7 +7,6 @@ import {
   Circle,
   PlayCircle,
   ChevronDown,
-  Clock,
   Target,
   ExternalLink,
   Loader2,
@@ -193,12 +192,6 @@ export default function LearningPathPage() {
                 </div>
 
                 <div className="flex items-center gap-4 text-sm text-gray-500">
-                  {chapter.estimated_time_hours && (
-                    <span className="flex items-center gap-1 bg-gray-100 px-2 py-1 rounded-md">
-                      <Clock className="h-4 w-4" />
-                      {chapter.estimated_time_hours}h
-                    </span>
-                  )}
                   <div className={`transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}>
                     <ChevronDown className="h-5 w-5" />
                   </div>

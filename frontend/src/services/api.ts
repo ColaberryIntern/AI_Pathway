@@ -14,8 +14,31 @@ const api = axios.create({
   },
 })
 
-// Profiles
-export const getProfiles = async (): Promise<Profile[]> => {
+// Profiles - DB-backed CRUD
+export interface ProfileListItem {
+  id: string
+  name: string
+  current_role: string
+  target_role: string | null
+  industry: string
+  experience_years: number | null
+  ai_exposure_level: string | null
+  learning_intent: string | null
+  created_at: string | null
+  has_analysis: boolean
+  has_learning_path: boolean
+  learning_path_id: string | null
+  goal_id: string | null
+  user_id: string | null
+  overall_progress: number
+  lessons_completed: number
+  total_lessons: number
+  tools_used: string[]
+  technical_background: string
+  current_profile: Record<string, unknown> | null
+}
+
+export const getProfiles = async (): Promise<ProfileListItem[]> => {
   const { data } = await api.get('/profiles/')
   return data
 }
@@ -25,8 +48,22 @@ export const getProfile = async (profileId: string): Promise<Profile> => {
   return data
 }
 
+export const createProfile = async (profile: Record<string, unknown>): Promise<{ id: string; user_id: string; name: string }> => {
+  const { data } = await api.post('/profiles/', profile)
+  return data
+}
+
+export const updateProfile = async (profileId: string, updates: Record<string, unknown>): Promise<{ id: string }> => {
+  const { data } = await api.put(`/profiles/${profileId}`, updates)
+  return data
+}
+
+export const deleteProfile = async (profileId: string): Promise<void> => {
+  await api.delete(`/profiles/${profileId}`)
+}
+
 export const uploadProfile = async (profile: Partial<Profile>): Promise<{ id: string; user_id: string }> => {
-  const { data } = await api.post('/profiles/upload', profile)
+  const { data } = await api.post('/profiles/', profile)
   return data
 }
 

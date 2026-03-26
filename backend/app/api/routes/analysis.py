@@ -1,7 +1,6 @@
 """Analysis API routes - main workflow endpoints."""
 import json
 import logging
-from pathlib import Path
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel as _BaseModel
@@ -28,18 +27,6 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
-PROFILES_DIR = Path(__file__).parent.parent.parent / "data" / "profiles"
-
-
-def load_test_profile(profile_id: str) -> dict | None:
-    """Load a test profile by ID."""
-    for profile_file in PROFILES_DIR.glob("profile_*.json"):
-        with open(profile_file) as f:
-            profile_data = json.load(f)
-            if profile_data["id"] == profile_id:
-                return profile_data
-    return None
-
 
 @router.post("/full")
 async def run_full_analysis(
@@ -47,12 +34,42 @@ async def run_full_analysis(
     db: AsyncSession = Depends(get_database),
     orchestrator: Orchestrator = Depends(get_agent_orchestrator),
 ):
-    """Run full analysis: Profile → JD → Gap → Path generation."""
-    # Get or create profile
+    """Run full analysis: Profile -> JD -> Gap -> Path generation.
+
+    Accepts either a profile_id (DB profile) or custom_profile (inline dict).
+    When profile_id is provided, links the analysis results to that profile.
+    """
+    from app.models.profile import Profile as ProfileModel
+
+    db_profile = None
+    user_id = None
+
     if request.profile_id:
-        profile = load_test_profile(request.profile_id)
-        if not profile:
+        # Load profile from database
+        db_profile = await db.get(ProfileModel, request.profile_id)
+        if not db_profile:
             raise HTTPException(status_code=404, detail="Profile not found")
+
+        # Build profile dict from DB record for orchestrator
+        pd = db_profile.profile_data or {}
+        profile = {
+            "id": db_profile.id,
+            "name": db_profile.name,
+            "current_role": db_profile.current_role,
+            "target_role": db_profile.target_role,
+            "industry": db_profile.industry,
+            "experience_years": db_profile.experience_years,
+            "ai_exposure_level": db_profile.ai_exposure_level,
+            "learning_intent": db_profile.learning_intent,
+            "tools_used": pd.get("tools_used", []),
+            "technical_background": pd.get("technical_background", ""),
+            "current_profile": pd.get("current_profile"),
+            "archetype": pd.get("archetype"),
+            "target_jd": pd.get("target_jd"),
+            "estimated_current_skills": pd.get("estimated_current_skills"),
+            "expected_skill_gaps": pd.get("expected_skill_gaps"),
+        }
+        user_id = db_profile.user_id
     elif request.custom_profile:
         profile = request.custom_profile
     else:
@@ -74,13 +91,16 @@ async def run_full_analysis(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
 
-    # Quick DB save — lock held ~100ms instead of 20-40s
-    user = User(name=profile.get("name", "Anonymous"))
-    db.add(user)
-    await db.flush()
+    # Quick DB save
+    if not user_id:
+        user = User(name=profile.get("name", "Anonymous"))
+        db.add(user)
+        await db.flush()
+        user_id = user.id
 
     goal = Goal(
-        user_id=user.id,
+        user_id=user_id,
+        profile_id=db_profile.id if db_profile else None,
         target_role=request.target_role or profile.get("target_role", ""),
         target_jd_text=request.target_jd_text,
         learning_intent=profile.get("learning_intent", ""),
@@ -90,7 +110,7 @@ async def run_full_analysis(
     await db.flush()
 
     skill_gap = SkillGap(
-        user_id=user.id,
+        user_id=user_id,
         goal_id=goal.id,
         state_a_skills=result.get("profile_analysis", {}).get("state_a_skills", {}),
         state_b_skills=result.get("jd_parsing", {}).get("state_b_skills", {}),
@@ -100,7 +120,7 @@ async def run_full_analysis(
     await db.flush()
 
     learning_path = LearningPath(
-        user_id=user.id,
+        user_id=user_id,
         goal_id=goal.id,
         gap_id=skill_gap.id,
         title=result.get("learning_path", {}).get("title", ""),
@@ -112,7 +132,7 @@ async def run_full_analysis(
     await db.commit()
 
     return {
-        "user_id": user.id,
+        "user_id": user_id,
         "goal_id": goal.id,
         "skill_gap_id": skill_gap.id,
         "learning_path_id": learning_path.id,
