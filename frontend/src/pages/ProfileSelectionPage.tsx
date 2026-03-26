@@ -1,8 +1,8 @@
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
-  getProfiles, createProfile, deleteProfile, parseResume,
+  getProfiles, createProfile, deleteProfile, parseResume, parseJDSkills,
   type ProfileListItem,
 } from '../services/api'
 import {
@@ -267,8 +267,41 @@ function CreateProfileForm({
   const [resumeError, setResumeError] = useState<string | null>(null)
   const [resumeParsed, setResumeParsed] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+  const [isAnalyzingJD, setIsAnalyzingJD] = useState(false)
+  const [jdAnalysisComplete, setJdAnalysisComplete] = useState(false)
+  const [detectedRole, setDetectedRole] = useState('')
+  const jdDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [isDragOver, setIsDragOver] = useState(false)
+
+  // Auto-analyze JD after paste/typing stops (1.5s debounce)
+  useEffect(() => {
+    if (jdDebounceRef.current) clearTimeout(jdDebounceRef.current)
+    if (targetJD.trim().length < 50) {
+      setJdAnalysisComplete(false)
+      setDetectedRole('')
+      return
+    }
+    setJdAnalysisComplete(false)
+    jdDebounceRef.current = setTimeout(async () => {
+      setIsAnalyzingJD(true)
+      try {
+        const result = await parseJDSkills({ jd_text: targetJD, target_role: customProfile.target_role })
+        if (result.target_role) {
+          setDetectedRole(result.target_role)
+          setCustomProfile(prev => ({ ...prev, target_role: result.target_role || prev.target_role }))
+        }
+        setJdAnalysisComplete(true)
+      } catch {
+        // Silently fail - user can still proceed manually
+        setJdAnalysisComplete(true)
+      } finally {
+        setIsAnalyzingJD(false)
+      }
+    }, 1500)
+    return () => { if (jdDebounceRef.current) clearTimeout(jdDebounceRef.current) }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [targetJD])
 
   const handleResumeUpload = useCallback(async (file: File) => {
     const ext = file.name.split('.').pop()?.toLowerCase()
@@ -353,7 +386,7 @@ function CreateProfileForm({
     }
   }
 
-  const isValid = customProfile.name.trim().length > 0 && targetJD.trim().length > 0
+  const isValid = customProfile.name.trim().length > 0 && targetJD.trim().length >= 50 && jdAnalysisComplete && !isAnalyzingJD
 
   return (
     <section className="card border-2 border-indigo-200 bg-indigo-50/30 space-y-6">
@@ -404,6 +437,9 @@ function CreateProfileForm({
           onTargetJDChange={setTargetJD}
           learningIntent={customProfile.learning_intent}
           onLearningIntentChange={(value) => handleProfileChange({ learning_intent: value })}
+          isAnalyzing={isAnalyzingJD}
+          analysisComplete={jdAnalysisComplete}
+          detectedRole={detectedRole}
         />
       </div>
 
