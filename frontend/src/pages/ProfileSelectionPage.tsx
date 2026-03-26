@@ -2,7 +2,7 @@ import { useState, useRef, useCallback, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
-  getProfiles, createProfile, deleteProfile, parseResume, parseJDSkills,
+  getProfiles, createProfile, deleteProfile, parseResume, parseJDProfile,
   type ProfileListItem,
 } from '../services/api'
 import {
@@ -270,6 +270,14 @@ function CreateProfileForm({
   const [isAnalyzingJD, setIsAnalyzingJD] = useState(false)
   const [jdAnalysisComplete, setJdAnalysisComplete] = useState(false)
   const [detectedRole, setDetectedRole] = useState('')
+  const [jdAnalysis, setJdAnalysis] = useState<{
+    technical_skills?: string[]
+    soft_skills?: string[]
+    ai_requirements?: string
+    summary?: string
+    seniority_level?: string
+    key_tools?: string[]
+  } | null>(null)
   const jdDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [isDragOver, setIsDragOver] = useState(false)
@@ -280,20 +288,26 @@ function CreateProfileForm({
     if (targetJD.trim().length < 50) {
       setJdAnalysisComplete(false)
       setDetectedRole('')
+      setJdAnalysis(null)
       return
     }
     setJdAnalysisComplete(false)
     jdDebounceRef.current = setTimeout(async () => {
       setIsAnalyzingJD(true)
       try {
-        const result = await parseJDSkills({ jd_text: targetJD, target_role: customProfile.target_role })
-        if (result.target_role) {
-          setDetectedRole(result.target_role)
-          setCustomProfile(prev => ({ ...prev, target_role: result.target_role || prev.target_role }))
+        const result = await parseJDProfile({ jd_text: targetJD, target_role: customProfile.target_role })
+        // parseJDProfile returns: technical_skills, soft_skills, ai_requirements, summary, seniority_level, key_tools
+        setJdAnalysis(result)
+        // Extract role from summary if available
+        const role = (result as Record<string, unknown>).target_role as string | undefined
+        if (role) {
+          setDetectedRole(role)
+          setCustomProfile(prev => ({ ...prev, target_role: role || prev.target_role }))
+        } else if (result.summary) {
+          setDetectedRole(customProfile.target_role || 'Role detected')
         }
         setJdAnalysisComplete(true)
       } catch {
-        // Silently fail - user can still proceed manually
         setJdAnalysisComplete(true)
       } finally {
         setIsAnalyzingJD(false)
@@ -440,6 +454,7 @@ function CreateProfileForm({
           isAnalyzing={isAnalyzingJD}
           analysisComplete={jdAnalysisComplete}
           detectedRole={detectedRole}
+          jdAnalysis={jdAnalysis}
         />
       </div>
 

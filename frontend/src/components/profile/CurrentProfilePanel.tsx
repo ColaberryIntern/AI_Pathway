@@ -1,5 +1,5 @@
 import {
-  User, FileText, X, CheckCircle2, AlertCircle, Loader2,
+  User, FileText, X, CheckCircle2, AlertCircle, Loader2, Wrench, Users as UsersIcon, Brain,
 } from 'lucide-react'
 
 interface ProfileFields {
@@ -12,6 +12,12 @@ interface ProfileFields {
   current_jd: string
   tools_used: string[]
   technical_background: string
+  current_profile?: {
+    technical_skills: string[]
+    soft_skills: string[]
+    ai_experience: string
+    summary: string
+  }
 }
 
 interface CurrentProfilePanelProps {
@@ -257,6 +263,68 @@ export default function CurrentProfilePanel({
           })}
         </div>
       </div>
+
+      {/* Parsed Profile Breakdown */}
+      {resumeParsed && customProfile.current_profile && (
+        <div className="space-y-4 border-t border-gray-100 pt-4">
+          {/* Summary */}
+          {customProfile.current_profile.summary && (
+            <div>
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Profile Summary</p>
+              <p className="text-sm text-gray-600 bg-gray-50 p-2.5 rounded-md border border-gray-200 max-h-32 overflow-y-auto">
+                {customProfile.current_profile.summary}
+              </p>
+            </div>
+          )}
+
+          {/* Technical Skills */}
+          {customProfile.current_profile.technical_skills && customProfile.current_profile.technical_skills.length > 0 && (
+            <div>
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-1">
+                <Wrench className="h-3.5 w-3.5" />
+                Technical Skills
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {customProfile.current_profile.technical_skills.map((skill, i) => (
+                  <span key={i} className="text-xs bg-gray-100 text-gray-700 px-2.5 py-1 rounded-md">
+                    {skill}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Soft Skills */}
+          {customProfile.current_profile.soft_skills && customProfile.current_profile.soft_skills.length > 0 && (
+            <div>
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-1">
+                <UsersIcon className="h-3.5 w-3.5" />
+                Soft Skills
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {customProfile.current_profile.soft_skills.map((skill, i) => (
+                  <span key={i} className="text-xs bg-sky-50 text-sky-700 px-2.5 py-1 rounded-md border border-sky-200">
+                    {skill}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* AI Experience */}
+          {customProfile.current_profile.ai_experience && (
+            <div>
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1 flex items-center gap-1">
+                <Brain className="h-3.5 w-3.5" />
+                AI Experience
+              </p>
+              <p className="text-sm text-gray-600 bg-indigo-50 p-2.5 rounded-md border border-indigo-200">
+                {customProfile.current_profile.ai_experience}
+              </p>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Current Job Description */}
       <div>
