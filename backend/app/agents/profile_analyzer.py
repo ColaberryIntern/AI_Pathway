@@ -119,6 +119,14 @@ the user's profile (job title, responsibilities, tools used, or background)."""
 
         result = await self._call_llm_structured(prompt, output_schema)
 
+        if not result or not isinstance(result, dict):
+            result = {
+                "top_10_current_skills": [],
+                "state_a_skills": {},
+                "profile_summary": f"{profile.get('name', 'Unknown')} - {profile.get('current_role', 'Unknown')}",
+                "recommended_focus_domains": [],
+            }
+
         # Post-process: ensure all skill IDs are valid ontology IDs.
         # When RAG is unavailable, the LLM may hallucinate IDs despite
         # instructions.  This is critical for custom profiles that lack
