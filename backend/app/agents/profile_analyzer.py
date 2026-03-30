@@ -162,10 +162,10 @@ the user's profile (job title, responsibilities, tools used, or background)."""
             result["top_10_current_skills"] = cleaned_top10
 
         # Merge with any pre-defined skills from profile (overrides LLM)
-        if "estimated_current_skills" in profile:
+        if profile.get("estimated_current_skills"):
             result["state_a_skills"] = {
                 **result.get("state_a_skills", {}),
-                **profile["estimated_current_skills"]
+                **profile["estimated_current_skills"],
             }
 
         self._log_execution("analyze_profile", profile, result)
