@@ -296,15 +296,16 @@ function CreateProfileForm({
       setIsAnalyzingJD(true)
       try {
         const result = await parseJDProfile({ jd_text: targetJD, target_role: customProfile.target_role })
-        // parseJDProfile returns: technical_skills, soft_skills, ai_requirements, summary, seniority_level, key_tools
         setJdAnalysis(result)
-        // Extract role from summary if available
-        const role = (result as Record<string, unknown>).target_role as string | undefined
+        // Extract detected role - check multiple possible field locations
+        const resultAny = result as Record<string, unknown>
+        const role = (resultAny.target_role as string)
+          || (resultAny.role_title as string)
+          || customProfile.target_role
+          || ''
         if (role) {
           setDetectedRole(role)
-          setCustomProfile(prev => ({ ...prev, target_role: role || prev.target_role }))
-        } else if (result.summary) {
-          setDetectedRole(customProfile.target_role || 'Role detected')
+          setCustomProfile(prev => ({ ...prev, target_role: role }))
         }
         setJdAnalysisComplete(true)
       } catch {
