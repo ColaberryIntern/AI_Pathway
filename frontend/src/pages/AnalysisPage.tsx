@@ -211,12 +211,18 @@ export default function AnalysisPage() {
     try {
       const result = await parseJDProfile({ jd_text: jdText, target_role: role })
       setJdProfile(result)
+      // Auto-fill target role from JD if not already set
+      const detected = (result as Record<string, unknown>).target_role as string | undefined
+      if (detected && !targetRole) {
+        setTargetRole(detected)
+      }
     } catch {
       setJdParseError('Could not analyze job description. You can still run the full analysis.')
     } finally {
       setIsParsingJD(false)
     }
-  }, [])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [targetRole])
 
   // Auto-analyze JD with debounce when text changes
   const jdDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)

@@ -14,6 +14,7 @@ async def parse_jd_profile(jd_text: str, target_role: str = "") -> dict:
 
     Returns:
         {
+            "target_role": str,
             "technical_skills": list[str],
             "soft_skills": list[str],
             "ai_requirements": str | None,
@@ -40,12 +41,13 @@ async def parse_jd_profile(jd_text: str, target_role: str = "") -> dict:
 
     prompt = f"""Analyze this job description and extract the following fields:
 
-1. "technical_skills" — Array of 4-10 key technical skills, tools, and technologies required (e.g. ["Python", "TensorFlow", "AWS", "SQL", "Docker"]). Extract the most prominent ones.
-2. "soft_skills" — Array of 3-6 soft/leadership skills required or implied (e.g. ["Cross-functional collaboration", "Strategic thinking", "Stakeholder management"]).
-3. "ai_requirements" — One or two sentences describing the AI/ML experience or capabilities expected for this role. If the role doesn't involve AI, describe the key technical competency expected. (e.g. "Must have hands-on experience building and deploying ML models in production, with familiarity in LLMs and prompt engineering")
-4. "summary" — A 2-3 sentence summary of what this role entails and what the ideal candidate looks like. Write in third person. (e.g. "This senior AI product manager role leads the development of GenAI features for an enterprise SaaS platform. The ideal candidate combines strong technical understanding of LLMs with product strategy experience and the ability to drive cross-functional execution.")
-5. "seniority_level" — One of: "Entry-level", "Mid-level", "Senior", "Lead", "Director", "VP/Executive", or null.
-6. "key_tools" — Array of 2-5 specific platforms, frameworks, or tools mentioned (e.g. ["OpenAI API", "LangChain", "Kubernetes", "Snowflake"]). Different from technical_skills — these are specific named products/platforms.
+1. "target_role" — The exact job title for this position. Extract from the title field, first sentence, or "We are looking for a [TITLE]" pattern. If no explicit title, infer the best role title from the responsibilities. (e.g. "Lead AI Solution Architect", "AI Content Editor", "Senior Data Scientist")
+2. "technical_skills" — Array of 4-10 key technical skills, tools, and technologies required (e.g. ["Python", "TensorFlow", "AWS", "SQL", "Docker"]). Extract the most prominent ones.
+3. "soft_skills" — Array of 3-6 soft/leadership skills required or implied (e.g. ["Cross-functional collaboration", "Strategic thinking", "Stakeholder management"]).
+4. "ai_requirements" — One or two sentences describing the AI/ML experience or capabilities expected for this role. If the role doesn't involve AI, describe the key technical competency expected.
+5. "summary" — A 2-3 sentence summary of what this role entails and what the ideal candidate looks like. Write in third person.
+6. "seniority_level" — One of: "Entry-level", "Mid-level", "Senior", "Lead", "Director", "VP/Executive", or null.
+7. "key_tools" — Array of 2-5 specific platforms, frameworks, or tools mentioned (e.g. ["OpenAI API", "LangChain", "Kubernetes", "Snowflake"]). Different from technical_skills — these are specific named products/platforms.
 
 {f'TARGET ROLE: {target_role}' if target_role else ''}
 
