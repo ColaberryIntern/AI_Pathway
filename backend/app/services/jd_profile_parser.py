@@ -54,7 +54,7 @@ async def parse_jd_profile(jd_text: str, target_role: str = "") -> dict:
 JOB DESCRIPTION:
 {jd_text}
 
-Return ONLY a JSON object with these 6 keys. No additional text."""
+Return ONLY a JSON object with these 7 keys. No additional text."""
 
     response = await llm.generate(
         prompt=prompt,
@@ -71,6 +71,7 @@ Return ONLY a JSON object with these 6 keys. No additional text."""
         raise ValueError("Failed to parse job description. Please try again.")
 
     return {
+        "target_role": result.get("target_role") or "",
         "technical_skills": _validate_list(result.get("technical_skills")),
         "soft_skills": _validate_list(result.get("soft_skills")),
         "ai_requirements": result.get("ai_requirements") or None,
