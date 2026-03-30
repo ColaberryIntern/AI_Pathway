@@ -201,7 +201,7 @@ parse job descriptions, identify skill gaps, and generate personalized learning 
             # valid_state_b empty.  In that case, derive state_b from
             # the profile's expected_skill_gaps.
             profile_data = task.get("profile", {})
-            if not valid_state_b and "expected_skill_gaps" in profile_data:
+            if not valid_state_b and profile_data.get("expected_skill_gaps"):
                 for gap_group in profile_data["expected_skill_gaps"]:
                     for sid in gap_group.get("skills", []):
                         skill = ontology.get_skill(sid)
@@ -225,7 +225,7 @@ parse job descriptions, identify skill gaps, and generate personalized learning 
                         )
                     else:
                         valid_state_b[sid] = level
-            elif "expected_skill_gaps" in profile_data:
+            elif profile_data.get("expected_skill_gaps"):
                 # No template: add only the specific skills listed
                 # in each gap group (not the entire domain).
                 for gap_group in profile_data["expected_skill_gaps"]:

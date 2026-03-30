@@ -89,6 +89,8 @@ async def run_full_analysis(
             "include_resources": True,
         })
     except Exception as e:
+        import traceback
+        logger.error("Analysis failed: %s\n%s", e, traceback.format_exc())
         raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
 
     # Quick DB save
