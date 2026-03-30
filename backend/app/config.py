@@ -38,6 +38,15 @@ class Settings(BaseSettings):
     # CORS - comma-separated string (parsed by main.py)
     cors_origins: str = "http://localhost:5173,http://localhost:3000,http://95.216.199.47,http://95.216.199.47:3000"
 
+    # Communication Intelligence - Basecamp
+    basecamp_token: str = ""
+    basecamp_account_id: str = "3945211"
+    basecamp_project_id: str = "46692302"
+
+    # Communication Intelligence - Gmail
+    gmail_credentials_path: str = "credentials/gmail_credentials.json"
+    gmail_token_path: str = "credentials/gmail_token.json"
+
     def get_cors_origins_list(self) -> list[str]:
         """Get CORS origins as a list."""
         return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]

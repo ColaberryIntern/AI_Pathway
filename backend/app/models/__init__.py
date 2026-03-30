@@ -16,6 +16,9 @@ from app.models.skill_genome import SkillGenomeEntry
 from app.models.lesson_reaction import LessonReaction
 from app.models.confusion_event import ConfusionEvent
 from app.models.implementation_submission import ImplementationSubmission
+from app.models.email_thread import EmailThread
+from app.models.topic_thread_map import TopicThreadMap
+from app.models.communication_feedback import CommunicationFeedback
 
 __all__ = [
     "User",
@@ -35,4 +38,7 @@ __all__ = [
     "LessonReaction",
     "ConfusionEvent",
     "ImplementationSubmission",
+    "EmailThread",
+    "TopicThreadMap",
+    "CommunicationFeedback",
 ]
