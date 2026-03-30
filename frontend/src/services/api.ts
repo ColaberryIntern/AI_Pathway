@@ -95,6 +95,7 @@ export const parseJDProfile = async (params: {
   jd_text: string
   target_role?: string
 }): Promise<{
+  target_role?: string
   technical_skills: string[]
   soft_skills: string[]
   ai_requirements?: string

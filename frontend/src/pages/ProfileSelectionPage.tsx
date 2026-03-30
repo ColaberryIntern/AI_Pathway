@@ -271,6 +271,7 @@ function CreateProfileForm({
   const [jdAnalysisComplete, setJdAnalysisComplete] = useState(false)
   const [detectedRole, setDetectedRole] = useState('')
   const [jdAnalysis, setJdAnalysis] = useState<{
+    target_role?: string
     technical_skills?: string[]
     soft_skills?: string[]
     ai_requirements?: string
@@ -297,15 +298,14 @@ function CreateProfileForm({
       try {
         const result = await parseJDProfile({ jd_text: targetJD, target_role: customProfile.target_role })
         setJdAnalysis(result)
-        // Extract detected role - check multiple possible field locations
-        const resultAny = result as Record<string, unknown>
-        const role = (resultAny.target_role as string)
-          || (resultAny.role_title as string)
-          || customProfile.target_role
-          || ''
+        // Extract detected role from backend response
+        const role = result.target_role || customProfile.target_role || ''
         if (role) {
           setDetectedRole(role)
           setCustomProfile(prev => ({ ...prev, target_role: role }))
+        } else {
+          // Fallback: mark analysis complete even without role
+          setDetectedRole('')
         }
         setJdAnalysisComplete(true)
       } catch {
