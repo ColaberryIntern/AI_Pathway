@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { useParams } from 'react-router-dom'
-import { useQuery, useMutation } from '@tanstack/react-query'
-import { getProfile, runFullAnalysis, parseJDProfile, parseJDSkills, getVisualization } from '../services/api'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { getProfile, runFullAnalysis, parseJDProfile, parseJDSkills, getVisualization, updateProfile } from '../services/api'
 import {
   Loader2,
   CheckCircle,
@@ -63,6 +63,38 @@ export default function AnalysisPage() {
   const [jdParseError, setJdParseError] = useState<string | null>(null)
 
   const isCustom = profileId === 'custom'
+
+  // Profile editing state
+  const [isEditingProfile, setIsEditingProfile] = useState(false)
+  const [isSavingProfile, setIsSavingProfile] = useState(false)
+  const [editFields, setEditFields] = useState({ name: '', current_role: '', industry: '' })
+
+  const queryClient = useQueryClient()
+
+  const handleStartEdit = () => {
+    if (activeProfile) {
+      setEditFields({
+        name: activeProfile.name || '',
+        current_role: activeProfile.current_role || '',
+        industry: activeProfile.industry || '',
+      })
+      setIsEditingProfile(true)
+    }
+  }
+
+  const handleSaveProfile = async () => {
+    if (!profileId || isCustom) return
+    setIsSavingProfile(true)
+    try {
+      await updateProfile(profileId, editFields)
+      queryClient.invalidateQueries({ queryKey: ['profile', profileId] })
+      setIsEditingProfile(false)
+    } catch (e) {
+      console.error('Failed to save profile:', e)
+    } finally {
+      setIsSavingProfile(false)
+    }
+  }
 
   // Load profile if not custom
   const { data: profile } = useQuery({
@@ -326,11 +358,22 @@ export default function AnalysisPage() {
         <div className="grid lg:grid-cols-[1fr,auto,1fr] gap-6 items-stretch">
           {/* Left Panel: Where You Are */}
           <div className="card bg-gray-50 border-2 border-gray-200">
-            <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-200">
-              <div className="w-8 h-8 bg-gray-600 rounded-lg flex items-center justify-center">
-                <MapPin className="h-4 w-4 text-white" />
+            <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-200">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 bg-gray-600 rounded-lg flex items-center justify-center">
+                  <MapPin className="h-4 w-4 text-white" />
+                </div>
+                <h2 className="text-lg font-bold text-gray-700">Where You Are</h2>
               </div>
-              <h2 className="text-lg font-bold text-gray-700">Where You Are</h2>
+              {activeProfile && !isCustom && profileId && (
+                <button
+                  onClick={isEditingProfile ? handleSaveProfile : handleStartEdit}
+                  disabled={isSavingProfile}
+                  className="text-xs text-indigo-600 hover:text-indigo-800 font-medium px-2 py-1 rounded hover:bg-indigo-50 transition-colors"
+                >
+                  {isSavingProfile ? 'Saving...' : isEditingProfile ? 'Save Changes' : 'Edit'}
+                </button>
+              )}
             </div>
 
             {activeProfile ? (
@@ -340,6 +383,13 @@ export default function AnalysisPage() {
                   <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center flex-shrink-0">
                     <User className="h-6 w-6 text-primary-600" />
                   </div>
+                  {isEditingProfile ? (
+                    <div className="flex-1 space-y-2">
+                      <input className="input text-lg font-semibold" value={editFields.name} onChange={e => setEditFields(p => ({ ...p, name: e.target.value }))} placeholder="Name" />
+                      <input className="input text-sm" value={editFields.current_role} onChange={e => setEditFields(p => ({ ...p, current_role: e.target.value }))} placeholder="Current Role" />
+                      <input className="input text-sm" value={editFields.industry} onChange={e => setEditFields(p => ({ ...p, industry: e.target.value }))} placeholder="Industry" />
+                    </div>
+                  ) : (
                   <div>
                     <h3 className="font-semibold text-xl text-gray-900">
                       {activeProfile.name}
@@ -352,6 +402,7 @@ export default function AnalysisPage() {
                       <p className="text-sm text-gray-500">{activeProfile.industry}</p>
                     )}
                   </div>
+                  )}
                 </div>
 
                 {/* Stats Row */}

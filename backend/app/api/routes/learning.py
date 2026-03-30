@@ -435,17 +435,28 @@ async def start_lesson(
     preceding_lessons = result.scalars().all()
     preceding_titles = [l.title for l in sorted(preceding_lessons, key=lambda l: l.lesson_number)]
 
-    # Get learner context
+    # Get learner context (industry, target role, profile summary)
     result = await db.execute(
         select(LearningPath).where(LearningPath.id == path_id)
     )
     path = result.scalars().first()
-    learner_context = {"industry": "General"}
+    learner_context: dict = {"industry": "General", "target_role": "", "profile_summary": ""}
     if path and path.goal_id:
         result = await db.execute(select(Goal).where(Goal.id == path.goal_id))
         goal = result.scalars().first()
         if goal:
             learner_context["target_role"] = goal.target_role or ""
+            learner_context["target_jd"] = goal.target_jd_text or ""
+            # Get industry from linked profile
+            if goal.profile_id:
+                from app.models.profile import Profile as ProfileModel
+                profile = await db.get(ProfileModel, goal.profile_id)
+                if profile:
+                    learner_context["industry"] = profile.industry or "General"
+                    pd = profile.profile_data or {}
+                    learner_context["profile_summary"] = (
+                        pd.get("current_profile", {}).get("summary", "")
+                    )
 
     # Find focus area from lesson outline
     focus_area = ""

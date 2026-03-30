@@ -146,21 +146,41 @@ RULES:
         preceding = module_ctx.get("preceding_lesson_titles", [])
         preceding_str = "\n".join(f"  - {t}" for t in preceding) if preceding else "  (This is the first lesson)"
 
+        industry = learner_ctx.get('industry', 'General')
+        target_role = learner_ctx.get('target_role', '')
+        profile_summary = learner_ctx.get('profile_summary', '')
+
+        role_section = ""
+        if target_role:
+            role_section = f"\nTARGET ROLE: {target_role}"
+        if profile_summary:
+            role_section += f"\nLEARNER BACKGROUND: {profile_summary[:300]}"
+
         prompt = f"""Generate a full AI-native lesson for a working professional.
 
 MODULE: {module.get('title', '')}
 SKILL: {module.get('skill_name', '')} ({module.get('skill_id', '')})
-LEVEL: L{module.get('current_level', 0)} → L{module.get('target_level', 1)}
+LEVEL: L{module.get('current_level', 0)} -> L{module.get('target_level', 1)}
 
-LESSON: #{lesson_number} — {lesson_title}
+LESSON: #{lesson_number} -- {lesson_title}
 TYPE: {lesson_type}
 FOCUS: {lesson_focus}
-INDUSTRY: {learner_ctx.get('industry', 'General')}
+INDUSTRY: {industry}{role_section}
 
 CONTEXT:
 - Total lessons in this module: {module_ctx.get('total_lessons', 4)}
 - Preceding lessons:
 {preceding_str}
+
+INDUSTRY-SPECIFIC REQUIREMENT:
+All exercises, code examples, implementation tasks, and prompt templates MUST use
+realistic scenarios from the {industry} industry{f' and the {target_role} role' if target_role else ''}.
+Do NOT use generic examples. The learner should recognize these as tasks they would
+actually encounter in their target position. For example:
+- If the industry is "Marketing & Creative" and the role is "AI Content Editor",
+  use content editing, brand voice, editorial workflow scenarios.
+- If the industry is "Healthcare", use clinical data, patient records, compliance scenarios.
+- If the industry is "Education", use curriculum design, training delivery, learner assessment scenarios.
 
 Generate the lesson content. The learner should leave this lesson knowing how to USE AI
 to work with this concept, not just understand it theoretically.
