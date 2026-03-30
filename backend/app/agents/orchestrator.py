@@ -150,7 +150,7 @@ parse job descriptions, identify skill gaps, and generate personalized learning 
             # Step 4: Gap Analysis
             # Build learner background summary for Momentum scoring
             _profile = task.get("profile", {})
-            _cp = _profile.get("current_profile", {})
+            _cp = _profile.get("current_profile") or {}
             _bg_parts = []
             if _cp.get("summary"):
                 _bg_parts.append(_cp["summary"])
@@ -297,7 +297,7 @@ parse job descriptions, identify skill gaps, and generate personalized learning 
             # Build role_context for better gap prioritization
             target_domains = [
                 g["domain"]
-                for g in profile_data.get("expected_skill_gaps", [])
+                for g in (profile_data.get("expected_skill_gaps") or [])
                 if "domain" in g
             ]
             role_context = None
