@@ -396,6 +396,93 @@ this person transitioning to this role."""
     return validated
 
 
+@router.get("/results/{profile_id}")
+async def get_analysis_results(
+    profile_id: str,
+    db: AsyncSession = Depends(get_database),
+):
+    """Get saved analysis results for a profile (goal + skill gap + learning path)."""
+    from sqlalchemy import select
+    from app.models.profile import Profile
+
+    # Find the most recent goal for this profile
+    result = await db.execute(
+        select(Goal)
+        .where(Goal.profile_id == profile_id)
+        .order_by(Goal.created_at.desc())
+    )
+    goal = result.scalars().first()
+    if not goal:
+        raise HTTPException(status_code=404, detail="No analysis found for this profile")
+
+    # Get skill gap
+    result = await db.execute(
+        select(SkillGap).where(SkillGap.goal_id == goal.id)
+    )
+    skill_gap = result.scalars().first()
+
+    # Get learning path
+    result = await db.execute(
+        select(LearningPath).where(LearningPath.goal_id == goal.id)
+    )
+    learning_path = result.scalars().first()
+
+    # Get profile
+    result = await db.execute(
+        select(Profile).where(Profile.id == profile_id)
+    )
+    profile = result.scalars().first()
+
+    # Build response matching what the frontend AnalysisPage expects
+    gaps = skill_gap.gaps if skill_gap else []
+    state_a = skill_gap.state_a_skills if skill_gap else {}
+    state_b = skill_gap.state_b_skills if skill_gap else {}
+
+    # Calculate fit score from gaps
+    if gaps and isinstance(gaps, list):
+        levels = [g.get("current_level", 0) for g in gaps if isinstance(g, dict)]
+        targets = [g.get("target_level", 3) for g in gaps if isinstance(g, dict)]
+        if targets:
+            fit_score = round(sum(levels) / max(sum(targets), 1) * 100)
+        else:
+            fit_score = 0
+    else:
+        fit_score = 0
+
+    return {
+        "user_id": goal.user_id,
+        "goal_id": goal.id,
+        "skill_gap_id": skill_gap.id if skill_gap else None,
+        "learning_path_id": learning_path.id if learning_path else None,
+        "result": {
+            "profile_analysis": {
+                "state_a_skills": state_a or {},
+                "name": profile.name if profile else "",
+                "current_role": profile.current_role if profile else "",
+                "industry": profile.industry if profile else "",
+            },
+            "jd_parsing": {
+                "state_b_skills": state_b or {},
+            },
+            "gap_analysis": {
+                "gaps": gaps or [],
+                "fit_score": fit_score,
+            },
+            "learning_path": {
+                "title": learning_path.title if learning_path else "",
+                "description": learning_path.description if learning_path else "",
+                "chapters": learning_path.chapters if learning_path else [],
+            },
+            "role_analysis": {
+                "primary_function": goal.target_role or "",
+            },
+        },
+        "target_role": goal.target_role or "",
+        "fit_score": fit_score,
+        "recommendations": [],
+    }
+
+
 @router.get("/gap/{user_id}")
 async def get_skill_gap(
     user_id: str,

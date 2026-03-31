@@ -173,6 +173,11 @@ export const getSkillGap = async (userId: string) => {
   return data
 }
 
+export const getAnalysisResults = async (profileId: string) => {
+  const { data } = await api.get(`/analysis/results/${profileId}`)
+  return data
+}
+
 // Learning Paths
 export const getLearningPath = async (pathId: string): Promise<LearningPath> => {
   const { data } = await api.get(`/paths/${pathId}`)

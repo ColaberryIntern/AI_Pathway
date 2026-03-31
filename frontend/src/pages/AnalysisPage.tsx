@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { useParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { getProfile, runFullAnalysis, parseJDProfile, parseJDSkills, getVisualization, updateProfile } from '../services/api'
+import { getProfile, runFullAnalysis, parseJDProfile, parseJDSkills, getVisualization, updateProfile, getAnalysisResults } from '../services/api'
 import {
   Loader2,
   CheckCircle,
@@ -168,23 +168,35 @@ export default function AnalysisPage() {
     },
   })
 
-  // Auto-start analysis when profile already has JD (from create form)
+  // Auto-load saved results or auto-start analysis when profile has JD
   const autoStarted = useRef(false)
   useEffect(() => {
     if (autoStarted.current || isCustom || !profile || step !== 'jd_input') return
-    const profileAny = profile as unknown as Record<string, unknown>
-    if (profileAny.target_jd_text) {
-      autoStarted.current = true
-      setStep('analyzing')
-      setCurrentStepIndex(0)
-      setAnalysisStartTime(Date.now())
-      analysisMutation.mutate({
-        profile_id: profileId,
-        target_jd_text: profileAny.target_jd_text as string,
-        target_role: (profile.target_role || detectedRole || '') as string,
-        skip_assessment: true,
+    autoStarted.current = true
+
+    // Always try to load existing results first
+    getAnalysisResults(profileId!)
+      .then((data) => {
+        setResult(data as AnalysisResult)
+        setStep('complete')
       })
-    }
+      .catch(() => {
+        // No saved results — auto-start if profile has JD
+        const profileAny = profile as unknown as Record<string, unknown>
+        if (profileAny.target_jd_text) {
+          setStep('analyzing')
+          setCurrentStepIndex(0)
+          setAnalysisStartTime(Date.now())
+          analysisMutation.mutate({
+            profile_id: profileId,
+            target_jd_text: profileAny.target_jd_text as string,
+            target_role: (profile.target_role || detectedRole || '') as string,
+            skip_assessment: true,
+          })
+        } else {
+          autoStarted.current = false
+        }
+      })
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile])
 
