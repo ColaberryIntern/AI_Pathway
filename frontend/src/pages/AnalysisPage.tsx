@@ -1477,13 +1477,6 @@ export default function AnalysisPage() {
           Start My Learning Path
         </button>
         <button
-          onClick={() => window.open(`/path/${result?.learning_path_id}`, '_blank')}
-          className="btn btn-primary flex items-center gap-2 text-lg px-8 py-4 shadow-lg hover:shadow-xl transition-shadow"
-        >
-          View Your Learning Path
-          <ArrowRight className="h-5 w-5" />
-        </button>
-        <button
           onClick={async () => {
             if (!result?.result) return
             try {

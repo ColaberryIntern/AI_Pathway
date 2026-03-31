@@ -24,6 +24,7 @@ class Goal(Base):
     target_jd_text: Mapped[str] = mapped_column(Text, nullable=True)
     learning_intent: Mapped[str] = mapped_column(Text, nullable=True)
     state_b_skills: Mapped[dict] = mapped_column(JSON, nullable=True)  # Extracted skills
+    full_result: Mapped[dict] = mapped_column(JSON, nullable=True)  # Complete analysis result for replay
     created_at: Mapped[datetime] = mapped_column(
         DateTime, default=datetime.utcnow, nullable=False
     )

@@ -107,6 +107,7 @@ async def run_full_analysis(
         target_jd_text=request.target_jd_text,
         learning_intent=profile.get("learning_intent", ""),
         state_b_skills=result.get("jd_parsing", {}).get("state_b_skills", {}),
+        full_result=result,
     )
     db.add(goal)
     await db.flush()
@@ -433,19 +434,25 @@ async def get_analysis_results(
     )
     profile = result.scalars().first()
 
-    # Build response matching what the frontend AnalysisPage expects
+    # If full_result was saved, return it directly (complete fidelity)
+    if goal.full_result:
+        return {
+            "user_id": goal.user_id,
+            "goal_id": goal.id,
+            "skill_gap_id": skill_gap.id if skill_gap else None,
+            "learning_path_id": learning_path.id if learning_path else None,
+            "result": goal.full_result,
+        }
+
+    # Fallback: reconstruct from DB fields (older analyses without full_result)
     gaps = skill_gap.gaps if skill_gap else []
     state_a = skill_gap.state_a_skills if skill_gap else {}
     state_b = skill_gap.state_b_skills if skill_gap else {}
 
-    # Calculate fit score from gaps
     if gaps and isinstance(gaps, list):
         levels = [g.get("current_level", 0) for g in gaps if isinstance(g, dict)]
         targets = [g.get("target_level", 3) for g in gaps if isinstance(g, dict)]
-        if targets:
-            fit_score = round(sum(levels) / max(sum(targets), 1) * 100)
-        else:
-            fit_score = 0
+        fit_score = round(sum(levels) / max(sum(targets), 1) * 100) if targets else 0
     else:
         fit_score = 0
 
@@ -455,31 +462,16 @@ async def get_analysis_results(
         "skill_gap_id": skill_gap.id if skill_gap else None,
         "learning_path_id": learning_path.id if learning_path else None,
         "result": {
-            "profile_analysis": {
-                "state_a_skills": state_a or {},
-                "name": profile.name if profile else "",
-                "current_role": profile.current_role if profile else "",
-                "industry": profile.industry if profile else "",
-            },
-            "jd_parsing": {
-                "state_b_skills": state_b or {},
-            },
-            "gap_analysis": {
-                "gaps": gaps or [],
-                "fit_score": fit_score,
-            },
+            "profile_analysis": {"state_a_skills": state_a or {}},
+            "jd_parsing": {"state_b_skills": state_b or {}},
+            "gap_analysis": {"gaps": gaps or [], "fit_score": fit_score},
             "learning_path": {
                 "title": learning_path.title if learning_path else "",
                 "description": learning_path.description if learning_path else "",
                 "chapters": learning_path.chapters if learning_path else [],
             },
-            "role_analysis": {
-                "primary_function": goal.target_role or "",
-            },
+            "role_analysis": {"primary_function": goal.target_role or ""},
         },
-        "target_role": goal.target_role or "",
-        "fit_score": fit_score,
-        "recommendations": [],
     }
 
 
