@@ -172,30 +172,28 @@ export default function ProfileSelectionPage() {
               )}
 
               {/* Action buttons */}
-              {(p.has_analysis || p.has_learning_path) && (
+              {p.has_learning_path && p.learning_path_id && (
                 <div className="flex gap-2 mt-3 pt-3 border-t border-gray-100">
                   <button
                     onClick={(e) => {
                       e.stopPropagation()
-                      navigate(`/analysis/${p.id}`)
+                      navigate(`/path/${p.learning_path_id}`)
                     }}
                     className="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2 rounded-lg bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition-colors"
                   >
                     <Crosshair className="h-3.5 w-3.5" />
                     Skills Profile
                   </button>
-                  {p.has_learning_path && p.learning_path_id && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        navigate(`/learn/${p.learning_path_id}`)
-                      }}
-                      className="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors"
-                    >
-                      <BookOpen className="h-3.5 w-3.5" />
-                      Learning Path
-                    </button>
-                  )}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      navigate(`/learn/${p.learning_path_id}`)
+                    }}
+                    className="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors"
+                  >
+                    <BookOpen className="h-3.5 w-3.5" />
+                    Learning Path
+                  </button>
                 </div>
               )}
 
