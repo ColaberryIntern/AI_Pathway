@@ -7,7 +7,7 @@ import {
 } from '../services/api'
 import {
   User, Upload, Plus, Trash2, ChevronRight, BookOpen,
-  Briefcase, Target, BarChart3, Loader2, X, FileText,
+  Briefcase, Target, BarChart3, Loader2, X, FileText, Crosshair,
 } from 'lucide-react'
 import CurrentProfilePanel from '../components/profile/CurrentProfilePanel'
 import TargetGoalPanel from '../components/profile/TargetGoalPanel'
@@ -171,8 +171,36 @@ export default function ProfileSelectionPage() {
                 </div>
               )}
 
+              {/* Action buttons */}
+              {(p.has_analysis || p.has_learning_path) && (
+                <div className="flex gap-2 mt-3 pt-3 border-t border-gray-100">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      navigate(`/analysis/${p.id}`)
+                    }}
+                    className="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2 rounded-lg bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition-colors"
+                  >
+                    <Crosshair className="h-3.5 w-3.5" />
+                    Skills Profile
+                  </button>
+                  {p.has_learning_path && p.learning_path_id && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        navigate(`/learn/${p.learning_path_id}`)
+                      }}
+                      className="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors"
+                    >
+                      <BookOpen className="h-3.5 w-3.5" />
+                      Learning Path
+                    </button>
+                  )}
+                </div>
+              )}
+
               {/* Created date */}
-              <div className="text-xs text-gray-400 mt-3 pt-3 border-t border-gray-100">
+              <div className="text-xs text-gray-400 mt-2">
                 Created {p.created_at ? new Date(p.created_at).toLocaleDateString() : 'recently'}
               </div>
             </div>
