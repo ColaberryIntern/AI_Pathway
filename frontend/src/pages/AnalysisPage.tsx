@@ -168,6 +168,26 @@ export default function AnalysisPage() {
     },
   })
 
+  // Auto-start analysis when profile already has JD (from create form)
+  const autoStarted = useRef(false)
+  useEffect(() => {
+    if (autoStarted.current || isCustom || !profile || step !== 'jd_input') return
+    const profileAny = profile as unknown as Record<string, unknown>
+    if (profileAny.target_jd_text) {
+      autoStarted.current = true
+      setStep('analyzing')
+      setCurrentStepIndex(0)
+      setAnalysisStartTime(Date.now())
+      analysisMutation.mutate({
+        profile_id: profileId,
+        target_jd_text: profileAny.target_jd_text as string,
+        target_role: (profile.target_role || detectedRole || '') as string,
+        skip_assessment: true,
+      })
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profile])
+
   const analysisSteps = [
     { name: 'Analyzing Profile', icon: Target },
     { name: 'Parsing Job Description', icon: BarChart3 },
