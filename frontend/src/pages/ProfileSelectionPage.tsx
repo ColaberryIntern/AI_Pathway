@@ -177,7 +177,7 @@ export default function ProfileSelectionPage() {
                   <button
                     onClick={(e) => {
                       e.stopPropagation()
-                      navigate(`/path/${p.learning_path_id}`)
+                      navigate(`/analysis/${p.id}`)
                     }}
                     className="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2 rounded-lg bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition-colors"
                   >
@@ -193,6 +193,16 @@ export default function ProfileSelectionPage() {
                   >
                     <BookOpen className="h-3.5 w-3.5" />
                     Learning Path
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      navigate(`/path/${p.learning_path_id}`)
+                    }}
+                    className="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2 rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100 transition-colors"
+                  >
+                    <BarChart3 className="h-3.5 w-3.5" />
+                    Ontology Path
                   </button>
                 </div>
               )}
