@@ -2,6 +2,14 @@ import { useState } from 'react'
 import { Info } from 'lucide-react'
 import type { ParsedSkill } from '../types'
 
+const DEFAULT_PROFICIENCY_DESCRIPTIONS = [
+  { level: 0, label: 'No Experience', description: 'No exposure to this skill area yet.' },
+  { level: 1, label: 'Aware', description: 'Can explain the concept. Entry-level familiarity.' },
+  { level: 2, label: 'User', description: 'Can apply with guidance. Uses existing tools and frameworks.' },
+  { level: 3, label: 'Practitioner', description: 'Adapts independently. Configures, customizes, and troubleshoots.' },
+  { level: 4, label: 'Builder', description: 'Ships production solutions. Designs and implements end-to-end.' },
+]
+
 const LEVEL_COLORS: Record<number, { bg: string; border: string; text: string; selectedBg: string }> = {
   0: { bg: 'bg-gray-50', border: 'border-gray-300', text: 'text-gray-600', selectedBg: 'bg-gray-200' },
   1: { bg: 'bg-blue-50', border: 'border-blue-300', text: 'text-blue-700', selectedBg: 'bg-blue-200' },
@@ -33,7 +41,9 @@ export default function SelfAssessment({ skills, assessments, onAssess }: SelfAs
 
       {skills.map((skill) => {
         const selectedLevel = assessments[skill.skill_id]
-        const descriptions = skill.proficiency_descriptions || []
+        const descriptions = (skill.proficiency_descriptions && skill.proficiency_descriptions.length > 0)
+          ? skill.proficiency_descriptions
+          : DEFAULT_PROFICIENCY_DESCRIPTIONS
 
         return (
           <div

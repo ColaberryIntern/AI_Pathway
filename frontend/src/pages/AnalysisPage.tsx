@@ -180,10 +180,24 @@ export default function AnalysisPage() {
     getAnalysisResults(profileId!)
       .then((data) => {
         setResult(data as AnalysisResult)
-        // Populate parsedSkills and selectedSkillIds from saved results for inline adjustment
-        const savedTarget = data.result?.top_10_target_skills || data.result?.top_10_skill_gaps || []
-        if (savedTarget.length > 0) {
-          setParsedSkills(savedTarget.map((s: Record<string, unknown>, i: number) => ({
+        // Populate parsedSkills from ALL available skills (target + gaps + all_gaps)
+        const targetSkills = data.result?.top_10_target_skills || []
+        const gapSkills = data.result?.top_10_skill_gaps || []
+        const allGapSkills = data.result?.all_skill_gaps || []
+        // Merge all sources, deduplicate by skill_id, prefer target skills order
+        const seenIds = new Set<string>()
+        const allSkills: Record<string, unknown>[] = []
+        for (const list of [targetSkills, gapSkills, allGapSkills]) {
+          for (const s of list) {
+            const sid = (s as Record<string, unknown>).skill_id as string
+            if (sid && !seenIds.has(sid)) {
+              seenIds.add(sid)
+              allSkills.push(s as Record<string, unknown>)
+            }
+          }
+        }
+        if (allSkills.length > 0) {
+          setParsedSkills(allSkills.map((s, i) => ({
             rank: (s.rank as number) || i + 1,
             skill_id: (s.skill_id as string) || '',
             skill_name: (s.skill_name as string) || '',
@@ -192,8 +206,11 @@ export default function AnalysisPage() {
             required_level: (s.required_level as number) || (s.target_level as number) || 3,
             importance: (s.importance as string) || 'medium',
             rationale: (s.rationale as string) || '',
+            skill_description: '',
+            proficiency_descriptions: [],
           })))
-          setSelectedSkillIds(savedTarget.slice(0, 5).map((s: Record<string, unknown>) => (s.skill_id as string) || ''))
+          // First 5 are default selected
+          setSelectedSkillIds(allSkills.slice(0, 5).map(s => (s.skill_id as string) || ''))
         }
         setStep('results_review')
       })
