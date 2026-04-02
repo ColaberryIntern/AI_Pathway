@@ -105,9 +105,9 @@ Map everything to the GenAI Skills Ontology structure."""
                         },
                         "required": ["rank", "skill_id", "skill_name", "domain", "required_level", "importance", "rationale"]
                     },
-                    "minItems": 3,
+                    "minItems": 10,
                     "maxItems": 10,
-                    "description": "3-10 skills ranked by importance. Only include skills clearly required by the JD — do not pad to 10."
+                    "description": "Exactly 10 skills ranked by importance. Include both explicit and implied skills."
                 },
                 "state_b_skills": {
                     "type": "object",
@@ -205,9 +205,9 @@ Map everything to the GenAI Skills Ontology structure."""
         else:
             skills_context = "(No skills available)"
 
-        return f"""Analyze this job description and identify the required skills (3-10).
-IMPORTANT: Only include skills clearly required by the JD. If the JD only requires 4 skills,
-return 4. Do NOT add marginally relevant skills to reach 10.
+        return f"""Analyze this job description and identify the TOP 10 required skills.
+IMPORTANT: Always return exactly 10 skills ranked by relevance. Include both explicit
+requirements AND implied skills from the responsibilities. Cast a wide net across domains.
 
 TARGET ROLE: {target_role or 'Not specified'}
 
@@ -245,8 +245,8 @@ CRITICAL: You MUST ONLY use skill_id values from the AVAILABLE SKILLS list above
 Do NOT invent new skill IDs. Every skill_id in your response must exactly match one from that list.
 If a JD requirement doesn't map perfectly to an ontology skill, choose the closest match.
 
-1. Select 3-10 skills from the ontology that are genuinely required for this role.
-   Only include skills with clear evidence from the JD. Quality over quantity.
+1. Select exactly 10 skills from the ontology that are required or strongly implied by this role.
+   Include both explicit requirements AND implied skills from responsibilities.
 2. For each skill, determine the required proficiency level (1-5) using the CALIBRATION RULES above.
    Do NOT default to low levels -- match the level to the JD's actual demands.
 3. For each skill, rate its importance (high/medium/low).
@@ -302,6 +302,14 @@ Do NOT only match explicit keywords. Also surface skills implied by the role's r
   -> include Facilitating AI workshops (D.COM) as a practical delivery skill
 - If the JD mentions "content creation" + "AI tools"
   -> include IP/copyright awareness (D.FND) since AI-generated content carries IP risks
+- If the JD mentions "evaluate", "review", "assess", "accuracy", "tone", "clarity" of AI content
+  -> include Recognizing AI-generated content (D.CTIC) as a critical thinking skill
+- If the JD mentions "bias", "fairness", "inclusive", "brand voice", "alignment"
+  -> include Understanding bias in content (D.CTIC) as a critical thinking skill
+- If the JD mentions "AI-generated", "hallucination", "factual", "verify", "accuracy"
+  -> include Capabilities vs limitations/hallucinations (D.FND)
+- If the JD mentions "prompt", "generation", "refine", "iterate", "debug"
+  -> include Prompt debugging & iteration (D.PRM)
 - Avoid recommending 3+ skills from the same domain. Spread across domains for breadth.
 
 Only recommend skills the person in this role would actually USE day-to-day."""

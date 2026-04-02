@@ -90,6 +90,22 @@ parse job descriptions, identify skill gaps, and generate personalized learning 
             top_10_current = profile_result.get("top_10_current_skills", [])
             top_10_target = jd_result.get("top_10_target_skills", [])
             results["top_10_current_skills"] = top_10_current
+
+            # Re-rank top 10 using learner profile + 5-factor rubric
+            try:
+                from app.api.routes.analysis import _rerank_skills_for_learner
+                reranked = await _rerank_skills_for_learner(
+                    top_10_target, profile_data, jd_result.get("role_analysis", {}),
+                )
+                if reranked and len(reranked) >= 3:
+                    # Use re-ranked top 5 as the primary skills, rest follow
+                    top5_ids = {s["skill_id"] for s in reranked}
+                    remaining = [s for s in top_10_target if s["skill_id"] not in top5_ids]
+                    top_10_target = reranked + remaining
+                    logger.info("Re-ranked skills: top 5 = %s", [s["skill_id"] for s in reranked])
+            except Exception as e:
+                logger.warning("Re-ranking failed in orchestrator, using JD order: %s", e)
+
             results["top_10_target_skills"] = top_10_target
 
             # Extract state_a_skills early — needed for gap computation below
