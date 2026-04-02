@@ -180,19 +180,39 @@ export default function AnalysisPage() {
         setResult(data as AnalysisResult)
         setStep('complete')
       })
-      .catch(() => {
-        // No saved results — auto-start if profile has JD
+      .catch(async () => {
+        // No saved results — parse JD skills and show skill selection + self-assessment
         const profileAny = profile as unknown as Record<string, unknown>
         if (profileAny.target_jd_text) {
-          setStep('analyzing')
-          setCurrentStepIndex(0)
-          setAnalysisStartTime(Date.now())
-          analysisMutation.mutate({
-            profile_id: profileId,
-            target_jd_text: profileAny.target_jd_text as string,
-            target_role: (profile.target_role || detectedRole || '') as string,
-            skip_assessment: true,
-          })
+          const jdText = profileAny.target_jd_text as string
+          setTargetJD(jdText)
+          setTargetRole((profile.target_role || '') as string)
+          try {
+            const learnerProfile = {
+              name: profile.name,
+              current_role: profile.current_role,
+              industry: profile.industry,
+              experience_years: profile.experience_years,
+              ai_exposure_level: profile.ai_exposure_level,
+              tools_used: profile.tools_used,
+              technical_background: profile.technical_background,
+              learning_intent: profile.learning_intent,
+              current_profile: profile.current_profile,
+              estimated_current_skills: profile.estimated_current_skills,
+            }
+            const result = await parseJDSkills({
+              jd_text: jdText,
+              target_role: (profile.target_role || '') as string,
+              learner_profile: learnerProfile as Record<string, unknown>,
+            })
+            setParsedSkills(result.top_10_skills)
+            if (result.target_role) setDetectedRole(result.target_role)
+            const top5 = result.top_10_skills.slice(0, 5).map((s: ParsedSkill) => s.skill_id)
+            setSelectedSkillIds(top5)
+            setStep('skill_selection')
+          } catch {
+            autoStarted.current = false
+          }
         } else {
           autoStarted.current = false
         }
