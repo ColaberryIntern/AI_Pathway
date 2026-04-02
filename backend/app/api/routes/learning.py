@@ -237,6 +237,43 @@ async def activate_learning_path(
         db.add(mastery)
         all_masteries.append(mastery)
 
+    # Migrate lesson content from previous path (preserve already-generated curriculum)
+    if path.previous_path_id:
+        try:
+            # Get previous path's modules indexed by skill_id
+            prev_modules_q = await db.execute(
+                select(Module).where(Module.path_id == path.previous_path_id)
+            )
+            prev_modules = {m.skill_id: m for m in prev_modules_q.scalars().all()}
+
+            migrated_count = 0
+            for new_module in all_modules:
+                prev_module = prev_modules.get(new_module.skill_id)
+                if not prev_module:
+                    continue
+                # Get previous lessons with content for this module
+                prev_lessons_q = await db.execute(
+                    select(Lesson)
+                    .where(Lesson.module_id == prev_module.id)
+                    .where(Lesson.content.isnot(None))
+                )
+                prev_lessons_by_num = {
+                    l.lesson_number: l for l in prev_lessons_q.scalars().all()
+                }
+                # Copy content to matching new lessons
+                for new_lesson in all_lessons:
+                    if new_lesson.module_id == new_module.id:
+                        prev_lesson = prev_lessons_by_num.get(new_lesson.lesson_number)
+                        if prev_lesson and prev_lesson.content:
+                            new_lesson.content = prev_lesson.content
+                            new_lesson.status = prev_lesson.status
+                            migrated_count += 1
+
+            if migrated_count > 0:
+                logger.info("Migrated %d lesson(s) from previous path %s", migrated_count, path.previous_path_id)
+        except Exception as e:
+            logger.warning("Lesson migration failed (non-fatal): %s", e)
+
     await db.commit()
 
     # Refresh all to get generated IDs

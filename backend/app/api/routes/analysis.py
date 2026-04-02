@@ -122,6 +122,26 @@ async def run_full_analysis(
     db.add(skill_gap)
     await db.flush()
 
+    # Find previous learning path for this profile (for lesson content migration)
+    previous_path_id = None
+    if db_profile:
+        from sqlalchemy import select as sa_select
+        prev_goal_q = await db.execute(
+            sa_select(Goal)
+            .where(Goal.profile_id == db_profile.id)
+            .where(Goal.id != goal.id)
+            .order_by(Goal.created_at.desc())
+        )
+        prev_goal = prev_goal_q.scalars().first()
+        if prev_goal:
+            prev_path_q = await db.execute(
+                sa_select(LearningPath).where(LearningPath.goal_id == prev_goal.id)
+            )
+            prev_path = prev_path_q.scalars().first()
+            if prev_path:
+                previous_path_id = prev_path.id
+                logger.info("Found previous learning path %s for migration", previous_path_id)
+
     learning_path = LearningPath(
         user_id=user_id,
         goal_id=goal.id,
@@ -130,6 +150,7 @@ async def run_full_analysis(
         description=result.get("learning_path", {}).get("description", ""),
         chapters=result.get("learning_path", {}).get("chapters", []),
         total_chapters=len(result.get("learning_path", {}).get("chapters", [])),
+        previous_path_id=previous_path_id,
     )
     db.add(learning_path)
     await db.commit()

@@ -27,6 +27,7 @@ class LearningPath(Base):
     description: Mapped[str] = mapped_column(String(1000), nullable=True)
     chapters: Mapped[dict] = mapped_column(JSON, nullable=True)  # 5 chapters
     total_chapters: Mapped[int] = mapped_column(default=5)
+    previous_path_id: Mapped[str] = mapped_column(String(36), nullable=True)  # For lesson content migration on rerun
     created_at: Mapped[datetime] = mapped_column(
         DateTime, default=datetime.utcnow, nullable=False
     )
