@@ -33,7 +33,7 @@ import UnifiedSkillsChart from '../components/UnifiedSkillsChart'
 import SelfAssessment from '../components/SelfAssessment'
 import { useAnalysisAnimation } from '../components/ontology/hooks/useAnalysisAnimation'
 
-type AnalysisStep = 'jd_input' | 'skill_selection' | 'self_assessment' | 'analyzing' | 'complete' | 'error'
+type AnalysisStep = 'jd_input' | 'skill_selection' | 'self_assessment' | 'analyzing' | 'results_review' | 'complete' | 'error'
 
 export default function AnalysisPage() {
   const { profileId } = useParams<{ profileId: string }>()
@@ -154,7 +154,7 @@ export default function AnalysisPage() {
       // Delay showing results to ensure minimum visualization time
       setTimeout(() => {
         setResult(data)
-        setStep('complete')
+        setStep('results_review')
       }, remainingTime)
     },
     onError: () => {
@@ -178,7 +178,7 @@ export default function AnalysisPage() {
     getAnalysisResults(profileId!)
       .then((data) => {
         setResult(data as AnalysisResult)
-        setStep('complete')
+        setStep('results_review')
       })
       .catch(async () => {
         // No saved results — parse JD skills and show skill selection + self-assessment
@@ -1089,6 +1089,119 @@ export default function AnalysisPage() {
     )
   }
 
+  // ── Results Review: show assessment, let user adjust, then continue to roadmap ──
+  if (step === 'results_review') {
+    return (
+      <div className="max-w-4xl mx-auto space-y-8">
+        {/* Success Header */}
+        <div className="text-center">
+          <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <CheckCircle className="h-10 w-10 text-green-500" />
+          </div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            Analysis Complete!
+          </h1>
+          <p className="text-gray-600">
+            Review your skills assessment below. Adjust your selections, then continue to see your learning path.
+          </p>
+        </div>
+
+        {/* Fit Score */}
+        {fitScore > 0 && (
+          <div className="card bg-gradient-to-br from-indigo-600 to-sky-600 text-white">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-lg font-bold">Role Fit Score</h2>
+                <p className="text-sm text-indigo-100">
+                  How closely your current skills match the target role
+                </p>
+              </div>
+              <div className="text-right">
+                <div className="text-5xl font-bold">{Math.round(fitScore * 100)}%</div>
+                <div className="text-xs text-indigo-200 mt-1">current match</div>
+              </div>
+            </div>
+            <div className="h-3 bg-white/20 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-white/80 rounded-full transition-all duration-1000 ease-out"
+                style={{ width: `${Math.round(fitScore * 100)}%` }}
+              />
+            </div>
+          </div>
+        )}
+
+        {executiveIntroduction && (
+          <div className="card">
+            <h2 className="text-lg font-bold text-gray-900 mb-3 flex items-center gap-2">
+              <BookOpen className="h-5 w-5 text-indigo-600" />
+              Your Learning Journey
+            </h2>
+            <p className="text-gray-700 leading-relaxed whitespace-pre-line">
+              {executiveIntroduction}
+            </p>
+          </div>
+        )}
+
+        {/* Role Context */}
+        {(summary?.target_role || primaryFunction) && (
+          <div className="card bg-gradient-to-r from-indigo-50 to-sky-50 border-indigo-200">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                <Briefcase className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-gray-900">
+                  Your Path to: {summary?.target_role || primaryFunction}
+                </h2>
+                {keyDomains.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mt-2">
+                    {keyDomains.map((domain: string, i: number) => (
+                      <span key={i} className="text-xs px-2 py-0.5 bg-indigo-100 text-indigo-700 rounded-full font-medium">
+                        {domain}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Domain Grid */}
+        {actualSelectedDomains.length > 0 && (
+          <div>
+            <h2 className="text-lg font-semibold text-gray-700 mb-3 text-center">
+              Your Learning Path Across the AI Skills Ontology
+            </h2>
+            <DomainGrid
+              highlightedDomains={[]}
+              activeDomain={null}
+              completedDomains={actualSelectedDomains.map((d: { domainId: string }) => d.domainId)}
+              selectedDomains={actualSelectedDomains}
+            />
+          </div>
+        )}
+
+        {/* Skills Gap Overview */}
+        {top10Gaps.length > 0 && (
+          <UnifiedSkillsChart gaps={top10Gaps} allGaps={allSkillGaps} />
+        )}
+
+        {/* Continue to Learning Path */}
+        <div className="flex justify-center">
+          <button
+            onClick={() => setStep('complete')}
+            className="btn flex items-center gap-2 text-lg px-8 py-4 shadow-lg hover:shadow-xl transition-shadow bg-gradient-to-r from-emerald-500 to-teal-500 text-white hover:from-emerald-600 hover:to-teal-600"
+          >
+            Continue to Learning Path
+            <ArrowRight className="h-5 w-5" />
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  // ── Complete: show full results including Journey Roadmap and learning sequence ──
   return (
     <div className="max-w-4xl mx-auto space-y-8">
       {/* Success Header */}
