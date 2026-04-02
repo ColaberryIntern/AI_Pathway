@@ -94,8 +94,9 @@ parse job descriptions, identify skill gaps, and generate personalized learning 
             # Re-rank top 10 using learner profile + 5-factor rubric
             try:
                 from app.api.routes.analysis import _rerank_skills_for_learner
+                learner_profile = task.get("profile", {})
                 reranked = await _rerank_skills_for_learner(
-                    top_10_target, profile_data, jd_result.get("role_analysis", {}),
+                    top_10_target, learner_profile, jd_result.get("role_analysis", {}),
                 )
                 if reranked and len(reranked) >= 3:
                     # Use re-ranked top 5 as the primary skills, rest follow
