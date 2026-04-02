@@ -173,13 +173,23 @@ export default function ProfileSelectionPage() {
 
               {/* Action buttons */}
               {p.has_learning_path && p.learning_path_id && (
-                <div className="flex gap-2 mt-3 pt-3 border-t border-gray-100">
+                <div className="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-gray-100">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      navigate(`/analysis/${p.id}?view=profile`)
+                    }}
+                    className="flex items-center justify-center gap-1.5 text-xs font-medium py-2 rounded-lg bg-gray-50 text-gray-700 hover:bg-gray-100 transition-colors"
+                  >
+                    <User className="h-3.5 w-3.5" />
+                    View Profile
+                  </button>
                   <button
                     onClick={(e) => {
                       e.stopPropagation()
                       navigate(`/analysis/${p.id}`)
                     }}
-                    className="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2 rounded-lg bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition-colors"
+                    className="flex items-center justify-center gap-1.5 text-xs font-medium py-2 rounded-lg bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition-colors"
                   >
                     <Crosshair className="h-3.5 w-3.5" />
                     Skills Profile
@@ -189,7 +199,7 @@ export default function ProfileSelectionPage() {
                       e.stopPropagation()
                       navigate(`/learn/${p.learning_path_id}`)
                     }}
-                    className="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors"
+                    className="flex items-center justify-center gap-1.5 text-xs font-medium py-2 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors"
                   >
                     <BookOpen className="h-3.5 w-3.5" />
                     Learning Path
@@ -199,7 +209,7 @@ export default function ProfileSelectionPage() {
                       e.stopPropagation()
                       navigate(`/path/${p.learning_path_id}`)
                     }}
-                    className="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2 rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100 transition-colors"
+                    className="flex items-center justify-center gap-1.5 text-xs font-medium py-2 rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100 transition-colors"
                   >
                     <BarChart3 className="h-3.5 w-3.5" />
                     Ontology Path

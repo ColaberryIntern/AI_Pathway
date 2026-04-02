@@ -465,6 +465,7 @@ async def start_lesson(
                 if profile:
                     learner_context["industry"] = profile.industry or "General"
                     pd = profile.profile_data or {}
+                    learner_context["technical_background"] = pd.get("technical_background", "")
                     learner_context["profile_summary"] = (
                         pd.get("current_profile", {}).get("summary", "")
                     )

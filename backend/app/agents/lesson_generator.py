@@ -35,10 +35,18 @@ Each lesson must include these sections:
    Include {{placeholders}} the learner fills in. Describe each placeholder.
    Include the expected shape of the AI output.
 
-4. CODE_EXAMPLES — 2-3 runnable code examples with comments explaining each step.
+4. CODE_EXAMPLES or TOOL_WALKTHROUGH — Depends on the learner's technical background:
+   - If the learner is technical (has coding experience): Provide 2-3 runnable code examples
+     with comments explaining each step.
+   - If the learner is NON-TECHNICAL (no coding experience): Instead of code, provide a
+     TOOL_WALKTHROUGH — a step-by-step guide using no-code/low-code tools, AI assistants
+     (ChatGPT, Claude, Copilot), spreadsheets, or visual platforms. Walk through the exact
+     clicks, prompts, and settings. NEVER show raw Python or code to non-technical learners.
 
 5. IMPLEMENTATION_TASK — A hands-on task where the learner builds something real.
-   Must require: code/deliverable + brief architecture explanation.
+   - For technical learners: Must require code/deliverable + brief architecture explanation.
+   - For non-technical learners: Must be a PROMPT_PRACTICE or TOOL_EXERCISE using AI tools,
+     spreadsheets, or visual platforms. Focus on using AI to accomplish the goal, not coding.
    Include requirements list, deliverable description, estimated minutes.
    Include a "tools" array listing each tool, API, or platform needed.
    Each tool must include: name, url (tool homepage), is_free (boolean).
@@ -50,9 +58,11 @@ Each lesson must include these sections:
    terminal output showing expected results. Do NOT just ask for "a script" — ask for the
    script AND a screenshot proving it ran correctly.
 
-6. REFLECTION_QUESTIONS — 3-4 questions that force metacognition about AI usage:
-   How did your prompt evolve? What did AI get wrong? What did you improve?
-   What would you NOT delegate to AI? Why?
+6. REFLECTION_QUESTIONS — 3-4 questions that force metacognition about AI usage.
+   Each question MUST reference the specific implementation task from section 5.
+   Do NOT ask generic metacognition questions unrelated to this lesson's content.
+   Ask about: How did your prompt evolve during THIS task? What did AI get wrong
+   on THIS specific deliverable? What would you NOT delegate to AI for THIS use case?
    Each question's prompt_for_deeper_thinking MUST be a detailed, context-rich prompt
    (at least 30 words) that references the specific skill, lesson topic, and a concrete
    scenario. Example: "Ask the AI: 'As a data analyst working with sales data, explain
@@ -60,6 +70,10 @@ Each lesson must include these sections:
    insights you get compared to generic prompting, with 2 specific examples.'"
 
 7. KNOWLEDGE_CHECKS — Exactly 5 quiz questions testing understanding.
+   CRITICAL: Every question MUST be answerable solely from the CONCEPT_SNAPSHOT and
+   AI_STRATEGY sections above. Do NOT ask about topics, tools, frameworks, or concepts
+   not explicitly covered in this lesson. If you taught about stakeholder identification,
+   only ask about stakeholder identification — not about legal compliance or other topics.
    Each question's ai_followup_prompt MUST be a detailed, self-contained question
    (at least 30 words) that gives the AI Mentor enough context to provide targeted help.
    Include: the specific concept being tested, what the learner should explore, and a
@@ -81,7 +95,11 @@ RULES:
 - Use analogies from the learner's industry when possible.
 - For concept lessons: emphasize concept_snapshot, ai_strategy, knowledge_checks.
 - For practice lessons: emphasize prompt_template, code_examples, implementation_task.
-- For assessment lessons: emphasize knowledge_checks and a comprehensive implementation_task."""
+- For assessment lessons: emphasize knowledge_checks and a comprehensive implementation_task.
+- If any exercise, code example, or implementation task references input files (CSV, JSON, Excel, etc.),
+  you MUST generate realistic sample data INLINE as a formatted table, JSON block, or CSV block within
+  the lesson content. NEVER reference files the learner does not have access to. The learner should be
+  able to complete every exercise with only what is provided in the lesson."""
 
     @staticmethod
     def _extract_from_schema_echo(schema: dict) -> dict:
@@ -149,12 +167,31 @@ RULES:
         industry = learner_ctx.get('industry', 'General')
         target_role = learner_ctx.get('target_role', '')
         profile_summary = learner_ctx.get('profile_summary', '')
+        technical_background = learner_ctx.get('technical_background', '')
+
+        # Determine if learner is non-technical
+        is_non_technical = technical_background.lower() in (
+            'no coding experience', 'no technical background', 'non-technical', ''
+        ) if technical_background else True  # Default to non-technical if unknown
 
         role_section = ""
         if target_role:
             role_section = f"\nTARGET ROLE: {target_role}"
         if profile_summary:
             role_section += f"\nLEARNER BACKGROUND: {profile_summary[:300]}"
+
+        tech_level_section = ""
+        if is_non_technical:
+            tech_level_section = """
+TECHNICAL LEVEL: NON-TECHNICAL
+The learner has NO coding experience. You MUST:
+- Replace all CODE_EXAMPLES with TOOL_WALKTHROUGH (step-by-step guides using AI tools, spreadsheets, or visual platforms)
+- Replace code-based IMPLEMENTATION_TASK with PROMPT_PRACTICE or TOOL_EXERCISE
+- NEVER show raw Python, JavaScript, or any programming code
+- Use ChatGPT/Claude prompts, Google Sheets formulas, or no-code tool instructions instead
+- Focus on what buttons to click, what prompts to write, what settings to configure"""
+        else:
+            tech_level_section = f"\nTECHNICAL LEVEL: {technical_background} (include code examples as appropriate)"
 
         prompt = f"""Generate a full AI-native lesson for a working professional.
 
@@ -165,7 +202,7 @@ LEVEL: L{module.get('current_level', 0)} -> L{module.get('target_level', 1)}
 LESSON: #{lesson_number} -- {lesson_title}
 TYPE: {lesson_type}
 FOCUS: {lesson_focus}
-INDUSTRY: {industry}{role_section}
+INDUSTRY: {industry}{role_section}{tech_level_section}
 
 CONTEXT:
 - Total lessons in this module: {module_ctx.get('total_lessons', 4)}

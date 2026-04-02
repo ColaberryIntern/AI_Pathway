@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useSearchParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getProfile, runFullAnalysis, parseJDProfile, parseJDSkills, getVisualization, updateProfile, getAnalysisResults } from '../services/api'
 import {
@@ -37,6 +37,8 @@ type AnalysisStep = 'jd_input' | 'skill_selection' | 'self_assessment' | 'analyz
 
 export default function AnalysisPage() {
   const { profileId } = useParams<{ profileId: string }>()
+  const [searchParams] = useSearchParams()
+  const viewProfile = searchParams.get('view') === 'profile'
   const [step, setStep] = useState<AnalysisStep>('jd_input')
   const [targetJD, setTargetJD] = useState('')
   const [targetRole, setTargetRole] = useState('')
@@ -171,13 +173,28 @@ export default function AnalysisPage() {
   // Auto-load saved results or auto-start analysis when profile has JD
   const autoStarted = useRef(false)
   useEffect(() => {
-    if (autoStarted.current || isCustom || !profile || step !== 'jd_input') return
+    if (autoStarted.current || isCustom || !profile || step !== 'jd_input' || viewProfile) return
     autoStarted.current = true
 
     // Always try to load existing results first
     getAnalysisResults(profileId!)
       .then((data) => {
         setResult(data as AnalysisResult)
+        // Populate parsedSkills and selectedSkillIds from saved results for inline adjustment
+        const savedTarget = data.result?.top_10_target_skills || data.result?.top_10_skill_gaps || []
+        if (savedTarget.length > 0) {
+          setParsedSkills(savedTarget.map((s: Record<string, unknown>, i: number) => ({
+            rank: (s.rank as number) || i + 1,
+            skill_id: (s.skill_id as string) || '',
+            skill_name: (s.skill_name as string) || '',
+            domain: (s.domain as string) || '',
+            domain_label: (s.domain_label as string) || '',
+            required_level: (s.required_level as number) || (s.target_level as number) || 3,
+            importance: (s.importance as string) || 'medium',
+            rationale: (s.rationale as string) || '',
+          })))
+          setSelectedSkillIds(savedTarget.slice(0, 5).map((s: Record<string, unknown>) => (s.skill_id as string) || ''))
+        }
         setStep('results_review')
       })
       .catch(async () => {
@@ -1187,6 +1204,75 @@ export default function AnalysisPage() {
           <UnifiedSkillsChart gaps={top10Gaps} allGaps={allSkillGaps} />
         )}
 
+        {/* Inline Skill Adjustment */}
+        {parsedSkills.length > 0 && (
+          <div className="card">
+            <h2 className="text-lg font-bold text-gray-900 mb-2 flex items-center gap-2">
+              <Target className="h-5 w-5 text-indigo-600" />
+              Adjust Your Skill Focus
+            </h2>
+            <p className="text-sm text-gray-500 mb-4">
+              We identified {parsedSkills.length} key skills. Select the ones you want to focus on. Uncheck any you feel confident in.
+            </p>
+            <div className="space-y-2">
+              {parsedSkills.map((skill) => {
+                const isSelected = selectedSkillIds.includes(skill.skill_id)
+                const canSelect = selectedSkillIds.length < 5 || isSelected
+                return (
+                  <div
+                    key={skill.skill_id}
+                    onClick={() => {
+                      if (isSelected) {
+                        setSelectedSkillIds(prev => prev.filter(id => id !== skill.skill_id))
+                      } else if (canSelect) {
+                        setSelectedSkillIds(prev => [...prev, skill.skill_id])
+                      }
+                    }}
+                    className={`p-3 rounded-lg cursor-pointer transition-all border-2 ${
+                      isSelected
+                        ? 'border-primary-400 bg-primary-50'
+                        : canSelect
+                          ? 'border-gray-200 bg-white hover:border-gray-300'
+                          : 'border-gray-100 bg-gray-50 opacity-60 cursor-not-allowed'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 ${
+                        isSelected ? 'bg-primary-500 border-primary-500' : 'border-gray-300'
+                      }`}>
+                        {isSelected && <CheckCircle className="h-4 w-4 text-white" />}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-mono text-gray-400">#{skill.rank}</span>
+                          <span className="font-medium text-gray-900 text-sm">{skill.skill_name}</span>
+                          <span className="text-xs bg-primary-50 text-primary-700 px-1.5 py-0.5 rounded-full border border-primary-200">
+                            {skill.domain_label}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+            <div className="text-sm text-gray-500 mt-2 text-right">{selectedSkillIds.length}/5 selected</div>
+          </div>
+        )}
+
+        {/* Inline Self-Assessment */}
+        {selectedSkillIds.length > 0 && parsedSkills.length > 0 && (
+          <div className="card">
+            <SelfAssessment
+              skills={parsedSkills.filter(s => selectedSkillIds.includes(s.skill_id))}
+              assessments={selfAssessedSkills}
+              onAssess={(skillId, level) => {
+                setSelfAssessedSkills(prev => ({ ...prev, [skillId]: level }))
+              }}
+            />
+          </div>
+        )}
+
         {/* Continue to Learning Path */}
         <div className="flex justify-center">
           <button
@@ -1201,109 +1287,16 @@ export default function AnalysisPage() {
     )
   }
 
-  // ── Complete: show full results including Journey Roadmap and learning sequence ──
+  // ── Complete: Journey Roadmap + Learning Path (skills review is on results_review) ──
   return (
     <div className="max-w-4xl mx-auto space-y-8">
-      {/* Success Header */}
-      <div className="text-center">
-        <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <CheckCircle className="h-10 w-10 text-green-500" />
-        </div>
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          Analysis Complete!
-        </h1>
-        <p className="text-gray-600">
-          Your personalized AI skills assessment is ready.
-        </p>
-      </div>
-
-      {/* Fit Score + Executive Introduction */}
-      {fitScore > 0 && (
-        <div className="card bg-gradient-to-br from-indigo-600 to-sky-600 text-white">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h2 className="text-lg font-bold">Role Fit Score</h2>
-              <p className="text-sm text-indigo-100">
-                How closely your current skills match the target role
-              </p>
-            </div>
-            <div className="text-right">
-              <div className="text-5xl font-bold">{Math.round(fitScore * 100)}%</div>
-              <div className="text-xs text-indigo-200 mt-1">current match</div>
-            </div>
-          </div>
-          <div className="h-3 bg-white/20 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-white/80 rounded-full transition-all duration-1000 ease-out"
-              style={{ width: `${Math.round(fitScore * 100)}%` }}
-            />
-          </div>
-        </div>
-      )}
-
-      {executiveIntroduction && (
-        <div className="card">
-          <h2 className="text-lg font-bold text-gray-900 mb-3 flex items-center gap-2">
-            <BookOpen className="h-5 w-5 text-indigo-600" />
-            Your Learning Journey
-          </h2>
-          <p className="text-gray-700 leading-relaxed whitespace-pre-line">
-            {executiveIntroduction}
-          </p>
-        </div>
-      )}
-
-      {/* Section 0: Role Context Header */}
-      {(summary?.target_role || primaryFunction) && (
-        <div className="card bg-gradient-to-r from-indigo-50 to-sky-50 border-indigo-200">
-          <div className="flex items-start gap-3">
-            <div className="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center flex-shrink-0">
-              <Briefcase className="h-5 w-5 text-white" />
-            </div>
-            <div>
-              <h2 className="text-lg font-bold text-gray-900">
-                Your Path to: {summary?.target_role || primaryFunction}
-              </h2>
-              {primaryFunction && summary?.target_role && primaryFunction !== summary.target_role && (
-                <p className="text-sm text-gray-600 mt-1">
-                  Core Focus: {primaryFunction}
-                </p>
-              )}
-              {keyDomains.length > 0 && (
-                <div className="flex flex-wrap gap-1.5 mt-2">
-                  {keyDomains.map((domain, i) => (
-                    <span key={i} className="text-xs px-2 py-0.5 bg-indigo-100 text-indigo-700 rounded-full font-medium">
-                      {domain}
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Domain Grid — actual chapter-to-domain mapping */}
-      {actualSelectedDomains.length > 0 && (
-        <div>
-          <h2 className="text-lg font-semibold text-gray-700 mb-3 text-center">
-            Your Learning Path Across the AI Skills Ontology
-          </h2>
-          <DomainGrid
-            highlightedDomains={[]}
-            activeDomain={null}
-            completedDomains={actualSelectedDomains.map((d: { domainId: string }) => d.domainId)}
-            selectedDomains={actualSelectedDomains}
-          />
-        </div>
-      )}
-
-      {/* ================================================================ */}
-      {/* UNIFIED SKILLS GAP OVERVIEW                                      */}
-      {/* ================================================================ */}
-      {top10Gaps.length > 0 && (
-        <UnifiedSkillsChart gaps={top10Gaps} allGaps={allSkillGaps} />
-      )}
+      {/* Back to Skills Review */}
+      <button
+        onClick={() => setStep('results_review')}
+        className="text-sm text-indigo-600 hover:text-indigo-800 flex items-center gap-1"
+      >
+        &larr; Back to Skills Review
+      </button>
 
       {/* ================================================================ */}
       {/* JOURNEY ROADMAP — Bridge gap analysis and learning path          */}
@@ -1481,7 +1474,7 @@ export default function AnalysisPage() {
           <div className="flex items-center gap-2 mb-5">
             <BookOpen className="h-5 w-5 text-indigo-600" />
             <h2 className="text-xl font-bold text-gray-900">
-              Recommended Learning Sequence
+              High Level Learning Objectives
             </h2>
           </div>
 
