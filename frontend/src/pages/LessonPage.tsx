@@ -22,7 +22,7 @@ export default function LessonPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [quizScore, setQuizScore] = useState<number | null>(null)
-  const [taskSubmitted, setTaskSubmitted] = useState(false)
+  const [, setTaskSubmitted] = useState(false)
   const [confusionDrawerOpen, setConfusionDrawerOpen] = useState(false)
   const [regenerating, setRegenerating] = useState(false)
 
@@ -158,13 +158,7 @@ export default function LessonPage() {
   // Detect AI-native vs legacy content format
   const isAINative = !!content?.concept_snapshot
 
-  // Completion gating: for AI-native lessons, require knowledge check + implementation task
-  const hasKnowledgeCheck = !!(content?.knowledge_checks?.length)
-  const hasImplementationTask = !!(content?.implementation_task?.title)
-  const canComplete = !isAINative || (
-    (!hasKnowledgeCheck || quizScore !== null) &&
-    (!hasImplementationTask || taskSubmitted)
-  )
+  // Free completion — no gating on knowledge checks or implementation tasks
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
@@ -472,27 +466,18 @@ export default function LessonPage() {
 
         <div className="flex items-center gap-3">
           {!isCompleted && (
-            <div className="flex items-center gap-3">
-              {!canComplete && isAINative && (
-                <p className="text-xs text-amber-600 max-w-[14rem] text-right">
-                  Complete the {hasKnowledgeCheck && quizScore === null ? 'knowledge check' : ''}
-                  {hasKnowledgeCheck && quizScore === null && hasImplementationTask && !taskSubmitted ? ' and ' : ''}
-                  {hasImplementationTask && !taskSubmitted ? 'implementation task' : ''} first
-                </p>
+            <button
+              onClick={handleComplete}
+              disabled={completeMutation.isPending}
+              className="btn bg-gradient-to-r from-emerald-500 to-teal-500 text-white hover:from-emerald-600 hover:to-teal-600 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {completeMutation.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-1" />
+              ) : (
+                <CheckCircle2 className="h-4 w-4 mr-1" />
               )}
-              <button
-                onClick={handleComplete}
-                disabled={!canComplete || completeMutation.isPending}
-                className="btn bg-gradient-to-r from-emerald-500 to-teal-500 text-white hover:from-emerald-600 hover:to-teal-600 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {completeMutation.isPending ? (
-                  <Loader2 className="h-4 w-4 animate-spin mr-1" />
-                ) : (
-                  <CheckCircle2 className="h-4 w-4 mr-1" />
-                )}
-                Mark as Complete
-              </button>
-            </div>
+              Mark as Complete
+            </button>
           )}
 
           {isCompleted && (

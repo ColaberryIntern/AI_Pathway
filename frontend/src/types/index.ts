@@ -321,6 +321,7 @@ export interface LearningModule {
 }
 
 export interface LessonOutline {
+  id?: string          // lesson DB id (populated at dashboard time)
   lesson_number: number
   title: string
   type: 'concept' | 'practice' | 'assessment'

@@ -48,6 +48,17 @@ def _module_response(module: Module, lessons: list[Lesson]) -> ModuleResponse:
     """Build a ModuleResponse from a Module and its lessons."""
     module_lessons = [l for l in lessons if l.module_id == module.id]
     completed = sum(1 for l in module_lessons if l.status == "completed")
+
+    # Enrich lesson outlines with DB lesson IDs so the frontend can link to any lesson
+    lesson_id_map = {l.lesson_number: l.id for l in module_lessons}
+    enriched_outline = None
+    if module.lesson_outline:
+        enriched_outline = []
+        for outline in module.lesson_outline:
+            entry = dict(outline)
+            entry["id"] = lesson_id_map.get(outline.get("lesson_number"))
+            enriched_outline.append(entry)
+
     return ModuleResponse(
         id=module.id,
         chapter_number=module.chapter_number,
@@ -56,7 +67,7 @@ def _module_response(module: Module, lessons: list[Lesson]) -> ModuleResponse:
         title=module.title,
         current_level=module.current_level,
         target_level=module.target_level,
-        lesson_outline=module.lesson_outline,
+        lesson_outline=enriched_outline,
         total_lessons=module.total_lessons,
         completed_lessons=completed,
         status=_module_status(module, lessons),

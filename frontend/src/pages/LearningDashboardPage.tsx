@@ -208,12 +208,14 @@ export default function LearningDashboardPage() {
                 <div className="space-y-2">
                   {selectedModule.lesson_outline.map((lesson, i) => {
                     const isCompleted = i < selectedModule.completed_lessons
+                    const canNavigate = !!lesson.id
                     return (
                       <div
                         key={i}
+                        onClick={() => canNavigate && navigate(`/learn/${pathId}/lesson/${lesson.id}`)}
                         className={`flex items-center gap-3 p-2.5 rounded-lg ${
                           isCompleted ? 'bg-emerald-50' : 'bg-gray-50'
-                        }`}
+                        } ${canNavigate ? 'cursor-pointer hover:ring-2 hover:ring-indigo-300 transition-all' : ''}`}
                       >
                         <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
                           isCompleted ? 'bg-emerald-500 text-white' : 'bg-gray-300 text-white'
@@ -226,6 +228,9 @@ export default function LearningDashboardPage() {
                           </p>
                           <p className="text-[10px] text-gray-400">{lesson.type} · {lesson.estimated_minutes} min</p>
                         </div>
+                        {canNavigate && (
+                          <span className="text-xs text-indigo-500 font-medium flex-shrink-0">Open</span>
+                        )}
                       </div>
                     )
                   })}

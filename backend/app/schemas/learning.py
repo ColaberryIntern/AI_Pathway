@@ -9,6 +9,7 @@ from pydantic import BaseModel
 class LessonOutline(BaseModel):
     """Lesson outline within a module (no full content yet)."""
 
+    id: str | None = None  # lesson DB id, populated at dashboard time
     lesson_number: int
     title: str
     type: Literal["concept", "practice", "assessment"]
