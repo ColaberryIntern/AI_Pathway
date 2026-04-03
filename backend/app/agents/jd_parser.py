@@ -192,17 +192,28 @@ Map everything to the GenAI Skills Ontology structure."""
         if len(top_skills) < 10:
             existing_ids = {s.get("skill_id") for s in top_skills}
             # Extract key terms from JD and search ontology for each
+            # Search terms mapped to implied skills - broader than exact JD keywords
             search_terms = [
-                "prompt", "debug", "iteration", "bias", "content", "hallucin",
-                "copyright", "IP", "draft", "revise", "critique", "grounding",
+                "prompt", "debug", "iteration", "bias", "hallucin",
+                "copyright", "draft", "revise", "critique", "grounding",
                 "citation", "evaluation", "quality", "disclosure", "governance",
-                "stakeholder", "collaboration", "domain",
+                "collaboration",
             ]
+            # Also add terms derived from common JD phrases
+            jd_lower = jd_text.lower()
+            if "edit" in jd_lower or "refine" in jd_lower or "generat" in jd_lower:
+                search_terms.extend(["prompt", "debug", "draft"])
+            if "accuracy" in jd_lower or "tone" in jd_lower or "clarity" in jd_lower:
+                search_terms.extend(["hallucin", "bias"])
+            if "ai-generated" in jd_lower or "ai generated" in jd_lower:
+                search_terms.extend(["disclosure", "copyright"])
+            if "data analysis" in jd_lower or "performance" in jd_lower:
+                search_terms.extend(["evaluation", "quality"])
+            # Deduplicate
+            search_terms = list(dict.fromkeys(search_terms))
             for term in search_terms:
                 if len(top_skills) >= 10:
                     break
-                if term.lower() not in jd_text.lower():
-                    continue
                 matches = ontology.search_skills(term)
                 for match in matches:
                     if len(top_skills) >= 10:
