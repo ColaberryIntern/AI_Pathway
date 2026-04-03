@@ -403,7 +403,7 @@ this person transitioning to this role."""
         prompt=prompt,
         system_prompt=_RERANK_SYSTEM_PROMPT,
         max_tokens=2048,
-        temperature=0.3,
+        temperature=0.0,
         json_mode=True,
     )
 
