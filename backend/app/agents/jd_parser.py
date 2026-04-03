@@ -194,10 +194,11 @@ Map everything to the GenAI Skills Ontology structure."""
             # Extract key terms from JD and search ontology for each
             # Search terms mapped to implied skills - broader than exact JD keywords
             search_terms = [
-                "prompt", "debug", "iteration", "bias", "hallucin",
-                "copyright", "draft", "revise", "critique", "grounding",
-                "citation", "evaluation", "quality", "disclosure", "governance",
-                "collaboration",
+                "prompt", "bias", "hallucin", "Recognizing AI",
+                "copyright", "disclosure", "Output quality",
+                "draft", "grounding", "collaboration",
+                "debug", "evaluation", "governance",
+                "critique", "citation", "iteration",
             ]
             # Also add terms derived from common JD phrases
             jd_lower = jd_text.lower()
@@ -215,9 +216,8 @@ Map everything to the GenAI Skills Ontology structure."""
                 if len(top_skills) >= 10:
                     break
                 matches = ontology.search_skills(term)
-                for match in matches:
-                    if len(top_skills) >= 10:
-                        break
+                # Take only the first match per term for broader coverage
+                for match in matches[:1]:
                     if match["id"] not in existing_ids:
                         top_skills.append({
                             "rank": len(top_skills) + 1,
