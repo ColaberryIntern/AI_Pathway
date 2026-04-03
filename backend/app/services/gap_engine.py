@@ -59,6 +59,7 @@ class SkillGapEngine:
         state_b: dict[str, int],
         role_context: dict[str, Any] | None = None,
         skill_importance: dict[str, str] | None = None,
+        skill_rank: dict[str, int] | None = None,
     ) -> list[dict[str, Any]]:
         """Return a sorted list of skill gaps where delta > 0.
 
@@ -259,14 +260,14 @@ class SkillGapEngine:
                 }
             )
 
-        # Sort by: (1) JD parser rank (critical > high > medium > low), then
+        # Sort by: (1) JD parser rank (lower = higher priority), then
         # (2) rubric priority_score as tiebreaker
-        _RANK_ORDER = {"critical": 4, "high": 3, "medium": 2, "low": 1}
+        # skill_rank maps skill_id -> rank (1 = most important)
+        max_rank = len(state_b) + 1
         gaps.sort(
             key=lambda g: (
-                _RANK_ORDER.get((skill_importance or {}).get(g["skill_id"], "medium"), 2),
+                -(skill_rank or {}).get(g["skill_id"], max_rank),  # negative rank so rank 1 sorts first
                 g["priority_score"],
-                g["skill_id"],
             ),
             reverse=True,
         )

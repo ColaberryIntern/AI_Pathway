@@ -70,6 +70,7 @@ class LearningPathGenerator:
         state_b: dict[str, int],
         role_context: dict[str, Any] | None = None,
         skill_importance: dict[str, str] | None = None,
+        skill_rank: dict[str, int] | None = None,
     ) -> dict[str, Any]:
         """Generate a learning path of up to 5 chapters.
 
@@ -150,6 +151,7 @@ class LearningPathGenerator:
         gaps = self._gap_engine.compute_gap(
             expanded_a, state_b, role_context,
             skill_importance=skill_importance,
+            skill_rank=skill_rank,
         )
 
         # ==============================================================

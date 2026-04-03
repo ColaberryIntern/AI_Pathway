@@ -91,21 +91,9 @@ parse job descriptions, identify skill gaps, and generate personalized learning 
             top_10_target = jd_result.get("top_10_target_skills", [])
             results["top_10_current_skills"] = top_10_current
 
-            # Re-rank top 10 using learner profile + 5-factor rubric
-            try:
-                from app.api.routes.analysis import _rerank_skills_for_learner
-                learner_profile = task.get("profile") or {}
-                reranked = await _rerank_skills_for_learner(
-                    top_10_target, learner_profile, jd_result.get("role_analysis") or {},
-                )
-                if reranked and len(reranked) >= 3:
-                    top5_ids = {s["skill_id"] for s in reranked}
-                    remaining = [s for s in top_10_target if s["skill_id"] not in top5_ids]
-                    top_10_target = reranked + remaining
-                    logger.info("Re-ranked skills: top 5 = %s", [s["skill_id"] for s in reranked])
-            except Exception as e:
-                logger.warning("Re-ranking failed in orchestrator, using JD order: %s", e)
-
+            # Pass JD parser rank as explicit priority to the gap engine
+            # The JD parser ranks skills by importance to the role.
+            # We encode this as a numeric priority so the gap engine preserves the order.
             results["top_10_target_skills"] = top_10_target
 
             # Extract state_a_skills early — needed for gap computation below
@@ -345,26 +333,22 @@ parse job descriptions, identify skill gaps, and generate personalized learning 
                     "priority_skills": set(_tpl.keys()) if _tpl else set(),
                 }
 
-            # Build skill_importance dict from JD parser's RANK order
-            # Top-ranked skills get "critical" importance so the gap engine
-            # prioritizes them, matching the rubric-based ordering
+            # Build skill_importance with explicit numeric rank from JD parser
+            # The gap engine will sort by this rank to preserve JD parser ordering
             skill_importance: dict[str, str] = {}
+            skill_rank: dict[str, int] = {}
             for skill in jd_result.get("top_10_target_skills", []):
                 sid = skill.get("skill_id")
                 rank = skill.get("rank", 10)
                 if sid:
-                    # Map rank to importance: top 3 = critical, 4-5 = high, rest = medium
-                    if rank <= 3:
-                        skill_importance[sid] = "critical"
-                    elif rank <= 5:
-                        skill_importance[sid] = "high"
-                    else:
-                        skill_importance[sid] = skill.get("importance", "medium")
+                    skill_rank[sid] = rank
+                    skill_importance[sid] = skill.get("importance", "medium")
 
             deterministic = LearningPathGenerator(ontology_service=ontology)
             scaffold_result = deterministic.generate_path(
                 valid_state_a, valid_state_b, role_context=role_context,
                 skill_importance=skill_importance,
+                skill_rank=skill_rank,
             )
             results["steps"].append({
                 "step": "deterministic_scaffold", "status": "completed",

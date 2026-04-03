@@ -413,16 +413,27 @@ this person transitioning to this role."""
     # Sort by total_score descending to ensure correct priority order
     top5.sort(key=lambda s: s.get("total_score", 0), reverse=True)
 
-    # Validate skill IDs exist in the original list
+    # Validate skill IDs - fuzzy match by skill name if ID doesn't match
     valid_ids = {s["skill_id"] for s in skills}
+    name_to_skill = {s.get("skill_name", "").lower(): s for s in skills}
     validated = []
+    used_ids = set()
     for i, s in enumerate(top5[:5], 1):
         sid = s.get("skill_id", "")
-        if sid in valid_ids:
-            # Merge with original skill data (preserve domain_label etc.)
+        if sid in valid_ids and sid not in used_ids:
             original = next((o for o in skills if o["skill_id"] == sid), {})
             merged = {**original, **s, "rank": i}
             validated.append(merged)
+            used_ids.add(sid)
+        else:
+            # Fuzzy match by skill name
+            sname = s.get("skill_name", "").lower()
+            if sname in name_to_skill and name_to_skill[sname]["skill_id"] not in used_ids:
+                original = name_to_skill[sname]
+                merged = {**original, **s, "skill_id": original["skill_id"], "rank": i}
+                validated.append(merged)
+                used_ids.add(original["skill_id"])
+                logger.info("Fuzzy matched re-ranked skill '%s' -> %s", sname, original["skill_id"])
 
     if len(validated) < 3:
         raise ValueError(f"Re-ranking returned too few valid skills ({len(validated)})")
