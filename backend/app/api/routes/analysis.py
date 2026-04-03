@@ -231,6 +231,15 @@ Skills they already have strong transferable experience in should be DEPRIORITIZ
 (low Momentum potential = low learning ROI). Focus on genuine gaps where
 training creates the most value.
 
+CALIBRATION EXAMPLE (for an AI Content Editor with editorial/communications background):
+- Prompt debugging & iteration: score 42 (Imp:3, Breadth:3, Momentum:3, Connect:3, Career:3) — zero prompting experience = highest priority
+- Capabilities vs limitations (hallucinations): score 40 — ethics exposure but no technical understanding of WHY models fail
+- Draft-critique-revise with AI: score 38 — strong editor but AI-in-the-loop workflow is new
+- AI-generated content disclosure: score 37 — governance exposure but disclosure standards are emerging
+- Output quality evaluation: score 33 — data awareness but systematic AI evaluation is new
+The pattern: skills that CREATE MOMENTUM (quick wins that transform capability) rank highest.
+Skills the learner ALREADY HAS from their career should DROP (low momentum = low learning ROI).
+
 Return a JSON object with:
 {
   "top_5": [
@@ -401,6 +410,9 @@ this person transitioning to this role."""
     reranked = json.loads(response.content)
     top5 = reranked.get("top_5", [])
 
+    # Sort by total_score descending to ensure correct priority order
+    top5.sort(key=lambda s: s.get("total_score", 0), reverse=True)
+
     # Validate skill IDs exist in the original list
     valid_ids = {s["skill_id"] for s in skills}
     validated = []
@@ -415,6 +427,10 @@ this person transitioning to this role."""
     if len(validated) < 3:
         raise ValueError(f"Re-ranking returned too few valid skills ({len(validated)})")
 
+    logger.info(
+        "Rubric re-ranking results: %s",
+        [(s["skill_id"], s.get("total_score", "?")) for s in validated],
+    )
     return validated
 
 
