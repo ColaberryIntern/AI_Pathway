@@ -78,6 +78,7 @@ parse job descriptions, identify skill gaps, and generate personalized learning 
                     {
                         "jd_text": task.get("jd_text", ""),
                         "target_role": task.get("target_role", ""),
+                        "learner_profile": task.get("profile", {}),
                     }
                 )
             )

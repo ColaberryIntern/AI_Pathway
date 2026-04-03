@@ -71,6 +71,7 @@ Map everything to the GenAI Skills Ontology structure."""
 
         jd_text = task.get("jd_text", "")
         target_role = task.get("target_role", "")
+        learner_profile = task.get("learner_profile") or {}
 
         # Get similar JDs and relevant skills from RAG
         relevant_skills = await self.rag.retrieve_skills(jd_text, n_results=40)
@@ -84,7 +85,9 @@ Map everything to the GenAI Skills Ontology structure."""
 
         # Build prompt
         prompt = self._build_parsing_prompt(
-            jd_text, target_role, relevant_skills, ontology_context=ontology_context
+            jd_text, target_role, relevant_skills,
+            ontology_context=ontology_context,
+            learner_profile=learner_profile,
         )
 
         output_schema = {
@@ -244,7 +247,7 @@ Map everything to the GenAI Skills Ontology structure."""
 
     def _build_parsing_prompt(
         self, jd_text: str, target_role: str, relevant_skills: list,
-        *, ontology_context: str = ""
+        *, ontology_context: str = "", learner_profile: dict | None = None
     ) -> str:
         """Build the JD parsing prompt for the LLM."""
         if relevant_skills:
@@ -257,14 +260,42 @@ Map everything to the GenAI Skills Ontology structure."""
         else:
             skills_context = "(No skills available)"
 
+        # Build learner context for prioritization
+        learner_section = ""
+        if learner_profile:
+            cp = (learner_profile.get("current_profile") or {})
+            parts = []
+            if cp.get("summary"):
+                parts.append(f"Background: {cp['summary'][:300]}")
+            if learner_profile.get("current_role"):
+                parts.append(f"Current Role: {learner_profile['current_role']}")
+            if learner_profile.get("industry"):
+                parts.append(f"Industry: {learner_profile['industry']}")
+            if learner_profile.get("experience_years"):
+                parts.append(f"Experience: {learner_profile['experience_years']} years")
+            if parts:
+                learner_section = f"""
+
+LEARNER PROFILE (use this to PRIORITIZE skills by gap):
+{chr(10).join(parts)}
+
+RANKING RULE: Rank by what creates the most VALUE for THIS learner.
+Skills the learner ALREADY HAS from their career background should be ranked LOWER (they have less to learn).
+Skills where the learner has the BIGGEST GAP should be ranked HIGHER (most learning value).
+For example, if the learner has 9+ years of editorial experience, skills like "recognizing content" and
+"understanding bias" are partially covered by their background. Prioritize skills they have ZERO experience
+with, like prompt engineering and AI mechanics."""
+
         return f"""Analyze this job description and identify the TOP 10 required skills.
-IMPORTANT: Always return exactly 10 skills ranked by relevance. Include both explicit
-requirements AND implied skills from the responsibilities. Cast a wide net across domains.
+IMPORTANT: Always return exactly 10 skills ranked by PRIORITY for THIS learner.
+Skills where the learner has the biggest gap should be ranked highest.
+Skills the learner already partially has from their career should be ranked lower.
+Include both explicit requirements AND implied skills from the responsibilities.
 
 TARGET ROLE: {target_role or 'Not specified'}
 
 JOB DESCRIPTION:
-{jd_text}
+{jd_text}{learner_section}
 
 AVAILABLE SKILLS FROM ONTOLOGY:
 {skills_context}
