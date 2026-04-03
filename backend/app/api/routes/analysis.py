@@ -342,7 +342,7 @@ async def _rerank_skills_for_learner(
     scoring rubric. Returns the top 5 in priority order.
     """
     # Build learner background summary
-    cp = learner_profile.get("current_profile", {})
+    cp = learner_profile.get("current_profile") or {}
     bg_parts = []
     if cp.get("summary"):
         bg_parts.append(f"Background: {cp['summary']}")
