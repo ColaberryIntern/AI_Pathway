@@ -441,7 +441,10 @@ parse job descriptions, identify skill gaps, and generate personalized learning 
                         ),
                     })
                 results["top_10_skill_gaps"] = reconciled_top
-                results["top_10_target_skills"] = reconciled_top
+                # Keep original top_10_target_skills (all 10) for the skill selection UI
+                # Only overwrite if we don't already have them
+                if not results.get("top_10_target_skills"):
+                    results["top_10_target_skills"] = reconciled_top
 
             # Step 5: Generate Learning Path (scaffold-enrichment mode)
             path_result = await self._execute_step(
