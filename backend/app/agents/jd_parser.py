@@ -186,6 +186,42 @@ Map everything to the GenAI Skills Ontology structure."""
                     if matches:
                         req["skill_id"] = matches[0]["id"]
 
+        # Ensure we have at least 10 skills - if LLM returned fewer, pad with
+        # ontology-matched skills from JD keywords
+        top_skills = result.get("top_10_target_skills", [])
+        if len(top_skills) < 10:
+            existing_ids = {s.get("skill_id") for s in top_skills}
+            # Extract key terms from JD and search ontology for each
+            search_terms = [
+                "prompt", "debug", "iteration", "bias", "content", "hallucin",
+                "copyright", "IP", "draft", "revise", "critique", "grounding",
+                "citation", "evaluation", "quality", "disclosure", "governance",
+                "stakeholder", "collaboration", "domain",
+            ]
+            for term in search_terms:
+                if len(top_skills) >= 10:
+                    break
+                if term.lower() not in jd_text.lower():
+                    continue
+                matches = ontology.search_skills(term)
+                for match in matches:
+                    if len(top_skills) >= 10:
+                        break
+                    if match["id"] not in existing_ids:
+                        top_skills.append({
+                            "rank": len(top_skills) + 1,
+                            "skill_id": match["id"],
+                            "skill_name": match.get("name", match["id"]),
+                            "domain": match.get("domain", ""),
+                            "domain_label": match.get("domain_label", ""),
+                            "required_level": 2,
+                            "importance": "medium",
+                            "rationale": f"Implied by '{term}' in the job description",
+                        })
+                        existing_ids.add(match["id"])
+                        result.setdefault("state_b_skills", {})[match["id"]] = 2
+            result["top_10_target_skills"] = top_skills
+
         self._log_execution("parse_jd", {"jd_length": len(jd_text)}, result)
         result["duration_ms"] = self._end_execution()
 
