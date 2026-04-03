@@ -188,7 +188,10 @@ Map everything to the GenAI Skills Ontology structure."""
 
         # Ensure we have at least 10 skills - if LLM returned fewer, pad with
         # ontology-matched skills from JD keywords
+        import logging
+        _logger = logging.getLogger(__name__)
         top_skills = result.get("top_10_target_skills", [])
+        _logger.info("JD parser returned %d skills, padding to 10 if needed", len(top_skills))
         if len(top_skills) < 10:
             existing_ids = {s.get("skill_id") for s in top_skills}
             # Extract key terms from JD and search ontology for each
@@ -231,6 +234,7 @@ Map everything to the GenAI Skills Ontology structure."""
                         })
                         existing_ids.add(match["id"])
                         result.setdefault("state_b_skills", {})[match["id"]] = 2
+                        _logger.info("Padded skill: %s - %s (from '%s')", match["id"], match.get("name"), term)
             result["top_10_target_skills"] = top_skills
 
         self._log_execution("parse_jd", {"jd_length": len(jd_text)}, result)
