@@ -189,17 +189,52 @@ class SkillGapEngine:
             else:
                 role_relevance = 0
 
-            # Criticality from JD parser's importance rating
-            criticality = 0
-            if skill_importance:
-                imp = skill_importance.get(skill_id, "medium")
-                criticality = _IMPORTANCE_TO_CRITICALITY.get(imp, 1)
+            # ── 5-Factor Rubric Scoring (matches Luda's prioritization rubric) ──
+            # Each factor scored 1-3, then weighted:
+            # Priority = (Importance x 4) + (Breadth x 3) + (Momentum x 3) + (Connectivity x 2) + (Career Signal x 2)
 
+            # 1. IMPORTANCE (x4): How critical for the target role?
+            #    Based on JD parser's importance rating
+            imp_rating = (skill_importance or {}).get(skill_id, "medium")
+            importance_score = {"critical": 3, "high": 3, "medium": 2, "low": 1}.get(imp_rating, 2)
+
+            # 2. BREADTH (x3): How many scenarios does this skill apply to?
+            #    Foundation/prompting skills are broad (used daily), niche skills are narrow
+            domain = skill["domain"]
+            breadth_score = 3 if domain in ("D.PRM", "D.FND", "D.CTIC") else (2 if domain in ("D.EVL", "D.GOV", "D.COM") else 1)
+
+            # 3. MOMENTUM (x3): How quickly can THIS LEARNER realistically improve?
+            #    High = learner has transferable skills from their background to build on
+            #    Low = starting from scratch, long ramp-up needed
+            #    This is about the LEARNER's existing foundation, not the gap size
+            if current_level >= 2:
+                momentum_score = 3  # Strong existing foundation
+            elif domain_floor >= 2:
+                momentum_score = 3  # Strong in this domain already
+            elif current_level == 1 or domain_floor >= 1:
+                momentum_score = 2  # Some related experience
+            else:
+                momentum_score = 1  # Starting from scratch
+
+            # 4. CONNECTIVITY (x2): How much does this skill enable other skills?
+            #    Count dependents in the ontology
+            dependents = self._ontology.get_skill_dependents(skill_id)
+            connectivity_score = 3 if len(dependents) >= 3 else (2 if len(dependents) >= 1 else 1)
+
+            # 5. CAREER SIGNAL (x2): How visible is this skill to hiring managers?
+            #    Explicitly mentioned in JD (high importance) = high signal
+            career_score = 3 if imp_rating in ("critical", "high") else (2 if imp_rating == "medium" else 1)
+            # Skills in primary domains get a boost
+            if skill["domain"] in primary_domains:
+                career_score = min(3, career_score + 1)
+
+            # Compute total rubric score
             priority_score = (
-                (3 * delta)
-                + (3 * criticality)
-                + (2 * role_relevance)
-                - (0.5 * skill["level"])
+                (importance_score * 4)
+                + (breadth_score * 3)
+                + (momentum_score * 3)
+                + (connectivity_score * 2)
+                + (career_score * 2)
             )
 
             gaps.append(
@@ -213,13 +248,26 @@ class SkillGapEngine:
                     "skill_level": skill["level"],
                     "prerequisites": skill.get("prerequisites", []),
                     "role_relevance": role_relevance,
-                    "criticality": criticality,
                     "priority_score": priority_score,
+                    "rubric_scores": {
+                        "importance": importance_score,
+                        "breadth": breadth_score,
+                        "momentum": momentum_score,
+                        "connectivity": connectivity_score,
+                        "career_signal": career_score,
+                    },
                 }
             )
 
+        # Sort by: (1) JD parser rank (critical > high > medium > low), then
+        # (2) rubric priority_score as tiebreaker
+        _RANK_ORDER = {"critical": 4, "high": 3, "medium": 2, "low": 1}
         gaps.sort(
-            key=lambda g: (g["priority_score"], g["skill_id"]),
+            key=lambda g: (
+                _RANK_ORDER.get((skill_importance or {}).get(g["skill_id"], "medium"), 2),
+                g["priority_score"],
+                g["skill_id"],
+            ),
             reverse=True,
         )
 
