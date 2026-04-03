@@ -133,7 +133,7 @@ class SkillGapEngine:
             target_domains = set(role_context.get("target_domains") or [])
             primary_domains = set(role_context.get("primary_domains") or [])
 
-        _IMPORTANCE_TO_CRITICALITY = {"high": 3, "medium": 1, "low": 0}
+        _IMPORTANCE_TO_CRITICALITY = {"critical": 5, "high": 3, "medium": 1, "low": 0}
 
         # Professional floor: any working professional (L2+ in anything)
         # is at least Aware (L1) of all skills.  Prevents L0 display.

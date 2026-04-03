@@ -332,13 +332,21 @@ parse job descriptions, identify skill gaps, and generate personalized learning 
                     "priority_skills": set(_tpl.keys()) if _tpl else set(),
                 }
 
-            # Build skill_importance dict from JD parser's importance ratings
+            # Build skill_importance dict from JD parser's RANK order
+            # Top-ranked skills get "critical" importance so the gap engine
+            # prioritizes them, matching the rubric-based ordering
             skill_importance: dict[str, str] = {}
             for skill in jd_result.get("top_10_target_skills", []):
                 sid = skill.get("skill_id")
-                imp = skill.get("importance", "medium")
+                rank = skill.get("rank", 10)
                 if sid:
-                    skill_importance[sid] = imp
+                    # Map rank to importance: top 3 = critical, 4-5 = high, rest = medium
+                    if rank <= 3:
+                        skill_importance[sid] = "critical"
+                    elif rank <= 5:
+                        skill_importance[sid] = "high"
+                    else:
+                        skill_importance[sid] = skill.get("importance", "medium")
 
             deterministic = LearningPathGenerator(ontology_service=ontology)
             scaffold_result = deterministic.generate_path(
