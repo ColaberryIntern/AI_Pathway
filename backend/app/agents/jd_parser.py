@@ -16,8 +16,9 @@ class JDParserAgent(BaseAgent):
     description = "Parses job descriptions to extract required skills and proficiency levels"
 
     system_prompt = """You are an expert job description analyst specializing in AI/ML roles.
-Your task is to analyze job descriptions and extract the required skills (3-10) mapped to
-the GenAI Skills Ontology. Only include skills clearly required by the JD — do not pad to 10.
+Your task is to analyze job descriptions and extract exactly 10 required skills mapped to
+the GenAI Skills Ontology. Always return 10 skills — include both explicit requirements
+AND implied skills from the responsibilities. Cast a wide net across domains.
 
 PROFICIENCY SCALE (use this when assigning required levels):
 - Level 1 (Aware): Can explain the concept. Entry-level familiarity.
