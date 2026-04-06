@@ -179,11 +179,19 @@ class LearningPathGenerator:
         # Build chapter list directly from planned skills
         # ==============================================================
         chapters = []
-        for i, skill in enumerate(planned):
-            current = expanded_a.get(skill["skill_id"], skill.get("current_level", 0))
+        for i, gap in enumerate(planned):
+            # Adapt gap engine output to _build_chapter's expected format
+            skill_for_chapter = {
+                "id": gap["skill_id"],
+                "name": gap["skill_name"],
+                "domain": gap["domain"],
+                "level": gap.get("skill_level", 1),
+                "prerequisites": gap.get("prerequisites", []),
+            }
+            current = expanded_a.get(gap["skill_id"], gap.get("current_level", 0))
             chapters.append(self._build_chapter(
                 chapter_number=i + 1,
-                skill=skill,
+                skill=skill_for_chapter,
                 current_level=current,
             ))
 
