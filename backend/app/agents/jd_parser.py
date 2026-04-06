@@ -146,7 +146,7 @@ Map everything to the GenAI Skills Ontology structure."""
             "required": ["top_10_target_skills", "state_b_skills", "extracted_requirements", "role_analysis"]
         }
 
-        result = await self._call_llm_structured(prompt, output_schema)
+        result = await self._call_llm_structured(prompt, output_schema, temperature=0.0)
 
         # Post-process: validate and remap skill IDs to ontology.
         # Critical for custom profiles where the LLM may hallucinate

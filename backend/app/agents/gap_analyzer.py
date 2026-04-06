@@ -151,7 +151,7 @@ Create a prioritized list using these scores. Show the score breakdown for each 
             }
         }
 
-        result = await self._call_llm_structured(prompt, output_schema)
+        result = await self._call_llm_structured(prompt, output_schema, temperature=0.0)
 
         # Format final gaps list
         result["gaps"] = result.pop("prioritized_gaps", [])
