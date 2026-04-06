@@ -232,7 +232,7 @@ Map everything to the GenAI Skills Ontology structure."""
                             "domain": match.get("domain", ""),
                             "domain_label": match.get("domain_label", ""),
                             "required_level": 2,
-                            "importance": "medium",
+                            "importance": "low",  # Padded skills rank below LLM-selected ones
                             "rationale": f"Implied by '{term}' in the job description",
                         })
                         existing_ids.add(match["id"])

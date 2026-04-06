@@ -414,8 +414,9 @@ class SkillGapEngine:
             # ── 5-Factor Rubric ──
 
             # 1. IMPORTANCE (x4)
-            imp_rating = (skill_importance or {}).get(skill_id, "medium")
-            importance_score = {"critical": 3, "high": 3, "medium": 2, "low": 1}.get(imp_rating, 2)
+            # Skills not in skill_importance (e.g., mandatory-injected) default to "low"
+            imp_rating = (skill_importance or {}).get(skill_id, "low")
+            importance_score = {"critical": 3, "high": 3, "medium": 2, "low": 1}.get(imp_rating, 1)
 
             # 2. BREADTH (x3)
             domain = skill["domain"]
@@ -441,10 +442,11 @@ class SkillGapEngine:
             )
 
             # 5. CAREER SIGNAL (x2)
+            # Skills explicitly in the JD (high/critical importance) have high career signal
             career_score = (
                 3 if imp_rating in ("critical", "high")
                 else 2 if imp_rating == "medium"
-                else 1
+                else 1  # low/unrated = not visible to hiring managers
             )
             if skill["domain"] in primary_domains:
                 career_score = min(3, career_score + 1)
