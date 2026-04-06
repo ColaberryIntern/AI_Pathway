@@ -145,9 +145,11 @@ class LearningPathGenerator:
         priority_skills: set[str] = set()
         if role_context:
             priority_skills = set(role_context.get("priority_skills") or [])
-        self._ensure_mandatory_in_state_b(
-            state_b, expanded_a, priority_skills,
-        )
+        # Mandatory injection disabled: let the JD parser's skill selection
+        # drive the learning path without injecting unrelated skills
+        # self._ensure_mandatory_in_state_b(
+        #     state_b, expanded_a, priority_skills,
+        # )
 
         gaps = self._gap_engine.compute_gap(
             expanded_a, state_b, role_context,
@@ -179,15 +181,14 @@ class LearningPathGenerator:
         chapters = self._build_ordered_chapters(planned, expanded_a)
 
         # ==============================================================
-        # Phase 4 — Mandatory category enforcement (post-processing)
+        # Phase 4 — Mandatory category enforcement (DISABLED)
         # ==============================================================
-        # After a valid chapter plan is built, swap in skills from
-        # missing mandatory categories.  This operates on the final
-        # chapter list rather than the candidate list, avoiding the
-        # cascading back-pressure problem.
-        chapters = self._post_enforce_mandatory(
-            chapters, gaps, expanded_a, priority_skills,
-        )
+        # Disabled: mandatory swaps override the rubric-based ranking
+        # and inject skills the JD didn't ask for. The gap engine's
+        # 5-factor rubric should drive skill selection entirely.
+        # chapters = self._post_enforce_mandatory(
+        #     chapters, gaps, expanded_a, priority_skills,
+        # )
 
         # ==============================================================
         # Phase 5 — Top-up: fill remaining slots if under MAX_CHAPTERS
