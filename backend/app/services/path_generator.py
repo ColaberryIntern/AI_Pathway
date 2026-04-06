@@ -178,10 +178,14 @@ class LearningPathGenerator:
         # ==============================================================
         # Build chapter list directly from planned skills
         # ==============================================================
-        chapters = [
-            self._build_chapter(skill, i + 1, expanded_a)
-            for i, skill in enumerate(planned)
-        ]
+        chapters = []
+        for i, skill in enumerate(planned):
+            current = expanded_a.get(skill["skill_id"], skill.get("current_level", 0))
+            chapters.append(self._build_chapter(
+                chapter_number=i + 1,
+                skill=skill,
+                current_level=current,
+            ))
 
         # ==============================================================
         # Phase 4 — Mandatory category enforcement (DISABLED)
