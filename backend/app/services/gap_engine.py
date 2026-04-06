@@ -1,57 +1,337 @@
-"""Skill Gap Engine — Phase 3.2
+"""Skill Gap Engine — Phase 4: Deterministic 5-Factor Rubric Scoring
 
 Computes the delta between a learner's current skill levels (State A)
 and a target skill profile (State B), returning a prioritised list of
-gaps that need to be closed.
-
-Every skill ID is validated against the canonical ontology so that
-downstream consumers never receive phantom entries.
+gaps scored by Luda's 5-factor rubric.
 
 Scoring formula
 ---------------
 ::
 
-    priority_score = (3 × delta)
-                   + (3 × criticality)
-                   + (2 × role_relevance)
-                   - (0.5 × skill_level)
+    priority_score = (Importance × 4)
+                   + (Breadth × 3)
+                   + (Momentum × 3)
+                   + (Connectivity × 2)
+                   + (Career Signal × 2)
 
-- **delta** (weight 3) — the proficiency distance; larger gaps need
-  attention first.
-- **criticality** (weight 3) — from the JD parser's importance rating:
-  high=3, medium=1, low=0.  Ensures "must have" skills outrank
-  "nice to have" skills even when deltas are equal.
-- **role_relevance** (weight 2) — graduated: 2 for primary domains
-  (from role_analysis.key_domains), 1 for broader target domains,
-  0 otherwise.
-- **skill_level** (weight −0.5) — mild penalty for very advanced
-  skills so that foundational gaps are addressed before architect-tier
-  ones when deltas are equal.
+Each factor is scored 1-3 (max score = 42).
+
+Momentum is the key differentiator — it captures the learner's
+LEARNING ROI: skills they already have from their career get LOW
+momentum (small room to grow), skills with zero background get HIGH
+momentum (biggest gap, highest return on investment).
 """
 
 from __future__ import annotations
 
+import re
 from typing import Any
 
 from app.services.ontology import OntologyService, get_ontology_service
 
+# ── Stopwords for tokenization ──────────────────────────────────────
+STOPWORDS = frozenset({
+    "a", "an", "the", "and", "or", "but", "in", "on", "at", "to", "for",
+    "of", "with", "by", "from", "is", "are", "was", "were", "be", "been",
+    "has", "have", "had", "do", "does", "did", "will", "would", "could",
+    "should", "may", "might", "can", "shall", "not", "no", "so", "if",
+    "as", "it", "its", "i", "my", "me", "we", "our", "you", "your",
+    "he", "she", "they", "them", "their", "this", "that", "these",
+    "those", "all", "each", "every", "both", "few", "more", "most",
+    "other", "some", "such", "than", "too", "very", "just", "also",
+    "about", "up", "out", "into", "over", "after", "before", "between",
+    "under", "above", "through", "during", "while", "where", "when",
+    "how", "what", "which", "who", "whom", "why", "then", "there",
+    "here", "well", "back", "being", "been", "having", "new", "old",
+    "across", "including", "working", "work", "years", "year",
+    "experience", "experienced", "professional", "professionals",
+})
+
+
+def _tokenize(text: str) -> set[str]:
+    """Split text into normalized lowercase tokens."""
+    if not text:
+        return set()
+    # Split on whitespace and common punctuation, lowercase
+    tokens = set(re.split(r'[\s,;:/&|•·\-–—()\[\]{}]+', text.lower()))
+    tokens -= {"", " "}
+    tokens -= STOPWORDS
+    return tokens
+
+
+def _extract_capability_signals(learner_profile: dict) -> set[str]:
+    """Extract normalized capability keywords from learner profile.
+
+    Deterministic: same profile always produces the same signal set.
+    """
+    signals: set[str] = set()
+
+    # 1. Role keywords
+    signals.update(_tokenize(learner_profile.get("current_role", "")))
+
+    # 2. Industry keywords
+    signals.update(_tokenize(learner_profile.get("industry", "")))
+
+    # 3. Technical skills (both as phrases and tokens)
+    cp = learner_profile.get("current_profile") or {}
+    for skill in cp.get("technical_skills", []):
+        if isinstance(skill, str):
+            signals.add(skill.lower().strip())
+            signals.update(_tokenize(skill))
+
+    # 4. Soft skills
+    for skill in cp.get("soft_skills", []):
+        if isinstance(skill, str):
+            signals.add(skill.lower().strip())
+            signals.update(_tokenize(skill))
+
+    # 5. Summary text
+    signals.update(_tokenize(cp.get("summary", "")))
+
+    # 6. Tools used
+    for tool in learner_profile.get("tools_used", []):
+        if isinstance(tool, str):
+            signals.add(tool.lower().strip())
+            signals.update(_tokenize(tool))
+
+    # 7. AI experience text
+    signals.update(_tokenize(cp.get("ai_experience", "")))
+
+    # 8. Learning intent
+    signals.update(_tokenize(learner_profile.get("learning_intent", "")))
+
+    return signals
+
+
+# ── Career signal lookup tables ──────────────────────────────────────
+# Maps ontology domains to career keywords indicating transferable experience.
+# If a learner's profile contains these keywords, they likely already have
+# some foundation in this domain from their career.
+
+DOMAIN_CAREER_SIGNALS: dict[str, set[str]] = {
+    "D.CTIC": {
+        "editorial", "editor", "editing", "journalism", "journalist",
+        "fact-checking", "research", "analyst", "verification",
+        "content review", "content moderation", "critical thinking",
+        "proofreading", "copyediting", "copy editing",
+        "bias", "fairness", "diversity", "inclusion",
+    },
+    "D.FND": {
+        "machine learning", "data science", "artificial intelligence",
+        "ai", "ml", "deep learning", "neural network", "nlp",
+        "natural language processing", "computer science",
+        "statistics", "statistical", "analytics", "data analysis",
+        "python", "tensorflow", "pytorch",
+    },
+    "D.PRM": {
+        "prompt engineering", "prompting", "prompt",
+        "llm", "large language model", "conversational ai",
+    },
+    "D.GOV": {
+        "governance", "compliance", "regulation", "regulatory",
+        "policy", "legal", "privacy", "gdpr", "hipaa",
+        "risk management", "audit", "ethics",
+        "disclosure", "transparency",
+    },
+    "D.EVL": {
+        "quality assurance", "qa", "testing",
+        "metrics", "measurement", "kpi", "evaluation",
+        "a/b testing", "data-driven",
+        "performance measurement", "benchmarking",
+    },
+    "D.COM": {
+        "communications", "communication", "writing", "writer",
+        "copywriting", "content strategy", "content creation",
+        "storytelling", "presentation", "presenting",
+        "stakeholder", "executive communications",
+        "internal communications", "public relations",
+        "marketing communications", "brand",
+    },
+    "D.PRD": {
+        "product management", "product manager", "product owner",
+        "ux", "user experience", "design thinking",
+        "agile", "scrum", "project management",
+        "roadmap", "strategy", "strategic planning",
+    },
+    "D.RAG": {
+        "search", "information retrieval", "knowledge management",
+        "database", "sql", "elasticsearch",
+        "documentation", "taxonomy", "content management", "cms",
+    },
+    "D.AGT": {
+        "automation", "workflow", "orchestration",
+        "rpa", "scripting", "devops",
+        "systems integration", "api",
+    },
+    "D.SEC": {
+        "security", "cybersecurity", "infosec",
+        "risk assessment", "vulnerability",
+        "access control", "authentication",
+    },
+    "D.PRQ": {
+        "programming", "coding", "software development",
+        "python", "javascript", "typescript", "java",
+        "sql", "git", "version control",
+        "api", "rest", "backend", "frontend",
+    },
+    "D.TOOL": {
+        "chatgpt", "claude", "gemini", "copilot",
+        "midjourney", "dall-e", "stable diffusion",
+    },
+    "D.LRN": {
+        "training", "teaching", "education", "instructor",
+        "mentoring", "coaching", "curriculum",
+        "learning development",
+    },
+}
+
+# Skill-specific overrides for high-specificity skills
+SKILL_CAREER_SIGNALS: dict[str, set[str]] = {
+    "SK.CTIC.006": {  # Recognizing AI-generated content
+        "editorial", "editor", "content review",
+        "fact-checking", "journalism",
+    },
+    "SK.CTIC.004": {  # Understanding bias in content
+        "editorial", "editor", "journalism", "bias",
+        "diversity", "inclusion", "equity",
+        "content review", "sensitivity",
+    },
+    "SK.FND.021": {  # IP/copyright awareness
+        "publishing", "publisher", "editorial",
+        "copyright", "intellectual property", "licensing",
+        "media", "content rights", "random house",
+    },
+    "SK.PRM.021": {  # Grounding & citations
+        "journalism", "journalist", "research",
+        "academic", "editorial", "fact-checking",
+        "citations", "source", "newsletter",
+    },
+    "SK.PRM.003": {  # Prompt debugging & iteration
+        "prompt engineering", "prompting",
+        # Deliberately narrow: most people do NOT have this
+    },
+    "SK.PRM.020": {  # Draft -> critique -> revise
+        "editorial", "editor", "editing",
+        "revision", "content strategy",
+        # Editorial-adjacent but AI-in-the-loop is new
+    },
+    "SK.GOV.022": {  # AI-generated content disclosure
+        "compliance", "regulatory", "disclosure",
+        "transparency", "ai governance",
+    },
+    "SK.EVL.001": {  # Output quality evaluation
+        "quality assurance", "qa", "testing",
+        "metrics", "kpi", "evaluation",
+        "benchmarking", "a/b testing",
+    },
+    "SK.FND.002": {  # Capabilities vs limitations (hallucinations)
+        "machine learning", "data science", "ai research",
+        "model training", "neural network",
+        # Technical AI knowledge, not editorial
+    },
+    "SK.COM.005": {  # Cross-functional AI collaboration
+        "communications", "stakeholder", "cross-functional",
+        "collaboration", "executive communications",
+        "project management",
+    },
+}
+
+# AI-specific domains where career transfer exists but AI application is new
+AI_SPECIFIC_DOMAINS = frozenset({
+    "D.PRM", "D.FND", "D.RAG", "D.AGT", "D.MOD",
+    "D.MUL", "D.EVL", "D.SEC", "D.OPS", "D.TOOL",
+})
+
+
+def _compute_career_overlap(
+    skill_id: str,
+    skill_domain: str,
+    learner_signals: set[str],
+) -> tuple[float, int]:
+    """Compute overlap between learner signals and skill's career signals.
+
+    Returns (overlap_ratio, match_count).
+    """
+    # Merge domain-level and skill-level signal sets
+    relevant = set(DOMAIN_CAREER_SIGNALS.get(skill_domain, set()))
+    if skill_id in SKILL_CAREER_SIGNALS:
+        relevant |= SKILL_CAREER_SIGNALS[skill_id]
+
+    if not relevant:
+        return 0.0, 0
+
+    matches = learner_signals & relevant
+    return len(matches) / len(relevant), len(matches)
+
+
+def _compute_momentum_score(
+    skill_id: str,
+    skill_domain: str,
+    learner_signals: set[str],
+    ai_exposure_level: str,
+    experience_years: int,
+    current_level: int,
+    domain_floor: int,
+) -> int:
+    """Compute momentum score 1-3 for a skill.
+
+    Momentum = Learning ROI for THIS learner on THIS skill.
+    - 3: Zero background. Huge room to grow. Highest ROI.
+    - 2: Some transferable experience but AI application is new.
+    - 1: Strong transferable skills. Low room to grow. Lowest ROI.
+    """
+    # If we have explicit skill levels, use them
+    if current_level >= 2:
+        return 1  # Already competent = low learning ROI
+    if domain_floor >= 2:
+        return 1  # Strong in this domain already
+
+    # Career-based momentum from profile text
+    if learner_signals:
+        overlap, match_count = _compute_career_overlap(
+            skill_id, skill_domain, learner_signals,
+        )
+
+        # Experience-based thresholds: senior professionals transfer more
+        if experience_years >= 7:
+            high_threshold, low_threshold = 0.10, 0.03
+            high_match_count = 2
+        elif experience_years <= 2:
+            high_threshold, low_threshold = 0.25, 0.10
+            high_match_count = 3
+        else:
+            high_threshold, low_threshold = 0.15, 0.05
+            high_match_count = 2
+
+        is_high = overlap >= high_threshold or match_count >= high_match_count
+        is_some = overlap >= low_threshold or match_count >= 1
+
+        if is_high:
+            base = 1  # Strong career overlap -> LOW momentum
+        elif is_some:
+            base = 2  # Some overlap -> MEDIUM
+        else:
+            base = 3  # No overlap -> HIGH momentum
+
+        # AI-specific boost: even with career transfer, AI application is new
+        if base == 1 and skill_domain in AI_SPECIFIC_DOMAINS:
+            ai_is_new = ai_exposure_level in ("None", "Basic", "")
+            if ai_is_new:
+                base = 2  # Career transfer exists but AI is novel
+
+        return base
+
+    # Fallback when no profile available
+    if current_level == 1 or domain_floor >= 1:
+        return 2
+    return 3  # Starting from scratch
+
 
 class SkillGapEngine:
-    """Calculate and rank skill gaps between current and target profiles.
-
-    Parameters
-    ----------
-    ontology_service : OntologyService | None
-        Injected ontology service.  When *None* the cached singleton
-        returned by ``get_ontology_service()`` is used.
-    """
+    """Calculate and rank skill gaps using the 5-factor rubric."""
 
     def __init__(self, ontology_service: OntologyService | None = None) -> None:
         self._ontology = ontology_service or get_ontology_service()
-
-    # ------------------------------------------------------------------
-    # Public API
-    # ------------------------------------------------------------------
 
     def compute_gap(
         self,
@@ -60,70 +340,18 @@ class SkillGapEngine:
         role_context: dict[str, Any] | None = None,
         skill_importance: dict[str, str] | None = None,
         skill_rank: dict[str, int] | None = None,
+        learner_profile: dict[str, Any] | None = None,
     ) -> list[dict[str, Any]]:
-        """Return a sorted list of skill gaps where delta > 0.
+        """Return a sorted list of skill gaps scored by the 5-factor rubric.
 
         Parameters
         ----------
-        state_a : dict[str, int]
-            Learner's current profile — ``{skill_id: current_level}``.
-            Skills present in *state_b* but absent here default to 0,
-            but two floors apply:
-
-            * **Professional floor** — if the learner has *any* skill
-              at level 2+, unknown skills start at 1 (Aware).
-            * **Skill-level floor** — experienced professionals (L3+
-              anywhere) start at 2 (User) for intermediate+ skills
-              (ontology level 3+), giving mixed starting levels.
-            * **Domain floor** — if the learner knows any skill in a
-              domain, other skills in that domain start at
-              ``max(1, domain_max − 1)``.
-        state_b : dict[str, int]
-            Target/required profile — ``{skill_id: required_level}``.
-        role_context : dict | None
-            Optional role hint used for relevance scoring::
-
-                {
-                    "target_role":    str,
-                    "target_domains": list[str],
-                    "primary_domains": list[str],   # from role_analysis.key_domains
-                }
-
-            When *None*, role_relevance is 0 for every skill (pure
-            delta-based ranking, backward compatible).
-        skill_importance : dict[str, str] | None
-            Optional mapping of ``{skill_id: "high"|"medium"|"low"}``
-            from the JD parser's importance ratings.  Used to compute
-            a criticality score so that "must have" skills outrank
-            "nice to have" skills even when deltas are equal.
-
-        Returns
-        -------
-        list[dict]
-            Each entry contains::
-
-                {
-                    "skill_id":        str,
-                    "skill_name":      str,
-                    "domain":          str,
-                    "current_level":   int,
-                    "required_level":  int,
-                    "delta":           int,
-                    "skill_level":     int,
-                    "prerequisites":   list[str],
-                    "role_relevance":  int,          # 0, 1, or 2
-                    "criticality":     int,          # 0, 1, or 3
-                    "priority_score":  float,
-                }
-
-            Sorted by *priority_score* descending.  Ties are broken by
-            *skill_id* ascending for deterministic output.
-
-        Raises
-        ------
-        ValueError
-            If any skill ID in *state_a* or *state_b* is not found in the
-            ontology.
+        state_a : current skill levels {skill_id: level}
+        state_b : target skill levels {skill_id: level}
+        role_context : role hint for relevance scoring
+        skill_importance : JD parser importance ratings {skill_id: "high"|"medium"|"low"}
+        skill_rank : JD parser rank order {skill_id: rank_int}
+        learner_profile : full learner profile dict for career-based momentum
         """
         self._validate_skill_ids(state_a, label="state_a")
         self._validate_skill_ids(state_b, label="state_b")
@@ -134,17 +362,19 @@ class SkillGapEngine:
             target_domains = set(role_context.get("target_domains") or [])
             primary_domains = set(role_context.get("primary_domains") or [])
 
-        _IMPORTANCE_TO_CRITICALITY = {"critical": 5, "high": 3, "medium": 1, "low": 0}
+        # Extract career signals once for all skills
+        learner_signals: set[str] = set()
+        ai_exposure = "Basic"
+        exp_years = 0
+        if learner_profile:
+            learner_signals = _extract_capability_signals(learner_profile)
+            ai_exposure = learner_profile.get("ai_exposure_level") or "Basic"
+            exp_years = learner_profile.get("experience_years") or 0
 
-        # Professional floor: any working professional (L2+ in anything)
-        # is at least Aware (L1) of all skills.  Prevents L0 display.
+        # Professional/domain floors
         max_skill = max(state_a.values()) if state_a else 0
         professional_floor = 1 if max_skill >= 2 else 0
 
-        # Domain floor: if a learner has ANY skill in a domain, other
-        # skills in that domain start at max(1, domain_max - 1).
-        # A data analyst with SQL at L3 (D.PRQ) starts other D.PRQ
-        # skills at L2 — she can "apply with help" in her own domain.
         domain_max: dict[str, int] = {}
         for sid, level in state_a.items():
             skill_info = self._ontology.get_skill(sid)
@@ -156,17 +386,10 @@ class SkillGapEngine:
 
         for skill_id, required_level in state_b.items():
             skill = self._ontology.get_skill(skill_id)
-            # skill is guaranteed non-None after validation
 
-            # Domain floor: known domains get a boost
             dm = domain_max.get(skill["domain"], 0)
             domain_floor = max(1, dm - 1) if dm > 0 else 0
 
-            # Skill-level floor: experienced professionals (L3+
-            # anywhere) start at L2 for intermediate+ skills
-            # (ontology level 3+).  A 6-year analyst isn't just
-            # "aware" of A/B testing — she's worked adjacent to it.
-            # But for foundational skills (level 1-2) she's just L1.
             if max_skill >= 3 and skill["level"] >= 3:
                 skill_floor = 2
             else:
@@ -180,9 +403,7 @@ class SkillGapEngine:
             if delta <= 0:
                 continue
 
-            # Graduated role relevance: primary domains (from
-            # role_analysis.key_domains) score 2, broader target
-            # domains score 1, everything else 0.
+            # Role relevance
             if skill["domain"] in primary_domains:
                 role_relevance = 2
             elif skill["domain"] in target_domains:
@@ -190,46 +411,44 @@ class SkillGapEngine:
             else:
                 role_relevance = 0
 
-            # ── 5-Factor Rubric Scoring (matches Luda's prioritization rubric) ──
-            # Each factor scored 1-3, then weighted:
-            # Priority = (Importance x 4) + (Breadth x 3) + (Momentum x 3) + (Connectivity x 2) + (Career Signal x 2)
+            # ── 5-Factor Rubric ──
 
-            # 1. IMPORTANCE (x4): How critical for the target role?
-            #    Based on JD parser's importance rating
+            # 1. IMPORTANCE (x4)
             imp_rating = (skill_importance or {}).get(skill_id, "medium")
             importance_score = {"critical": 3, "high": 3, "medium": 2, "low": 1}.get(imp_rating, 2)
 
-            # 2. BREADTH (x3): How many scenarios does this skill apply to?
-            #    Foundation/prompting skills are broad (used daily), niche skills are narrow
+            # 2. BREADTH (x3)
             domain = skill["domain"]
-            breadth_score = 3 if domain in ("D.PRM", "D.FND", "D.CTIC") else (2 if domain in ("D.EVL", "D.GOV", "D.COM") else 1)
+            breadth_score = (
+                3 if domain in ("D.PRM", "D.FND", "D.CTIC")
+                else 2 if domain in ("D.EVL", "D.GOV", "D.COM")
+                else 1
+            )
 
-            # 3. MOMENTUM (x3): How quickly can THIS LEARNER realistically improve?
-            #    High = learner has transferable skills from their background to build on
-            #    Low = starting from scratch, long ramp-up needed
-            #    This is about the LEARNER's existing foundation, not the gap size
-            if current_level >= 2:
-                momentum_score = 3  # Strong existing foundation
-            elif domain_floor >= 2:
-                momentum_score = 3  # Strong in this domain already
-            elif current_level == 1 or domain_floor >= 1:
-                momentum_score = 2  # Some related experience
-            else:
-                momentum_score = 1  # Starting from scratch
+            # 3. MOMENTUM (x3) - career-based learning ROI
+            momentum_score = _compute_momentum_score(
+                skill_id, domain, learner_signals,
+                ai_exposure, exp_years,
+                current_level, domain_floor,
+            )
 
-            # 4. CONNECTIVITY (x2): How much does this skill enable other skills?
-            #    Count dependents in the ontology
+            # 4. CONNECTIVITY (x2)
             dependents = self._ontology.get_skill_dependents(skill_id)
-            connectivity_score = 3 if len(dependents) >= 3 else (2 if len(dependents) >= 1 else 1)
+            connectivity_score = (
+                3 if len(dependents) >= 3
+                else 2 if len(dependents) >= 1
+                else 1
+            )
 
-            # 5. CAREER SIGNAL (x2): How visible is this skill to hiring managers?
-            #    Explicitly mentioned in JD (high importance) = high signal
-            career_score = 3 if imp_rating in ("critical", "high") else (2 if imp_rating == "medium" else 1)
-            # Skills in primary domains get a boost
+            # 5. CAREER SIGNAL (x2)
+            career_score = (
+                3 if imp_rating in ("critical", "high")
+                else 2 if imp_rating == "medium"
+                else 1
+            )
             if skill["domain"] in primary_domains:
                 career_score = min(3, career_score + 1)
 
-            # Compute total rubric score
             priority_score = (
                 (importance_score * 4)
                 + (breadth_score * 3)
@@ -238,45 +457,50 @@ class SkillGapEngine:
                 + (career_score * 2)
             )
 
-            gaps.append(
-                {
-                    "skill_id": skill_id,
-                    "skill_name": skill["name"],
-                    "domain": skill["domain"],
-                    "current_level": current_level,
-                    "required_level": required_level,
-                    "delta": delta,
-                    "skill_level": skill["level"],
-                    "prerequisites": skill.get("prerequisites", []),
-                    "role_relevance": role_relevance,
-                    "priority_score": priority_score,
-                    "rubric_scores": {
-                        "importance": importance_score,
-                        "breadth": breadth_score,
-                        "momentum": momentum_score,
-                        "connectivity": connectivity_score,
-                        "career_signal": career_score,
-                    },
-                }
-            )
+            gaps.append({
+                "skill_id": skill_id,
+                "skill_name": skill["name"],
+                "domain": skill["domain"],
+                "current_level": current_level,
+                "required_level": required_level,
+                "delta": delta,
+                "skill_level": skill["level"],
+                "prerequisites": skill.get("prerequisites", []),
+                "role_relevance": role_relevance,
+                "priority_score": priority_score,
+                "rubric_scores": {
+                    "importance": importance_score,
+                    "breadth": breadth_score,
+                    "momentum": momentum_score,
+                    "connectivity": connectivity_score,
+                    "career_signal": career_score,
+                },
+            })
 
-        # Sort by: (1) JD parser rank (lower = higher priority), then
-        # (2) rubric priority_score as tiebreaker
-        # skill_rank maps skill_id -> rank (1 = most important)
-        max_rank = len(state_b) + 1
+        # Sort by priority_score descending (deterministic, no LLM variance)
         gaps.sort(
-            key=lambda g: (
-                -(skill_rank or {}).get(g["skill_id"], max_rank),  # negative rank so rank 1 sorts first
-                g["priority_score"],
-            ),
+            key=lambda g: (g["priority_score"], g["skill_id"]),
             reverse=True,
         )
 
-        return gaps
+        # Apply diversity rule: max 2 skills per domain in the top 5
+        # If a domain already has 2 skills in the top positions, push
+        # additional skills from that domain down
+        if len(gaps) > 5:
+            diversified: list[dict[str, Any]] = []
+            domain_count: dict[str, int] = {}
+            deferred: list[dict[str, Any]] = []
+            for g in gaps:
+                d = g["domain"]
+                if domain_count.get(d, 0) < 2 or len(diversified) >= 5:
+                    diversified.append(g)
+                    domain_count[d] = domain_count.get(d, 0) + 1
+                else:
+                    deferred.append(g)
+            # Re-insert deferred skills after the diversified top
+            gaps = diversified + deferred
 
-    # ------------------------------------------------------------------
-    # Internals
-    # ------------------------------------------------------------------
+        return gaps
 
     def _validate_skill_ids(
         self,
@@ -284,7 +508,7 @@ class SkillGapEngine:
         *,
         label: str,
     ) -> None:
-        """Raise ``ValueError`` listing every unknown skill ID in *profile*."""
+        """Raise ValueError listing every unknown skill ID in profile."""
         unknown = [
             sid for sid in profile if self._ontology.get_skill(sid) is None
         ]

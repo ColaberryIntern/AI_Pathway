@@ -350,6 +350,7 @@ parse job descriptions, identify skill gaps, and generate personalized learning 
                 valid_state_a, valid_state_b, role_context=role_context,
                 skill_importance=skill_importance,
                 skill_rank=skill_rank,
+                learner_profile=profile_data,
             )
             results["steps"].append({
                 "step": "deterministic_scaffold", "status": "completed",

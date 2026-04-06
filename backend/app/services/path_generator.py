@@ -152,6 +152,7 @@ class LearningPathGenerator:
             expanded_a, state_b, role_context,
             skill_importance=skill_importance,
             skill_rank=skill_rank,
+            learner_profile=learner_profile,
         )
 
         # ==============================================================
