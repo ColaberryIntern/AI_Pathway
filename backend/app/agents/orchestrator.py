@@ -363,6 +363,9 @@ parse job descriptions, identify skill gaps, and generate personalized learning 
             # NOTE: scaffold chapters use "primary_skill_id" / "primary_skill_name"
             # (from LearningPathGenerator._build_chapter), not "skill_id".
             scaffold_chapters = scaffold_result.get("chapters", [])
+            logger.info("Scaffold produced %d chapters: %s",
+                        len(scaffold_chapters),
+                        [ch.get("primary_skill_id", ch.get("skill_id", "?")) for ch in scaffold_chapters])
             if scaffold_chapters:
                 # Build aligned gaps list from scaffold chapters
                 aligned_gaps = []
