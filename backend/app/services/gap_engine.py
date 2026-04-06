@@ -413,24 +413,27 @@ class SkillGapEngine:
 
             # ── 5-Factor Rubric ──
 
-            # 1. IMPORTANCE (x4)
-            # Skills not in skill_importance (e.g., mandatory-injected) default to "low"
-            imp_rating = (skill_importance or {}).get(skill_id, "low")
-            importance_score = {"critical": 3, "high": 3, "medium": 2, "low": 1}.get(imp_rating, 1)
-
-            # 2. BREADTH (x3)
+            # 3. MOMENTUM (x3) - compute FIRST so it can influence importance
             domain = skill["domain"]
-            breadth_score = (
-                3 if domain in ("D.PRM", "D.FND", "D.CTIC")
-                else 2 if domain in ("D.EVL", "D.GOV", "D.COM")
-                else 1
-            )
-
-            # 3. MOMENTUM (x3) - career-based learning ROI
             momentum_score = _compute_momentum_score(
                 skill_id, domain, learner_signals,
                 ai_exposure, exp_years,
                 current_level, domain_floor,
+            )
+
+            # 1. IMPORTANCE (x4)
+            imp_rating = (skill_importance or {}).get(skill_id, "low")
+            importance_score = {"critical": 3, "high": 3, "medium": 2, "low": 1}.get(imp_rating, 1)
+            # If learner already has this skill (momentum=1), cap importance
+            # so it doesn't dominate over genuine gaps
+            if momentum_score == 1:
+                importance_score = min(importance_score, 2)
+
+            # 2. BREADTH (x3)
+            breadth_score = (
+                3 if domain in ("D.PRM", "D.FND", "D.CTIC")
+                else 2 if domain in ("D.EVL", "D.GOV", "D.COM")
+                else 1
             )
 
             # 4. CONNECTIVITY (x2)
