@@ -164,21 +164,24 @@ class LearningPathGenerator:
         primary_candidates: list[dict[str, Any]] = gaps[:MAX_CHAPTERS]
 
         # ==============================================================
-        # Phase 2 — Prerequisite resolution with back-pressure
+        # Phase 2 — Skip prerequisite injection
         # ==============================================================
-        planned: list[dict[str, Any]] = self._resolve_with_backpressure(
-            primary_candidates, expanded_a,
-        )
+        # Prerequisites were consuming chapter slots and displacing
+        # rubric-ranked skills. The top 5 from the gap engine should
+        # be the 5 chapters directly.
+        planned = primary_candidates
 
         # ==============================================================
-        # Phase 3 — Domain diversity enforcement
+        # Phase 3 — Domain diversity (handled by gap engine now)
         # ==============================================================
-        planned = self._enforce_domain_diversity(planned, gaps, expanded_a)
 
         # ==============================================================
-        # Build chapter list — prereqs before their dependents
+        # Build chapter list directly from planned skills
         # ==============================================================
-        chapters = self._build_ordered_chapters(planned, expanded_a)
+        chapters = [
+            self._build_chapter(skill, i + 1, expanded_a)
+            for i, skill in enumerate(planned)
+        ]
 
         # ==============================================================
         # Phase 4 — Mandatory category enforcement (DISABLED)
