@@ -118,10 +118,12 @@ DOMAIN_CAREER_SIGNALS: dict[str, set[str]] = {
     },
     "D.FND": {
         "machine learning", "data science", "artificial intelligence",
-        "ai", "ml", "deep learning", "neural network", "nlp",
+        "ml", "deep learning", "neural network", "nlp",
         "natural language processing", "computer science",
-        "statistics", "statistical", "analytics", "data analysis",
-        "python", "tensorflow", "pytorch",
+        "statistics", "statistical", "data analysis",
+        "tensorflow", "pytorch",
+        # Note: "ai" excluded (too generic - tool users have it but lack foundation knowledge)
+        # Note: "analytics" excluded (business analytics != AI fundamentals)
     },
     "D.PRM": {
         "prompt engineering", "prompting", "prompt",
@@ -188,22 +190,22 @@ DOMAIN_CAREER_SIGNALS: dict[str, set[str]] = {
 # Skill-specific overrides for high-specificity skills
 SKILL_CAREER_SIGNALS: dict[str, set[str]] = {
     "SK.CTIC.006": {  # Recognizing AI-generated content
-        "editorial", "editor", "content review",
-        "fact-checking", "journalism",
+        "editorial", "editor", "editing", "content review",
+        "fact-checking", "journalism", "communications",
     },
     "SK.CTIC.004": {  # Understanding bias in content
-        "editorial", "editor", "journalism", "bias",
+        "editorial", "editor", "editing", "journalism", "bias",
         "diversity", "inclusion", "equity",
-        "content review", "sensitivity",
+        "content review", "sensitivity", "communications",
     },
     "SK.FND.021": {  # IP/copyright awareness
-        "publishing", "publisher", "editorial",
+        "publishing", "publisher", "editorial", "editor",
         "copyright", "intellectual property", "licensing",
         "media", "content rights", "random house",
     },
     "SK.PRM.021": {  # Grounding & citations
         "journalism", "journalist", "research",
-        "academic", "editorial", "fact-checking",
+        "academic", "editorial", "editor", "fact-checking",
         "citations", "source", "newsletter",
     },
     "SK.PRM.003": {  # Prompt debugging & iteration
@@ -314,9 +316,11 @@ def _compute_momentum_score(
             base = 3  # No overlap -> HIGH momentum
 
         # AI-specific boost: even with career transfer, AI application is new
+        # But only if the career overlap is weak (1 match). 2+ matches means
+        # the learner has genuine transferable experience in this skill area.
         if base == 1 and skill_domain in AI_SPECIFIC_DOMAINS:
             ai_is_new = ai_exposure_level in ("None", "Basic", "")
-            if ai_is_new:
+            if ai_is_new and match_count < 2:
                 base = 2  # Career transfer exists but AI is novel
 
         return base
