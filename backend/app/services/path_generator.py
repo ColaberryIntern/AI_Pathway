@@ -71,6 +71,7 @@ class LearningPathGenerator:
         role_context: dict[str, Any] | None = None,
         skill_importance: dict[str, str] | None = None,
         skill_rank: dict[str, int] | None = None,
+        learner_profile: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """Generate a learning path of up to 5 chapters.
 
