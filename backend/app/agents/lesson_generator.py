@@ -72,10 +72,14 @@ Each lesson must include these sections:
    the task with what you provide, the task is broken.
 
 6. REFLECTION_QUESTIONS — 3-4 questions that force metacognition about AI usage.
-   Each question MUST reference the specific implementation task from section 5.
-   Do NOT ask generic metacognition questions unrelated to this lesson's content.
-   Ask about: How did your prompt evolve during THIS task? What did AI get wrong
-   on THIS specific deliverable? What would you NOT delegate to AI for THIS use case?
+   CRITICAL: Each question MUST mention the SPECIFIC task the learner just completed
+   by name. Do NOT use generic phrasing like "How did your prompt evolve?" or
+   "What did AI get wrong?" — instead say "When you built the [specific deliverable],
+   how did your prompt evolve?" or "In your [specific task name], what did AI get wrong?"
+   The learner should immediately recognize which exercise the question refers to.
+   BAD: "How did your prompt evolve during the task?"
+   GOOD: "When you created the stakeholder analysis report, how did your prompt evolve
+   from your first attempt to your final version? What specific changes improved the output?"
    Each question's prompt_for_deeper_thinking MUST be a detailed, context-rich prompt
    (at least 30 words) that references the specific skill, lesson topic, and a concrete
    scenario. Example: "Ask the AI: 'As a data analyst working with sales data, explain
@@ -87,12 +91,13 @@ Each lesson must include these sections:
    AI_STRATEGY sections above. Do NOT ask about topics, tools, frameworks, or concepts
    not explicitly covered in this lesson. If you taught about stakeholder identification,
    only ask about stakeholder identification — not about legal compliance or other topics.
+   Do NOT reference regulations (HIPAA, GDPR, SOX, PCI, etc.) unless the lesson
+   specifically teaches about those regulations. Do NOT test industry-specific compliance
+   knowledge unless it was explicitly covered in the concept snapshot.
    Each question's ai_followup_prompt MUST be a detailed, self-contained question
    (at least 30 words) that gives the AI Mentor enough context to provide targeted help.
    Include: the specific concept being tested, what the learner should explore, and a
-   concrete angle or constraint. Example: "Explain why choosing an open-source AI model
-   for healthcare data analysis requires different compliance considerations than a
-   proprietary model, covering HIPAA, data residency, and audit trail requirements."
+   concrete angle or constraint.
 
 8. EXPLANATION — A brief summary (2-3 paragraphs) for reference. This is secondary
    to the concept snapshot — keep it concise.
@@ -109,6 +114,7 @@ RULES:
 - For concept lessons: emphasize concept_snapshot, ai_strategy, knowledge_checks.
 - For practice lessons: emphasize prompt_template, code_examples, implementation_task.
 - For assessment lessons: emphasize knowledge_checks and a comprehensive implementation_task.
+- Implementation task estimated_minutes MUST be between 10 and 60 minutes. Never exceed 60.
 - If any exercise, code example, or implementation task references input files (CSV, JSON, Excel, etc.),
   you MUST generate realistic sample data INLINE as a formatted table, JSON block, or CSV block within
   the lesson content. NEVER reference files the learner does not have access to. The learner should be
