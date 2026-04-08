@@ -226,6 +226,12 @@ SKILL_CAREER_SIGNALS: dict[str, set[str]] = {
         "metrics", "kpi", "evaluation",
         "benchmarking", "a/b testing",
     },
+    "SK.FND.022": {  # Bias & fairness basics
+        "editorial", "editor", "editing", "journalism",
+        "bias", "fairness", "diversity", "inclusion", "equity",
+        "content review", "sensitivity", "communications",
+        # Editorial professionals have inherent bias-detection instincts
+    },
     "SK.FND.002": {  # Capabilities vs limitations (hallucinations)
         "machine learning", "data science", "ai research",
         "model training", "neural network",
