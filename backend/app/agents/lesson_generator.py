@@ -58,6 +58,19 @@ Each lesson must include these sections:
    terminal output showing expected results. Do NOT just ask for "a script" — ask for the
    script AND a screenshot proving it ran correctly.
 
+   CRITICAL - DATA AND FILES:
+   If the task requires ANY input data (CSV, JSON, logs, patient records, transaction data,
+   etc.), you MUST do ONE of the following:
+   a) Include the complete sample data INLINE in the task description as a formatted table,
+      CSV block, or JSON block. The learner should be able to copy-paste it directly.
+   b) Provide an exact prompt the learner can paste into ChatGPT/Claude to GENERATE the
+      sample data themselves. Write the prompt for them - do not assume they know how.
+   c) Use only data the learner can create themselves in 2 minutes (e.g., "Open a new
+      Google Sheet and enter 10 rows of...").
+   NEVER say "use a dataset" or "access logs" without providing them. The learner has
+   NOTHING except this lesson, a web browser, and free AI tools. If they cannot complete
+   the task with what you provide, the task is broken.
+
 6. REFLECTION_QUESTIONS — 3-4 questions that force metacognition about AI usage.
    Each question MUST reference the specific implementation task from section 5.
    Do NOT ask generic metacognition questions unrelated to this lesson's content.
