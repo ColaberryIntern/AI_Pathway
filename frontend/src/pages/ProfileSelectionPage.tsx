@@ -49,7 +49,7 @@ export default function ProfileSelectionPage() {
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Your Profiles</h1>
           <p className="text-gray-600 mt-1">
-            Create and manage learner profiles. Each profile tracks skills, learning paths, and progress.
+            Create profiles for different career goals. Each profile tracks skills, learning paths, and progress.
           </p>
         </div>
         <button
@@ -459,7 +459,7 @@ function CreateProfileForm({
           <div>
             <h2 className="text-xl font-bold text-gray-900">Create New Profile</h2>
             <p className="text-sm text-gray-500">
-              Upload a resume or fill in manually, then paste the target job description.
+              Upload your LinkedIn profile PDF and paste the target job description.
             </p>
           </div>
         </div>

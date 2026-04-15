@@ -80,7 +80,7 @@ export default function TargetGoalPanel({
           {detectedRole && (
             <div className="flex items-center gap-2 text-sm">
               <CheckCircle className="h-4 w-4 text-emerald-500 flex-shrink-0" />
-              <span className="text-gray-600">Detected role:</span>
+              <span className="text-gray-600">Targeted role:</span>
               <span className="font-semibold text-gray-900">{detectedRole}</span>
             </div>
           )}

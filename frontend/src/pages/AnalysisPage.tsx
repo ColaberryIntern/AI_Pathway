@@ -156,7 +156,7 @@ export default function AnalysisPage() {
       // Delay showing results to ensure minimum visualization time
       setTimeout(() => {
         setResult(data)
-        setStep('results_review')
+        setStep('complete')
       }, remainingTime)
     },
     onError: () => {
@@ -212,7 +212,7 @@ export default function AnalysisPage() {
           // First 5 are default selected
           setSelectedSkillIds(allSkills.slice(0, 5).map(s => (s.skill_id as string) || ''))
         }
-        setStep('results_review')
+        setStep('complete')
       })
       .catch(async () => {
         // No saved results — parse JD skills and show skill selection + self-assessment
@@ -812,80 +812,105 @@ export default function AnalysisPage() {
     )
   }
 
-  if (step === 'skill_selection') {
+  // Combined skill_selection + self_assessment (Pages 3+4 merged)
+  if (step === 'skill_selection' || step === 'self_assessment') {
+    const selectedSkills = parsedSkills.filter(s => selectedSkillIds.includes(s.skill_id))
+    const allAssessed = selectedSkills.every(s => selfAssessedSkills[s.skill_id] !== undefined)
+
+    // Check which skills already meet target level
+    const skillsAtTarget = selectedSkills.filter(s => {
+      const assessed = selfAssessedSkills[s.skill_id]
+      return assessed !== undefined && assessed >= s.required_level
+    })
+    const skillsNeedingWork = selectedSkills.filter(s => {
+      const assessed = selfAssessedSkills[s.skill_id]
+      return assessed === undefined || assessed < s.required_level
+    })
+
     return (
       <div className="max-w-4xl mx-auto space-y-6">
         <div className="text-center">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Select Top 5 Skills
+            Top {Math.min(parsedSkills.length, 5)} Skills for the Targeted Role
           </h1>
           <p className="text-gray-600">
             We identified {parsedSkills.length} key skills from the job description.
-            Select the <strong>5 most important</strong> ones for this role.
+            {detectedRole && <> Targeted role: <strong>{detectedRole}</strong>.</>}
+            {' '}Please rate your current proficiency for each skill.
           </p>
-          {detectedRole && (
-            <p className="text-sm text-primary-700 mt-1">
-              Detected role: <strong>{detectedRole}</strong>
-            </p>
-          )}
         </div>
 
+        {/* Skill cards with inline self-assessment */}
         <div className="space-y-3">
           {parsedSkills.map((skill) => {
             const isSelected = selectedSkillIds.includes(skill.skill_id)
             const canSelect = selectedSkillIds.length < 5 || isSelected
 
             return (
-              <div
-                key={skill.skill_id}
-                onClick={() => {
-                  if (isSelected) {
-                    setSelectedSkillIds(prev => prev.filter(id => id !== skill.skill_id))
-                  } else if (canSelect) {
-                    setSelectedSkillIds(prev => [...prev, skill.skill_id])
-                  }
-                }}
-                className={`card cursor-pointer transition-all duration-150 border-2 ${
-                  isSelected
-                    ? 'border-primary-400 bg-primary-50 shadow-md'
-                    : canSelect
-                      ? 'border-gray-200 bg-white hover:border-gray-300'
-                      : 'border-gray-100 bg-gray-50 opacity-60 cursor-not-allowed'
-                }`}
-              >
-                <div className="flex items-start gap-3">
-                  {/* Checkbox */}
-                  <div className={`mt-0.5 w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 ${
-                    isSelected ? 'bg-primary-500 border-primary-500' : 'border-gray-300'
-                  }`}>
-                    {isSelected && (
-                      <CheckCircle className="h-4 w-4 text-white" />
-                    )}
-                  </div>
-
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xs font-mono text-gray-400">#{skill.rank}</span>
-                      <h3 className="font-semibold text-gray-900">{skill.skill_name}</h3>
-                      <span className="text-xs bg-primary-50 text-primary-700 px-2 py-0.5 rounded-full border border-primary-200">
-                        {skill.domain_label}
-                      </span>
-                      {skill.importance === 'high' && (
-                        <span className="text-xs bg-red-50 text-red-700 px-2 py-0.5 rounded-full border border-red-200">
-                          Critical
-                        </span>
-                      )}
+              <div key={skill.skill_id} className="space-y-0">
+                <div
+                  onClick={() => {
+                    if (isSelected) {
+                      setSelectedSkillIds(prev => prev.filter(id => id !== skill.skill_id))
+                      setSelfAssessedSkills(prev => { const n = {...prev}; delete n[skill.skill_id]; return n })
+                    } else if (canSelect) {
+                      setSelectedSkillIds(prev => [...prev, skill.skill_id])
+                    }
+                  }}
+                  className={`card cursor-pointer transition-all duration-150 border-2 ${
+                    isSelected ? 'border-primary-400 bg-primary-50 shadow-md rounded-b-none' : canSelect ? 'border-gray-200 bg-white hover:border-gray-300' : 'border-gray-100 bg-gray-50 opacity-60 cursor-not-allowed'
+                  }`}
+                >
+                  <div className="flex items-start gap-3">
+                    <div className={`mt-0.5 w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 ${
+                      isSelected ? 'bg-primary-500 border-primary-500' : 'border-gray-300'
+                    }`}>
+                      {isSelected && <CheckCircle className="h-4 w-4 text-white" />}
                     </div>
-                    <p className="text-sm text-gray-500 line-clamp-2">{skill.rationale}</p>
-                    <div className="mt-1 text-xs text-gray-400">
-                      Required: Level {skill.required_level}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-xs font-mono text-gray-400">#{skill.rank}</span>
+                        <h3 className="font-semibold text-gray-900">{skill.skill_name}</h3>
+                        <span className="text-xs bg-primary-50 text-primary-700 px-2 py-0.5 rounded-full border border-primary-200">{skill.domain_label}</span>
+                      </div>
+                      <p className="text-sm text-gray-500 line-clamp-2">{skill.rationale}</p>
+                      <div className="mt-1 text-xs text-gray-400">Target: Level {skill.required_level}</div>
                     </div>
                   </div>
                 </div>
+
+                {/* Inline self-assessment for selected skills */}
+                {isSelected && (
+                  <div className="border-2 border-t-0 border-primary-400 bg-white rounded-b-lg p-4">
+                    <SelfAssessment
+                      skills={[skill]}
+                      assessments={selfAssessedSkills}
+                      onAssess={(skillId, level) => {
+                        setSelfAssessedSkills(prev => ({ ...prev, [skillId]: level }))
+                      }}
+                    />
+                  </div>
+                )}
               </div>
             )
           })}
         </div>
+
+        {/* Skills at target level message */}
+        {skillsAtTarget.length > 0 && allAssessed && (
+          <div className="card bg-emerald-50 border-emerald-200">
+            <p className="text-emerald-800">
+              Since {skillsAtTarget.length} skill{skillsAtTarget.length > 1 ? 's' : ''} match{skillsAtTarget.length === 1 ? 'es' : ''} your targeted level,
+              we will proceed with the remaining {skillsNeedingWork.length} skill{skillsNeedingWork.length !== 1 ? 's' : ''}.
+              {' '}<button
+                onClick={() => {/* Keep all - no action needed, they stay selected */}}
+                className="text-emerald-700 underline font-medium"
+              >
+                Click here to keep all skills in your path.
+              </button>
+            </p>
+          </div>
+        )}
 
         <div className="flex items-center justify-between">
           <button
@@ -895,58 +920,16 @@ export default function AnalysisPage() {
             Back
           </button>
           <div className="text-sm text-gray-500">
-            {selectedSkillIds.length}/5 selected
-          </div>
-          <button
-            onClick={() => {
-              setSelfAssessedSkills({})
-              setStep('self_assessment')
-            }}
-            disabled={selectedSkillIds.length === 0}
-            className={`btn flex items-center gap-2 ${
-              selectedSkillIds.length > 0 ? 'btn-primary' : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-            }`}
-          >
-            Continue to Self-Assessment
-            <ArrowRight className="h-4 w-4" />
-          </button>
-        </div>
-      </div>
-    )
-  }
-
-  if (step === 'self_assessment') {
-    const selectedSkills = parsedSkills.filter(s => selectedSkillIds.includes(s.skill_id))
-    const allAssessed = selectedSkills.every(s => selfAssessedSkills[s.skill_id] !== undefined)
-
-    return (
-      <div className="max-w-3xl mx-auto space-y-6">
-        <SelfAssessment
-          skills={selectedSkills}
-          assessments={selfAssessedSkills}
-          onAssess={(skillId, level) => {
-            setSelfAssessedSkills(prev => ({ ...prev, [skillId]: level }))
-          }}
-        />
-
-        <div className="flex items-center justify-between">
-          <button
-            onClick={() => setStep('skill_selection')}
-            className="btn bg-gray-100 text-gray-700 hover:bg-gray-200"
-          >
-            Back
-          </button>
-          <div className="text-sm text-gray-500">
-            {Object.keys(selfAssessedSkills).length}/{selectedSkills.length} assessed
+            {selectedSkillIds.length}/5 selected | {Object.keys(selfAssessedSkills).length}/{selectedSkillIds.length} assessed
           </div>
           <button
             onClick={handleStartAnalysis}
-            disabled={!allAssessed}
+            disabled={selectedSkillIds.length === 0 || !allAssessed}
             className={`btn flex items-center gap-2 text-lg px-6 py-3 ${
-              allAssessed ? 'btn-primary' : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+              selectedSkillIds.length > 0 && allAssessed ? 'btn-primary' : 'bg-gray-300 text-gray-500 cursor-not-allowed'
             }`}
           >
-            Run Full Analysis
+            Generate Learning Path
             <ArrowRight className="h-5 w-5" />
           </button>
         </div>
@@ -961,7 +944,7 @@ export default function AnalysisPage() {
           {/* Header */}
           <div className="text-center space-y-2">
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
-              Analyzing Your Profile
+              Generating Your Learning Path
             </h1>
             <p className="text-gray-600">
               Our AI agents are exploring the skills ontology to create your personalized learning path
