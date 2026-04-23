@@ -160,8 +160,9 @@ class ChapterGeneratorAgent(BaseAgent):
 
         # Handle "objectives" at top level (should be inside scenario)
         if "objectives" in chapter_spec and "scenario" in chapter_spec:
-            if "objectives" not in chapter_spec["scenario"]:
-                chapter_spec["scenario"]["objectives"] = chapter_spec.pop("objectives")
+            scenario = chapter_spec["scenario"]
+            if isinstance(scenario, dict) and "objectives" not in scenario:
+                scenario["objectives"] = chapter_spec.pop("objectives")
             else:
                 chapter_spec.pop("objectives", None)
 
