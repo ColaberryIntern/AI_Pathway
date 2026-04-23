@@ -20,6 +20,14 @@ import ConfusionRecoveryDrawer from '../components/learning/ConfusionRecoveryDra
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function ChapterFormatView({ content, pathId, navigate, completeMutation }: { content: any; pathId: string; navigate: (path: string) => void; completeMutation: any }) {
+  const handleComplete = () => {
+    completeMutation.mutate(undefined, {
+      onSuccess: () => {
+        navigate(`/learn/${pathId}`)
+      },
+    })
+  }
+
   return (
     <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
       <div className="flex items-center gap-2 text-sm">
@@ -31,12 +39,19 @@ function ChapterFormatView({ content, pathId, navigate, completeMutation }: { co
         </button>
       </div>
       <ChapterRenderer chapter={content} />
-      <div className="flex justify-center pt-4">
+      <div className="flex justify-center gap-4 pt-4">
         <button
-          onClick={() => completeMutation.mutate()}
+          onClick={() => navigate(`/learn/${pathId}`)}
+          className="btn bg-gray-100 text-gray-700 hover:bg-gray-200"
+        >
+          Back to Dashboard
+        </button>
+        <button
+          onClick={handleComplete}
+          disabled={completeMutation.isPending}
           className="btn btn-primary flex items-center gap-2"
         >
-          Mark as Complete
+          {completeMutation.isPending ? 'Completing...' : 'Mark Chapter Complete'}
         </button>
       </div>
     </div>
