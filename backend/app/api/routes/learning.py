@@ -408,9 +408,13 @@ async def get_modules(
 def _has_substance(content: dict) -> bool:
     """Check that cached lesson content has actual educational material."""
     return bool(
+        # Legacy lesson format
         content.get("concept_snapshot")
         or content.get("explanation")
         or content.get("knowledge_checks")
+        # Vivek's chapter format
+        or content.get("scenario")
+        or content.get("meta")
     )
 
 

@@ -100,6 +100,7 @@ class ChapterGeneratorAgent(BaseAgent):
 
         # _call_llm returns content string directly
         content_text = response if isinstance(response, str) else str(response)
+        logger.info("Chapter LLM response: type=%s, length=%d", type(response).__name__, len(content_text))
 
         # Try to extract JSON from fenced code block
         chapter_spec = None
@@ -139,7 +140,11 @@ class ChapterGeneratorAgent(BaseAgent):
                             break
 
         if not chapter_spec:
-            raise ValueError("Failed to extract ChapterSpec JSON from LLM response")
+            logger.error(
+                "Failed to extract ChapterSpec JSON. Response length: %d chars. First 500: %s",
+                len(content_text), content_text[:500]
+            )
+            raise ValueError(f"Failed to extract ChapterSpec JSON from LLM response ({len(content_text)} chars)")
 
         # Validate required sections
         required = ["meta", "scenario", "concepts", "example_1", "example_2", "agent_build"]
