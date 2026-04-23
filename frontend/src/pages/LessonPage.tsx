@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import ChapterRenderer from '../components/chapter/ChapterRenderer'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   ArrowLeft, Loader2, AlertCircle, CheckCircle2, ChevronRight,
@@ -16,6 +17,31 @@ import ImplementationTaskCard from '../components/learning/ImplementationTaskCar
 import ReflectionPrompts from '../components/learning/ReflectionPrompts'
 import LessonReactions from '../components/learning/LessonReactions'
 import ConfusionRecoveryDrawer from '../components/learning/ConfusionRecoveryDrawer'
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function ChapterFormatView({ content, pathId, navigate, completeMutation }: { content: any; pathId: string; navigate: (path: string) => void; completeMutation: any }) {
+  return (
+    <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
+      <div className="flex items-center gap-2 text-sm">
+        <button
+          onClick={() => navigate(`/learn/${pathId}`)}
+          className="flex items-center gap-1 text-gray-500 hover:text-indigo-600 transition-colors"
+        >
+          &larr; Back to Dashboard
+        </button>
+      </div>
+      <ChapterRenderer chapter={content} />
+      <div className="flex justify-center pt-4">
+        <button
+          onClick={() => completeMutation.mutate()}
+          className="btn btn-primary flex items-center gap-2"
+        >
+          Mark as Complete
+        </button>
+      </div>
+    </div>
+  )
+}
 
 export default function LessonPage() {
   const { pathId, lessonId } = useParams<{ pathId: string; lessonId: string }>()
@@ -155,10 +181,18 @@ export default function LessonPage() {
     content?.knowledge_checks?.length
   )
 
-  // Detect AI-native vs legacy content format
+  // Detect content format
   const isAINative = !!content?.concept_snapshot
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const contentAny = content as any
+  const isChapterFormat = !!contentAny?.scenario && !!contentAny?.meta  // Vivek's chapter format
 
   // Free completion — no gating on knowledge checks or implementation tasks
+
+  // Render Vivek's chapter format
+  if (isChapterFormat && contentAny) {
+    return <ChapterFormatView content={contentAny} pathId={pathId!} navigate={navigate} completeMutation={completeMutation} />
+  }
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">

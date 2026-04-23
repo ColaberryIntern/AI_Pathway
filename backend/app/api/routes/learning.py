@@ -151,25 +151,16 @@ async def activate_learning_path(
         if goal:
             learner_context["target_role"] = goal.target_role or ""
 
-    # 5. Generate lesson outlines for all chapters in parallel
-    outline_agent = ModuleOutlineAgent()
-    outline_tasks = [
-        outline_agent.execute({
-            "chapter": chapter,
-            "learner_context": learner_context,
-        })
-        for chapter in chapters
-    ]
-
-    logger.info("Generating lesson outlines for %d modules...", len(chapters))
-    outline_results = await asyncio.gather(*outline_tasks, return_exceptions=True)
-
-    # 6. Create Module + Lesson + SkillMastery records
+    # 5. Create Module + Lesson + SkillMastery records
+    # New format: 1 chapter = 1 lesson (15-minute interactive chapter)
+    # No multi-lesson outlines needed - content generated on demand
     all_modules = []
     all_lessons = []
     all_masteries = []
 
-    for i, (chapter, outline_result) in enumerate(zip(chapters, outline_results)):
+    logger.info("Creating %d modules (1 chapter per skill level)...", len(chapters))
+
+    for i, chapter in enumerate(chapters):
         chapter_num = chapter.get("chapter_number", i + 1)
         skill_id = chapter.get("skill_id", chapter.get("primary_skill_id", f"unknown_{i}"))
         skill_name = chapter.get("skill_name", chapter.get("primary_skill_name", "Unknown"))
@@ -177,20 +168,17 @@ async def activate_learning_path(
         current_level = chapter.get("current_level", 0)
         target_level = chapter.get("target_level", 1)
 
-        # Parse lesson outline (handle errors gracefully)
-        lesson_outline = []
-        if isinstance(outline_result, dict):
-            lesson_outline = outline_result.get("lessons", [])
-        else:
-            # LLM call failed — generate a minimal fallback outline
-            logger.warning("Outline generation failed for chapter %d: %s", chapter_num, outline_result)
-            lesson_outline = [
-                {"lesson_number": 1, "title": f"Introduction to {skill_name}", "type": "concept", "focus_area": "Core concepts", "estimated_minutes": 30},
-                {"lesson_number": 2, "title": f"Hands-On {skill_name}", "type": "practice", "focus_area": "Practical application", "estimated_minutes": 40},
-                {"lesson_number": 3, "title": f"{skill_name} Assessment", "type": "assessment", "focus_area": "Knowledge check", "estimated_minutes": 20},
-            ]
-
-        total_lessons = len(lesson_outline)
+        # Single lesson per module (15-minute chapter)
+        lesson_outline = [
+            {
+                "lesson_number": 1,
+                "title": f"{skill_name}: L{current_level} to L{target_level}",
+                "type": "chapter",
+                "focus_area": f"Level {current_level} to {target_level}",
+                "estimated_minutes": 15,
+            }
+        ]
+        total_lessons = 1
 
         # Create Module
         module = Module(
@@ -518,26 +506,38 @@ async def start_lesson(
     logger.info("Generating content for lesson '%s' (module: %s)...", lesson.title, module.title)
 
     try:
-        generator = LessonGeneratorAgent()
-        gen_result = await generator.execute({
-            "module": {
+        # Use ChapterGeneratorAgent for single-lesson modules (Vivek's format)
+        # Fall back to LessonGeneratorAgent for multi-lesson modules (legacy)
+        if module.total_lessons == 1:
+            from app.agents.chapter_generator import ChapterGeneratorAgent
+            generator = ChapterGeneratorAgent()
+            gen_result = await generator.execute({
                 "skill_id": module.skill_id,
-                "skill_name": module.skill_name,
-                "title": module.title,
                 "current_level": module.current_level,
                 "target_level": module.target_level,
-            },
-            "lesson_number": lesson.lesson_number,
-            "lesson_title": lesson.title,
-            "lesson_type": lesson.lesson_type,
-            "lesson_focus_area": focus_area,
-            "learner_context": learner_context,
-            "module_context": {
-                "total_lessons": module.total_lessons,
-                "lesson_outline": module.lesson_outline,
-                "preceding_lesson_titles": preceding_titles,
-            },
-        })
+                "learner_context": learner_context,
+            })
+        else:
+            generator = LessonGeneratorAgent()
+            gen_result = await generator.execute({
+                "module": {
+                    "skill_id": module.skill_id,
+                    "skill_name": module.skill_name,
+                    "title": module.title,
+                    "current_level": module.current_level,
+                    "target_level": module.target_level,
+                },
+                "lesson_number": lesson.lesson_number,
+                "lesson_title": lesson.title,
+                "lesson_type": lesson.lesson_type,
+                "lesson_focus_area": focus_area,
+                "learner_context": learner_context,
+                "module_context": {
+                    "total_lessons": module.total_lessons,
+                    "lesson_outline": module.lesson_outline,
+                    "preceding_lesson_titles": preceding_titles,
+                },
+            })
     except Exception as e:
         logger.error("Lesson generation failed (lesson_id=%s): %s", lesson.id, e)
         raise HTTPException(

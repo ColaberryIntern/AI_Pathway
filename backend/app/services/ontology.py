@@ -65,6 +65,42 @@ class OntologyService:
                 return domain
         return None
 
+    def get_skill_rubric(self, skill_id: str, level: int | None = None) -> list[str] | str | None:
+        """Get rubric descriptions for a skill.
+
+        If level is None, returns the full list of 6 rubric strings (L0-L5).
+        If level is specified (0-5), returns the single rubric string for that level.
+        """
+        skill = self.get_skill(skill_id)
+        if not skill:
+            return None
+        rubrics = skill.get("rubric_by_level", [])
+        if not rubrics:
+            return None
+        if level is not None:
+            if 0 <= level < len(rubrics):
+                return rubrics[level]
+            return None
+        return rubrics
+
+    def get_skill_for_chapter(self, skill_id: str) -> dict | None:
+        """Get skill data formatted for chapter generation input.
+
+        Returns the skill object with rubric_by_level included,
+        matching Vivek's chapter generator input contract.
+        """
+        skill = self.get_skill(skill_id)
+        if not skill:
+            return None
+        domain = self.get_domain(skill["domain"])
+        return {
+            "id": skill["id"],
+            "name": skill["name"],
+            "domain_id": skill["domain"],
+            "domain_name": domain["label"] if domain else skill["domain"],
+            "rubric_by_level": skill.get("rubric_by_level", []),
+        }
+
     def get_skill_prerequisites(self, skill_id: str) -> list[dict]:
         """Get prerequisite skills for a skill."""
         skill = self.get_skill(skill_id)
