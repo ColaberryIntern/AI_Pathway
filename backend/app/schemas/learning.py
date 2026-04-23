@@ -12,7 +12,7 @@ class LessonOutline(BaseModel):
     id: str | None = None  # lesson DB id, populated at dashboard time
     lesson_number: int
     title: str
-    type: Literal["concept", "practice", "assessment"]
+    type: Literal["concept", "practice", "assessment", "chapter"]
     focus_area: str
     estimated_minutes: int
 
