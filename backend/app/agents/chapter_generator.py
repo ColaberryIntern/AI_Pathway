@@ -96,11 +96,10 @@ class ChapterGeneratorAgent(BaseAgent):
         response = await self._call_llm(
             prompt=prompt,
             temperature=0.7,  # Creative content needs some temperature
-            max_tokens=16000,  # Chapters are large
         )
 
-        # Parse the response - extract JSON block from the response
-        content_text = response.content if hasattr(response, 'content') else str(response)
+        # _call_llm returns content string directly
+        content_text = response if isinstance(response, str) else str(response)
 
         # Try to extract JSON from fenced code block
         chapter_spec = None
