@@ -90,61 +90,131 @@ class ChapterGeneratorAgent(BaseAgent):
                 "technical_background": learner_ctx.get("technical_background", ""),
             }
 
-        # Call LLM with the chapter generator prompt
-        prompt = json.dumps(input_payload, indent=2)
+        # Call LLM with structured output schema
+        prompt = f"""Generate a 15-minute interactive chapter for this skill and level gap.
 
-        response = await self._call_llm(
-            prompt=prompt,
-            temperature=0.7,  # Creative content needs some temperature
-        )
+INPUT:
+{json.dumps(input_payload, indent=2)}
 
-        # _call_llm returns content string directly
-        content_text = response if isinstance(response, str) else str(response)
-        logger.info("Chapter LLM response: type=%s, length=%d", type(response).__name__, len(content_text))
+Generate the chapter content with these 5 sections:
+1. scenario (2 min): A realistic situation with A->B level progression, objectives
+2. concepts (3 min): 2-4 concept cards with analogies, a mnemonic if natural
+3. example_1 (3 min): Applied use case with prompt, output, rating, diagnosis
+4. example_2 (4 min): Second use case with A/B comparison of two prompt variants
+5. agent_build (3 min): Build a reusable artifact (system prompt template with personalization fields)
 
-        # Try to extract JSON from fenced code block
-        chapter_spec = None
+Use the rubric_by_level strings to frame the A->B progression.
+Make examples specific to the skill domain, not generic.
+"""
 
-        # Method 1: Look for ```json ... ``` block
-        import re
-        json_match = re.search(r'```json\s*([\s\S]*?)```', content_text)
-        if json_match:
-            try:
-                chapter_spec = json.loads(json_match.group(1))
-            except json.JSONDecodeError:
-                logger.warning("Failed to parse JSON from fenced block")
+        output_schema = {
+            "type": "object",
+            "properties": {
+                "meta": {
+                    "type": "object",
+                    "properties": {
+                        "chapter_title": {"type": "string"},
+                        "chapter_subtitle": {"type": "string"},
+                        "skill_id": {"type": "string"},
+                        "skill_name": {"type": "string"},
+                        "domain_name": {"type": "string"},
+                        "total_minutes": {"type": "integer"},
+                    },
+                },
+                "scenario": {
+                    "type": "object",
+                    "properties": {
+                        "title": {"type": "string"},
+                        "narrative": {"type": "string"},
+                        "a_state": {"type": "object", "properties": {"level_display": {"type": "string"}, "quote": {"type": "string"}}},
+                        "b_state": {"type": "object", "properties": {"level_display": {"type": "string"}, "quote": {"type": "string"}}},
+                        "objectives": {"type": "array", "items": {"type": "string"}},
+                        "why_it_matters": {"type": "string"},
+                    },
+                },
+                "concepts": {
+                    "type": "object",
+                    "properties": {
+                        "title": {"type": "string"},
+                        "intro": {"type": "string"},
+                        "mnemonic": {"type": "string"},
+                        "cards": {"type": "array", "items": {
+                            "type": "object",
+                            "properties": {
+                                "identifier": {"type": "string"},
+                                "word": {"type": "string"},
+                                "headline": {"type": "string"},
+                                "body": {"type": "string"},
+                                "analogy": {"type": "string"},
+                            },
+                        }},
+                        "pull_quote": {"type": "string"},
+                    },
+                },
+                "example_1": {
+                    "type": "object",
+                    "properties": {
+                        "title": {"type": "string"},
+                        "setup": {"type": "string"},
+                        "original_prompt": {"type": "object", "properties": {
+                            "label": {"type": "string"}, "prompt": {"type": "string"},
+                            "output": {"type": "string"}, "rating": {"type": "integer"},
+                            "diagnosis": {"type": "string"},
+                        }},
+                        "iterated_prompt": {"type": "object", "properties": {
+                            "label": {"type": "string"}, "prompt": {"type": "string"},
+                            "output": {"type": "string"}, "rating": {"type": "integer"},
+                            "diagnosis": {"type": "string"},
+                        }},
+                    },
+                },
+                "example_2": {
+                    "type": "object",
+                    "properties": {
+                        "title": {"type": "string"},
+                        "setup": {"type": "string"},
+                        "comparison": {"type": "object", "properties": {
+                            "test_question": {"type": "string"},
+                            "variants": {"type": "array", "items": {
+                                "type": "object",
+                                "properties": {
+                                    "id": {"type": "string"}, "label": {"type": "string"},
+                                    "prompt": {"type": "string"}, "output": {"type": "string"},
+                                    "rating": {"type": "integer"}, "why": {"type": "string"},
+                                },
+                            }},
+                            "takeaway": {"type": "string"},
+                        }},
+                    },
+                },
+                "agent_build": {
+                    "type": "object",
+                    "properties": {
+                        "title": {"type": "string"},
+                        "intro": {"type": "string"},
+                        "capability_chips": {"type": "array", "items": {
+                            "type": "object",
+                            "properties": {"title": {"type": "string"}, "description": {"type": "string"}},
+                        }},
+                        "personalization_fields": {"type": "array", "items": {
+                            "type": "object",
+                            "properties": {
+                                "key": {"type": "string"}, "label": {"type": "string"},
+                                "placeholder": {"type": "string"}, "input_type": {"type": "string"},
+                            },
+                        }},
+                        "system_prompt_template": {"type": "string"},
+                        "usage_steps": {"type": "array", "items": {"type": "string"}},
+                        "final_affirmation": {"type": "object", "properties": {
+                            "rubric_quote": {"type": "string"}, "tie_back": {"type": "string"},
+                        }},
+                    },
+                },
+            },
+            "required": ["meta", "scenario", "concepts", "example_1", "example_2", "agent_build"],
+        }
 
-        # Method 2: Try parsing the entire response as JSON
-        if not chapter_spec:
-            try:
-                chapter_spec = json.loads(content_text)
-            except json.JSONDecodeError:
-                pass
-
-        # Method 3: Find the first { ... } block
-        if not chapter_spec:
-            brace_start = content_text.find('{')
-            if brace_start >= 0:
-                # Find matching closing brace
-                depth = 0
-                for i in range(brace_start, len(content_text)):
-                    if content_text[i] == '{':
-                        depth += 1
-                    elif content_text[i] == '}':
-                        depth -= 1
-                        if depth == 0:
-                            try:
-                                chapter_spec = json.loads(content_text[brace_start:i+1])
-                            except json.JSONDecodeError:
-                                pass
-                            break
-
-        if not chapter_spec:
-            logger.error(
-                "Failed to extract ChapterSpec JSON. Response length: %d chars. First 500: %s",
-                len(content_text), content_text[:500]
-            )
-            raise ValueError(f"Failed to extract ChapterSpec JSON from LLM response ({len(content_text)} chars)")
+        chapter_spec = await self._call_llm_structured(prompt, output_schema, temperature=0.7)
 
         # Normalize: LLM may use slightly different keys
         # Handle "examples" array instead of "example_1"/"example_2"
