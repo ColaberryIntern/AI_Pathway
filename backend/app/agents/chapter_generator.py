@@ -146,11 +146,34 @@ class ChapterGeneratorAgent(BaseAgent):
             )
             raise ValueError(f"Failed to extract ChapterSpec JSON from LLM response ({len(content_text)} chars)")
 
+        # Normalize: LLM may use slightly different keys
+        # Handle "examples" array instead of "example_1"/"example_2"
+        if "examples" in chapter_spec and "example_1" not in chapter_spec:
+            examples = chapter_spec.pop("examples", [])
+            if isinstance(examples, list):
+                if len(examples) >= 1:
+                    chapter_spec["example_1"] = examples[0]
+                if len(examples) >= 2:
+                    chapter_spec["example_2"] = examples[1]
+            elif isinstance(examples, dict):
+                chapter_spec["example_1"] = examples
+
+        # Handle "objectives" at top level (should be inside scenario)
+        if "objectives" in chapter_spec and "scenario" in chapter_spec:
+            if "objectives" not in chapter_spec["scenario"]:
+                chapter_spec["scenario"]["objectives"] = chapter_spec.pop("objectives")
+            else:
+                chapter_spec.pop("objectives", None)
+
         # Validate required sections
-        required = ["meta", "scenario", "concepts", "example_1", "example_2", "agent_build"]
+        required = ["meta", "scenario", "concepts", "agent_build"]
+        optional = ["example_1", "example_2"]
         missing = [s for s in required if s not in chapter_spec]
         if missing:
-            logger.warning("ChapterSpec missing sections: %s", missing)
+            logger.warning("ChapterSpec missing required sections: %s", missing)
+        missing_opt = [s for s in optional if s not in chapter_spec]
+        if missing_opt:
+            logger.info("ChapterSpec missing optional sections (will use defaults): %s", missing_opt)
 
         # Ensure meta has correct skill info
         if "meta" in chapter_spec:
