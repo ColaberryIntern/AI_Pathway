@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mission Briefing — Chain-of-Thought Prompting</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #07070f;
+  --bg2: #0d0d1c;
+  --bg3: #121228;
+  --border: #1e1e40;
+  --border2: #2a2a5a;
+  --tx: #eeeeff;
+  --muted: #9090b8;
+  --dim: #5a5a80;
+  --cyan: #06b6d4;
+  --indigo: #6366f1;
+  --violet: #8b5cf6;
+  --pink: #ec4899;
+  --green: #10b981;
+  --mono: 'JetBrains Mono', monospace;
+  --sans: 'Space Grotesk', sans-serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body { background: var(--bg); color: var(--tx); font-family: var(--sans); overflow-x: hidden; }
+
+/* Layout */
+.shell { display: flex; min-height: 100vh; }
+.sidebar { width: 260px; flex-shrink: 0; position: fixed; top: 0; left: 0; height: 100vh; background: var(--bg2); border-right: 1px solid var(--border); display: flex; flex-direction: column; z-index: 100; }
+.main { margin-left: 260px; flex: 1; }
+
+/* Sidebar */
+.sidebar-header { padding: 28px 24px 20px; border-bottom: 1px solid var(--border); }
+.sidebar-tag { font-family: var(--mono); font-size: 10px; color: var(--cyan); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 8px; }
+.sidebar-title { font-size: 14px; font-weight: 600; color: var(--tx); line-height: 1.4; }
+.sidebar-skill { font-family: var(--mono); font-size: 10px; color: var(--dim); margin-top: 4px; }
+
+.nav-sections { padding: 20px 0; flex: 1; overflow-y: auto; }
+.nav-item { display: flex; align-items: center; gap: 12px; padding: 12px 24px; cursor: pointer; transition: all .2s; border-left: 2px solid transparent; }
+.nav-item:hover { background: var(--bg3); }
+.nav-item.active { border-left-color: var(--cyan); background: rgba(6,182,212,.06); }
+.nav-item.locked { opacity: .35; cursor: default; }
+.nav-num { width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--border2); display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 10px; color: var(--muted); flex-shrink: 0; transition: all .2s; }
+.nav-item.active .nav-num { background: var(--cyan); border-color: var(--cyan); color: #000; }
+.nav-item.done .nav-num { background: var(--green); border-color: var(--green); color: #000; }
+.nav-item.done .nav-num::after { content: '✓'; }
+.nav-label { font-size: 12px; font-weight: 500; color: var(--muted); }
+.nav-item.active .nav-label { color: var(--tx); }
+
+.progress-footer { padding: 20px 24px; border-top: 1px solid var(--border); }
+.progress-label { font-family: var(--mono); font-size: 10px; color: var(--dim); margin-bottom: 8px; display: flex; justify-content: space-between; }
+.progress-bar { height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, var(--cyan), var(--indigo)); border-radius: 2px; transition: width .5s ease; }
+
+/* Sections */
+.section { min-height: 100vh; padding: 60px 64px; display: none; }
+.section.active { display: block; }
+
+/* Section 1 - Scenario */
+.mission-badge { display: inline-flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: 11px; color: var(--cyan); border: 1px solid rgba(6,182,212,.3); background: rgba(6,182,212,.06); padding: 6px 14px; border-radius: 4px; margin-bottom: 32px; }
+.mission-badge::before { content: ''; width: 6px; height: 6px; background: var(--cyan); border-radius: 50%; animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .3; } }
+.section-label { font-family: var(--mono); font-size: 10px; color: var(--dim); text-transform: uppercase; letter-spacing: 3px; margin-bottom: 12px; }
+h1.headline { font-size: clamp(28px, 4vw, 48px); font-weight: 700; line-height: 1.1; letter-spacing: -.5px; margin-bottom: 24px; }
+h1.headline span { background: linear-gradient(135deg, var(--cyan), var(--indigo)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.scenario-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 32px 0; }
+.scenario-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 20px; }
+.sc-label { font-family: var(--mono); font-size: 10px; color: var(--dim); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 8px; }
+.sc-value { font-size: 15px; font-weight: 600; color: var(--tx); }
+.sc-sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+.objectives { margin: 32px 0; }
+.obj-title { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px; }
+.journey { display: flex; align-items: center; gap: 0; }
+.journey-node { background: var(--bg3); border: 1px solid var(--border2); border-radius: 10px; padding: 16px 20px; flex: 1; }
+.jn-label { font-family: var(--mono); font-size: 9px; color: var(--dim); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px; }
+.jn-text { font-size: 13px; color: var(--tx); line-height: 1.5; }
+.journey-arrow { padding: 0 16px; color: var(--cyan); font-size: 20px; flex-shrink: 0; }
+.journey-node.dest { border-color: rgba(99,102,241,.4); background: rgba(99,102,241,.06); }
+
+/* Section 2 - Concepts */
+.concepts-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 32px 0; }
+.concept-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 20px; position: relative; overflow: hidden; transition: border-color .2s; }
+.concept-card:hover { border-color: var(--border2); }
+.concept-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; }
+.concept-card:nth-child(1)::before { background: var(--cyan); }
+.concept-card:nth-child(2)::before { background: var(--indigo); }
+.concept-card:nth-child(3)::before { background: var(--violet); }
+.cc-icon { font-size: 24px; margin-bottom: 12px; }
+.cc-title { font-size: 14px; font-weight: 600; margin-bottom: 8px; }
+.cc-body { font-size: 12px; color: var(--muted); line-height: 1.6; }
+
+.cot-visual { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 28px; margin: 24px 0; }
+.cot-title { font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 20px; text-transform: uppercase; letter-spacing: 1px; }
+.cot-steps { display: flex; gap: 0; align-items: stretch; }
+.cot-step { flex: 1; text-align: center; position: relative; }
+.cot-step:not(:last-child)::after { content: '→'; position: absolute; right: -12px; top: 50%; transform: translateY(-50%); color: var(--dim); font-size: 16px; z-index: 1; }
+.cs-box { background: var(--bg3); border: 1px solid var(--border2); border-radius: 8px; padding: 12px; margin: 0 8px; }
+.cs-num { font-family: var(--mono); font-size: 10px; color: var(--cyan); margin-bottom: 6px; }
+.cs-text { font-size: 11px; color: var(--tx); line-height: 1.4; }
+
+/* Section 3 - Examples */
+.examples-tabs { display: flex; gap: 8px; margin-bottom: 24px; }
+.ex-tab { padding: 8px 20px; border: 1px solid var(--border); border-radius: 6px; font-size: 12px; font-weight: 500; color: var(--muted); cursor: pointer; transition: all .2s; background: transparent; }
+.ex-tab.active { background: var(--indigo); border-color: var(--indigo); color: #fff; }
+.example-panel { display: none; }
+.example-panel.active { display: block; }
+.ex-scenario { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 24px; margin-bottom: 16px; }
+.ex-s-label { font-family: var(--mono); font-size: 10px; color: var(--dim); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px; }
+.ex-s-text { font-size: 14px; color: var(--tx); line-height: 1.6; }
+.doc-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+.doc-chip { display: flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 10px; color: var(--muted); background: var(--bg3); border: 1px solid var(--border2); border-radius: 5px; padding: 4px 10px; }
+.prompt-block { background: var(--bg); border: 1px solid var(--border2); border-radius: 10px; overflow: hidden; margin-bottom: 16px; }
+.prompt-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; border-bottom: 1px solid var(--border); }
+.prompt-label { font-family: var(--mono); font-size: 10px; color: var(--cyan); text-transform: uppercase; letter-spacing: 2px; }
+.copy-btn { font-family: var(--mono); font-size: 10px; color: var(--dim); cursor: pointer; background: none; border: none; }
+.prompt-body { padding: 20px; font-family: var(--mono); font-size: 12px; color: var(--tx); line-height: 1.7; white-space: pre-wrap; }
+.prompt-body em { color: var(--cyan); font-style: normal; }
+.output-block { background: rgba(16,185,129,.04); border: 1px solid rgba(16,185,129,.2); border-radius: 10px; padding: 20px; }
+.output-label { font-family: var(--mono); font-size: 10px; color: var(--green); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px; }
+.output-text { font-size: 13px; color: var(--tx); line-height: 1.7; }
+
+/* Section 4 - Agent Builder */
+.builder-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 24px; }
+.builder-steps { }
+.builder-preview { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 24px; position: sticky; top: 20px; }
+.build-step { display: flex; gap: 16px; margin-bottom: 24px; cursor: pointer; }
+.bs-num { width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--border2); display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 11px; color: var(--dim); flex-shrink: 0; transition: all .2s; }
+.build-step.active .bs-num { background: var(--indigo); border-color: var(--indigo); color: #fff; }
+.build-step.done .bs-num { background: var(--green); border-color: var(--green); color: #000; content: '✓'; }
+.bs-content { flex: 1; }
+.bs-title { font-size: 14px; font-weight: 600; margin-bottom: 6px; }
+.bs-body { font-size: 12px; color: var(--muted); line-height: 1.6; }
+.bs-input { background: var(--bg3); border: 1px solid var(--border2); border-radius: 6px; padding: 10px 14px; width: 100%; font-family: var(--mono); font-size: 11px; color: var(--tx); margin-top: 10px; resize: none; transition: border-color .2s; }
+.bs-input:focus { outline: none; border-color: var(--indigo); }
+.agent-preview-code { font-family: var(--mono); font-size: 11px; color: var(--tx); line-height: 1.7; white-space: pre; }
+.agent-preview-code .kw { color: var(--violet); }
+.agent-preview-code .str { color: var(--green); }
+.agent-preview-code .comment { color: var(--dim); }
+
+/* Shared */
+.section-divider { height: 1px; background: linear-gradient(90deg, transparent, var(--border2), transparent); margin: 40px 0; }
+.btn-primary { display: inline-flex; align-items: center; gap: 8px; background: var(--cyan); color: #000; font-family: var(--sans); font-size: 14px; font-weight: 600; padding: 12px 28px; border-radius: 8px; border: none; cursor: pointer; transition: all .2s; margin-top: 32px; }
+.btn-primary:hover { background: #22d3ee; transform: translateY(-1px); }
+.btn-secondary { display: inline-flex; align-items: center; gap: 8px; background: transparent; color: var(--muted); font-family: var(--sans); font-size: 13px; font-weight: 500; padding: 10px 20px; border-radius: 8px; border: 1px solid var(--border2); cursor: pointer; transition: all .2s; margin-top: 32px; margin-left: 12px; }
+.btn-secondary:hover { border-color: var(--tx); color: var(--tx); }
+
+/* Section 5 - Complete */
+.complete-center { text-align: center; max-width: 560px; margin: 80px auto; }
+.complete-icon { width: 80px; height: 80px; border-radius: 50%; background: rgba(16,185,129,.1); border: 2px solid var(--green); display: flex; align-items: center; justify-content: center; font-size: 32px; margin: 0 auto 28px; }
+.skills-earned { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin: 28px 0; }
+.skill-badge { font-family: var(--mono); font-size: 11px; padding: 6px 14px; border-radius: 20px; border: 1px solid; }
+.skill-badge.cot { color: var(--cyan); border-color: rgba(6,182,212,.3); background: rgba(6,182,212,.06); }
+.skill-badge.agent { color: var(--indigo); border-color: rgba(99,102,241,.3); background: rgba(99,102,241,.06); }
+.skill-badge.prompt { color: var(--violet); border-color: rgba(139,92,246,.3); background: rgba(139,92,246,.06); }
+</style>
+</head>
+<body>
+<div class="shell">
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-tag">Mission Brief</div>
+      <div class="sidebar-title">Chain-of-Thought Prompting</div>
+      <div class="sidebar-skill">SK.PRM.005 · Intermediate</div>
+    </div>
+    <nav class="nav-sections">
+      <div class="nav-item active" onclick="goSection(0)">
+        <div class="nav-num">01</div>
+        <div class="nav-label">Scenario & Objectives</div>
+      </div>
+      <div class="nav-item locked" id="nav1" onclick="goSection(1)">
+        <div class="nav-num">02</div>
+        <div class="nav-label">AI Concepts</div>
+      </div>
+      <div class="nav-item locked" id="nav2" onclick="goSection(2)">
+        <div class="nav-num">03</div>
+        <div class="nav-label">Live Examples</div>
+      </div>
+      <div class="nav-item locked" id="nav3" onclick="goSection(3)">
+        <div class="nav-num">04</div>
+        <div class="nav-label">Build Your Agent</div>
+      </div>
+      <div class="nav-item locked" id="nav4" onclick="goSection(4)">
+        <div class="nav-num">05</div>
+        <div class="nav-label">Mission Complete</div>
+      </div>
+    </nav>
+    <div class="progress-footer">
+      <div class="progress-label"><span>Progress</span><span id="prog-pct">20%</span></div>
+      <div class="progress-bar"><div class="progress-fill" id="prog-fill" style="width:20%"></div></div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <!-- Section 1: Scenario -->
+    <section class="section active" id="s0">
+      <div class="mission-badge">Mission Incoming · SK.PRM.005</div>
+      <div class="section-label">Section 01 — Scenario & Objectives</div>
+      <h1 class="headline">Your next move: <span>thinking in chains</span></h1>
+      <p style="font-size:16px;color:var(--muted);line-height:1.7;max-width:640px">You're a Marketing Manager at a B2B SaaS company. You already get results from AI — but your outputs are inconsistent, and complex campaigns still take multiple rounds to get right. This mission changes that.</p>
+
+      <div class="scenario-grid">
+        <div class="scenario-card">
+          <div class="sc-label">Your Role</div>
+          <div class="sc-value">Marketing Manager</div>
+          <div class="sc-sub">B2B SaaS · Mid-market focus</div>
+        </div>
+        <div class="scenario-card">
+          <div class="sc-label">Current Level</div>
+          <div class="sc-value">Intermediate</div>
+          <div class="sc-sub">Comfortable with basic prompting</div>
+        </div>
+        <div class="scenario-card">
+          <div class="sc-label">Skill ID</div>
+          <div class="sc-value" style="font-family:var(--mono);font-size:13px">SK.PRM.005</div>
+          <div class="sc-sub">Prompting & HITL Workflows</div>
+        </div>
+        <div class="scenario-card">
+          <div class="sc-label">Time Required</div>
+          <div class="sc-value">~35 minutes</div>
+          <div class="sc-sub">5 sections · self-paced</div>
+        </div>
+      </div>
+
+      <div class="objectives">
+        <div class="obj-title">Your Journey</div>
+        <div class="journey">
+          <div class="journey-node">
+            <div class="jn-label">Where you are</div>
+            <div class="jn-text">You write direct prompts and get decent outputs, but multi-step tasks require constant back-and-forth with the AI</div>
+          </div>
+          <div class="journey-arrow">→</div>
+          <div class="journey-node dest">
+            <div class="jn-label">Where you're going</div>
+            <div class="jn-text">You'll structure AI reasoning before it responds — producing boardroom-ready campaign briefs and analyses in a single prompt</div>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn-primary" onclick="advance()">Begin Mission →</button>
+    </section>
+
+    <!-- Section 2: Concepts -->
+    <section class="section" id="s1">
+      <div class="section-label">Section 02 — AI Concepts</div>
+      <h1 class="headline">How <span>chain-of-thought</span> actually works</h1>
+      <p style="font-size:15px;color:var(--muted);line-height:1.7;max-width:600px;margin-bottom:8px">Most people give AI the question and expect the answer. CoT changes the contract: you make the AI <em style="color:var(--tx);font-style:normal">show its work</em> before concluding. Reasoning quality jumps.</p>
+
+      <div class="concepts-grid">
+        <div class="concept-card">
+          <div class="cc-icon">🧠</div>
+          <div class="cc-title">The Problem</div>
+          <div class="cc-body">LLMs predict the next token. Without guidance, they skip steps and hallucinate conclusions — especially on multi-variable problems like campaign analysis.</div>
+        </div>
+        <div class="concept-card">
+          <div class="cc-icon">🔗</div>
+          <div class="cc-title">The Mechanism</div>
+          <div class="cc-body">CoT forces the model to generate intermediate reasoning steps. Each step conditions the next token — so the path to the answer improves its own quality.</div>
+        </div>
+        <div class="concept-card">
+          <div class="cc-icon">📈</div>
+          <div class="cc-title">The Payoff</div>
+          <div class="cc-body">Google Research found CoT improved large-model accuracy on complex tasks by 40–60%. For you: fewer revisions, more reliable strategic outputs.</div>
+        </div>
+      </div>
+
+      <div class="cot-visual">
+        <div class="cot-title">The Chain: How a CoT prompt executes</div>
+        <div class="cot-steps">
+          <div class="cot-step">
+            <div class="cs-box">
+              <div class="cs-num">STEP 1</div>
+              <div class="cs-text">Define the problem space & constraints</div>
+            </div>
+          </div>
+          <div class="cot-step">
+            <div class="cs-box">
+              <div class="cs-num">STEP 2</div>
+              <div class="cs-text">Analyze each factor independently</div>
+            </div>
+          </div>
+          <div class="cot-step">
+            <div class="cs-box">
+              <div class="cs-num">STEP 3</div>
+              <div class="cs-text">Synthesize across factors</div>
+            </div>
+          </div>
+          <div class="cot-step">
+            <div class="cs-box">
+              <div class="cs-num">STEP 4</div>
+              <div class="cs-text">Produce structured recommendation</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn-primary" onclick="advance()">See Examples →</button>
+      <button class="btn-secondary" onclick="goSection(0)">← Back</button>
+    </section>
+
+    <!-- Section 3: Examples -->
+    <section class="section" id="s2">
+      <div class="section-label">Section 03 — Live Examples</div>
+      <h1 class="headline">CoT in your <span>actual work</span></h1>
+      <div class="examples-tabs">
+        <button class="ex-tab active" onclick="switchEx(0, this)">Example 1: Campaign Brief</button>
+        <button class="ex-tab" onclick="switchEx(1, this)">Example 2: Competitive Analysis</button>
+      </div>
+
+      <div class="example-panel active" id="ex0">
+        <div class="ex-scenario">
+          <div class="ex-s-label">Scenario</div>
+          <div class="ex-s-text">Q3 product launch for your new AI-powered analytics feature. You have ICP data, past campaign performance, and competitor positioning. You need a complete campaign brief — normally a 2-hour exercise.</div>
+          <div class="doc-chips">
+            <div class="doc-chip">📄 Q2-campaign-results.csv</div>
+            <div class="doc-chip">📄 ICP-profile-2024.pdf</div>
+            <div class="doc-chip">📄 competitor-matrix.xlsx</div>
+          </div>
+        </div>
+        <div class="prompt-block">
+          <div class="prompt-header">
+            <div class="prompt-label">Chain-of-Thought Prompt</div>
+            <button class="copy-btn" onclick="this.textContent='Copied!'">Copy</button>
+          </div>
+          <div class="prompt-body">I'm launching a B2B SaaS analytics feature in Q3. Work through this <em>step by step</em>:
+
+<em>Step 1 — Audience:</em> Review the attached ICP profile. Who is the primary buyer? What pain points does this feature address most acutely?
+
+<em>Step 2 — Competitive context:</em> Using the competitor matrix, identify our key differentiation. What gap are we filling that competitors leave open?
+
+<em>Step 3 — Channel strategy:</em> Based on Q2 campaign results, which channels drove highest-quality pipeline for similar features? Explain your reasoning before recommending.
+
+<em>Step 4 — Brief synthesis:</em> Now combine your analysis above into a structured campaign brief with: positioning statement, 3 messaging pillars, recommended channel mix, and Q3 KPIs.
+
+Show your reasoning at each step before moving to the next.</div>
+        </div>
+        <div class="output-block">
+          <div class="output-label">Why this works</div>
+          <div class="output-text">Each step forces the model to reason from your specific data before synthesizing. The final brief is grounded in evidence you provided — not generic marketing advice. The phrase "show your reasoning before moving to the next" is the CoT trigger that prevents premature conclusions.</div>
+        </div>
+      </div>
+
+      <div class="example-panel" id="ex1">
+        <div class="ex-scenario">
+          <div class="ex-s-label">Scenario</div>
+          <div class="ex-s-text">Your VP wants a competitive intelligence memo before Monday's board meeting. You have 4 competitor websites, 3 G2 review exports, and 2 analyst reports. You need a clear strategic recommendation.</div>
+          <div class="doc-chips">
+            <div class="doc-chip">📄 g2-reviews-export.csv</div>
+            <div class="doc-chip">📄 gartner-report-2025.pdf</div>
+            <div class="doc-chip">📄 competitor-websites.txt</div>
+          </div>
+        </div>
+        <div class="prompt-block">
+          <div class="prompt-header">
+            <div class="prompt-label">Chain-of-Thought Prompt</div>
+            <button class="copy-btn" onclick="this.textContent='Copied!'">Copy</button>
+          </div>
+          <div class="prompt-body">Competitive analysis for an executive memo. Think through each step, then build on your prior analysis:
+
+<em>Step 1 — Customer sentiment:</em> From the G2 reviews, what are the top 3 complaints about each competitor? Quantify where possible.
+
+<em>Step 2 — Analyst positioning:</em> How does the Gartner report characterize the market? Where does it see gaps?
+
+<em>Step 3 — Gap mapping:</em> Cross-reference Steps 1 and 2. Which unmet needs appear in both customer complaints AND analyst white space?
+
+<em>Step 4 — Strategic recommendation:</em> Based on your analysis, write a 3-paragraph executive memo recommending where we should invest to capture the identified gap. Cite your step-by-step reasoning inline.</div>
+        </div>
+        <div class="output-block">
+          <div class="output-label">Why this works</div>
+          <div class="output-text">The cross-reference in Step 3 is advanced CoT technique — you're making the model triangulate across two evidence sources before concluding. The instruction to "cite your reasoning inline" in Step 4 keeps the output auditable for executives who will probe the claims.</div>
+        </div>
+      </div>
+
+      <button class="btn-primary" onclick="advance()">Build Your Agent →</button>
+      <button class="btn-secondary" onclick="goSection(1)">← Back</button>
+    </section>
+
+    <!-- Section 4: Agent Builder -->
+    <section class="section" id="s3">
+      <div class="section-label">Section 04 — Build Your Agent</div>
+      <h1 class="headline">Design your <span>CoT marketing agent</span></h1>
+      <p style="font-size:15px;color:var(--muted);line-height:1.7;max-width:600px;margin-bottom:8px">Follow the steps to configure an agent that uses chain-of-thought reasoning for your specific marketing workflows. Watch the agent spec build in real time.</p>
+
+      <div class="builder-layout">
+        <div class="builder-steps">
+          <div class="build-step active" id="bs0">
+            <div class="bs-num">1</div>
+            <div class="bs-content">
+              <div class="bs-title">Define the agent's role</div>
+              <div class="bs-body">What is this agent's primary job? Be specific about the marketing workflow it will support.</div>
+              <textarea class="bs-input" rows="2" placeholder="e.g. Campaign brief generator for Q-level product launches..." oninput="updatePreview()" id="in0">Campaign brief generator for B2B SaaS product launches</textarea>
+            </div>
+          </div>
+          <div class="build-step" id="bs1">
+            <div class="bs-num">2</div>
+            <div class="bs-content">
+              <div class="bs-title">Set reasoning depth</div>
+              <div class="bs-body">How many chain-of-thought steps should the agent work through? More steps = more reliable but slower.</div>
+              <textarea class="bs-input" rows="2" placeholder="e.g. 4 steps: audience analysis, competitive context, channel fit, synthesis..." oninput="updatePreview()" id="in1">4 steps: audience → competitive context → channel fit → brief synthesis</textarea>
+            </div>
+          </div>
+          <div class="build-step" id="bs2">
+            <div class="bs-num">3</div>
+            <div class="bs-content">
+              <div class="bs-title">Specify required inputs</div>
+              <div class="bs-body">What documents or data must the agent always receive to ground its reasoning?</div>
+              <textarea class="bs-input" rows="2" placeholder="e.g. ICP profile, past campaign data, competitor matrix..." oninput="updatePreview()" id="in2">ICP profile PDF, past campaign CSV, competitor positioning doc</textarea>
+            </div>
+          </div>
+          <div class="build-step" id="bs3">
+            <div class="bs-num">4</div>
+            <div class="bs-content">
+              <div class="bs-title">Define the output format</div>
+              <div class="bs-body">What structure should the final synthesized output follow?</div>
+              <textarea class="bs-input" rows="2" placeholder="e.g. Positioning statement, 3 pillars, channel mix, KPIs..." oninput="updatePreview()" id="in3">Positioning statement, 3 messaging pillars, channel mix, Q-KPIs</textarea>
+            </div>
+          </div>
+        </div>
+
+        <div class="builder-preview">
+          <div style="font-family:var(--mono);font-size:10px;color:var(--cyan);text-transform:uppercase;letter-spacing:2px;margin-bottom:16px">Agent Spec · Live Preview</div>
+          <pre class="agent-preview-code" id="agent-preview"><span class="kw">agent</span> <span class="str">"marketing-cot-agent"</span> {
+  <span class="comment"># Role</span>
+  role: <span class="str" id="pv0">"Campaign brief generator for B2B SaaS product launches"</span>
+
+  <span class="comment"># Reasoning chain</span>
+  chain_of_thought: [
+    <span class="str" id="pv1">"audience → competitive context → channel fit → brief synthesis"</span>
+  ]
+
+  <span class="comment"># Required inputs</span>
+  requires: [
+    <span class="str" id="pv2">"ICP profile PDF, past campaign CSV, competitor positioning doc"</span>
+  ]
+
+  <span class="comment"># Output schema</span>
+  output: {
+    format: <span class="str" id="pv3">"Positioning statement, 3 messaging pillars, channel mix, Q-KPIs"</span>
+  }
+
+  <span class="comment"># CoT instruction appended to all prompts</span>
+  system_append: <span class="str">"Think step by step. Show reasoning at each stage before synthesizing."</span>
+}</pre>
+        </div>
+      </div>
+
+      <button class="btn-primary" onclick="advance()">Complete Mission →</button>
+      <button class="btn-secondary" onclick="goSection(2)">← Back</button>
+    </section>
+
+    <!-- Section 5: Complete -->
+    <section class="section" id="s4">
+      <div class="complete-center">
+        <div class="complete-icon">✓</div>
+        <div class="section-label" style="text-align:center">Mission Complete</div>
+        <h1 class="headline" style="text-align:center;font-size:36px;margin-bottom:16px">SK.PRM.005 <span>unlocked</span></h1>
+        <p style="font-size:15px;color:var(--muted);line-height:1.7">You've learned to structure AI reasoning, seen CoT applied to your real marketing work, and built an agent spec you can deploy today.</p>
+
+        <div class="skills-earned">
+          <div class="skill-badge cot">Chain-of-Thought Prompting</div>
+          <div class="skill-badge agent">Agent Configuration</div>
+          <div class="skill-badge prompt">Structured Reasoning</div>
+        </div>
+
+        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:24px;text-align:left;margin-top:8px">
+          <div style="font-size:12px;color:var(--muted);margin-bottom:12px;font-family:var(--mono);text-transform:uppercase;letter-spacing:2px">Suggested Next Missions</div>
+          <div style="font-size:14px;color:var(--tx);margin-bottom:8px">→ SK.PRM.022 — ReAct-style patterns</div>
+          <div style="font-size:14px;color:var(--tx);margin-bottom:8px">→ SK.AGT.001 — Tool definitions & validation</div>
+          <div style="font-size:14px;color:var(--tx)">→ SK.RAG.022 — Agentic RAG patterns</div>
+        </div>
+
+        <button class="btn-primary" onclick="goSection(0)" style="margin-top:28px">Restart Mission</button>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+let current = 0;
+let unlocked = 1;
+const total = 5;
+
+function goSection(n) {
+  if (n > unlocked - 1) return;
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById('s' + n).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach((el, i) => {
+    el.classList.remove('active', 'done', 'locked');
+    if (i < n) el.classList.add('done');
+    else if (i === n) el.classList.add('active');
+    else if (i >= unlocked) el.classList.add('locked');
+  });
+  current = n;
+  const pct = Math.round(((n + 1) / total) * 100);
+  document.getElementById('prog-fill').style.width = pct + '%';
+  document.getElementById('prog-pct').textContent = pct + '%';
+  window.scrollTo(0, 0);
+}
+
+function advance() {
+  if (current < total - 1) {
+    unlocked = Math.max(unlocked, current + 2);
+    // Unlock nav
+    const nextNav = document.getElementById('nav' + current);
+    if (nextNav) nextNav.classList.remove('locked');
+    goSection(current + 1);
+  }
+}
+
+function switchEx(n, btn) {
+  document.querySelectorAll('.example-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('ex' + n).classList.add('active');
+  document.querySelectorAll('.ex-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function updatePreview() {
+  const ids = ['in0','in1','in2','in3'];
+  ids.forEach((id, i) => {
+    const el = document.getElementById(id);
+    const pv = document.getElementById('pv' + i);
+    if (el && pv) pv.textContent = '"' + el.value + '"';
+  });
+  // Highlight active build step
+  ids.forEach((id, i) => {
+    const el = document.getElementById('bs' + i);
+    if (el) {
+      const inp = document.getElementById(id);
+      if (inp && inp.value.trim()) el.classList.add('done');
+    }
+  });
+}
+</script>
+</body>
+</html>

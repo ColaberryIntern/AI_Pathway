@@ -1,0 +1,218 @@
+--- PAGE 1 ---
+AI Pathway
+Home
+Profiles
+My Learning
+Dashboard / Module 1: Building AI
+Collaboration Skills
+/ Understanding Stakeholder Identification in AI
+Projects
+concept
+Lesson 1
+AI-Native
+Understanding Stakeholder Identification in AI
+Projects
+Concept Snapshot
+Identifying stakeholders in AI projects is crucial for ensuring alignment and
+successful outcomes. Key stakeholders in corporate communications include
+content creators, legal teams, IT departments, and executive leadership. Each
+group has unique interests and concerns, such as compliance, technical
+feasibility, and strategic alignment. Understanding these perspectives helps AI
+Content Editors tailor AI solutions to meet organizational goals effectively.
+AI Strategy
+Use AI to map out stakeholder interests and concerns by analyzing communication
+patterns and historical project data. Delegate the task of identifying potential
+stakeholders and their past interactions to AI tools, while humans should validate
+AI's findings and engage with stakeholders to understand their needs deeply.
+DELEGATE TO AI
+Analyzing large volumes of
+communication data to identify key
+stakeholders.
+KEEP HUMAN
+Validating AI-generated stakeholder
+lists.
+Engaging with stakeholders to gather
+qualitative insights.
+AI Mentor
+4/1/26, 9:30 PM
+AI Pathway Tool - Personalized AI Learning Paths
+95.216.199.47:3000/learn/1293e154-8bc0-427f-be3c-6325d30a09a0/lesson/90220ea6-df46-40a4-b35b-17be92dad365
+1/6
+
+--- PAGE 2 ---
+Summarizing stakeholder interests
+and historical project involvement.
+Try this prompt:
+Analyze the email communication logs and meeting notes to identify 
+key stakeholders in our upcoming AI-driven content strategy project. 
+Summarize their roles and previous project contributions.
+Run in ChatGPT
+Copy
+Prompt Template
+Identify key stakeholders in the {{project_name}}  by analyzing 
+{{data_source}} . Summarize their roles and interests in relation to 
+{{project_goal}} .
+Test in Prompt Lab
+EXPECTED OUTPUT
+A list of stakeholders with their roles and interests.
+Show placeholder guide (3)
+Prompt Lab
+Interactive
+Your Prompt
+Iteration #1
+Try writing your own prompt for this skill. Use the template above 
+as inspiration, or start from scratch...
+4/1/26, 9:30 PM
+AI Pathway Tool - Personalized AI Learning Paths
+95.216.199.47:3000/learn/1293e154-8bc0-427f-be3c-6325d30a09a0/lesson/90220ea6-df46-40a4-b35b-17be92dad365
+2/6
+
+--- PAGE 3 ---
+Load Template
+Code Examples
+This code reads a CSV file containing communication logs and uses Pandas to group messages by
+sender. It then sorts the senders by the number of messages sent, helping to identify key stakeholders
+based on communication frequency.
+Analyzing Communication Logs with Pandas
+python
+Run
+# Import necessary libraries
+import pandas as pd
+# Load the communication logs into a DataFrame
+logs = pd.read_csv('communication_logs.csv')
+# Group by sender to identify potential stakeholders
+stakeholders = logs.groupby('sender').size().reset_index(name='message_count
+# Sort stakeholders by the number of messages sent
+stakeholders_sorted = stakeholders.sort_values(by='message_count', ascending=
+# Display the top stakeholders
+print(stakeholders_sorted.head())
+OUTPUT
+Traceback (most recent call last):
+  File "/lib/python311.zip/_pyodide/_base.py", line 573, in eval_code_async
+    await CodeRunner(
+  File "/lib/python311.zip/_pyodide/_base.py", line 393, in run_async
+    coroutine = eval(self.code, globals, locals)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<exec>", line 5, in <module>
+  File "/lib/python3.11/site-packages/pandas/util/_decorators.py", line 211, in 
+wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/lib/python3.11/site-packages/pandas/util/_decorators.py", line 331, in 
+wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/lib/python3.11/site-packages/pandas/io/parsers/readers.py", line 950, in 
+read_csv
+    return _read(filepath_or_buffer, kwds)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/lib/python3.11/site-packages/pandas/io/parsers/readers.py", line 605, in 
+_read
+    parser = TextFileReader(filepath_or_buffer, **kwds)
+Run Prompt
+4/1/26, 9:30 PM
+AI Pathway Tool - Personalized AI Learning Paths
+95.216.199.47:3000/learn/1293e154-8bc0-427f-be3c-6325d30a09a0/lesson/90220ea6-df46-40a4-b35b-17be92dad365
+3/6
+
+--- PAGE 4 ---
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/lib/python3.11/site-packages/pandas/io/parsers/readers.py", line 1442, in 
+__init__
+    self._engine = self._make_engine(f, self.engine)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/lib/python3.11/site-packages/pandas/io/parsers/readers.py", line 1735, in 
+_make_engine
+    self.handles = get_handle(
+                   ^^^^^^^^^^^
+  File "/lib/python3.11/site-packages/pandas/io/common.py", line 856, in get_handle
+    handle = open(
+             ^^^^^
+FileNotFoundError: [Errno 44] No such file or directory: 'communication_logs.csv'
+This code creates a DataFrame of stakeholders with their roles and interests, then defines a function
+to summarize these details. The output is a list of sentences describing each stakeholder's role and
+interest.
+Summarizing Stakeholder Roles
+python
+Run
+# Assume we have a DataFrame 'stakeholders' with roles and interests
+stakeholders = pd.DataFrame({
+    'name': ['Alice', 'Bob', 'Charlie'],
+    'role': ['Content Creator', 'Legal Advisor', 'IT Specialist'],
+    'interest': ['Content personalization', 'Compliance', 'Technical feasibil
+})
+# Function to summarize stakeholder roles
+def summarize_stakeholders(df):
+    summary = []
+    for index, row in df.iterrows():
+        summary.append(f"{row['name']} is a {row['role']} interested in {row
+    return summary
+# Generate the summary
+stakeholder_summary = summarize_stakeholders(stakeholders)
+# Print the summary
+for line in stakeholder_summary:
+    print(line)
+Implementation Task
+Stakeholder Identification for AI Content Strategy
+Use AI to identify and summarize key stakeholders for an AI-driven content strategy project in
+corporate communications.
+4/1/26, 9:30 PM
+AI Pathway Tool - Personalized AI Learning Paths
+95.216.199.47:3000/learn/1293e154-8bc0-427f-be3c-6325d30a09a0/lesson/90220ea6-df46-40a4-b35b-17be92dad365
+4/6
+
+--- PAGE 5 ---
+REQUIREMENTS
+1
+Analyze communication logs to identify stakeholders.
+2
+Summarize their roles and interests.
+TOOLS NEEDED
+Python
+Free
+Pandas
+Free
+DELIVERABLE
+A report listing stakeholders with their roles and interests.
+YOUR WORKFLOW
+Review Assignment
+2
+Get AI Mentor Briefing
+Ask AI Mentor
+Your mentor will prepare a plan and open your workspace
+Submit & Get Graded
+Upload your required artifacts for AI grading
+Reflection
+1
+How did your prompt evolve during the task?
+2
+What did AI get wrong in identifying stakeholders?
+3
+What aspects of stakeholder identification would you not delegate to AI?
+Knowledge Check
+1/5
+Which of the following is NOT typically a stakeholder in AI projects within
+corporate communications?
+4/1/26, 9:30 PM
+AI Pathway Tool - Personalized AI Learning Paths
+95.216.199.47:3000/learn/1293e154-8bc0-427f-be3c-6325d30a09a0/lesson/90220ea6-df46-40a4-b35b-17be92dad365
+5/6
+
+--- PAGE 6 ---
+Content Creators
+Legal Teams
+IT Departments
+Retail Customers
+React:
+👍Helpful
+💡Interesting
+🤯Mind Blown
+😕Confused
+Back to Dashboard
+Complete the knowledge check and
+implementation task first
+Mark as Complete
+4/1/26, 9:30 PM
+AI Pathway Tool - Personalized AI Learning Paths
+95.216.199.47:3000/learn/1293e154-8bc0-427f-be3c-6325d30a09a0/lesson/90220ea6-df46-40a4-b35b-17be92dad365
+6/6

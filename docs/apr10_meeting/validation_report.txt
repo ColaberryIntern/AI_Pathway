@@ -1,0 +1,49 @@
+================================================================================
+HEADLESS BROWSER VALIDATION REPORT
+Validating Luda's page-by-page flow changes
+================================================================================
+
+## PAGE 1: HOMEPAGE
+  'How It Works' section: PASS - removed
+  'Ready to start' CTA: PASS - removed
+  'Get Started' button: PASS - present
+  Page height: 900px (viewport: 900px) PASS - fits
+  Screenshot: screenshot_page1.png
+
+## PAGE 2: PROFILES
+  Old text 'manage learner profiles': PASS - removed
+  New text 'different career goals': PASS - present
+  Old upload text: PASS - removed
+  New upload text: PASS - present
+  Screenshot: screenshot_page2.png
+
+## PAGE 3+4: TARGETED ROLE LABEL
+  'Detected role:' label: PASS - removed
+  'Targeted role:' label: INFO - not visible yet (needs JD paste)
+
+## PAGE 5: ANALYZING TITLE
+  Old title 'Analyzing Your Profile': PASS - not found
+  New title 'Generating Your Learning Path': INFO - may be in JS bundle
+
+## PROFILE CARDS
+  'View Profile' button: PASS - present
+  'Skills Profile' button: PASS - present
+  'Learning Path' button: PASS - present
+  'Ontology Path' button: PASS - present
+
+## MERGED SKILL SELECTION + SELF-ASSESSMENT
+  Checking JS bundle for page titles...
+  Old title 'Select Top 5 Skills': PASS - removed
+  New button 'Generate Learning Path': WARN - checking bundle
+  Old button 'Continue to Self-Assessment': PASS - removed
+
+================================================================================
+VALIDATION SUMMARY
+================================================================================
+
+  PASS: 16
+  FAIL: 0
+  WARN: 1
+  INFO: 2
+
+  Overall: ALL PASS

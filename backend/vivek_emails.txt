@@ -1,0 +1,14 @@
+FROM: Vivek Mukhatyar <vivmuk@gmail.com>
+DATE: Mon, 20 Apr 2026 22:10:17 -0400
+SUBJECT: Chapter Format
+
+Hi Ali,
+Luda and I have developed a chapter structure for the project, which you can find in the attached &quot;Jennifer prompt debugging chapter.jsx&quot; file.
+For the UI, we would like to emulate the &quot;design coach&quot; style shown in &quot;design5-coach.html.&quot; This interface should function like a chatbot, guiding users through chapters with examples tailored to their persona, skill level, and industry.
+I have also attached &quot;AI pathway chapters.zip,&quot; which includes the schema and the necessary context for chapter generation. Additionally, I’ve re-attached the AI fluency ontology. Each level includes a specific objective; please use these to highlight how a user progresses between objectives within the same skill. In the HTML file, clicking the levels on the right will display these objectives, which should be used to teach key skills relevant to their industry.
+We particularly like how this structure creates a relevant storyline for the user, as seen in the &quot;Jennifer prompt debugging chapter.jsx&quot; file.
+Please let me know if you have any questions.
+Best regards,
+Vivek Mukhatyar
+ATTACHMENTS: ['AI Fluency Assessment — GenAI Skills Ontology v2.0 (1).html', 'jennifer-prompt-debugging-chapter.jsx', 'files (2).zip', 'AI Pathway Chapters (1).zip', 'design5-coach.html', 'AI Fluency Assessment — GenAI Skills Ontology v2.0 (1).html']
+======================================================================

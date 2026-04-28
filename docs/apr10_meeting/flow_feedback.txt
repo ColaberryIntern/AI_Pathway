@@ -1,0 +1,39 @@
+Page by page – streamlining the flow
+Page 1
+Remove sections ‘How it works’ and “ready to start you journey?’
+The remaining sections should fit on one page
+Page 2
+This is the first page the user sees. Let’s change the language for an individual user who can create many profiles. 
+Change “Create and manageprofiles. Each profile tracks skills, learning paths, and progress.
+Remove “Upload a resume or fill in manually, then paste the target job description.”
+On the left “Your Current 
+.
+Change ‘Detected Role’ to ‘Targeted Role’
+Page 3
+What do ‘#x’ represent? Is this the priority of these skills according to our rubric? If so, please show them in this order.  And on ALL future pages when we show the skills as well.
+Suggest removing this page – it is duplicative with Page 4
+Page 4
+Use this page and combine the functionality with Page 3. 
+New text on top: “
+Title: Top 5 Skills for the Targeted Role - Assessing Your Proficiency Level
+Text: We identified 8 key skills from the job description. Targeted role: AI Content Editor
+Please rate your current proficiency. For each skill, select the level that best describes your current ability. Hover over each level for a description.
+Show skills in priority order. 
+Vivek is working on better definitions for each level for EACH skill. The definitions will be in the ontology. At the moment, let’s leave as is. 
+Page 4 filled out
+I believe that Jennifer meets target level for at least 2 skills. 
+Here is the logic of how we plan to deal with it. Suggestions welcome.
+If the level match to the target level, remove the skills and reduce the number of chapters to the remaining. 
+Inform the user at the bottom of the page about this change: “Since X skills match targeted level, we will proceed with the remaining skills. If you’d like to keep matching skills, click here.” And provide a button to click.
+At the completion of 3 chapters, we will reprioritize and provide additional chapters. 
+If the user picks all chapters at the target level, generate next 5 prioritized skills. In this generation, include skills that the user just learned in their current state, and rerun the selection and prioritization again.
+Page 5
+A placeholder while the learning path is being generated. 
+Change title to ‘Generating Your Learning Path’
+Page 6 – appears like duplication. suggest removing
+Page 7 – lists objectives but suggest removing for better flow
+Page 8 – not needed, suggest removing
+Page 9
+Jump here from Page 5
+Make sure that the chapters are listed in the order of priority selected by the rubric
+Vivek is working on 1 chapter per skill level but at this point leave as is. 

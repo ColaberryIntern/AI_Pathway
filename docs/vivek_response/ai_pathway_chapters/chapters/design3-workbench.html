@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Workbench — Chain-of-Thought Prompting</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0e1117;
+  --bg2: #161b22;
+  --bg3: #1c2128;
+  --bg4: #21262d;
+  --border: #30363d;
+  --border2: #3d444d;
+  --tx: #e6edf3;
+  --muted: #8b949e;
+  --dim: #484f58;
+  --green: #3fb950;
+  --amber: #d29922;
+  --blue: #58a6ff;
+  --purple: #bc8cff;
+  --red: #ff7b72;
+  --mono: 'JetBrains Mono', monospace;
+  --sans: 'Inter', sans-serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--tx); font-family: var(--sans); font-size: 13px; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
+
+/* Title bar */
+.titlebar { background: var(--bg2); border-bottom: 1px solid var(--border); padding: 0 16px; display: flex; align-items: center; height: 40px; gap: 16px; flex-shrink: 0; }
+.tb-dots { display: flex; gap: 6px; }
+.tbd { width: 12px; height: 12px; border-radius: 50%; }
+.tbd.r { background: #ff5f57; }
+.tbd.y { background: #febc2e; }
+.tbd.g { background: #28c840; }
+.tb-title { font-family: var(--mono); font-size: 12px; color: var(--muted); flex: 1; text-align: center; }
+.tb-skill { font-family: var(--mono); font-size: 11px; color: var(--dim); }
+
+/* Tab bar */
+.tabbar { background: var(--bg2); border-bottom: 1px solid var(--border); display: flex; flex-shrink: 0; }
+.tab { padding: 8px 20px; font-family: var(--mono); font-size: 11px; color: var(--muted); cursor: pointer; border-right: 1px solid var(--border); border-bottom: 2px solid transparent; transition: all .15s; display: flex; align-items: center; gap: 8px; }
+.tab:hover { background: var(--bg3); color: var(--tx); }
+.tab.active { background: var(--bg); color: var(--tx); border-bottom-color: var(--blue); }
+.tab-dot { width: 6px; height: 6px; border-radius: 50%; }
+
+/* Main layout */
+.workspace { display: flex; flex: 1; overflow: hidden; }
+
+/* File tree */
+.filetree { width: 220px; background: var(--bg2); border-right: 1px solid var(--border); flex-shrink: 0; overflow-y: auto; }
+.ft-header { padding: 10px 16px 6px; font-family: var(--mono); font-size: 10px; color: var(--dim); text-transform: uppercase; letter-spacing: 2px; }
+.ft-item { padding: 4px 16px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: 11px; color: var(--muted); transition: all .15s; }
+.ft-item:hover { background: var(--bg3); color: var(--tx); }
+.ft-item.active { background: var(--bg4); color: var(--blue); }
+.ft-item.section { padding-left: 28px; font-size: 10px; }
+.ft-icon { font-size: 12px; }
+.ft-section-label { padding: 10px 16px 4px; font-family: var(--mono); font-size: 9px; color: var(--dim); text-transform: uppercase; letter-spacing: 2px; margin-top: 8px; }
+.ft-progress { padding: 12px 16px; border-top: 1px solid var(--border); margin-top: auto; }
+.ft-prog-label { font-family: var(--mono); font-size: 9px; color: var(--dim); margin-bottom: 6px; display: flex; justify-content: space-between; }
+.ft-prog-bar { height: 2px; background: var(--border); border-radius: 1px; }
+.ft-prog-fill { height: 100%; background: var(--green); border-radius: 1px; transition: width .4s; }
+
+/* Editor pane */
+.editor { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.editor-content { flex: 1; overflow-y: auto; padding: 32px 48px; }
+
+/* Panel */
+.panel { display: none; }
+.panel.active { display: block; }
+
+/* Editor typography */
+.panel-title { font-family: var(--mono); font-size: 22px; font-weight: 700; color: var(--tx); margin-bottom: 6px; }
+.panel-subtitle { font-size: 13px; color: var(--muted); margin-bottom: 28px; line-height: 1.6; }
+
+/* Info box */
+.info-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 24px 0; }
+.info-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; padding: 14px; }
+.ic-label { font-family: var(--mono); font-size: 9px; color: var(--dim); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px; }
+.ic-value { font-size: 13px; font-weight: 600; color: var(--tx); }
+
+/* Journey */
+.journey-block { background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; padding: 20px; margin: 20px 0; }
+.jb-label { font-family: var(--mono); font-size: 9px; color: var(--amber); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 12px; }
+.jb-row { display: flex; align-items: center; gap: 12px; }
+.jb-from, .jb-to { flex: 1; background: var(--bg3); border-radius: 4px; padding: 12px; font-size: 12px; color: var(--muted); line-height: 1.5; }
+.jb-to { border: 1px solid rgba(88,166,255,.2); color: var(--tx); }
+.jb-arrow { color: var(--blue); font-size: 16px; flex-shrink: 0; font-family: var(--mono); }
+
+/* Concept blocks */
+.concept-block { background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; margin: 16px 0; overflow: hidden; }
+.cb-header { padding: 10px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+.cb-h-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.cb-h-title { font-family: var(--mono); font-size: 12px; font-weight: 600; color: var(--tx); }
+.cb-body { padding: 16px; font-size: 12px; color: var(--muted); line-height: 1.7; }
+.cb-tag { display: inline-block; font-family: var(--mono); font-size: 10px; padding: 2px 8px; border-radius: 3px; margin-top: 8px; }
+
+/* Chain viz */
+.chain-wrap { background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; padding: 20px; margin: 16px 0; }
+.chain-label { font-family: var(--mono); font-size: 9px; color: var(--dim); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 16px; }
+.chain-flow { display: flex; align-items: center; gap: 8px; flex-wrap: nowrap; overflow-x: auto; padding-bottom: 4px; }
+.cf-step { background: var(--bg4); border: 1px solid var(--border2); border-radius: 4px; padding: 10px 14px; min-width: 120px; flex-shrink: 0; }
+.cf-n { font-family: var(--mono); font-size: 9px; color: var(--blue); margin-bottom: 4px; }
+.cf-t { font-family: var(--mono); font-size: 10px; color: var(--tx); line-height: 1.4; }
+.cf-arrow { color: var(--dim); font-family: var(--mono); flex-shrink: 0; }
+
+/* Example tabs */
+.ex-tabs { display: flex; gap: 0; margin-bottom: 20px; border-bottom: 1px solid var(--border); }
+.ext { padding: 8px 18px; font-family: var(--mono); font-size: 11px; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; background: none; border-top: none; border-left: none; border-right: none; transition: all .15s; }
+.ext:hover { color: var(--tx); }
+.ext.active { color: var(--blue); border-bottom-color: var(--blue); }
+.ex-pane { display: none; }
+.ex-pane.active { display: block; }
+
+.scenario-comment { font-family: var(--mono); font-size: 12px; color: var(--dim); padding: 12px 0; border-top: 1px solid var(--border); margin-bottom: 4px; }
+.scenario-comment span { color: var(--green); }
+.doc-attach { display: inline-flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 10px; color: var(--muted); background: var(--bg2); border: 1px solid var(--border); border-radius: 4px; padding: 3px 10px; margin: 2px; }
+
+/* Code block */
+.code-block { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; margin: 12px 0; }
+.code-header { background: var(--bg2); padding: 8px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+.code-lang { font-family: var(--mono); font-size: 10px; color: var(--dim); }
+.code-copy { font-family: var(--mono); font-size: 10px; color: var(--dim); cursor: pointer; background: none; border: none; }
+.code-copy:hover { color: var(--tx); }
+.code-body { padding: 16px; font-family: var(--mono); font-size: 12px; line-height: 1.8; counter-reset: line; }
+.code-line { display: flex; gap: 20px; }
+.cl-num { color: var(--dim); width: 24px; flex-shrink: 0; text-align: right; user-select: none; }
+.cl-text { color: var(--tx); flex: 1; white-space: pre-wrap; }
+.cl-text .kw { color: var(--purple); }
+.cl-text .str { color: var(--green); }
+.cl-text .em { color: var(--amber); }
+.cl-text .cm { color: var(--dim); }
+
+/* Analysis note */
+.analysis { background: rgba(63,185,80,.06); border: 1px solid rgba(63,185,80,.2); border-radius: 6px; padding: 14px 18px; margin: 12px 0; }
+.an-label { font-family: var(--mono); font-size: 9px; color: var(--green); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px; }
+.an-text { font-size: 12px; color: var(--muted); line-height: 1.6; }
+
+/* Agent builder */
+.agent-editor { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
+.ae-form { }
+.ae-preview { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; position: sticky; top: 0; }
+.ae-prev-header { background: var(--bg2); padding: 8px 16px; border-bottom: 1px solid var(--border); font-family: var(--mono); font-size: 10px; color: var(--dim); display: flex; align-items: center; gap: 6px; }
+.ae-prev-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); }
+.ae-prev-code { padding: 16px; font-family: var(--mono); font-size: 11px; line-height: 1.8; white-space: pre-wrap; }
+.form-group { margin-bottom: 16px; }
+.fg-label { font-family: var(--mono); font-size: 10px; color: var(--dim); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px; display: block; }
+.fg-hint { font-size: 11px; color: var(--dim); margin-bottom: 8px; }
+textarea.fg-input { width: 100%; background: var(--bg2); border: 1px solid var(--border); border-radius: 4px; color: var(--tx); font-family: var(--mono); font-size: 11px; padding: 10px 12px; resize: none; line-height: 1.6; transition: border-color .15s; }
+textarea.fg-input:focus { outline: none; border-color: var(--blue); }
+
+/* Status bar */
+.statusbar { background: var(--blue); padding: 0 16px; height: 22px; display: flex; align-items: center; gap: 20px; flex-shrink: 0; }
+.sb-item { font-family: var(--mono); font-size: 10px; color: rgba(255,255,255,.8); display: flex; align-items: center; gap: 4px; }
+
+/* Nav buttons */
+.action-row { display: flex; gap: 10px; margin-top: 28px; padding-top: 20px; border-top: 1px solid var(--border); }
+.btn-run { background: var(--green); color: #000; font-family: var(--mono); font-size: 12px; font-weight: 600; padding: 9px 22px; border: none; border-radius: 5px; cursor: pointer; transition: all .15s; }
+.btn-run:hover { filter: brightness(1.1); }
+.btn-skip { background: transparent; color: var(--muted); font-family: var(--mono); font-size: 12px; padding: 9px 18px; border: 1px solid var(--border2); border-radius: 5px; cursor: pointer; transition: all .15s; }
+.btn-skip:hover { border-color: var(--tx); color: var(--tx); }
+
+/* Complete */
+.complete-wrap { text-align: center; padding: 40px 0; }
+.comp-badge { background: rgba(63,185,80,.1); border: 1px solid rgba(63,185,80,.3); border-radius: 8px; display: inline-block; padding: 16px 24px; margin-bottom: 28px; }
+.comp-badge-text { font-family: var(--mono); font-size: 13px; color: var(--green); }
+.skill-chips { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin: 20px 0; }
+.schip { font-family: var(--mono); font-size: 10px; padding: 4px 12px; border-radius: 3px; border: 1px solid; }
+.schip.g { color: var(--green); border-color: rgba(63,185,80,.3); background: rgba(63,185,80,.06); }
+.schip.b { color: var(--blue); border-color: rgba(88,166,255,.3); background: rgba(88,166,255,.06); }
+.schip.p { color: var(--purple); border-color: rgba(188,140,255,.3); background: rgba(188,140,255,.06); }
+.next-list { background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; margin: 20px auto; max-width: 400px; text-align: left; }
+.nl-header { padding: 8px 16px; border-bottom: 1px solid var(--border); font-family: var(--mono); font-size: 10px; color: var(--dim); }
+.nl-item { padding: 10px 16px; border-bottom: 1px solid var(--border); font-family: var(--mono); font-size: 11px; color: var(--muted); display: flex; justify-content: space-between; }
+.nl-item:last-child { border-bottom: none; }
+.nl-item span { color: var(--blue); }
+</style>
+</head>
+<body>
+<div class="titlebar">
+  <div class="tb-dots"><div class="tbd r"></div><div class="tbd y"></div><div class="tbd g"></div></div>
+  <div class="tb-title">GenAI Workbench — Chain-of-Thought Prompting</div>
+  <div class="tb-skill">SK.PRM.005 · Intermediate</div>
+</div>
+<div class="tabbar">
+  <div class="tab active" onclick="switchTab(0,this)"><span class="tab-dot" style="background:#3fb950"></span>01_scenario.md</div>
+  <div class="tab" id="tab1" onclick="switchTab(1,this)"><span class="tab-dot" style="background:#58a6ff"></span>02_concepts.md</div>
+  <div class="tab" id="tab2" onclick="switchTab(2,this)"><span class="tab-dot" style="background:#d29922"></span>03_examples.md</div>
+  <div class="tab" id="tab3" onclick="switchTab(3,this)"><span class="tab-dot" style="background:#bc8cff"></span>04_agent.config</div>
+  <div class="tab" id="tab4" onclick="switchTab(4,this)"><span class="tab-dot" style="background:#ff7b72"></span>05_complete.md</div>
+</div>
+<div class="workspace">
+  <div class="filetree">
+    <div class="ft-header">Explorer</div>
+    <div class="ft-section-label">SK.PRM.005</div>
+    <div class="ft-item active" onclick="switchPanel(0)"><span class="ft-icon">📄</span>01_scenario.md</div>
+    <div class="ft-item" id="fi1" onclick="switchPanel(1)"><span class="ft-icon">📄</span>02_concepts.md</div>
+    <div class="ft-item" id="fi2" onclick="switchPanel(2)"><span class="ft-icon">📄</span>03_examples.md</div>
+    <div class="ft-item" id="fi3" onclick="switchPanel(3)"><span class="ft-icon">⚙️</span>04_agent.config</div>
+    <div class="ft-item" id="fi4" onclick="switchPanel(4)"><span class="ft-icon">✅</span>05_complete.md</div>
+    <div class="ft-section-label" style="margin-top:16px">Attachments</div>
+    <div class="ft-item section"><span class="ft-icon">📊</span>Q2-campaign.csv</div>
+    <div class="ft-item section"><span class="ft-icon">📋</span>ICP-profile.pdf</div>
+    <div class="ft-item section"><span class="ft-icon">📈</span>competitor-matrix.xlsx</div>
+    <div class="ft-progress">
+      <div class="ft-prog-label"><span>Progress</span><span id="ft-pct">20%</span></div>
+      <div class="ft-prog-bar"><div class="ft-prog-fill" id="ft-fill" style="width:20%"></div></div>
+    </div>
+  </div>
+
+  <div class="editor">
+    <div class="editor-content">
+
+      <!-- Panel 0: Scenario -->
+      <div class="panel active" id="p0">
+        <div class="panel-title"># Scenario & Objectives</div>
+        <div class="panel-subtitle">Role: Marketing Manager · B2B SaaS · Skill: SK.PRM.005 · Level: Intermediate → Advanced</div>
+        <div class="info-row">
+          <div class="info-card"><div class="ic-label">Role</div><div class="ic-value">Mktg Manager</div></div>
+          <div class="info-card"><div class="ic-label">Industry</div><div class="ic-value">B2B SaaS</div></div>
+          <div class="info-card"><div class="ic-label">Skill Level</div><div class="ic-value">Intermediate</div></div>
+          <div class="info-card"><div class="ic-label">Duration</div><div class="ic-value">~35 min</div></div>
+        </div>
+        <div class="journey-block">
+          <div class="jb-label">// Journey: A → B</div>
+          <div class="jb-row">
+            <div class="jb-from">You write direct prompts. Complex campaigns need 8–10 revisions before output is usable.</div>
+            <div class="jb-arrow">──►</div>
+            <div class="jb-to">You structure the AI's reasoning before it responds. Complex deliverables arrive grounded in your data, ready for stakeholders.</div>
+          </div>
+        </div>
+        <div class="scenario-comment"><span>// Context:</span> Your Q3 product launch is in 6 weeks. You need a complete campaign brief, competitive analysis, and channel strategy — all grounded in your actual ICP and past performance data. This chapter teaches you to get that in a single, well-structured prompt.</div>
+        <div class="action-row">
+          <button class="btn-run" onclick="advance()">▶ Run next section</button>
+        </div>
+      </div>
+
+      <!-- Panel 1: Concepts -->
+      <div class="panel" id="p1">
+        <div class="panel-title"># AI Concepts</div>
+        <div class="panel-subtitle">Three mental models for chain-of-thought prompting</div>
+        <div class="concept-block">
+          <div class="cb-header"><div class="cb-h-dot" style="background:#ff7b72"></div><div class="cb-h-title">The Prediction Problem</div></div>
+          <div class="cb-body">LLMs predict the next token based on statistical patterns — they don't "reason." Without structured steps, they jump to plausible-sounding conclusions that skip real analytical work. This is why direct questions about complex topics produce confident but shallow outputs.
+          <div class="cb-tag" style="background:rgba(255,123,114,.1);color:#ff7b72">ROOT CAUSE</div></div>
+        </div>
+        <div class="concept-block">
+          <div class="cb-header"><div class="cb-h-dot" style="background:#58a6ff"></div><div class="cb-h-title">The Chain Mechanism</div></div>
+          <div class="cb-body">CoT forces the model to generate intermediate reasoning steps before concluding. Critically: each generated reasoning step becomes part of the context for the next step. The model is literally using its own reasoning as input — so quality compounds.
+          <div class="cb-tag" style="background:rgba(88,166,255,.1);color:#58a6ff">HOW IT WORKS</div></div>
+        </div>
+        <div class="concept-block">
+          <div class="cb-header"><div class="cb-h-dot" style="background:#3fb950"></div><div class="cb-h-title">Your Marketing Payoff</div></div>
+          <div class="cb-body">For B2B marketing work: CoT is the difference between a generic campaign outline and a brief that references your ICP, accounts for competitive positioning, and channels strategy based on your actual Q2 performance. One prompt. Board-ready output.
+          <div class="cb-tag" style="background:rgba(63,185,80,.1);color:#3fb950">THE ROI</div></div>
+        </div>
+        <div class="chain-wrap">
+          <div class="chain-label">// CoT execution flow</div>
+          <div class="chain-flow">
+            <div class="cf-step"><div class="cf-n">step_1</div><div class="cf-t">Define problem space & constraints</div></div>
+            <div class="cf-arrow">──►</div>
+            <div class="cf-step"><div class="cf-n">step_2</div><div class="cf-t">Analyze each variable independently</div></div>
+            <div class="cf-arrow">──►</div>
+            <div class="cf-step"><div class="cf-n">step_3</div><div class="cf-t">Cross-reference & synthesize</div></div>
+            <div class="cf-arrow">──►</div>
+            <div class="cf-step"><div class="cf-n">step_4</div><div class="cf-t">Produce structured output</div></div>
+          </div>
+        </div>
+        <div class="action-row">
+          <button class="btn-run" onclick="advance()">▶ Open examples</button>
+          <button class="btn-skip" onclick="switchPanel(0)">◀ Back</button>
+        </div>
+      </div>
+
+      <!-- Panel 2: Examples -->
+      <div class="panel" id="p2">
+        <div class="panel-title"># Live Examples</div>
+        <div class="panel-subtitle">Two real prompts from your marketing workflow</div>
+        <div class="ex-tabs">
+          <button class="ext active" onclick="swEx(0,this)">example_01_campaign_brief.md</button>
+          <button class="ext" onclick="swEx(1,this)">example_02_competitive_memo.md</button>
+        </div>
+        <div class="ex-pane active" id="xp0">
+          <div class="scenario-comment"><span>// Situation:</span> Q3 product launch, AI analytics feature. Need campaign brief from ICP, past performance, competitor data. Normally 2 hours.</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+            <div class="doc-attach">📊 Q2-campaign-results.csv</div>
+            <div class="doc-attach">📋 ICP-profile-2024.pdf</div>
+            <div class="doc-attach">📈 competitor-matrix.xlsx</div>
+          </div>
+          <div class="code-block">
+            <div class="code-header"><div class="code-lang">prompt.txt</div><button class="code-copy" onclick="this.textContent='✓ Copied'">Copy</button></div>
+            <div class="code-body">
+              <div class="code-line"><div class="cl-num">1</div><div class="cl-text">I'm launching a B2B SaaS analytics feature in Q3.</div></div>
+              <div class="code-line"><div class="cl-num">2</div><div class="cl-text"><span class="cm">// Work through this step by step:</span></div></div>
+              <div class="code-line"><div class="cl-num">3</div><div class="cl-text"></div></div>
+              <div class="code-line"><div class="cl-num">4</div><div class="cl-text"><span class="em">Step 1 — Audience:</span> Review the ICP profile.</div></div>
+              <div class="code-line"><div class="cl-num">5</div><div class="cl-text">Who is the primary buyer? What pain points does</div></div>
+              <div class="code-line"><div class="cl-num">6</div><div class="cl-text">this feature address most acutely?</div></div>
+              <div class="code-line"><div class="cl-num">7</div><div class="cl-text"></div></div>
+              <div class="code-line"><div class="cl-num">8</div><div class="cl-text"><span class="em">Step 2 — Competitive context:</span> Using the matrix,</div></div>
+              <div class="code-line"><div class="cl-num">9</div><div class="cl-text">identify our key differentiation. What gap are we</div></div>
+              <div class="code-line"><div class="cl-num">10</div><div class="cl-text">filling that competitors leave open?</div></div>
+              <div class="code-line"><div class="cl-num">11</div><div class="cl-text"></div></div>
+              <div class="code-line"><div class="cl-num">12</div><div class="cl-text"><span class="em">Step 3 — Channel strategy:</span> From Q2 results,</div></div>
+              <div class="code-line"><div class="cl-num">13</div><div class="cl-text">which channels drove highest-quality pipeline?</div></div>
+              <div class="code-line"><div class="cl-num">14</div><div class="cl-text">Explain your reasoning before recommending.</div></div>
+              <div class="code-line"><div class="cl-num">15</div><div class="cl-text"></div></div>
+              <div class="code-line"><div class="cl-num">16</div><div class="cl-text"><span class="em">Step 4 — Synthesis:</span> Combine analysis into brief:</div></div>
+              <div class="code-line"><div class="cl-num">17</div><div class="cl-text">positioning statement, 3 pillars, channels, KPIs.</div></div>
+              <div class="code-line"><div class="cl-num">18</div><div class="cl-text"></div></div>
+              <div class="code-line"><div class="cl-num">19</div><div class="cl-text"><span class="kw">// CRITICAL:</span> Show reasoning at each step</div></div>
+              <div class="code-line"><div class="cl-num">20</div><div class="cl-text"><span class="kw">// before moving to the next.</span></div></div>
+            </div>
+          </div>
+          <div class="analysis"><div class="an-label">// Analysis</div><div class="an-text">Line 19–20 is the CoT trigger. Without it, the model synthesizes immediately and skips the analytical grounding. The step structure forces evidence-based reasoning from your attached documents before it concludes.</div></div>
+        </div>
+        <div class="ex-pane" id="xp1">
+          <div class="scenario-comment"><span>// Situation:</span> VP needs competitive intelligence memo for Monday board meeting. Sources: G2 reviews, Gartner report, competitor sites.</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+            <div class="doc-attach">📊 g2-reviews-export.csv</div>
+            <div class="doc-attach">📋 gartner-report-2025.pdf</div>
+            <div class="doc-attach">🌐 competitor-websites.txt</div>
+          </div>
+          <div class="code-block">
+            <div class="code-header"><div class="code-lang">prompt.txt</div><button class="code-copy" onclick="this.textContent='✓ Copied'">Copy</button></div>
+            <div class="code-body">
+              <div class="code-line"><div class="cl-num">1</div><div class="cl-text">Competitive analysis for an executive memo.</div></div>
+              <div class="code-line"><div class="cl-num">2</div><div class="cl-text"><span class="cm">// Build on each step before proceeding:</span></div></div>
+              <div class="code-line"><div class="cl-num">3</div><div class="cl-text"></div></div>
+              <div class="code-line"><div class="cl-num">4</div><div class="cl-text"><span class="em">Step 1:</span> From G2 reviews, top 3 complaints</div></div>
+              <div class="code-line"><div class="cl-num">5</div><div class="cl-text">per competitor. Quantify where possible.</div></div>
+              <div class="code-line"><div class="cl-num">6</div><div class="cl-text"></div></div>
+              <div class="code-line"><div class="cl-num">7</div><div class="cl-text"><span class="em">Step 2:</span> How does Gartner frame the market?</div></div>
+              <div class="code-line"><div class="cl-num">8</div><div class="cl-text">Where does it see white space?</div></div>
+              <div class="code-line"><div class="cl-num">9</div><div class="cl-text"></div></div>
+              <div class="code-line"><div class="cl-num">10</div><div class="cl-text"><span class="em">Step 3 — Triangulate:</span> Cross-reference Steps</div></div>
+              <div class="code-line"><div class="cl-num">11</div><div class="cl-text">1 &amp; 2. Which gaps appear in BOTH customer</div></div>
+              <div class="code-line"><div class="cl-num">12</div><div class="cl-text">complaints AND analyst white space?</div></div>
+              <div class="code-line"><div class="cl-num">13</div><div class="cl-text"></div></div>
+              <div class="code-line"><div class="cl-num">14</div><div class="cl-text"><span class="em">Step 4:</span> Write 3-paragraph exec memo.</div></div>
+              <div class="code-line"><div class="cl-num">15</div><div class="cl-text">Cite your step-by-step reasoning <span class="kw">inline</span>.</div></div>
+            </div>
+          </div>
+          <div class="analysis"><div class="an-label">// Analysis</div><div class="an-text">Step 3 "Triangulation" is advanced CoT: you're forcing the model to cross-reference two evidence sources before concluding. "Cite reasoning inline" (line 15) makes the output auditable — every claim traces to evidence your executives can verify.</div></div>
+        </div>
+        <div class="action-row">
+          <button class="btn-run" onclick="advance()">▶ Build agent</button>
+          <button class="btn-skip" onclick="switchPanel(1)">◀ Back</button>
+        </div>
+      </div>
+
+      <!-- Panel 3: Agent Builder -->
+      <div class="panel" id="p3">
+        <div class="panel-title"># Agent Configuration</div>
+        <div class="panel-subtitle">Build your CoT marketing agent. Edit the fields — config file updates live.</div>
+        <div class="agent-editor">
+          <div class="ae-form">
+            <div class="form-group">
+              <label class="fg-label">agent_role</label>
+              <div class="fg-hint">Primary workflow this agent handles</div>
+              <textarea class="fg-input" rows="2" id="ag0" oninput="buildAgent()">Campaign brief generator for B2B SaaS product launches</textarea>
+            </div>
+            <div class="form-group">
+              <label class="fg-label">reasoning_chain[]</label>
+              <div class="fg-hint">Steps the agent works through before synthesizing</div>
+              <textarea class="fg-input" rows="4" id="ag1" oninput="buildAgent()">audience_analysis
+competitive_differentiation
+channel_fit_from_data
+brief_synthesis</textarea>
+            </div>
+            <div class="form-group">
+              <label class="fg-label">required_inputs[]</label>
+              <div class="fg-hint">Documents that must always be provided</div>
+              <textarea class="fg-input" rows="3" id="ag2" oninput="buildAgent()">icp_profile.pdf
+campaign_performance.csv
+competitor_matrix.xlsx</textarea>
+            </div>
+            <div class="form-group">
+              <label class="fg-label">output_schema</label>
+              <div class="fg-hint">Structure of the synthesized output</div>
+              <textarea class="fg-input" rows="3" id="ag3" oninput="buildAgent()">positioning_statement
+messaging_pillars[3]
+channel_mix
+quarterly_kpis</textarea>
+            </div>
+          </div>
+          <div class="ae-preview">
+            <div class="ae-prev-header"><div class="ae-prev-dot"></div>agent.config — live</div>
+            <div class="ae-prev-code" id="agent-cfg"><span style="color:#bc8cff">agent</span> <span style="color:#3fb950">"mktg-cot-v1"</span> {
+
+  <span style="color:#484f58">// Role</span>
+  role: <span style="color:#3fb950" id="ag-r0">"Campaign brief generator..."</span>
+
+  <span style="color:#484f58">// Reasoning chain</span>
+  chain: [
+    <span id="ag-r1" style="color:#3fb950">"audience_analysis",
+    "competitive_differentiation",
+    "channel_fit_from_data",
+    "brief_synthesis"</span>
+  ]
+
+  <span style="color:#484f58">// Required inputs</span>
+  inputs: [
+    <span id="ag-r2" style="color:#3fb950">"icp_profile.pdf",
+    "campaign_performance.csv",
+    "competitor_matrix.xlsx"</span>
+  ]
+
+  <span style="color:#484f58">// Output schema</span>
+  output: {
+    <span id="ag-r3" style="color:#3fb950">positioning_statement: string
+    messaging_pillars: string[3]
+    channel_mix: object
+    quarterly_kpis: object</span>
+  }
+
+  <span style="color:#484f58">// System instruction</span>
+  cot_instruction: <span style="color:#d29922">"Think step by step.
+  Show reasoning at each stage
+  before synthesizing."</span>
+}</div>
+          </div>
+        </div>
+        <div class="action-row">
+          <button class="btn-run" onclick="advance()">▶ Complete module</button>
+          <button class="btn-skip" onclick="switchPanel(2)">◀ Back</button>
+        </div>
+      </div>
+
+      <!-- Panel 4: Complete -->
+      <div class="panel" id="p4">
+        <div class="complete-wrap">
+          <div class="comp-badge"><div class="comp-badge-text">✓ SK.PRM.005 — COMPLETE</div></div>
+          <div class="panel-title" style="text-align:center;margin-bottom:8px"># Mission complete</div>
+          <div class="panel-subtitle" style="text-align:center;max-width:480px;margin:0 auto 20px">Chain-of-thought prompting is now in your toolkit. You've studied the mechanism, run two live examples, and built a deployable agent config.</div>
+          <div class="skill-chips">
+            <div class="schip g">chain-of-thought</div>
+            <div class="schip b">agent-config</div>
+            <div class="schip p">structured-reasoning</div>
+          </div>
+          <div class="next-list">
+            <div class="nl-header">// next_modules[]</div>
+            <div class="nl-item">SK.PRM.022 — ReAct-style patterns<span>→</span></div>
+            <div class="nl-item">SK.AGT.001 — Tool definitions<span>→</span></div>
+            <div class="nl-item">SK.RAG.022 — Agentic RAG<span>→</span></div>
+          </div>
+          <div class="action-row" style="justify-content:center">
+            <button class="btn-run" onclick="switchPanel(0)">▶ Restart module</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+<div class="statusbar">
+  <div class="sb-item">SK.PRM.005</div>
+  <div class="sb-item">Marketing Manager · B2B SaaS</div>
+  <div class="sb-item" id="sb-prog">Section 1/5</div>
+  <div class="sb-item" style="margin-left:auto">Intermediate → Advanced</div>
+</div>
+
+<script>
+let cur = 0, unlocked = 1;
+function switchPanel(n) {
+  if (n >= unlocked) return;
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('p'+n).classList.add('active');
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i===n));
+  document.querySelectorAll('.ft-item:not(.section)').forEach((f,i) => f.classList.toggle('active', i===n));
+  cur = n;
+  const pct = Math.round(((n+1)/5)*100);
+  document.getElementById('ft-fill').style.width = pct+'%';
+  document.getElementById('ft-pct').textContent = pct+'%';
+  document.getElementById('sb-prog').textContent = 'Section '+(n+1)+'/5';
+}
+function advance() {
+  unlocked = Math.max(unlocked, cur+2);
+  switchPanel(cur+1);
+}
+function switchTab(n, el) { switchPanel(n); }
+function swEx(n, btn) {
+  document.querySelectorAll('.ex-pane').forEach(p => p.classList.remove('active'));
+  document.getElementById('xp'+n).classList.add('active');
+  document.querySelectorAll('.ext').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+}
+function buildAgent() {
+  const r0 = document.getElementById('ag0').value;
+  const r1 = document.getElementById('ag1').value.split('\n').filter(Boolean);
+  const r2 = document.getElementById('ag2').value.split('\n').filter(Boolean);
+  const r3 = document.getElementById('ag3').value.split('\n').filter(Boolean);
+  document.getElementById('ag-r0').textContent = '"'+r0+'"';
+  document.getElementById('ag-r1').innerHTML = r1.map(s=>`<span style="color:#3fb950">"${s}"</span>`).join(',\n    ');
+  document.getElementById('ag-r2').innerHTML = r2.map(s=>`<span style="color:#3fb950">"${s}"</span>`).join(',\n    ');
+  document.getElementById('ag-r3').textContent = r3.join('\n    ');
+}
+</script>
+</body>
+</html>

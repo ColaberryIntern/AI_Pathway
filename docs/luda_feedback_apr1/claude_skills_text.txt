@@ -1,0 +1,42 @@
+please run this Job description by this ontology and pull out the top 10 skills that this person will require for this job.
+Here are the top 10 skills mapped from the JD against your ontology, ranked by relevance to the AI Content Editor role:
+A few observations:
+The JD skews heavily toward Foundation + Application layer skills — this person doesn't need to build models, but they need strong editorial judgment applied to AI systems. The critical cluster is D.PRM + D.CTIC + D.GOV, which maps to an AI Knowledge Worker profile (ROLE.KNOWLEDGE) leaning into content governance.
+The weakest coverage in your ontology for this role is SEO + CMS tooling — those are implied in D.TOOL but not explicitly mapped to content management platforms. That's a gap worth flagging for ontology v2.1 if this role type shows up frequently.
+Here is the PDF of this person's Linkedin profile summarizing her prior experience. could you take a look at the top 10 skills and prioritize them to top 5?
+Looking at Jennifer's LinkedIn profile against the 10 skills identified from the JD, here's how I'd prioritize down to the top 5 — weighted by where her experience shows clear gaps versus existing strengths:
+Why the bottom 5 were deprioritized:
+SK.CTIC.006 & SK.CTIC.004 — Jennifer's 9+ years of editorial and communications work means her critical reading and bias-spotting instincts are already strong. Lower gap.
+SK.FND.021 (IP/copyright) — Her publishing background (Random House, Nicholas Brealey) gives her a solid foundation here.
+SK.PRM.021 (Grounding & citations) — Her journalism and research newsletter work maps closely to this.
+SK.DOM.* (Domain applications) — She's effectively been living in the content/comms domain her entire career.
+Bottom line: Jennifer is an unusually strong candidate on the editorial and governance side, but her learning path should front-load the prompting and AI mechanics skills where she has the sharpest gap.
+great! Now, could you please take a fresh look at the 10 skills and the top 5 using this prioritization rubric?
+Great rubric — very clear scoring system. Let me now apply it rigorously to all 10 skills against Jennifer's profile.
+Here's the full re-scoring of all 10 skills using the rubric's formula (Importance × 4) + (Breadth × 3) + (Momentum × 3) + (Connectivity × 2) + (Career Signal × 2), then the top 5 selected with the diversity rule applied.
+Key differences from the previous prioritization:
+The rubric flips the ordering in two important ways. Previously I led with gap analysis ("where is she weakest?"). The rubric correctly reframes the question as "what makes her look most ready, fastest?" — which changes the weights.
+SK.EVL.001 (output quality evaluation) rises because it scores 3 on both career signal and role importance — hiring managers for an AI Content Editor role will specifically probe whether a candidate can measure and defend content quality decisions, not just make them intuitively.
+SK.CTIC.006 and SK.CTIC.004 drop out despite being role-relevant because Jennifer effectively already has these as transferable strengths — low momentum potential (she won't move a level in one chapter) and low connectivity. The rubric penalizes them appropriately.
+SK.PRM.021 (grounding & citations) was bumped by the diversity rule — three D.PRM skills in the top 5 violates the max-2-per-parent-node constraint, so it falls to position 6 despite scoring 29.
+
+--- TABLE ---
+# | Skill ID | Skill Name | Domain | Why It's Required
+1 | SK.PRM.003 | Prompt debugging & iteration | D.PRM — Prompting | Core to refining AI-generated content and collaborating with developers on generation algorithms
+2 | SK.CTIC.006 | Recognizing AI-generated content | D.CTIC — Critical Thinking | Directly stated: evaluate AI-generated content for accuracy, tone, and clarity
+3 | SK.FND.002 | Capabilities vs limitations (hallucinations) | D.FND — AI Literacy | Editing AI content requires knowing where it fails — hallucinations, factual drift
+4 | SK.CTIC.004 | Understanding bias in content | D.CTIC — Critical Thinking | Ensuring content aligns with brand voice and avoids skewed messaging
+5 | SK.GOV.022 | AI-generated content disclosure | D.GOV — Governance | Industry best practices for AI content, including disclosure requirements
+6 | SK.FND.021 | IP/copyright awareness | D.FND — AI Literacy | Working with AI-generated content carries IP/copyright risks explicitly relevant here
+7 | SK.PRM.020 | Draft → critique → revise | D.PRM — Prompting | The editorial workflow mirrors this loop — edit, optimize, repeat
+8 | SK.PRM.021 | Grounding & citations | D.PRM — Prompting | "Ensure accuracy" and SEO best practices require factual grounding
+9 | SK.EVL.001 | Output quality evaluation | D.EVL — Evaluation | Use data analysis to identify trends and content performance issues
+10 | SK.DOM.* | Domain Applications (Content/Martech) | D.DOM — Domain | Role is industry-specific (AI for content/media) — domain fluency is essential
+
+--- TABLE ---
+Priority | Skill ID | Skill Name | Reasoning
+🥇 1 | SK.PRM.003 | Prompt debugging & iteration | She has zero hands-on prompting experience. Yet the JD requires collaborating with developers to refine generation algorithms — this is her most critical gap.
+🥈 2 | SK.FND.002 | Capabilities vs limitations (hallucinations) | She reviewed 50+ AI use cases at Liberty Mutual through an ethics lens, but likely from a fairness/bias angle — not a technical understanding of why models hallucinate. A targeted gap.
+🥉 3 | SK.PRM.020 | Draft → critique → revise (with AI) | She's a strong editor natively, but applying that instinct to AI-in-the-loop workflows is a distinct skill she'll need to deliberately learn.
+4 | SK.GOV.022 | AI-generated content disclosure | She already built an inclusive AI review guide and has GenAI governance exposure — but content disclosure standards are a specific emerging requirement she hasn't explicitly done.
+5 | SK.EVL.001 | Output quality evaluation | Her newsletter metrics (63.5% open rate, 14.5% CTR) show data awareness, but evaluating AI output quality systematically — rubrics, scoring, iteration — is a skill she'd need to formalize.

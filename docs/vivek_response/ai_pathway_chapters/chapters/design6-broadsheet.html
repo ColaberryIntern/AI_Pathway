@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Broadsheet — What are AI Agents</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=UnifrakturMaguntia&family=IBM+Plex+Mono:wght@400;500&family=Lora:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#f5f2ea;--ink:#0e0d09;--red:#c0392b;--gray:#6b6558;
+  --rule:#c8bfaa;--serif:'Playfair Display',Georgia,serif;
+  --body:'Lora',Georgia,serif;--mono:'IBM Plex Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--paper);color:var(--ink);font-family:var(--body);min-height:100vh}
+
+/* Top masthead */
+.masthead{border-bottom:4px double var(--ink);padding:12px 40px 10px;display:flex;align-items:center;justify-content:space-between}
+.mast-left{font-family:var(--mono);font-size:10px;color:var(--gray);line-height:1.6}
+.mast-center{text-align:center}
+.mast-title{font-family:'UnifrakturMaguntia',cursive;font-size:44px;color:var(--ink);line-height:1;letter-spacing:1px}
+.mast-sub{font-family:var(--mono);font-size:9px;color:var(--gray);letter-spacing:3px;text-transform:uppercase;margin-top:4px}
+.mast-right{font-family:var(--mono);font-size:10px;color:var(--gray);text-align:right;line-height:1.6}
+
+/* Section tabs */
+.section-tabs{background:var(--ink);display:flex;overflow-x:auto}
+.stab{padding:8px 20px;font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.5);cursor:pointer;letter-spacing:2px;text-transform:uppercase;border-right:1px solid rgba(255,255,255,.1);white-space:nowrap;transition:all .2s;border-bottom:2px solid transparent}
+.stab:hover{color:#fff;background:rgba(255,255,255,.06)}
+.stab.active{color:#fff;border-bottom-color:var(--red)}
+.stab.locked{opacity:.3;cursor:default}
+
+/* Progress line */
+.progress-line{height:3px;background:var(--rule)}
+.progress-fill{height:100%;background:var(--red);transition:width .5s ease}
+
+/* Page */
+.page{max-width:1060px;margin:0 auto;padding:32px 40px 80px}
+
+/* Chapter */
+.chapter{display:none}
+.chapter.active{display:block}
+
+/* Headline style */
+.kicker{font-family:var(--mono);font-size:10px;color:var(--red);text-transform:uppercase;letter-spacing:3px;margin-bottom:8px;display:flex;align-items:center;gap:10px}
+.kicker::before,.kicker::after{content:'';flex:none;width:24px;height:1px;background:var(--red)}
+.headline{font-family:var(--serif);font-size:clamp(32px,5vw,56px);font-weight:900;line-height:1.05;letter-spacing:-.5px;margin-bottom:8px}
+.headline em{font-style:italic;color:var(--red)}
+.deck{font-family:var(--body);font-size:17px;color:var(--gray);line-height:1.6;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);padding:12px 0;margin-bottom:24px;font-style:italic}
+
+/* Column layout */
+.cols-3{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border:1px solid var(--rule)}
+.col{padding:20px 22px;border-right:1px solid var(--rule)}
+.col:last-child{border-right:none}
+.col-head{font-family:var(--serif);font-size:16px;font-weight:700;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid var(--rule)}
+.col-body{font-size:13px;color:var(--gray);line-height:1.7}
+
+.cols-2{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--rule);margin:20px 0}
+.col2{padding:20px 24px;border-right:1px solid var(--rule)}
+.col2:last-child{border-right:none}
+
+/* Profile box */
+.profile-box{background:var(--ink);color:var(--paper);padding:24px;margin-bottom:20px}
+.pb-label{font-family:var(--mono);font-size:9px;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,.4);margin-bottom:12px}
+.pb-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.pb-item-label{font-size:10px;color:rgba(255,255,255,.4);font-family:var(--mono);margin-bottom:3px}
+.pb-item-value{font-size:13px;font-weight:700;color:#fff}
+
+/* Pull quote */
+.pull{border-left:4px solid var(--red);padding:16px 20px;margin:20px 0;background:rgba(192,57,43,.04)}
+.pull-text{font-family:var(--serif);font-size:20px;font-style:italic;color:var(--ink);line-height:1.4}
+.pull-attr{font-family:var(--mono);font-size:10px;color:var(--gray);margin-top:8px}
+
+/* Journey */
+.journey{display:flex;align-items:stretch;gap:0;border:1px solid var(--rule);margin:20px 0}
+.j-cell{flex:1;padding:18px 20px}
+.j-cell:first-child{border-right:1px solid var(--rule)}
+.j-label{font-family:var(--mono);font-size:9px;color:var(--gray);text-transform:uppercase;letter-spacing:2px;margin-bottom:6px}
+.j-text{font-size:14px;color:var(--ink);line-height:1.5}
+.j-arrow{width:48px;background:var(--red);display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px;flex-shrink:0}
+
+/* Code/prompt */
+.prompt-box{border:1px solid var(--rule);margin:16px 0;overflow:hidden}
+.pb-header{background:var(--ink);color:rgba(255,255,255,.6);padding:8px 16px;font-family:var(--mono);font-size:10px;display:flex;justify-content:space-between}
+.pb-body{padding:16px;font-family:var(--mono);font-size:12px;line-height:1.8;color:var(--ink);background:var(--paper);white-space:pre-wrap}
+.pb-body em{color:var(--red);font-style:normal;font-weight:600}
+
+/* Concept list */
+.concept-list{border:1px solid var(--rule);margin:20px 0}
+.cl-item{display:flex;gap:0;border-bottom:1px solid var(--rule)}
+.cl-item:last-child{border-bottom:none}
+.cl-num{width:56px;background:var(--ink);color:var(--paper);display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:28px;font-weight:900;flex-shrink:0}
+.cl-content{padding:16px 20px;flex:1}
+.cl-title{font-family:var(--serif);font-size:16px;font-weight:700;margin-bottom:4px}
+.cl-text{font-size:13px;color:var(--gray);line-height:1.6}
+
+/* Scenario */
+.scenario-box{border-top:3px solid var(--red);background:rgba(192,57,43,.04);padding:20px;margin:16px 0}
+.scen-label{font-family:var(--mono);font-size:9px;color:var(--red);text-transform:uppercase;letter-spacing:3px;margin-bottom:8px}
+.scen-text{font-size:14px;color:var(--ink);line-height:1.7}
+.doc-chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.doc-chip{font-family:var(--mono);font-size:10px;color:var(--gray);border:1px solid var(--rule);padding:3px 10px}
+
+/* Agent builder */
+.builder-grid{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--rule);margin:20px 0}
+.bg-form{padding:20px;border-right:1px solid var(--rule)}
+.bg-preview{padding:20px;background:var(--ink);color:var(--paper)}
+.bform-row{margin-bottom:14px}
+.bform-label{font-family:var(--mono);font-size:9px;color:var(--gray);text-transform:uppercase;letter-spacing:2px;margin-bottom:5px}
+textarea.bform-input{width:100%;background:var(--paper);border:1px solid var(--rule);font-family:var(--mono);font-size:11px;color:var(--ink);padding:8px 10px;resize:none;line-height:1.5}
+textarea.bform-input:focus{outline:2px solid var(--red);border-color:var(--red)}
+.spec-code{font-family:var(--mono);font-size:11px;line-height:1.8;white-space:pre-wrap;color:rgba(255,255,255,.7)}
+.sc-kw{color:#f4a460}
+.sc-val{color:#90ee90}
+.sc-cm{color:rgba(255,255,255,.3)}
+
+/* Complete */
+.complete-box{border:3px double var(--ink);padding:40px;text-align:center;margin:20px 0}
+.cb-title{font-family:var(--serif);font-size:40px;font-weight:900;margin-bottom:8px}
+.cb-sub{font-size:15px;color:var(--gray);font-style:italic;margin-bottom:20px}
+.badge-row{display:flex;gap:12px;justify-content:center;margin:16px 0;flex-wrap:wrap}
+.badge{border:1px solid var(--ink);padding:6px 16px;font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:2px}
+.next-box{border:1px solid var(--rule);display:inline-block;text-align:left;margin-top:16px;min-width:360px}
+.nb-header{background:var(--ink);color:var(--paper);padding:8px 16px;font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:2px}
+.nb-item{padding:10px 16px;border-bottom:1px solid var(--rule);font-size:13px;color:var(--ink);display:flex;justify-content:space-between}
+.nb-item:last-child{border-bottom:none}
+
+/* Nav */
+.chapter-nav{display:flex;justify-content:space-between;align-items:center;margin-top:32px;padding-top:20px;border-top:1px solid var(--rule)}
+.btn{border:none;cursor:pointer;font-family:var(--body);font-size:14px;padding:12px 28px;transition:all .2s}
+.btn-primary{background:var(--red);color:#fff}
+.btn-primary:hover{background:#a93226}
+.btn-secondary{background:transparent;border:1px solid var(--rule);color:var(--gray)}
+.btn-secondary:hover{border-color:var(--ink);color:var(--ink)}
+
+/* horizontal rule */
+.hrule{border:none;border-top:1px solid var(--rule);margin:20px 0}
+</style>
+</head>
+<body>
+<div class="masthead">
+  <div class="mast-left">SK.AGT.000<br>Agents & Orchestration</div>
+  <div class="mast-center">
+    <div class="mast-title">The GenAI Gazette</div>
+    <div class="mast-sub">Interactive Learning Edition &nbsp;·&nbsp; Healthcare Operations &nbsp;·&nbsp; Beginner Series</div>
+  </div>
+  <div class="mast-right">Chapter One of Eight<br>Est. 35 Minutes</div>
+</div>
+<div class="section-tabs" id="tabs">
+  <div class="stab active" onclick="go(0)">I. Situation</div>
+  <div class="stab locked" id="t1" onclick="go(1)">II. Concepts</div>
+  <div class="stab locked" id="t2" onclick="go(2)">III. Examples</div>
+  <div class="stab locked" id="t3" onclick="go(3)">IV. Build Agent</div>
+  <div class="stab locked" id="t4" onclick="go(4)">V. Summary</div>
+</div>
+<div class="progress-line"><div class="progress-fill" id="pfill" style="width:20%"></div></div>
+
+<div class="page">
+
+  <!-- Ch 1: Scenario -->
+  <div class="chapter active" id="ch0">
+    <div class="kicker">Chapter One</div>
+    <div class="headline">AI Agents Arrive<br>in <em>Healthcare Ops</em></div>
+    <div class="deck">A VP of Operations confronts a new question: what exactly is an AI agent, and what does it mean for how my department works?</div>
+
+    <div class="profile-box">
+      <div class="pb-label">Learner Profile</div>
+      <div class="pb-grid">
+        <div><div class="pb-item-label">Role</div><div class="pb-item-value">VP of Operations</div></div>
+        <div><div class="pb-item-label">Industry</div><div class="pb-item-value">Healthcare System</div></div>
+        <div><div class="pb-item-label">Skill Level</div><div class="pb-item-value">Beginner</div></div>
+        <div><div class="pb-item-label">Duration</div><div class="pb-item-value">~35 Minutes</div></div>
+      </div>
+    </div>
+
+    <div class="pull">
+      <div class="pull-text">"My team keeps mentioning AI agents like I should already know what they are. I don't want to admit I've been nodding along."</div>
+      <div class="pull-attr">— Composite of healthcare operations leaders, 2025</div>
+    </div>
+
+    <div class="journey">
+      <div class="j-cell">
+        <div class="j-label">Where You Are Today</div>
+        <div class="j-text">You know AI exists and hear about it constantly. But "agents" sounds like science fiction. You can't yet evaluate proposals or have an informed conversation with your technology team.</div>
+      </div>
+      <div class="j-arrow">→</div>
+      <div class="j-cell">
+        <div class="j-label">Where You'll Be After</div>
+        <div class="j-text">You can confidently define agents, explain why they matter for healthcare operations, and evaluate two real use cases — all without technical jargon.</div>
+      </div>
+    </div>
+
+    <div class="chapter-nav">
+      <span></span>
+      <button class="btn btn-primary" onclick="advance()">Read Chapter Two →</button>
+    </div>
+  </div>
+
+  <!-- Ch 2: Concepts -->
+  <div class="chapter" id="ch1">
+    <div class="kicker">Chapter Two</div>
+    <div class="headline">What Makes an<br>Agent <em>Different</em></div>
+    <div class="deck">Three ideas that distinguish AI agents from the chatbots and simple AI tools your organisation already uses.</div>
+
+    <div class="concept-list">
+      <div class="cl-item">
+        <div class="cl-num">I</div>
+        <div class="cl-content">
+          <div class="cl-title">Agents Act, Not Just Answer</div>
+          <div class="cl-text">A regular AI tool responds to a question. An agent takes a sequence of actions — searching databases, sending notifications, updating records — to complete a goal autonomously. The key shift: from answering to doing.</div>
+        </div>
+      </div>
+      <div class="cl-item">
+        <div class="cl-num">II</div>
+        <div class="cl-content">
+          <div class="cl-title">Agents Use Tools</div>
+          <div class="cl-text">An agent has access to defined tools — a calendar system, a patient record database, an email service. It decides which tools to use and in what order, based on what it's trying to accomplish. This is what makes agents powerful in operations contexts.</div>
+        </div>
+      </div>
+      <div class="cl-item">
+        <div class="cl-num">III</div>
+        <div class="cl-content">
+          <div class="cl-title">Agents Operate Within Guardrails</div>
+          <div class="cl-text">Effective agents are not autonomous in an unconstrained sense. They operate within defined permissions, escalation paths, and approval gates — especially critical in healthcare, where decisions have clinical consequences.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="cols-3">
+      <div class="col">
+        <div class="col-head">Simple AI Tool</div>
+        <div class="col-body">Responds to a single prompt. Produces text output. No memory, no actions, no tools. You do all the follow-up work manually.</div>
+      </div>
+      <div class="col">
+        <div class="col-head">AI Agent</div>
+        <div class="col-body">Breaks goals into steps, uses tools to execute them, monitors outcomes, and reports back. You define the goal; the agent handles execution.</div>
+      </div>
+      <div class="col">
+        <div class="col-head">Multi-Agent System</div>
+        <div class="col-body">Multiple specialised agents collaborate — one handles scheduling, one clinical documentation, one compliance checks — coordinated toward a larger workflow goal.</div>
+      </div>
+    </div>
+
+    <div class="chapter-nav">
+      <button class="btn btn-secondary" onclick="go(0)">← Chapter One</button>
+      <button class="btn btn-primary" onclick="advance()">Read Chapter Three →</button>
+    </div>
+  </div>
+
+  <!-- Ch 3: Examples -->
+  <div class="chapter" id="ch2">
+    <div class="kicker">Chapter Three</div>
+    <div class="headline">Agents at Work in<br><em>Healthcare Operations</em></div>
+    <div class="deck">Two concrete examples drawn from real healthcare operations contexts. Study the scenario, the agent design, and the human oversight requirements.</div>
+
+    <div class="cols-2">
+      <div class="col2">
+        <div class="kicker" style="font-size:9px">Example One</div>
+        <div style="font-family:var(--serif);font-size:18px;font-weight:700;margin-bottom:10px">Discharge Coordination Agent</div>
+        <div class="scenario-box">
+          <div class="scen-label">Situation</div>
+          <div class="scen-text">Discharge delays cost your health system an estimated 200 bed-hours per week. The bottleneck is coordination: pharmacy, transport, social work, and family notification happen sequentially rather than in parallel.</div>
+          <div class="doc-chips">
+            <div class="doc-chip">📋 EHR discharge trigger</div>
+            <div class="doc-chip">📋 Transport roster</div>
+            <div class="doc-chip">📋 Family contact list</div>
+          </div>
+        </div>
+        <div class="prompt-box">
+          <div class="pb-header"><span>Agent Instruction</span></div>
+          <div class="pb-body"><em>Goal:</em> When a discharge order is placed in EHR, coordinate all downstream steps in parallel.
+
+<em>Step 1:</em> Notify pharmacy of pending discharge. Set 30-min check-in.
+<em>Step 2:</em> Reserve transport (soonest available slot + 90 min buffer).
+<em>Step 3:</em> Alert social work if flag present in record.
+<em>Step 4:</em> Send family notification SMS using approved template.
+<em>Step 5:</em> If any step fails, escalate to charge nurse immediately.</div>
+        </div>
+      </div>
+      <div class="col2" style="border-right:none">
+        <div class="kicker" style="font-size:9px">Example Two</div>
+        <div style="font-family:var(--serif);font-size:18px;font-weight:700;margin-bottom:10px">Staffing Gap Monitor Agent</div>
+        <div class="scenario-box">
+          <div class="scen-label">Situation</div>
+          <div class="scen-text">Your float pool coordinator spends 40% of their shift manually checking schedules and calling in staff for same-day gaps. An agent can monitor for gaps and initiate outreach, freeing them for higher-value work.</div>
+          <div class="doc-chips">
+            <div class="doc-chip">📋 Scheduling system API</div>
+            <div class="doc-chip">📋 Staff availability data</div>
+            <div class="doc-chip">📋 Escalation rules doc</div>
+          </div>
+        </div>
+        <div class="prompt-box">
+          <div class="pb-header"><span>Agent Instruction</span></div>
+          <div class="pb-body"><em>Goal:</em> Monitor shift schedule for coverage gaps 4+ hours in advance.
+
+<em>Step 1:</em> Check schedule every 60 min for gaps in next 8 hrs.
+<em>Step 2:</em> Cross-reference float pool availability.
+<em>Step 3:</em> Send shift offer to top 3 available staff (seniority order).
+<em>Step 4:</em> If no response in 20 min, escalate to supervisor.
+<em>Step 5:</em> Log all outreach in staffing system. Never book without human confirmation.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="chapter-nav">
+      <button class="btn btn-secondary" onclick="go(1)">← Chapter Two</button>
+      <button class="btn btn-primary" onclick="advance()">Build Your Agent →</button>
+    </div>
+  </div>
+
+  <!-- Ch 4: Agent Builder -->
+  <div class="chapter" id="ch3">
+    <div class="kicker">Chapter Four</div>
+    <div class="headline">Configure Your<br><em>Operations Agent</em></div>
+    <div class="deck">Define your agent's mission, tools, and guardrails. Your specification builds in real time on the right.</div>
+
+    <div class="builder-grid">
+      <div class="bg-form">
+        <div class="bform-row">
+          <div class="bform-label">Agent Goal</div>
+          <textarea class="bform-input" rows="2" id="b0" oninput="buildSpec()">Discharge coordination — parallel notification of all downstream teams</textarea>
+        </div>
+        <div class="bform-row">
+          <div class="bform-label">Tools Available</div>
+          <textarea class="bform-input" rows="3" id="b1" oninput="buildSpec()">EHR discharge trigger
+Transport booking API
+SMS notification service
+Escalation alert system</textarea>
+        </div>
+        <div class="bform-row">
+          <div class="bform-label">Human Oversight Rules</div>
+          <textarea class="bform-input" rows="3" id="b2" oninput="buildSpec()">Never cancel or modify discharge orders
+Always confirm transport before notifying family
+Escalate all failures to charge nurse immediately</textarea>
+        </div>
+        <div class="bform-row">
+          <div class="bform-label">Success Metric</div>
+          <textarea class="bform-input" rows="2" id="b3" oninput="buildSpec()">Discharge coordination time reduced by 40% within 60 days</textarea>
+        </div>
+      </div>
+      <div class="bg-preview">
+        <div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:2px;margin-bottom:12px">Agent Specification · Live</div>
+        <pre class="spec-code" id="spec-out"><span class="sc-kw">agent</span> "ops-coordinator" {
+
+  <span class="sc-cm">// Goal</span>
+  goal: <span class="sc-val" id="sv0">"Discharge coordination..."</span>
+
+  <span class="sc-cm">// Tools</span>
+  tools: [
+    <span class="sc-val" id="sv1">"EHR discharge trigger,
+    Transport booking API..."</span>
+  ]
+
+  <span class="sc-cm">// Guardrails</span>
+  guardrails: [
+    <span class="sc-val" id="sv2">"Never cancel discharge orders..."</span>
+  ]
+
+  <span class="sc-cm">// Success metric</span>
+  kpi: <span class="sc-val" id="sv3">"Discharge time -40%..."</span>
+
+  <span class="sc-cm">// Required for all healthcare agents</span>
+  human_in_loop: <span class="sc-val">true</span>
+  audit_log: <span class="sc-val">true</span>
+}</pre>
+      </div>
+    </div>
+
+    <div class="chapter-nav">
+      <button class="btn btn-secondary" onclick="go(2)">← Chapter Three</button>
+      <button class="btn btn-primary" onclick="advance()">Read Summary →</button>
+    </div>
+  </div>
+
+  <!-- Ch 5: Complete -->
+  <div class="chapter" id="ch4">
+    <div class="kicker">Chapter Five</div>
+    <div class="complete-box">
+      <div class="cb-title">SK.AGT.000 Unlocked</div>
+      <div class="cb-sub">What are AI Agents · Beginner → Intermediate · Healthcare Operations</div>
+      <div class="badge-row">
+        <div class="badge">Agent Architecture</div>
+        <div class="badge">Healthcare Ops</div>
+        <div class="badge">Guardrail Design</div>
+      </div>
+      <div class="next-box">
+        <div class="nb-header">Suggested Next Chapters</div>
+        <div class="nb-item"><span>SK.AGT.001 — Tool definitions & validation</span><span>→</span></div>
+        <div class="nb-item"><span>SK.AGT.010 — Single-agent loops</span><span>→</span></div>
+        <div class="nb-item"><span>SK.AGT.030 — Guardrails & approval gates</span><span>→</span></div>
+      </div>
+    </div>
+    <div class="chapter-nav">
+      <button class="btn btn-secondary" onclick="go(3)">← Chapter Four</button>
+      <button class="btn btn-primary" onclick="go(0)">Restart Chapter</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let cur=0, unlocked=1;
+function go(n){
+  if(n>=unlocked)return;
+  document.querySelectorAll('.chapter').forEach((c,i)=>c.classList.toggle('active',i===n));
+  document.querySelectorAll('.stab').forEach((t,i)=>{
+    t.classList.remove('active','locked');
+    if(i===n)t.classList.add('active');
+    else if(i>=unlocked)t.classList.add('locked');
+  });
+  cur=n;
+  document.getElementById('pfill').style.width=(((n+1)/5)*100)+'%';
+  window.scrollTo(0,0);
+}
+function advance(){unlocked=Math.max(unlocked,cur+2);go(cur+1);}
+function buildSpec(){
+  const v=[0,1,2,3].map(i=>document.getElementById('b'+i).value);
+  document.getElementById('sv0').textContent='"'+v[0]+'"';
+  document.getElementById('sv1').textContent=v[1].split('\n').map(s=>'"'+s.trim()+'"').join(',\n    ');
+  document.getElementById('sv2').textContent=v[2].split('\n').map(s=>'"'+s.trim()+'"').join(',\n    ');
+  document.getElementById('sv3').textContent='"'+v[3]+'"';
+}
+</script>
+</body>
+</html>

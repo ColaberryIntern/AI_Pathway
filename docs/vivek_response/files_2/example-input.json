@@ -1,0 +1,18 @@
+{
+  "skill": {
+    "id": "SK.PRM.003",
+    "name": "Prompt debugging & iteration",
+    "domain_id": "D.PRM",
+    "domain_name": "Prompting",
+    "rubric_by_level": [
+      "Does not iterate on prompts",
+      "Knows that prompts can be revised when output is unsatisfactory",
+      "Systematically debugs prompts: isolates variables, tests variations, logs results",
+      "Uses A/B prompt testing; tracks prompt versions with change notes",
+      "Builds prompt debugging and regression testing tools",
+      "Designs prompt lifecycle management systems with automated quality gates"
+    ]
+  },
+  "current_level": 2,
+  "target_level": 3
+}

@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Pathway Chapters — Design Showcase</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<template id="__bundler_thumbnail" data-bg-color="#07070f">
+  <svg viewBox="0 0 800 500" xmlns="http://www.w3.org/2000/svg">
+    <rect width="800" height="500" fill="#07070f"/>
+    <rect x="60" y="80" width="320" height="160" rx="12" fill="#0d0d1c" stroke="#1e1e40" stroke-width="1.5"/>
+    <rect x="420" y="80" width="320" height="160" rx="12" fill="#0d0d1c" stroke="#1e1e40" stroke-width="1.5"/>
+    <rect x="60" y="260" width="320" height="160" rx="12" fill="#0d0d1c" stroke="#1e1e40" stroke-width="1.5"/>
+    <rect x="420" y="260" width="320" height="160" rx="12" fill="#0d0d1c" stroke="#1e1e40" stroke-width="1.5"/>
+    <rect x="60" y="80" width="320" height="4" rx="2" fill="url(#g1)"/>
+    <rect x="420" y="80" width="320" height="4" rx="2" fill="#c0392b"/>
+    <rect x="60" y="260" width="320" height="4" rx="2" fill="#3fb950"/>
+    <rect x="420" y="260" width="320" height="4" rx="2" fill="#6c47ff"/>
+    <rect x="240" y="30" width="320" height="18" rx="4" fill="url(#g1)" opacity=".9"/>
+    <rect x="300" y="56" width="200" height="10" rx="3" fill="#5a5a80"/>
+    <defs>
+      <linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" stop-color="#06b6d4"/>
+        <stop offset="50%" stop-color="#6366f1"/>
+        <stop offset="100%" stop-color="#ec4899"/>
+      </linearGradient>
+    </defs>
+  </svg>
+</template>
+<style>
+:root {
+  --bg: #07070f;
+  --bg2: #0d0d1c;
+  --bg3: #121228;
+  --border: #1e1e40;
+  --border2: #2a2a5a;
+  --tx: #eeeeff;
+  --muted: #9090b8;
+  --dim: #5a5a80;
+  --c1: #6366f1;
+  --c2: #8b5cf6;
+  --c3: #ec4899;
+  --c4: #06b6d4;
+  --c5: #10b981;
+  --sans: 'Space Grotesk', sans-serif;
+  --mono: 'JetBrains Mono', monospace;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body { background: var(--bg); color: var(--tx); font-family: var(--sans); min-height: 100vh; }
+
+/* Animated bg */
+#bg-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; opacity: .35; }
+
+/* Hero */
+.hero { position: relative; z-index: 1; text-align: center; padding: 80px 24px 64px; max-width: 860px; margin: 0 auto; }
+.hero-tag { display: inline-flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: 11px; color: var(--c4); border: 1px solid rgba(6,182,212,.25); background: rgba(6,182,212,.06); padding: 6px 16px; border-radius: 20px; margin-bottom: 28px; }
+.hero-tag::before { content: ''; width: 6px; height: 6px; background: var(--c4); border-radius: 50%; animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1}50%{opacity:.3} }
+h1 { font-size: clamp(32px, 5vw, 60px); font-weight: 700; line-height: 1.1; letter-spacing: -.5px; margin-bottom: 20px; }
+h1 .grad { background: linear-gradient(135deg, var(--c4), var(--c1), var(--c3)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.hero-sub { font-size: 17px; color: var(--muted); line-height: 1.7; max-width: 640px; margin: 0 auto 40px; }
+.hero-meta { display: flex; gap: 24px; justify-content: center; flex-wrap: wrap; }
+.hm-item { display: flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: 12px; color: var(--dim); }
+.hm-dot { width: 6px; height: 6px; border-radius: 50%; }
+
+/* Context strip */
+.context-strip { position: relative; z-index: 1; max-width: 960px; margin: 0 auto 60px; padding: 0 24px; }
+.cs-inner { background: var(--bg2); border: 1px solid var(--border); border-radius: 14px; padding: 24px 32px; display: grid; grid-template-columns: repeat(4,1fr); gap: 0; }
+.cs-cell { padding: 0 24px; border-right: 1px solid var(--border); }
+.cs-cell:first-child { padding-left: 0; }
+.cs-cell:last-child { border-right: none; }
+.cs-label { font-family: var(--mono); font-size: 10px; color: var(--dim); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px; }
+.cs-value { font-size: 14px; font-weight: 600; color: var(--tx); }
+.cs-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+/* Section header */
+.section-hdr { position: relative; z-index: 1; max-width: 960px; margin: 0 auto 28px; padding: 0 24px; display: flex; align-items: baseline; gap: 16px; }
+.sh-title { font-size: 22px; font-weight: 700; color: var(--tx); }
+.sh-sub { font-size: 14px; color: var(--dim); }
+
+/* Design grid */
+.design-grid { position: relative; z-index: 1; max-width: 960px; margin: 0 auto 80px; padding: 0 24px; display: grid; grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); gap: 20px; }
+
+/* Design card */
+.design-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; transition: all .3s; cursor: pointer; text-decoration: none; display: block; }
+.design-card:hover { border-color: var(--border2); transform: translateY(-3px); box-shadow: 0 16px 48px rgba(0,0,0,.5); }
+.dc-preview { height: 220px; position: relative; overflow: hidden; }
+.dc-preview iframe { width: 100%; height: 100%; border: none; pointer-events: none; transform-origin: top left; }
+.dc-overlay { position: absolute; inset: 0; background: linear-gradient(to bottom, transparent 40%, rgba(13,13,28,.95) 100%); }
+.dc-badge { position: absolute; top: 14px; left: 14px; font-family: var(--mono); font-size: 10px; padding: 4px 10px; border-radius: 5px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+.dc-open-btn { position: absolute; top: 14px; right: 14px; background: rgba(255,255,255,.1); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,.15); border-radius: 8px; padding: 6px 14px; font-family: var(--mono); font-size: 10px; color: #fff; opacity: 0; transition: opacity .2s; }
+.design-card:hover .dc-open-btn { opacity: 1; }
+.dc-info { padding: 20px 22px 22px; }
+.dc-num { font-family: var(--mono); font-size: 10px; color: var(--dim); margin-bottom: 6px; }
+.dc-name { font-size: 18px; font-weight: 700; color: var(--tx); margin-bottom: 4px; }
+.dc-desc { font-size: 13px; color: var(--muted); line-height: 1.5; margin-bottom: 14px; }
+.dc-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+.dc-tag { font-family: var(--mono); font-size: 10px; padding: 3px 10px; border-radius: 20px; border: 1px solid var(--border2); color: var(--dim); }
+.dc-principles { display: flex; gap: 10px; align-items: center; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); }
+.dc-p-label { font-size: 10px; color: var(--dim); font-family: var(--mono); flex-shrink: 0; }
+.dc-p-pills { display: flex; gap: 6px; flex-wrap: wrap; }
+.dc-p-pill { font-size: 10px; color: var(--muted); display: flex; align-items: center; gap: 4px; }
+.dc-p-pill::before { content: ''; width: 4px; height: 4px; border-radius: 50%; background: var(--c5); }
+
+/* Learning principles reference */
+.principles-section { position: relative; z-index: 1; max-width: 960px; margin: 0 auto 80px; padding: 0 24px; }
+.ps-inner { background: var(--bg2); border: 1px solid var(--border); border-radius: 16px; padding: 32px; }
+.ps-title { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+.ps-sub { font-size: 13px; color: var(--muted); margin-bottom: 28px; }
+.principles-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; }
+.principle { background: var(--bg3); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+.pr-icon { font-size: 22px; margin-bottom: 8px; }
+.pr-name { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+.pr-desc { font-size: 12px; color: var(--muted); line-height: 1.5; }
+
+/* Structure map */
+.structure-section { position: relative; z-index: 1; max-width: 960px; margin: 0 auto 80px; padding: 0 24px; }
+.ss-inner { background: var(--bg2); border: 1px solid var(--border); border-radius: 16px; padding: 32px; }
+.ss-title { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+.ss-sub { font-size: 13px; color: var(--muted); margin-bottom: 28px; }
+.structure-row { display: flex; gap: 0; align-items: stretch; margin-bottom: 10px; }
+.sr-num { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--border2); display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 12px; color: var(--muted); flex-shrink: 0; margin-right: 16px; align-self: flex-start; margin-top: 2px; }
+.sr-content { flex: 1; }
+.sr-title { font-size: 14px; font-weight: 600; color: var(--tx); margin-bottom: 4px; }
+.sr-desc { font-size: 13px; color: var(--muted); line-height: 1.5; }
+.sr-connector { width: 40px; flex-shrink: 0; margin-right: 16px; display: flex; justify-content: center; margin-top: -6px; margin-bottom: -6px; }
+.sr-line { width: 1px; background: var(--border); flex: 1; margin: 2px 0; }
+
+/* Footer */
+.footer { position: relative; z-index: 1; text-align: center; padding: 40px 24px 60px; border-top: 1px solid var(--border); }
+.footer-text { font-family: var(--mono); font-size: 11px; color: var(--dim); }
+</style>
+</head>
+<body>
+<canvas id="bg-canvas"></canvas>
+
+<div class="hero">
+  <div class="hero-tag">Developer Preview · 5 Design Concepts</div>
+  <h1>AI Pathway<br><span class="grad">Chapter Designs</span></h1>
+  <p class="hero-sub">Five distinct interactive learning experiences for SK.PRM.005 — Chain-of-Thought Prompting. Each applies the same adult learning structure through a radically different design language and UX pattern.</p>
+  <div class="hero-meta">
+    <div class="hm-item"><div class="hm-dot" style="background:var(--c4)"></div>5 Design Concepts</div>
+    <div class="hm-item"><div class="hm-dot" style="background:var(--c5)"></div>5 Sections Each</div>
+    <div class="hm-item"><div class="hm-dot" style="background:var(--c1)"></div>Fully Interactive</div>
+    <div class="hm-item"><div class="hm-dot" style="background:var(--c2)"></div>SK.PRM.005 Demo Content</div>
+  </div>
+</div>
+
+<div class="context-strip">
+  <div class="cs-inner">
+    <div class="cs-cell">
+      <div class="cs-label">Demo Skill</div>
+      <div class="cs-value">SK.PRM.005</div>
+      <div class="cs-sub">Chain-of-Thought Prompting</div>
+    </div>
+    <div class="cs-cell">
+      <div class="cs-label">Persona</div>
+      <div class="cs-value">Marketing Manager</div>
+      <div class="cs-sub">B2B SaaS · Mid-market</div>
+    </div>
+    <div class="cs-cell">
+      <div class="cs-label">Level</div>
+      <div class="cs-value">Intermediate → Advanced</div>
+      <div class="cs-sub">Prompting & HITL Layer</div>
+    </div>
+    <div class="cs-cell">
+      <div class="cs-label">Structure</div>
+      <div class="cs-value">5 Sections</div>
+      <div class="cs-sub">Scenario · Concepts · Examples · Agent · Complete</div>
+    </div>
+  </div>
+</div>
+
+<div class="section-hdr">
+  <div class="sh-title">The Five Designs</div>
+  <div class="sh-sub">Click any card to open the full interactive chapter</div>
+</div>
+
+<div class="design-grid">
+
+  <!-- Design 1 -->
+  <a class="design-card" href="design1-mission.html" target="_blank">
+    <div class="dc-preview" style="background:#07070f">
+      <iframe src="design1-mission.html" style="width:200%;height:200%;transform:scale(0.5);transform-origin:top left" loading="lazy"></iframe>
+      <div class="dc-overlay"></div>
+      <div class="dc-badge" style="background:rgba(6,182,212,.15);color:#06b6d4;border:1px solid rgba(6,182,212,.25)">Design 01</div>
+      <div class="dc-open-btn">Open ↗</div>
+    </div>
+    <div class="dc-info">
+      <div class="dc-num">Design 01 · Dark · Cinematic</div>
+      <div class="dc-name">Mission Briefing</div>
+      <div class="dc-desc">Cinematic dossier aesthetic. Locked sidebar navigation that unlocks as you progress. Electric cyan + indigo on near-black. Feels like a classified mission brief.</div>
+      <div class="dc-tags">
+        <div class="dc-tag">Linear progress</div>
+        <div class="dc-tag">Locked nav</div>
+        <div class="dc-tag">Live agent spec</div>
+        <div class="dc-tag">Dark mode</div>
+      </div>
+      <div class="dc-principles">
+        <div class="dc-p-label">Principles</div>
+        <div class="dc-p-pills">
+          <div class="dc-p-pill">Spaced reveal</div>
+          <div class="dc-p-pill">Goal clarity</div>
+          <div class="dc-p-pill">Active recall</div>
+        </div>
+      </div>
+    </div>
+  </a>
+
+  <!-- Design 2 -->
+  <a class="design-card" href="design2-fieldguide.html" target="_blank">
+    <div class="dc-preview" style="background:#faf7f2">
+      <iframe src="design2-fieldguide.html" style="width:200%;height:200%;transform:scale(0.5);transform-origin:top left" loading="lazy"></iframe>
+      <div class="dc-overlay" style="background:linear-gradient(to bottom, transparent 40%, rgba(250,247,242,.95) 100%)"></div>
+      <div class="dc-badge" style="background:rgba(192,57,43,.1);color:#c0392b;border:1px solid rgba(192,57,43,.2)">Design 02</div>
+      <div class="dc-open-btn" style="color:var(--ink,#1a1410)">Open ↗</div>
+    </div>
+    <div class="dc-info">
+      <div class="dc-num">Design 02 · Editorial · Print</div>
+      <div class="dc-name">Field Guide</div>
+      <div class="dc-desc">Premium printed field guide aesthetic. Cream paper, dark ink, terracotta accents. Playfair Display serif typography. Chapter-style navigation with pull quotes and annotated examples.</div>
+      <div class="dc-tags">
+        <div class="dc-tag">Chapter nav</div>
+        <div class="dc-tag">Pull quotes</div>
+        <div class="dc-tag">Serif typography</div>
+        <div class="dc-tag">Light mode</div>
+      </div>
+      <div class="dc-principles">
+        <div class="dc-p-label">Principles</div>
+        <div class="dc-p-pills">
+          <div class="dc-p-pill">Elaborative interrogation</div>
+          <div class="dc-p-pill">Dual coding</div>
+          <div class="dc-p-pill">Self-explanation</div>
+        </div>
+      </div>
+    </div>
+  </a>
+
+  <!-- Design 3 -->
+  <a class="design-card" href="design3-workbench.html" target="_blank">
+    <div class="dc-preview" style="background:#0e1117">
+      <iframe src="design3-workbench.html" style="width:200%;height:200%;transform:scale(0.5);transform-origin:top left" loading="lazy"></iframe>
+      <div class="dc-overlay"></div>
+      <div class="dc-badge" style="background:rgba(63,185,80,.1);color:#3fb950;border:1px solid rgba(63,185,80,.25)">Design 03</div>
+      <div class="dc-open-btn">Open ↗</div>
+    </div>
+    <div class="dc-info">
+      <div class="dc-num">Design 03 · IDE · Terminal</div>
+      <div class="dc-name">Builder Workbench</div>
+      <div class="dc-desc">GitHub-style IDE aesthetic. File tree sidebar, tab navigation, line-numbered prompt code blocks, and a live-updating agent config file. Appeals to technical learners.</div>
+      <div class="dc-tags">
+        <div class="dc-tag">File tree nav</div>
+        <div class="dc-tag">Code blocks</div>
+        <div class="dc-tag">Live config</div>
+        <div class="dc-tag">IDE chrome</div>
+      </div>
+      <div class="dc-principles">
+        <div class="dc-p-label">Principles</div>
+        <div class="dc-p-pills">
+          <div class="dc-p-pill">Worked examples</div>
+          <div class="dc-p-pill">Production orientation</div>
+          <div class="dc-p-pill">Transfer</div>
+        </div>
+      </div>
+    </div>
+  </a>
+
+  <!-- Design 4 -->
+  <a class="design-card" href="design4-studio.html" target="_blank">
+    <div class="dc-preview" style="background:#f8f7ff">
+      <iframe src="design4-studio.html" style="width:200%;height:200%;transform:scale(0.5);transform-origin:top left" loading="lazy"></iframe>
+      <div class="dc-overlay" style="background:linear-gradient(to bottom, transparent 40%, rgba(248,247,255,.95) 100%)"></div>
+      <div class="dc-badge" style="background:rgba(108,71,255,.1);color:#6c47ff;border:1px solid rgba(108,71,255,.2)">Design 04</div>
+      <div class="dc-open-btn" style="color:#18162e">Open ↗</div>
+    </div>
+    <div class="dc-info">
+      <div class="dc-num">Design 04 · Gamified · Studio</div>
+      <div class="dc-name">Learning Studio</div>
+      <div class="dc-desc">Polished mobile-first card UI with XP points, streak indicator, stepper progress, achievement badges, and animated completion screen. Highest engagement potential.</div>
+      <div class="dc-tags">
+        <div class="dc-tag">XP system</div>
+        <div class="dc-tag">Stepper nav</div>
+        <div class="dc-tag">Badges</div>
+        <div class="dc-tag">Mobile-first</div>
+      </div>
+      <div class="dc-principles">
+        <div class="dc-p-label">Principles</div>
+        <div class="dc-p-pills">
+          <div class="dc-p-pill">Motivation</div>
+          <div class="dc-p-pill">Visible progress</div>
+          <div class="dc-p-pill">Spaced practice</div>
+        </div>
+      </div>
+    </div>
+  </a>
+
+  <!-- Design 5 -->
+  <a class="design-card" href="design5-coach.html" target="_blank" style="grid-column:1/-1">
+    <div style="display:grid;grid-template-columns:55% 1fr">
+      <div class="dc-preview" style="background:#f2f0fb;height:260px">
+        <iframe src="design5-coach.html" style="width:200%;height:200%;transform:scale(0.5);transform-origin:top left" loading="lazy"></iframe>
+        <div class="dc-overlay" style="background:linear-gradient(to right, transparent 60%, rgba(13,13,28,.8) 100%)"></div>
+        <div class="dc-badge" style="background:rgba(79,70,229,.1);color:#4f46e5;border:1px solid rgba(79,70,229,.2)">Design 05</div>
+        <div class="dc-open-btn" style="color:#18162e">Open ↗</div>
+      </div>
+      <div class="dc-info" style="display:flex;flex-direction:column;justify-content:center">
+        <div class="dc-num">Design 05 · Conversational · Coaching</div>
+        <div class="dc-name">Dialogue Coach</div>
+        <div class="dc-desc">Split-screen conversational coaching interface. AI coach persona "Aria" on the left, chat-style content delivery on the right. Content reveals through typed messages with response options — feels like 1:1 mentoring.</div>
+        <div class="dc-tags" style="margin-bottom:14px">
+          <div class="dc-tag">Chat UI</div>
+          <div class="dc-tag">Coach persona</div>
+          <div class="dc-tag">Response choices</div>
+          <div class="dc-tag">Sequential reveal</div>
+        </div>
+        <div class="dc-principles">
+          <div class="dc-p-label">Principles</div>
+          <div class="dc-p-pills">
+            <div class="dc-p-pill">Dialogue-based learning</div>
+            <div class="dc-p-pill">Scaffolding</div>
+            <div class="dc-p-pill">Social cognition</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </a>
+
+</div>
+
+<!-- Section structure -->
+<div class="structure-section">
+  <div class="ss-inner">
+    <div class="ss-title">Consistent Chapter Structure</div>
+    <div class="ss-sub">All five designs implement the same five-section curriculum — only the UX language differs.</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:32px">
+      <div>
+        <div class="structure-row">
+          <div class="sr-num">01</div>
+          <div class="sr-content">
+            <div class="sr-title">Scenario & Objectives</div>
+            <div class="sr-desc">Learner profile (role, industry, level), current state, desired A→B transformation, time commitment.</div>
+          </div>
+        </div>
+        <div class="structure-row" style="margin-left:20px;padding-left:36px;border-left:1px solid var(--border);margin-top:-8px;padding-top:0;padding-bottom:16px">
+        </div>
+        <div class="structure-row">
+          <div class="sr-num">02</div>
+          <div class="sr-content">
+            <div class="sr-title">AI Concepts</div>
+            <div class="sr-desc">3 core concepts with visual explanations. Mechanism, application, payoff. No jargon without definition.</div>
+          </div>
+        </div>
+        <div class="structure-row" style="margin-left:20px;padding-left:36px;border-left:1px solid var(--border);margin-top:-8px;padding-top:0;padding-bottom:16px">
+        </div>
+        <div class="structure-row">
+          <div class="sr-num">03</div>
+          <div class="sr-content">
+            <div class="sr-title">Live Examples (×2)</div>
+            <div class="sr-desc">Two real-work scenarios with attached documents, full prompt, and annotated breakdown of why it works.</div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="structure-row">
+          <div class="sr-num">04</div>
+          <div class="sr-content">
+            <div class="sr-title">Build Your Agent</div>
+            <div class="sr-desc">Guided agent configuration form with live-updating spec. Learner customises to their actual workflow and leaves with a deployable artifact.</div>
+          </div>
+        </div>
+        <div class="structure-row" style="margin-left:20px;padding-left:36px;border-left:1px solid var(--border);margin-top:-8px;padding-top:0;padding-bottom:16px">
+        </div>
+        <div class="structure-row">
+          <div class="sr-num">05</div>
+          <div class="sr-content">
+            <div class="sr-title">Completion & Next Steps</div>
+            <div class="sr-desc">Skill confirmation, earned badges/XP (design-dependent), next recommended skills from the ontology.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Adult learning principles -->
+<div class="principles-section">
+  <div class="ps-inner">
+    <div class="ps-title">Adult Learning Principles Applied</div>
+    <div class="ps-sub">Each design applies a different emphasis across these evidence-based principles.</div>
+    <div class="principles-grid">
+      <div class="principle">
+        <div class="pr-icon">🎯</div>
+        <div class="pr-name">Goal Orientation</div>
+        <div class="pr-desc">Every chapter opens with a clear A→B journey tied to the learner's actual role and workflow. Adults learn when they see direct relevance to their job.</div>
+      </div>
+      <div class="principle">
+        <div class="pr-icon">🔨</div>
+        <div class="pr-name">Learning by Doing</div>
+        <div class="pr-desc">The agent builder in Section 4 produces a real deployable artifact — not a quiz. Constructivist learning: build something you actually keep.</div>
+      </div>
+      <div class="principle">
+        <div class="pr-icon">📖</div>
+        <div class="pr-name">Worked Examples</div>
+        <div class="pr-desc">Two industry-specific examples with full prompts, attached documents, and expert annotation. Reduces cognitive load vs. abstract instruction.</div>
+      </div>
+      <div class="principle">
+        <div class="pr-icon">🔓</div>
+        <div class="pr-name">Progressive Disclosure</div>
+        <div class="pr-desc">Sections unlock sequentially — learners can't skip to the agent builder without context. Prevents overwhelm and ensures prerequisite knowledge.</div>
+      </div>
+      <div class="principle">
+        <div class="pr-icon">🗂️</div>
+        <div class="pr-name">Spaced Retrieval</div>
+        <div class="pr-desc">Concepts introduced in Section 2 are immediately applied in Section 3 examples and then transferred to Section 4 agent design. Three retrieval moments per concept.</div>
+      </div>
+      <div class="principle">
+        <div class="pr-icon">🤝</div>
+        <div class="pr-name">Self-Determination</div>
+        <div class="pr-desc">Learners customise the agent to their own workflow. Autonomy and personalisation are core SDT motivators — learners who input their own data engage more deeply.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  <div class="footer-text">AI Pathway Chapters · Developer Preview · GenAI Skills Ontology v2.0 · SK.PRM.005 Demo</div>
+</div>
+
+<script>
+(function() {
+  const c = document.getElementById('bg-canvas'), ctx = c.getContext('2d');
+  const COLS = ['#6366F1','#8B5CF6','#EC4899','#06B6D4','#10B981'];
+  let pts = [];
+  function resize() { c.width = window.innerWidth; c.height = window.innerHeight; }
+  function init() {
+    pts = [];
+    const n = Math.min(35, Math.floor(window.innerWidth * window.innerHeight / 22000));
+    for (let i = 0; i < n; i++) pts.push({ x: Math.random()*c.width, y: Math.random()*c.height, vx: (Math.random()-.5)*.2, vy: (Math.random()-.5)*.2, r: Math.random()*1.5+.5, col: COLS[i%COLS.length] });
+  }
+  let last = 0;
+  function draw(ts) {
+    if (ts - last < 33) { requestAnimationFrame(draw); return; }
+    last = ts;
+    ctx.clearRect(0, 0, c.width, c.height);
+    for (let i = 0; i < pts.length; i++) for (let j = i+1; j < pts.length; j++) {
+      const dx = pts[i].x-pts[j].x, dy = pts[i].y-pts[j].y, d = Math.sqrt(dx*dx+dy*dy);
+      if (d < 140) { const a = Math.floor((1-d/140)*25).toString(16).padStart(2,'0'); ctx.beginPath(); ctx.moveTo(pts[i].x,pts[i].y); ctx.lineTo(pts[j].x,pts[j].y); ctx.strokeStyle = pts[i].col+a; ctx.lineWidth = .5; ctx.stroke(); }
+    }
+    pts.forEach(p => { ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,6.28); ctx.fillStyle = p.col+'77'; ctx.fill(); p.x+=p.vx; p.y+=p.vy; if(p.x<0||p.x>c.width)p.vx*=-1; if(p.y<0||p.y>c.height)p.vy*=-1; });
+    requestAnimationFrame(draw);
+  }
+  resize(); init(); requestAnimationFrame(draw);
+  window.addEventListener('resize', () => { resize(); init(); });
+})();
+</script>
+</body>
+</html>

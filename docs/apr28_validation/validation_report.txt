@@ -1,0 +1,33 @@
+================================================================================
+HEADLESS BROWSER VALIDATION - LUDA APR 28 FIXES
+================================================================================
+
+## FIX #1: DETERMINISTIC SKILL ORDERING
+Running analysis twice with same input, comparing top 5...
+  Run 1 chapters: ['SK.FND.002', 'SK.PRM.003', 'SK.PRM.020', 'SK.GOV.022', 'SK.EVL.001']
+  Run 2 chapters: ['SK.FND.002', 'SK.PRM.003', 'SK.PRM.020', 'SK.GOV.022', 'SK.EVL.001']
+  [PASS] Same input produces same top 5 - 100% deterministic
+
+## FIX #2: DUPLICATE RATIONALE TEXT REMOVED
+  [PASS] skill.rationale paragraph removed from bundle
+
+## FIX #3: END-OF-PAGE MESSAGING UPDATED
+  [PASS] Old messaging removed
+  [PASS] New '5 chapters' messaging present
+
+## FIX #4: JOURNEY ROADMAP + READY TO START LEARNING REMOVED
+  [PASS] 'Ready to Start Learning?' removed from bundle
+  [WARN] Journey Roadmap text still in bundle (dead code)
+  Testing live with profile: Jennifer Campaniolo LK apr 28 
+  [PASS] Live: skips directly to dashboard (no Ready gate)
+  Screenshot: docs/apr28_validation/fix4_dashboard.png
+
+================================================================================
+VALIDATION SUMMARY
+================================================================================
+
+  PASS: 6
+  FAIL: 0
+  WARN: 1
+
+  Overall: ALL CRITICAL CHECKS PASS

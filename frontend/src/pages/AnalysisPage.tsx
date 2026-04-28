@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { getProfile, runFullAnalysis, parseJDProfile, parseJDSkills, getVisualization, updateProfile, getAnalysisResults } from '../services/api'
+import { getProfile, runFullAnalysis, parseJDProfile, parseJDSkills, updateProfile, getAnalysisResults } from '../services/api'
 import {
   Loader2,
   CheckCircle,
@@ -20,12 +20,8 @@ import {
   FileText,
   Wrench,
   Award,
-  ExternalLink,
-  Route,
-  Info,
-  Rocket,
 } from 'lucide-react'
-import type { AnalysisResult, Profile, Top10TargetSkill, Top10SkillGap, JourneyRoadmap, ParsedSkill } from '../types'
+import type { AnalysisResult, Profile, Top10SkillGap, ParsedSkill } from '../types'
 import JourneyArrow from '../components/JourneyArrow'
 import DomainGrid from '../components/ontology/DomainGrid'
 import AnalysisProgress from '../components/ontology/AnalysisProgress'
@@ -138,7 +134,6 @@ export default function AnalysisPage() {
   const MINIMUM_DISPLAY_TIME = 8000 // 8 seconds minimum to show the visualization
   const EXPECTED_DURATION = 60000 // typical analysis takes ~45-60 seconds
   const [analysisProgress, setAnalysisProgress] = useState(0)
-  const [showAllRemaining, setShowAllRemaining] = useState(false)
   const backendDone = useRef(false)
 
   const analysisMutation = useMutation({
@@ -1010,15 +1005,12 @@ export default function AnalysisPage() {
 
   // Complete state
   const summary = result?.result.summary
-  const gaps = result?.result.gap_analysis.gaps || []
-  const top10Target: Top10TargetSkill[] = result?.result.top_10_target_skills || []
   const top10Gaps: Top10SkillGap[] = result?.result.top_10_skill_gaps || []
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const allSkillGaps: Top10SkillGap[] = (result?.result.all_skill_gaps || []).map((g: any) => ({
     ...g,
     required_level: g.required_level ?? g.target_level,
   }))
-  const journeyRoadmap: JourneyRoadmap | undefined = result?.result.journey_roadmap
   const fitScore: number = result?.result.fit_score ?? 0
   const executiveIntroduction: string = result?.result.executive_introduction ?? ''
   const roleAnalysis = result?.result.jd_parsing?.role_analysis
@@ -1026,20 +1018,8 @@ export default function AnalysisPage() {
   const keyDomains = roleAnalysis?.key_domains || []
 
   // Derive actual chapter-to-domain mapping from learning path
-  const chapters = result?.result?.learning_path?.chapters || []
-
-  // Compute robust display values from actual data arrays
-  const displayGaps = top10Gaps.filter(g => g.gap > 0).length || gaps.length || summary?.total_gaps_identified || 0
-  const displayChapters = chapters.length || summary?.total_chapters || 0
-  const displayHours =
-    result?.result?.learning_path?.total_estimated_hours
-    || chapters.reduce((sum: number, ch: { estimated_time_hours?: number }) => sum + (ch.estimated_time_hours || 0), 0)
-    || summary?.estimated_learning_hours
-    || 0
-  const journeyProgressPct = journeyRoadmap && journeyRoadmap.total_gap_levels > 0
-    ? Math.round((journeyRoadmap.path_closes_levels / journeyRoadmap.total_gap_levels) * 100)
-    : 0
-  const actualSelectedDomains = chapters
+  const chaptersForDomains = result?.result?.learning_path?.chapters || []
+  const actualSelectedDomains = chaptersForDomains
     .map((ch: { skill_id?: string; primary_skill_id?: string; chapter_number?: number }) => {
       const sid = ch.skill_id || ch.primary_skill_id || ''
       const parts = sid.split('.')
@@ -1047,61 +1027,6 @@ export default function AnalysisPage() {
       return domainId ? { domainId, chapterNum: ch.chapter_number || 0 } : null
     })
     .filter((x: { domainId: string; chapterNum: number } | null): x is { domainId: string; chapterNum: number } => x !== null)
-
-  // Build domain label lookup for chapter phasing
-  const domainLabelMap = new Map<string, string>()
-  for (const g of top10Gaps) {
-    if (g.domain_label) domainLabelMap.set(g.domain, g.domain_label)
-  }
-  for (const t of top10Target) {
-    if (t.domain_label) domainLabelMap.set(t.domain, t.domain_label)
-  }
-  const resolveDomainLabel = (domainId: string) => domainLabelMap.get(domainId) || domainId
-
-  // Section 5: Group chapters by domain into phases
-  type ChapterEntry = { chapter_number?: number; skill_id?: string; primary_skill_id?: string; skill_name?: string; primary_skill_name?: string; title?: string; current_level?: number; target_level?: number; estimated_time_hours?: number; learning_objectives?: string[]; industry_context?: string }
-  const phases = (() => {
-    const groups: Array<{ domain: string; domainLabel: string; chapters: ChapterEntry[] }> = []
-    for (const ch of chapters as ChapterEntry[]) {
-      const sid = ch.skill_id || ch.primary_skill_id || ''
-      const parts = sid.split('.')
-      const domainId = parts.length >= 3 ? `D.${parts[1]}` : 'unknown'
-      const last = groups[groups.length - 1]
-      if (last && last.domain === domainId) {
-        last.chapters.push(ch)
-      } else {
-        groups.push({ domain: domainId, domainLabel: resolveDomainLabel(domainId), chapters: [ch] })
-      }
-    }
-    return groups
-  })()
-
-  // Helper to render two-row gap bars
-  const renderGapBars = (currentLevel: number, targetLevel: number, compact = false) => {
-    const currentPct = (currentLevel / 5) * 100
-    const targetPct = (targetLevel / 5) * 100
-    const h = compact ? 'h-2.5' : 'h-4'
-    return (
-      <div className={`space-y-${compact ? '0.5' : '1'}`}>
-        <div className="flex items-center gap-2">
-          <span className={`${compact ? 'text-[9px] w-8' : 'text-[10px] w-10'} font-medium text-gray-500 text-right`}>You</span>
-          <div className={`flex-1 ${h} bg-gray-100 rounded overflow-hidden`}>
-            {currentPct > 0 && (
-              <div className={`h-full bg-sky-500 rounded transition-all duration-700 ease-out`} style={{ width: `${currentPct}%` }} />
-            )}
-          </div>
-          <span className="text-[10px] font-bold text-sky-600 w-6">L{currentLevel}</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className={`${compact ? 'text-[9px] w-8' : 'text-[10px] w-10'} font-medium text-gray-500 text-right`}>Target</span>
-          <div className={`flex-1 ${h} bg-gray-100 rounded overflow-hidden`}>
-            <div className={`h-full bg-emerald-500 rounded transition-all duration-700 ease-out`} style={{ width: `${targetPct}%` }} />
-          </div>
-          <span className="text-[10px] font-bold text-emerald-600 w-6">L{targetLevel}</span>
-        </div>
-      </div>
-    )
-  }
 
   // ── Results Review: show assessment, let user adjust, then continue to roadmap ──
   if (step === 'results_review') {
@@ -1288,341 +1213,17 @@ export default function AnalysisPage() {
     )
   }
 
-  // ── Complete: Journey Roadmap + Learning Path (skills review is on results_review) ──
-  return (
-    <div className="max-w-4xl mx-auto space-y-8">
-      {/* Back to Skills Review */}
-      <button
-        onClick={() => setStep('results_review')}
-        className="text-sm text-indigo-600 hover:text-indigo-800 flex items-center gap-1"
-      >
-        &larr; Back to Skills Review
-      </button>
+  // ── Complete: redirects to learning dashboard (Journey Roadmap removed per Apr 28 feedback) ──
+  if (step === 'complete' && result?.learning_path_id) {
+    navigate(`/learn/${result.learning_path_id}`)
+    return null
+  }
 
-      {/* ================================================================ */}
-      {/* JOURNEY ROADMAP — Bridge gap analysis and learning path          */}
-      {/* ================================================================ */}
-      {journeyRoadmap && journeyRoadmap.total_gap_levels > 0 && (
-        <div className="card">
-          <div className="flex items-center gap-2 mb-4">
-            <Route className="w-5 h-5 text-indigo-600" />
-            <h2 className="text-lg font-bold text-gray-900">Your Journey Roadmap</h2>
-            <span className="text-sm text-gray-500 ml-auto">
-              Path {journeyRoadmap.path_number} of ~{journeyRoadmap.estimated_total_paths} estimated
-            </span>
-          </div>
+  // Fallback: redirect back to results review if we somehow land here
+  if (step === 'complete') {
+    setStep('results_review')
+    return null
+  }
 
-          {/* Progress bar */}
-          <div className="mb-5">
-            <div className="flex items-center justify-between text-xs text-gray-500 mb-1">
-              <span>Progress toward target role</span>
-              <span className="font-medium text-indigo-600">
-                {journeyRoadmap.path_closes_levels} of {journeyRoadmap.total_gap_levels} gap-levels
-              </span>
-            </div>
-            <div className="w-full h-3 bg-gray-200 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-indigo-500 rounded-full transition-all"
-                style={{
-                  width: `${Math.round((journeyRoadmap.path_closes_levels / journeyRoadmap.total_gap_levels) * 100)}%`,
-                }}
-              />
-            </div>
-            <div className="text-xs text-gray-400 mt-1 text-right">
-              {Math.round((journeyRoadmap.path_closes_levels / journeyRoadmap.total_gap_levels) * 100)}% after this path
-            </div>
-          </div>
-
-          {journeyRoadmap.total_gap_levels === journeyRoadmap.path_closes_levels ? (
-            <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-700 text-sm">
-              <CheckCircle className="w-4 h-4 inline mr-1" />
-              This path covers all your identified skill gaps!
-            </div>
-          ) : (
-            <div className="grid md:grid-cols-2 gap-4">
-              {/* Left: what this path covers */}
-              <div>
-                <h3 className="text-sm font-semibold text-gray-700 mb-2">
-                  This Path Covers ({journeyRoadmap.skills_addressed.length} skills, +1 level each)
-                </h3>
-                <div className="space-y-2">
-                  {journeyRoadmap.skills_addressed.map((s) => (
-                    <div key={s.skill_id} className="flex items-center justify-between p-2 bg-indigo-50 rounded text-sm">
-                      <div className="flex-1 min-w-0">
-                        <span className="font-medium text-gray-800 truncate block">
-                          <span className="text-indigo-500 font-mono text-[11px]">{s.skill_id}</span>{' '}
-                          {s.skill_name}
-                        </span>
-                        <span className="text-xs text-gray-500">{s.domain_label}</span>
-                      </div>
-                      <div className="flex items-center gap-1 ml-2 flex-shrink-0">
-                        <span className="text-xs font-bold text-sky-600">L{s.current_level}</span>
-                        <ArrowRight className="w-3 h-3 text-gray-400" />
-                        <span className="text-xs font-bold text-emerald-600">L{s.after_path_level}</span>
-                        <span className="text-[10px] text-gray-400 ml-1">(of L{s.required_level})</span>
-                        {s.gap_remaining === 0 ? (
-                          <CheckCircle className="w-3.5 h-3.5 text-emerald-500 ml-1" />
-                        ) : (
-                          <span className="text-[10px] px-1 py-0.5 bg-indigo-200 text-indigo-700 rounded ml-1">+1</span>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Right: what remains */}
-              <div>
-                {(() => {
-                  const REMAINING_PREVIEW = 3;
-                  const partial = journeyRoadmap.skills_addressed.filter(s => s.gap_remaining > 0);
-                  const notStarted = journeyRoadmap.skills_remaining.filter(s => !s.partial);
-                  const allRemaining = [
-                    ...partial.map(s => ({ ...s, kind: 'partial' as const })),
-                    ...notStarted.map(s => ({ ...s, kind: 'not_started' as const })),
-                  ];
-                  const totalGapLevels = partial.reduce((sum, s) => sum + s.gap_remaining, 0)
-                    + notStarted.reduce((sum, s) => sum + s.gap, 0);
-                  const visible = showAllRemaining ? allRemaining : allRemaining.slice(0, REMAINING_PREVIEW);
-                  const hiddenCount = allRemaining.length - REMAINING_PREVIEW;
-
-                  return (
-                    <>
-                      <h3 className="text-sm font-semibold text-gray-700 mb-2">
-                        Remaining ({allRemaining.length} entries, {totalGapLevels} gap-levels)
-                      </h3>
-                      <div className="space-y-1">
-                        {visible.map((s) => (
-                          <div key={s.skill_id} className={`flex items-center justify-between p-1.5 rounded text-sm ${s.kind === 'partial' ? 'bg-amber-50' : 'bg-gray-50'}`}>
-                            <span className="text-gray-700 truncate flex-1">
-                              <span className={`font-mono text-[11px] ${s.kind === 'partial' ? 'text-amber-500' : 'text-gray-400'}`}>{s.skill_id}</span>{' '}
-                              {s.skill_name}
-                            </span>
-                            <span className={`text-xs flex-shrink-0 ml-2 ${s.kind === 'partial' ? 'text-amber-600' : 'text-gray-500'}`}>
-                              {s.kind === 'partial'
-                                ? `L${s.after_path_level} → L${s.required_level} (${s.gap_remaining} more)`
-                                : `L${s.current_level} → L${s.required_level} (+${s.gap})`}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                      {hiddenCount > 0 && (
-                        <button
-                          onClick={() => setShowAllRemaining(!showAllRemaining)}
-                          className="mt-2 w-full text-xs font-medium text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 rounded py-1.5 px-3 transition-colors text-center"
-                        >
-                          {showAllRemaining ? 'Show fewer skills' : `Show all ${allRemaining.length} remaining skills (+${hiddenCount} more)`}
-                        </button>
-                      )}
-                    </>
-                  );
-                })()}
-
-                {/* CTA */}
-                <div className="mt-3 p-2 bg-blue-50 border border-blue-200 rounded text-xs text-blue-700 flex items-start gap-1.5">
-                  <Info className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
-                  <span>Each path builds solid +1 level foundations. Complete this path, then generate your next one to keep progressing.</span>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Summary Cards */}
-      <div className="grid md:grid-cols-4 gap-4">
-        <div className="card text-center border-l-4 border-l-red-500">
-          <div className="text-3xl font-bold text-red-600">
-            {journeyRoadmap ? journeyRoadmap.skills_addressed.length : displayGaps}
-          </div>
-          <div className="text-gray-600 text-sm">Skills in This Path</div>
-          <div className="text-gray-400 text-xs mt-1">+1 level each</div>
-        </div>
-        <div className="card text-center border-l-4 border-l-indigo-500">
-          <div className="text-3xl font-bold text-indigo-600">
-            {journeyProgressPct}%
-          </div>
-          <div className="text-gray-600 text-sm">Journey Progress</div>
-          <div className="text-gray-400 text-xs mt-1">
-            {journeyRoadmap ? `${journeyRoadmap.path_closes_levels} of ${journeyRoadmap.total_gap_levels} gap-levels` : ''}
-          </div>
-        </div>
-        <div className="card text-center border-l-4 border-l-sky-500">
-          <div className="text-3xl font-bold text-sky-600">
-            {journeyRoadmap ? `~${journeyRoadmap.estimated_total_paths}` : displayChapters}
-          </div>
-          <div className="text-gray-600 text-sm">
-            {journeyRoadmap ? 'Paths Estimated' : 'Chapters'}
-          </div>
-          <div className="text-gray-400 text-xs mt-1">
-            {journeyRoadmap ? 'to full role readiness' : ''}
-          </div>
-        </div>
-        <div className="card text-center border-l-4 border-l-amber-500">
-          <div className="text-3xl font-bold text-amber-600">
-            {Math.round(displayHours)}h
-          </div>
-          <div className="text-gray-600 text-sm">Estimated Time</div>
-          <div className="text-gray-400 text-xs mt-1">for this path</div>
-        </div>
-      </div>
-
-      {/* ================================================================ */}
-      {/* LEARNING PATH — Domain-Grouped Phases                            */}
-      {/* ================================================================ */}
-      {phases.length > 0 && (
-        <div className="card">
-          <div className="flex items-center gap-2 mb-5">
-            <BookOpen className="h-5 w-5 text-indigo-600" />
-            <h2 className="text-xl font-bold text-gray-900">
-              High Level Learning Objectives
-            </h2>
-          </div>
-
-          <div className="space-y-6">
-            {phases.map((phase, phaseIdx) => {
-              const phaseHours = phase.chapters.reduce((sum, ch) => sum + (ch.estimated_time_hours || 0), 0)
-              return (
-                <div key={phaseIdx}>
-                  {/* Phase header */}
-                  <div className="flex items-center gap-3 mb-3 pb-2 border-b border-indigo-100">
-                    <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-                      {phaseIdx + 1}
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="font-bold text-indigo-700">Phase {phaseIdx + 1}: {phase.domainLabel}</h3>
-                      <p className="text-xs text-gray-500">
-                        {phase.chapters.length} chapter{phase.chapters.length > 1 ? 's' : ''}
-                        {phaseHours > 0 && ` · ~${Math.round(phaseHours)}h`}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Chapters within phase */}
-                  <div className="space-y-3 pl-4">
-                    {phase.chapters.map((ch) => {
-                      const current = ch.current_level ?? 0
-                      const target = ch.target_level ?? 1
-                      return (
-                        <div key={ch.chapter_number} className="p-3 bg-gray-50 rounded-lg">
-                          {/* Chapter header */}
-                          <div className="flex items-center justify-between gap-3 mb-2">
-                            <div className="flex items-center gap-3 min-w-0">
-                              <div className="w-7 h-7 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 font-bold text-xs flex-shrink-0">
-                                {ch.chapter_number}
-                              </div>
-                              <div className="min-w-0">
-                                <div className="font-medium text-gray-900 text-sm truncate">{ch.title || ch.skill_name || ch.primary_skill_name}</div>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-1 flex-shrink-0">
-                              <span className="text-[10px] font-bold text-sky-600">L{current}</span>
-                              <ArrowRight className="h-3 w-3 text-gray-400" />
-                              <span className="text-[10px] font-bold text-emerald-600">L{target}</span>
-                              {ch.estimated_time_hours && (
-                                <span className="text-[10px] text-gray-400 ml-1">{ch.estimated_time_hours}h</span>
-                              )}
-                            </div>
-                          </div>
-
-                          {/* Two-row bars */}
-                          <div className="pl-10 mb-2">
-                            {renderGapBars(current, target, true)}
-                          </div>
-
-                          {/* Learning objectives */}
-                          {ch.learning_objectives && ch.learning_objectives.length > 0 && (
-                            <div className="pl-10 mt-2">
-                              <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide mb-1">Learning Objectives</p>
-                              <ul className="text-xs text-gray-600 space-y-0.5">
-                                {ch.learning_objectives.slice(0, 3).map((obj, i) => (
-                                  <li key={i} className="flex items-start gap-1.5">
-                                    <span className="text-indigo-400 mt-0.5">•</span>
-                                    <span>{obj}</span>
-                                  </li>
-                                ))}
-                                {ch.learning_objectives.length > 3 && (
-                                  <li className="text-gray-400 text-[10px]">+{ch.learning_objectives.length - 3} more</li>
-                                )}
-                              </ul>
-                            </div>
-                          )}
-
-                          {/* Industry context */}
-                          {ch.industry_context && (
-                            <p className="pl-10 mt-1.5 text-[11px] text-gray-500 italic line-clamp-2">
-                              {ch.industry_context}
-                            </p>
-                          )}
-                        </div>
-                      )
-                    })}
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-
-          {/* Legend */}
-          <div className="flex flex-wrap justify-center gap-5 mt-4 pt-3 border-t border-gray-100 text-xs text-gray-600">
-            <div className="flex items-center gap-1.5">
-              <div className="w-3 h-3 rounded-sm bg-sky-500" />
-              <span>Your Current Level</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <div className="w-3 h-3 rounded-sm bg-emerald-500" />
-              <span>Target Level Required</span>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Recommendations */}
-      {summary?.recommendations && summary.recommendations.length > 0 && (
-        <div className="card bg-indigo-50 border-indigo-200">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">
-            Recommended Next Steps
-          </h2>
-          <ul className="space-y-2">
-            {summary.recommendations.map((rec, i) => (
-              <li key={i} className="flex items-start gap-2 text-gray-700">
-                <CheckCircle className="h-5 w-5 text-indigo-500 flex-shrink-0 mt-0.5" />
-                {rec}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {/* CTA */}
-      <div className="flex flex-wrap justify-center gap-4">
-        <button
-          onClick={() => window.open(`/learn/${result?.learning_path_id}`, '_blank')}
-          className="btn flex items-center gap-2 text-lg px-8 py-4 shadow-lg hover:shadow-xl transition-shadow bg-gradient-to-r from-emerald-500 to-teal-500 text-white hover:from-emerald-600 hover:to-teal-600"
-        >
-          <Rocket className="h-5 w-5" />
-          Start My Learning Path
-        </button>
-        <button
-          onClick={async () => {
-            if (!result?.result) return
-            try {
-              const html = await getVisualization(result.result as Record<string, unknown>)
-              const win = window.open('', '_blank')
-              if (win) {
-                win.document.write(html)
-                win.document.close()
-              }
-            } catch {
-              // Silently fail — the button is a secondary action
-            }
-          }}
-          className="btn btn-secondary flex items-center gap-2 text-lg px-6 py-4"
-        >
-          View Ontology Path
-          <ExternalLink className="h-5 w-5" />
-        </button>
-      </div>
-    </div>
-  )
+  return null
 }

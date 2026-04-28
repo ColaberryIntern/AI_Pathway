@@ -1,0 +1,225 @@
+{
+  "meta": {
+    "chapter_title": "Debugging a prompt like an editor debugs a draft",
+    "chapter_subtitle": "Move from rewriting whole prompts to systematically isolating what's broken.",
+    "skill_id": "SK.PRM.003",
+    "skill_name": "Prompt debugging & iteration",
+    "domain_id": "D.PRM",
+    "domain_name": "Prompting",
+    "current_level": 2,
+    "target_level": 3,
+    "current_level_label": "Literacy",
+    "target_level_label": "Practitioner",
+    "current_level_rubric": "Knows that prompts can be revised when output is unsatisfactory",
+    "target_level_rubric": "Systematically debugs prompts: isolates variables, tests variations, logs results",
+    "total_minutes": 15,
+    "aesthetic_direction": "editorial_paper"
+  },
+
+  "scenario": {
+    "minutes": 2,
+    "kicker": "Where you are. Where you're going.",
+    "title": "The client email that keeps missing",
+    "narrative": "A financial wellness brand has asked you to use ChatGPT to draft a weekly email series. You write a prompt. The output is close, but the tone is off — reads like a bank pamphlet. You rewrite the prompt, try again. Still off, in a different way. After six tries you're not sure what changed or why any of them worked.",
+    "a_state": {
+      "level_display": "Level 2 · Literacy",
+      "quote": "When the output isn't right, I rewrite the prompt and hope it gets better."
+    },
+    "b_state": {
+      "level_display": "Level 3 · Practitioner",
+      "quote": "I isolate what's broken, change one variable at a time, and log what I learn."
+    },
+    "objectives": [
+      "Diagnose which part of a prompt is causing a bad output instead of rewriting the whole thing.",
+      "Run a controlled test comparing two prompt variations to learn what actually moves the needle.",
+      "Keep a simple debug log so you build a personal library of what works and can hand it to an AI developer."
+    ],
+    "why_it_matters": "Roles that collaborate with AI developers to refine content generation expect you to bring a systematic debugging practice — not just faster typing."
+  },
+
+  "concepts": {
+    "minutes": 3,
+    "kicker": "The mental model.",
+    "title": "The IVL method: three moves, in order",
+    "intro": "Most people at Level 2 treat a bad output as a signal to rewrite the whole prompt. Level 3 treats it as a diagnostic puzzle. Here are the three moves that make the difference.",
+    "mnemonic": "IVL — Isolate, Vary, Log",
+    "cards": [
+      {
+        "identifier": "I",
+        "word": "Isolate",
+        "headline": "Find the one piece that's broken.",
+        "body": "A prompt has parts: role, task, context, examples, format, constraints. When output is off, one of those parts is usually the culprit — not the whole prompt.",
+        "analogy": "Like editing a paragraph: you find the weak sentence, not rewrite the whole page.",
+        "color_role": "primary"
+      },
+      {
+        "identifier": "V",
+        "word": "Vary one thing",
+        "headline": "Change one variable. Keep the rest constant.",
+        "body": "If you change three things at once and the output improves, you don't know which change worked. Change one, compare the output, then move on.",
+        "analogy": "Like testing a recipe: don't swap the flour and the oven temp in the same batch.",
+        "color_role": "accent"
+      },
+      {
+        "identifier": "L",
+        "word": "Log it",
+        "headline": "Write down what you tried and what happened.",
+        "body": "Memory lies. A simple log (prompt version, what changed, quality 1-5, note) turns 'I'm fiddling' into 'I'm learning.' It's also what separates L2 from L3.",
+        "analogy": "Like a writer's notebook: you don't remember every good line, you capture it.",
+        "color_role": "secondary"
+      }
+    ],
+    "pull_quote": "If you only remember one thing: change one variable at a time."
+  },
+
+  "example_1": {
+    "minutes": 3,
+    "kicker": "Example one.",
+    "title": "Debugging a tone problem",
+    "setup": "The client wants warm, human financial-wellness emails. Your first draft prompt gets output that reads like a bank pamphlet. Let's debug it.",
+    "original_prompt": {
+      "label": "The original prompt (v1)",
+      "prompt": "Write a weekly email to subscribers about building an emergency fund. Make it friendly.",
+      "output": "Dear Valued Subscriber, An emergency fund is a critical financial instrument that provides stability during unexpected circumstances. Experts recommend saving 3–6 months of expenses...",
+      "rating": 2,
+      "diagnosis": "Reads like a bank pamphlet. The word 'friendly' is doing all the work — and ChatGPT doesn't know what friendly means to this brand."
+    },
+    "iterated_prompt": {
+      "label": "The iterated prompt (v2)",
+      "prompt": "Write a weekly email to subscribers about building an emergency fund. Match the tone of this sample: 'Hey — real talk. Life throws curveballs, and an emergency fund keeps a flat tire from becoming a financial crisis.' Keep it conversational, use 'you,' avoid words like 'instrument' or 'strategically.'",
+      "output": "Hey — let's talk about the one thing that separates 'I've got this' from 'I'm panicking at 2am': an emergency fund. The good news? You don't need thousands to start. Even $20 a week is a real safety net in 6 months...",
+      "rating": 4,
+      "diagnosis": "Big improvement. One variable changed — tone guidance — and the fix landed."
+    },
+    "steps": [
+      {
+        "step_number": 1,
+        "title": "Isolate: which part is broken?",
+        "content_type": "diagnosis_checklist",
+        "checklist_items": [
+          { "part": "Task", "status": "clear", "is_broken": false },
+          { "part": "Audience", "status": "partial", "is_broken": false },
+          { "part": "Tone guidance", "status": "vague", "is_broken": true },
+          { "part": "Examples", "status": "missing", "is_broken": true }
+        ]
+      },
+      {
+        "step_number": 2,
+        "title": "Vary one thing: replace 'friendly' with a concrete tone sample",
+        "content_type": "prompt_variant",
+        "prompt_variant_ref": "iterated_prompt"
+      },
+      {
+        "step_number": 3,
+        "title": "Log it: what did you learn?",
+        "content_type": "log_entry",
+        "log_entries": [
+          { "key": "prompt_id", "value": "emergency-fund-email-v2" },
+          { "key": "change", "value": "replaced 'friendly' with sample paragraph + banned words" },
+          { "key": "output_quality", "value": "4/5 (was 2/5)" },
+          { "key": "lesson", "value": "abstract tone words don't work. Show, don't tell." },
+          { "key": "reuse", "value": "paste brand sample into every copywriting prompt from now on" }
+        ]
+      }
+    ],
+    "wrap_up": "One variable changed, one lesson captured. That's an L3 move."
+  },
+
+  "example_2": {
+    "minutes": 4,
+    "kicker": "Example two — closer to real work.",
+    "title": "A/B testing two prompt variations",
+    "setup": "Same task, same information, two different ways to structure the prompt. Which one wins? This is L3 in the wild: run the test, compare, log the lesson.",
+    "steps": [
+      {
+        "step_number": 1,
+        "title": "The test setup",
+        "content_type": "commentary",
+        "commentary": "Does putting the role before the task produce better output than putting it after? One variable changed. Everything else identical."
+      },
+      {
+        "step_number": 2,
+        "title": "Pick a variant to inspect",
+        "content_type": "commentary",
+        "commentary": "Tap each variant to see its output and rating."
+      }
+    ],
+    "comparison": {
+      "test_question": "Does role placement (before vs. after task) affect output quality?",
+      "variants": [
+        {
+          "id": "A",
+          "label": "Variant A — Role first",
+          "prompt": "You are a fitness copywriter who writes for busy parents. Write a 40-word product description for a noise-cancelling yoga mat. Emphasize: durability, quiet use (kids sleeping), 60-day trial.",
+          "output": "Yoga on your schedule — even when the baby's finally down. Our noise-cancelling mat grips quietly on any floor, holds up to daily use, and comes with a 60-day trial. No creaks. No excuses. Just ten stolen minutes.",
+          "rating": 5,
+          "why": "The role ('fitness copywriter for busy parents') primes the model with audience and voice before the task. Result reads like a human wrote it."
+        },
+        {
+          "id": "B",
+          "label": "Variant B — Task first",
+          "prompt": "Write a 40-word product description for a noise-cancelling yoga mat. Emphasize: durability, quiet use (kids sleeping), 60-day trial. Target audience: busy parents.",
+          "output": "Introducing our premium noise-cancelling yoga mat — designed for durability and quiet use, so you can exercise without waking the kids. Built to last, backed by a 60-day trial. Perfect for busy parents who need a reliable fitness solution.",
+          "rating": 3,
+          "why": "Same information, different order. Without role framing, the model defaults to generic product-catalog voice."
+        }
+      ],
+      "takeaway": "Prime voice before asking for work. Role-first placement wins for voicey copy."
+    },
+    "wrap_up": "You ran a controlled A/B test. One variable. Two outputs. A reusable lesson."
+  },
+
+  "agent_build": {
+    "minutes": 3,
+    "kicker": "Your turn.",
+    "title": "Build your Prompt Debug Coach",
+    "intro": "Here's your takeaway artifact. It's a custom GPT instruction set that turns ChatGPT into a debugging partner — one that forces the IVL method on you every time. No code. Copy, paste, personalize three fields.",
+    "capability_chips": [
+      {
+        "title": "Asks for a rating",
+        "description": "Before diagnosing, it asks you to score the output 1-5."
+      },
+      {
+        "title": "Suggests ONE change",
+        "description": "Blocks you from changing three things at once."
+      },
+      {
+        "title": "Logs your lessons",
+        "description": "Formats your learnings into a reusable log."
+      }
+    ],
+    "personalization_fields": [
+      {
+        "key": "topic",
+        "label": "Your content area",
+        "placeholder": "e.g., financial wellness emails for first-time savers",
+        "input_type": "text"
+      },
+      {
+        "key": "tone",
+        "label": "Your brand tone (2-3 sentence sample)",
+        "placeholder": "e.g., Hey — real talk. Life throws curveballs...",
+        "input_type": "textarea"
+      },
+      {
+        "key": "avoid",
+        "label": "Banned words (comma separated)",
+        "placeholder": "e.g., instrument, solution, utilize, leverage",
+        "input_type": "text"
+      }
+    ],
+    "system_prompt_template": "You are my Prompt Debug Coach. You help me systematically improve prompts for ChatGPT using the IVL method.\n\nWhen I paste in a prompt and its output, you will:\n\n1. ISOLATE — identify which part of the prompt is likely causing the issue. Check: role, task clarity, audience, tone, format, constraints.\n\n2. VARY — suggest exactly ONE change to test. Not three. One. Explain why this variable.\n\n3. LOG — after I share the new output, help me record a one-line lesson: '[What I changed] → [quality change 1-5] → [what I learned]'\n\nRules:\n• Ask me for the output quality (1-5) before diagnosing.\n• Never rewrite the whole prompt.\n• If I try to change multiple things at once, push back.\n• After 5 lessons, suggest a 'patterns recap.'\n\nMy domain: {topic}\nMy brand tone: {tone}\nWords I never use: {avoid}",
+    "usage_steps": [
+      "Open a new ChatGPT conversation and paste the prompt above as your first message.",
+      "Next time you have a prompt that isn't working, paste the prompt and the bad output.",
+      "Answer its 1-5 rating question. Follow its ONE suggested change.",
+      "Paste the new output. Log the lesson in Notion, a Google Doc, or a notes app.",
+      "After 5 lessons, ask it: 'What patterns do you see across my tests?'"
+    ],
+    "final_affirmation": {
+      "rubric_quote": "I isolate what's broken, change one variable at a time, and log what I learn.",
+      "tie_back": "That's the rubric for Level 3 Practitioner on SK.PRM.003. Two weeks of logs gives you the kind of artifact an AI developer wants to see when you apply for content-engineering roles."
+    },
+    "next_skill_hint": "SK.PRM.011 — Rubrics as prompts"
+  }
+}

@@ -1,0 +1,72 @@
+
+On Apr 15, 2026, at 10:06 AM, Luda Kopeikina &lt;ludakopeikina@gmail.com&gt; wrote:Hi everyone, A quick summary of our meeting (Ram, Vivek & Luda) on April 10 at IIA. See my notes in Red below.
+	1. What constitutes a minimum POC? Here are several criteria to define this:
+		a. Selection of the right set of skills for personas that will motivate the user to jump in. 			Metric: Claude selections using our Prioritization Rubric	LK: agreed. I tested Jennifer C case by building the case from scratch and the tool picked the skills as Claude did. However, the prioritization was off. I think that we are really close. Luda to work with Ali on this.	We need additional logic for pages past the initial top 5 skills selection and prioritization. For examples, what happens when in self-assessment step, the user picks levels that match with the atrageted levels?  Luda is to define this logic, get comments from others and provide to Ali. 
+		b. Well structured but brief lessons that are clearly advancing the user towards being a candidate for a targeted position. 			Metric: 3 examples evaluated by each one of us.	LK: Vivek is working on the structure of the lessons. He is going to create a more detailed ontology that includes objectives for each proficiency level for each skill. It will be then clear what is the advancement from L1 to L2 in a particular skill. He will then define a chapter schema based on the ontology guidance. Ali, we are thinking that we should NOT subdivide chapters into lessons. Have a 15-30min chapter per skill level in one go.
+		c. Lessons including practical, hands-on exercises from the user’s industry and with their role in mind, e.g. marketing in healthcare.			Metric: 3 examples evaluated by each one of us.	LK: included in 1b. On Vivek’s list.
+
+	2. Let’s agree on the timeline. I think that Ali is really close to the above but let’s target a specific date.	LK: we agreed to shoot for the end of April to have a working POC to start showing people including Jennifer and other members of WAAI. I think that this is ambitious but let’s push for this. 
+Ali,Vivek and I are shooting for providing feedback on the above this week. I will be out next week but reachable. Vivek can answer questions. 
+Sincere thanks for your help!
+Best, Luda
+On Apr 7, 2026, at 8:57 PM, Luda Kopeikina &lt;ludakopeikina@gmail.com&gt; wrote:Hi Ram and Vivek,How about we meet on April 10th at 4pm? There is a break 4-4:30pm in all conference streams. We can meet on the 6th floor in front of the Classroom where Tech Talks are going to be. 
+Ram,Thank you for allowing us to leverage your tremendously valuable resource (Ali)!!! Both, Vivek and I are super conscious about it and would like to make sure that we do not 'overstay our welcome'. So, let’s figure out a couple of items make sure that all of us are on the same page.
+	1. What constitutes a minimum POC? Here are several criteria to define this:
+		a. Selection of the right set of skills for personas that will motivate the user to jump in. 			Metric: Claude selections using our Prioritization Rubric		b. Well structured but brief lessons that are clearly advancing the user towards being a candidate for a targeted position. 			Metric: 3 examples evaluated by each one of us.		c. Lessons including practical, hands-on exercises from the user’s industry and with their role in mind, e.g. marketing in healthcare.			Metric: 3 examples evaluated by each one of us.
+	2. Let’s agree on the timeline. I think that Ali is really close to the above but let’s target a specific date.
+Please confirm that 4pm works and that the above is a good agenda. Please suggest changes. 
+We can get Ali on the phone but it is unlikely that he will be able to hear anything - it is a VERY noisy place. But it is your call, Ram.
+Looking forward to talking about this! It is really exciting!
+Best, Luda
+On Apr 6, 2026, at 2:19 PM, Ram Dhan Yadav Katamaraja &lt;ram@colaberry.com&gt; wrote:Luda,
+Thanks of the quick response. I am planning to be there on 10th. On 9th I have a conflict. 
+Thank you,Ram
+On Apr 6, 2026, at 12:59 PM, Luda Kopeikina &lt;ludakopeikina@gmail.com&gt; wrote:Hi Ram,Absolutely!Apologies for not getting us together sooner. 
+Hi Vivek,What is your availability this week? Do you have any daytime availability? Or nighttime is still the best time for you? If so, would tomorrow (Tuesday), April 7th night work for you? After 7pm?
+Hi, Ram and Vivek, are you going to be at the IIA summit April 9 and 10th? I am planning to be there both days.  If you are going to be there, this can present an in-person opportunity. We can engage with Ali on zoom. 
+Please let me know your thoughts on the timing asap so that we can schedule. 
+Thank you!
+Best, Luda
+On Apr 6, 2026, at 7:41 AM, Ram Dhan Yadav Katamaraja &lt;ram@colaberry.com&gt; wrote:Can we have a follow up call sometime to discuss the status of the initiative?
+
+On Wed, Apr 1, 2026 at 8:15 AM Luda Kopeikina &lt;ludakopeikina@gmail.com&gt; wrote:
+Yes, Ram, I was just about to send this article. This is actually rather important. We should discuss how we incorporate this thinking into the tool.
+Thanks!
+On Apr 1, 2026, at 7:39 AM, Ram Dhan Yadav Katamaraja &lt;ram@colaberry.com&gt; wrote:
+Looks like Zapier is giving an skill dev roadmap: https://zapier.com/blog/raising-ai-fluency-bar-in-hiring/
+Best Regards, Ram KatamarajaCEO | Colaberry.com | Refactored.ai C: +1-339-368-1181F: +1-833-336-0060Book a Meeting @ https://meetings.hubspot.com/ram-katamaraja
+Ask Us About our 4 MIT SOLVE Global Championship Awardshttps://blog.colaberry.com/refactored.ai-awarded-mit-solves-2018-most-promising-work-of-the-future-solution
+
+On Mon, Mar 30, 2026 at 12:12 PM Ram Dhan Yadav Katamaraja &lt;ram@colaberry.com&gt; wrote:
+Good afternoon. Any insights/input on how the feedback is coming along? Any next steps?
+On Thu, Mar 26, 2026 at 6:06 PM Vivek Mukhatyar &lt;vivmuk@gmail.com&gt; wrote:
+We should plan a lunch date and work backwards. We will keep improving once we get some feedback. 
+Vivek
+
+On Thu, Mar 26, 2026 at 10:59 AM Ram Dhan Yadav Katamaraja &lt;ram@colaberry.com&gt; wrote:
+Competition is awesome. We can learn from them. 
+
+On Thu, Mar 26, 2026 at 10:53 AM Luda Kopeikina &lt;ludakopeikina@gmail.com&gt; wrote:
+Hi all, At WAAI we profile founders who are building cool start-ups. This one was profiled yesterday. It is our competitor. They raised $3M. Located in Europe. Mostly focused on Enterprise. Have their first pilot customer.
+WE NEED TO ACCELERATE!!
+&lt;OigiMmAMWLNZKI1DmNalWOM1b40.png&gt;Personalized AI Learningschole.ai
+
+-- 
+Best Regards, Ram KatamarajaCEO | Colaberry.com | Refactored.ai C: +1-339-368-1181F: +1-833-336-0060Book a Meeting @ https://meetings.hubspot.com/ram-katamaraja
+Ask Us About our 4 MIT SOLVE Global Championship Awardshttps://blog.colaberry.com/refactored.ai-awarded-mit-solves-2018-most-promising-work-of-the-future-solution
+
+
+-- 
+Best Regards, Ram KatamarajaCEO | Colaberry.com | Refactored.ai C: +1-339-368-1181F: +1-833-336-0060Book a Meeting @ https://meetings.hubspot.com/ram-katamaraja
+Ask Us About our 4 MIT SOLVE Global Championship Awardshttps://blog.colaberry.com/refactored.ai-awarded-mit-solves-2018-most-promising-work-of-the-future-solution
+
+
+
+-- 
+Best Regards, Ram KatamarajaCEO | Colaberry.com | Refactored.ai C: +1-339-368-1181F: +1-833-336-0060Book a Meeting @ https://meetings.hubspot.com/ram-katamaraja
+Ask Us About our 4 MIT SOLVE Global Championship Awardshttps://blog.colaberry.com/refactored.ai-awarded-mit-solves-2018-most-promising-work-of-the-future-solution
+
+
+
+
+

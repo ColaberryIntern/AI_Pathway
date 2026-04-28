@@ -1,0 +1,112 @@
+FROM: Luda Kopeikina <ludakopeikina@gmail.com>
+DATE: Tue, 28 Apr 2026 11:09:37 -0400
+SUBJECT: Re: AI Pathway - Chapter Format Integrated, Ready to Test
+
+Hi Ali,
+Here is some initial feedback as I just ran JC profile twice:
+
+1. Top 5 Skills page. 
+	- Difference in skills generated. I created JC profile twice. The first time, the skills were prioritized correctly (1 to 5). For some reason, the second time the tool showed #2 skill on the top. Here are 2 files from both runs. Notice that the second time we got Evals skill in the mix for some reason. Eval skill is ok for any role actually. But it is weird. 
+
+￼￼
+	- Presentation of each skill. Vivek wanted to have ontology descriptions for each skills show up in the buttons when the user hovers over them. This way the user will not guess. Vivek, please confirm.
+
+	- this text appears twice: "Understanding AI limitations is crucial for content accuracy, and the learner's background in ethics provides a moderate foundation to build on.” I suggest that we use a description of the skill from the ontology in the blue box under the skill name. I suggest we remove text under the skill name in the Rate Your Current Proficiency. 
+
+	- at the end of the page, we explicitly state that we will proceed with ONLY the skills that have a gap. We need to change this text to say that we will add other skills that were originally selected to have a learning path consisting of 5 chapters. 
+	- When we add skills if the user’s proficiency matches the target level, I think that we need to show another page with 5 skills, 2 remaining with selected proficiency levels and 3 added (skills 6,7,8) for the user to rate the proficiency for skills 6,7 and 8. In other words, we always wants to ask the user to select/deselect what they want on the path and select their proficiency levels. And only then go to generate the chapters. The skills that matched the target level can remain on the page at the bottom. 
+
+2. Let’s remove pages Your Journey Roadmap and Ready to Start Learning. I believe that they are duplicative.
+￼￼
+
+3. Skils names and ordering. 
+	- I noticed that the skills are named differently from the prior pages. E.g. Mastering the Drafting Process with AI vs Draft -> critique -> revise. I say that we name them as they are in the ontology. And we should name than the same throughout to eliminate confusion. Vivek, please confirm.
+	- skills prioritization should stay the same as on the original 5 skills selection that was shown on Rating proficiency page.
+ 
+￼
+4. I like the chapters. They are somewhat simplistic but clear and easy to navigate. I think that this is what we want. After reading a couple of these, it becomes rather repetitive. Not sure what we do with this.  Vivek, please let us know what you think.
+
+Best, Luda
+ATTACHMENTS: ['Apr 28, 26 JC 5 skills proficiency selections.pdf', 'Apr 28 JC 2 5 skills proficiencies.pdf', 'Apr 28, 26 JC Your Journey Roundmap.pdf', 'Apr 28, 26 JC Ready to start learning page.pdf', 'Apr 28, 26 Summary of learning path.pdf']
+======================================================================
+FROM: Luda Kopeikina <ludakopeikina@gmail.com>
+DATE: Tue, 28 Apr 2026 09:56:24 -0400
+SUBJECT: Re: AI Pathway - Chapter Format Integrated, Ready to Test
+
+Hi Vivek,
+How about we use the same files for Jennifer C persona as you create a new profile? So that we are looking at the same outputs.
+
+Attached are the 3 files that I will use. The third file has Intent and answers to the survey - Basic AI level, No coding experience & ChatGPT usage.
+￼￼￼
+
+I am also attaching the file with Claude generated top 5 skills that Ali and I were comparing the tool to.
+￼
+And here is how I rated the proficiency selections for Jennifer:
+
+￼
+
+I saved this profile. It has LK Apr 28 in the name. It is probably best if you create from scratch and save yours as well. Thanks!
+
+Best, Luda
+ATTACHMENTS: ['Jennifer Companiolo LI PDF.pdf', 'Jennifer Campaniolo JD.docx', 'Jennifer C persona w survey answers.docx', '260324 Jennifer C top skills Claude.docx', 'Apr 28, 26 JC 5 skills proficiency selections.pdf']
+======================================================================
+FROM: Luda Kopeikina <ludakopeikina@gmail.com>
+DATE: Tue, 28 Apr 2026 08:28:48 -0400
+SUBJECT: Re: AI Pathway - Chapter Format Integrated, Ready to Test
+
+Hi Ali and Ram,
+I allocated time this morning to test this version. Will let you know.
+
+Ali,
+Thank you SO much for working on this!! Really appreciate it! And we are still within our target deadline!
+
+Best, Luda
+======================================================================
+FROM: Ram Dhan Yadav Katamaraja <ram@colaberry.com>
+DATE: Tue, 28 Apr 2026 08:23:50 -0400
+SUBJECT: Re: AI Pathway - Chapter Format Integrated, Ready to Test
+
+Luda / Vivek,
+
+Good morning. Let me know if you had opportunity to test this out. Hope
+this gets us ready to do a pilot with external users.
+
+Best,
+Ram
+======================================================================
+FROM: Ram Dhan Yadav Katamaraja <ram@colaberry.com>
+DATE: Tue, 28 Apr 2026 07:55:13 -0400
+SUBJECT: Re: Action needed — wire colaberry.ai forms into the new lead ingestion system
+
+Ali,
+
+My login is not working. Can you please cross check the credentials?
+======================================================================
+FROM: Ram Dhan Yadav Katamaraja <ram@colaberry.com>
+DATE: Mon, 27 Apr 2026 11:04:58 -0400
+SUBJECT: Insurance business breakdown
+
+JJ,
+
+Here is the insurance business breakdown for tomorrows call.
+
+
+
+-- 
+Best Regards,
+
+Ram Katamaraja
+
+CEO | Colaberry.com | Refactored.ai
+
+C: +1-339-368-1181
+
+F: +1-833-336-0060
+
+Book a Meeting @ https://meetings.hubspot.com/ram-katamaraja
+
+*Ask Us About our 4 MIT SOLVE Global Championship **Awards*
+
+https://blog.colaberry.com/refactored.ai-awarded-mit-solves-2018-most-promising-work-of-the-future-solution
+ATTACHMENTS: ['Patriot_Back_Office_Reprice_v2.docx']
+======================================================================

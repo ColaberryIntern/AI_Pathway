@@ -1,0 +1,402 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://genai-skills.app/schemas/chapter-spec.v1.json",
+  "title": "ChapterSpec",
+  "description": "Output shape for a personalized 15-minute chapter teaching one GenAI Skills Ontology skill across one level gap. The LLM returns one ChapterSpec JSON object plus a JSX component. The dev pipeline stores the JSON and renders either the LLM-produced JSX or its own React template fed by the JSON.",
+  "type": "object",
+  "required": ["meta", "scenario", "concepts", "example_1", "example_2", "agent_build"],
+  "additionalProperties": false,
+  "properties": {
+
+    "meta": {
+      "type": "object",
+      "required": [
+        "chapter_title",
+        "chapter_subtitle",
+        "skill_id",
+        "skill_name",
+        "domain_id",
+        "domain_name",
+        "current_level",
+        "target_level",
+        "current_level_label",
+        "target_level_label",
+        "current_level_rubric",
+        "target_level_rubric",
+        "total_minutes",
+        "aesthetic_direction"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "chapter_title": {
+          "type": "string",
+          "description": "Memorable 5–12 word chapter title in sentence case. No emoji. No colons.",
+          "minLength": 12,
+          "maxLength": 120
+        },
+        "chapter_subtitle": {
+          "type": "string",
+          "description": "One-sentence framing, 10–20 words. Italicized in the UI."
+        },
+        "skill_id": {
+          "type": "string",
+          "pattern": "^SK\\.[A-Z]+\\.[0-9]{3}$",
+          "description": "Ontology skill ID, e.g., SK.PRM.003"
+        },
+        "skill_name": { "type": "string" },
+        "domain_id": { "type": "string", "pattern": "^D\\.[A-Z]+$" },
+        "domain_name": { "type": "string" },
+        "current_level": { "type": "integer", "minimum": 0, "maximum": 4 },
+        "target_level": { "type": "integer", "minimum": 1, "maximum": 5 },
+        "current_level_label": {
+          "type": "string",
+          "enum": ["Unaware", "Awareness", "Literacy", "Practitioner", "Expert", "Architect"]
+        },
+        "target_level_label": {
+          "type": "string",
+          "enum": ["Awareness", "Literacy", "Practitioner", "Expert", "Architect"]
+        },
+        "current_level_rubric": { "type": "string", "description": "Verbatim rubric string from ontology at current_level." },
+        "target_level_rubric": { "type": "string", "description": "Verbatim rubric string from ontology at target_level." },
+        "total_minutes": { "type": "integer", "const": 15 },
+        "aesthetic_direction": {
+          "type": "string",
+          "enum": [
+            "editorial_paper",
+            "technical_terminal",
+            "magazine_bold",
+            "minimal_grid",
+            "warm_textile",
+            "architectural_blueprint"
+          ],
+          "description": "The visual language the JSX component commits to. Must be consistent across all sections."
+        }
+      }
+    },
+
+    "scenario": {
+      "type": "object",
+      "description": "Section 1 — Scenario + objectives. 2 minutes.",
+      "required": ["minutes", "kicker", "title", "narrative", "a_state", "b_state", "objectives", "why_it_matters"],
+      "additionalProperties": false,
+      "properties": {
+        "minutes": { "type": "integer", "const": 2 },
+        "kicker": { "type": "string", "description": "3–8 word italic framing above the title." },
+        "title": { "type": "string", "description": "4–10 word scenario title." },
+        "narrative": {
+          "type": "string",
+          "description": "2–4 sentence realistic scenario. Concrete, domain-specific. Names actual artifacts, not generic ones."
+        },
+        "a_state": {
+          "type": "object",
+          "required": ["level_display", "quote"],
+          "additionalProperties": false,
+          "properties": {
+            "level_display": { "type": "string", "description": "e.g., 'Level 2 · Literacy'" },
+            "quote": { "type": "string", "description": "First-person paraphrase of current-level rubric." }
+          }
+        },
+        "b_state": {
+          "type": "object",
+          "required": ["level_display", "quote"],
+          "additionalProperties": false,
+          "properties": {
+            "level_display": { "type": "string" },
+            "quote": { "type": "string", "description": "First-person paraphrase of target-level rubric." }
+          }
+        },
+        "objectives": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 3,
+          "description": "Action-verb starting, outcome-focused, 12–25 words each.",
+          "items": { "type": "string" }
+        },
+        "why_it_matters": {
+          "type": "string",
+          "description": "1–2 sentence tie to the skill's real-world application or career leverage."
+        }
+      }
+    },
+
+    "concepts": {
+      "type": "object",
+      "description": "Section 2 — Concepts. 3 minutes.",
+      "required": ["minutes", "kicker", "title", "intro", "cards", "pull_quote"],
+      "additionalProperties": false,
+      "properties": {
+        "minutes": { "type": "integer", "const": 3 },
+        "kicker": { "type": "string" },
+        "title": { "type": "string" },
+        "intro": { "type": "string", "description": "1–2 sentences framing the mental model." },
+        "mnemonic": {
+          "type": "string",
+          "description": "Optional mnemonic label, e.g., 'IVL method'. Omit if none fits naturally."
+        },
+        "cards": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 4,
+          "items": {
+            "type": "object",
+            "required": ["identifier", "word", "headline", "body", "analogy", "color_role"],
+            "additionalProperties": false,
+            "properties": {
+              "identifier": {
+                "type": "string",
+                "description": "1–2 char visual anchor (letter or number).",
+                "maxLength": 2
+              },
+              "word": { "type": "string", "description": "Concept name, 1–3 words." },
+              "headline": { "type": "string", "description": "Memorable one-sentence distillation." },
+              "body": { "type": "string", "description": "1–3 sentences explaining the idea." },
+              "analogy": { "type": "string", "description": "Non-AI analogy from a familiar domain." },
+              "color_role": {
+                "type": "string",
+                "enum": ["primary", "secondary", "tertiary", "accent"],
+                "description": "Semantic role. Component maps to the aesthetic's palette."
+              }
+            }
+          }
+        },
+        "pull_quote": {
+          "type": "string",
+          "description": "The 'if you only remember one thing' line."
+        }
+      }
+    },
+
+    "example_1": { "$ref": "#/$defs/Example" },
+
+    "example_2": {
+      "allOf": [
+        { "$ref": "#/$defs/Example" },
+        {
+          "type": "object",
+          "required": ["comparison"],
+          "properties": {
+            "comparison": {
+              "type": "object",
+              "description": "Example 2 MUST include an A/B comparison of two prompt variants differing by one variable.",
+              "required": ["test_question", "variants", "takeaway"],
+              "additionalProperties": false,
+              "properties": {
+                "test_question": {
+                  "type": "string",
+                  "description": "The single variable being tested across A and B."
+                },
+                "variants": {
+                  "type": "array",
+                  "minItems": 2,
+                  "maxItems": 2,
+                  "items": {
+                    "type": "object",
+                    "required": ["id", "label", "prompt", "output", "rating", "why"],
+                    "additionalProperties": false,
+                    "properties": {
+                      "id": { "type": "string", "enum": ["A", "B"] },
+                      "label": { "type": "string", "description": "e.g., 'Variant A — Role first'" },
+                      "prompt": { "type": "string" },
+                      "output": { "type": "string" },
+                      "rating": { "type": "integer", "minimum": 1, "maximum": 5 },
+                      "why": { "type": "string", "description": "Why this variant won or lost." }
+                    }
+                  }
+                },
+                "takeaway": { "type": "string", "description": "The reusable lesson from the comparison." }
+              }
+            }
+          }
+        }
+      ]
+    },
+
+    "agent_build": {
+      "type": "object",
+      "description": "Section 5 — Build your agent. 3 minutes. Produces a takeaway artifact.",
+      "required": [
+        "minutes",
+        "kicker",
+        "title",
+        "intro",
+        "capability_chips",
+        "personalization_fields",
+        "system_prompt_template",
+        "usage_steps",
+        "final_affirmation"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "minutes": { "type": "integer", "const": 3 },
+        "kicker": { "type": "string" },
+        "title": { "type": "string" },
+        "intro": {
+          "type": "string",
+          "description": "What the agent does and why the learner needs it."
+        },
+        "capability_chips": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 4,
+          "items": {
+            "type": "object",
+            "required": ["title", "description"],
+            "additionalProperties": false,
+            "properties": {
+              "title": { "type": "string", "description": "2–5 word capability name." },
+              "description": { "type": "string", "description": "1 sentence on what it does." }
+            }
+          }
+        },
+        "personalization_fields": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 4,
+          "items": {
+            "type": "object",
+            "required": ["key", "label", "placeholder", "input_type"],
+            "additionalProperties": false,
+            "properties": {
+              "key": {
+                "type": "string",
+                "pattern": "^[a-z_][a-z0-9_]*$",
+                "description": "Snake_case token used as {key} in system_prompt_template."
+              },
+              "label": { "type": "string" },
+              "placeholder": { "type": "string" },
+              "input_type": { "type": "string", "enum": ["text", "textarea"] }
+            }
+          }
+        },
+        "system_prompt_template": {
+          "type": "string",
+          "description": "Full system prompt with {field_key} placeholders that match personalization_fields keys exactly. Include the IVL-style method enforcement, guardrails, and behavior rules for the agent.",
+          "minLength": 200
+        },
+        "usage_steps": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 6,
+          "items": { "type": "string", "description": "One actionable step." }
+        },
+        "final_affirmation": {
+          "type": "object",
+          "required": ["rubric_quote", "tie_back"],
+          "additionalProperties": false,
+          "properties": {
+            "rubric_quote": {
+              "type": "string",
+              "description": "First-person paraphrase of target-level rubric. Appears in a pull-quote style."
+            },
+            "tie_back": {
+              "type": "string",
+              "description": "1–2 sentences linking the artifact to a real-world outcome."
+            }
+          }
+        },
+        "next_skill_hint": {
+          "type": "string",
+          "description": "Optional. Suggested next ontology skill ID to tackle, e.g., 'SK.PRM.011 — Rubrics as prompts'."
+        }
+      }
+    }
+  },
+
+  "$defs": {
+    "Example": {
+      "type": "object",
+      "description": "Shared shape for Example 1 and Example 2.",
+      "required": ["minutes", "kicker", "title", "setup", "steps"],
+      "additionalProperties": true,
+      "properties": {
+        "minutes": { "type": "integer", "minimum": 2, "maximum": 4 },
+        "kicker": { "type": "string" },
+        "title": { "type": "string" },
+        "setup": { "type": "string", "description": "1–2 sentences of context." },
+        "original_prompt": {
+          "type": "object",
+          "required": ["label", "prompt", "output", "rating", "diagnosis"],
+          "additionalProperties": false,
+          "properties": {
+            "label": { "type": "string", "description": "e.g., 'The original prompt (v1)'" },
+            "prompt": { "type": "string" },
+            "output": { "type": "string" },
+            "rating": { "type": "integer", "minimum": 1, "maximum": 5 },
+            "diagnosis": { "type": "string" }
+          }
+        },
+        "iterated_prompt": {
+          "type": "object",
+          "required": ["label", "prompt", "output", "rating", "diagnosis"],
+          "additionalProperties": false,
+          "properties": {
+            "label": { "type": "string", "description": "e.g., 'The iterated prompt (v2)'" },
+            "prompt": { "type": "string" },
+            "output": { "type": "string" },
+            "rating": { "type": "integer", "minimum": 1, "maximum": 5 },
+            "diagnosis": { "type": "string" }
+          }
+        },
+        "steps": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 4,
+          "description": "Step-gated reveal sequence inside the example. Each step unlocks via button.",
+          "items": {
+            "type": "object",
+            "required": ["step_number", "title", "content_type"],
+            "additionalProperties": false,
+            "properties": {
+              "step_number": { "type": "integer", "minimum": 1, "maximum": 4 },
+              "title": { "type": "string" },
+              "content_type": {
+                "type": "string",
+                "enum": ["diagnosis_checklist", "prompt_variant", "log_entry", "commentary"]
+              },
+              "checklist_items": {
+                "type": "array",
+                "description": "Used when content_type = diagnosis_checklist.",
+                "items": {
+                  "type": "object",
+                  "required": ["part", "status", "is_broken"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "part": { "type": "string" },
+                    "status": { "type": "string" },
+                    "is_broken": { "type": "boolean" }
+                  }
+                }
+              },
+              "prompt_variant_ref": {
+                "type": "string",
+                "enum": ["original_prompt", "iterated_prompt"],
+                "description": "Used when content_type = prompt_variant. Points to which prompt object to render."
+              },
+              "log_entries": {
+                "type": "array",
+                "description": "Used when content_type = log_entry.",
+                "items": {
+                  "type": "object",
+                  "required": ["key", "value"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "key": { "type": "string" },
+                    "value": { "type": "string" }
+                  }
+                }
+              },
+              "commentary": {
+                "type": "string",
+                "description": "Used when content_type = commentary. Plain prose."
+              }
+            }
+          }
+        },
+        "wrap_up": {
+          "type": "string",
+          "description": "Optional 1-sentence 'what just happened' reflection at end of example."
+        }
+      }
+    }
+  }
+}

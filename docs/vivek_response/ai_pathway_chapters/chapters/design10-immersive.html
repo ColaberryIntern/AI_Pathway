@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Immersive Story — What are AI Agents</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,700;1,9..144,300;1,9..144,400;1,9..144,700&family=Outfit:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --sans:'Outfit',sans-serif;--serif:'Fraunces',Georgia,serif;--mono:'JetBrains Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:#0a0914;color:#f0eeff;font-family:var(--sans);overflow-x:hidden}
+
+/* Sticky top bar */
+.topbar{position:fixed;top:0;left:0;right:0;z-index:200;padding:12px 40px;display:flex;align-items:center;justify-content:space-between;transition:background .3s;background:rgba(10,9,20,.8);backdrop-filter:blur(12px);border-bottom:1px solid rgba(255,255,255,.06)}
+.tb-skill{font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.35);letter-spacing:2px}
+.tb-progress{display:flex;align-items:center;gap:12px}
+.tb-bar{width:120px;height:2px;background:rgba(255,255,255,.1);border-radius:1px}
+.tb-fill{height:100%;background:linear-gradient(90deg,#a78bfa,#34d399);border-radius:1px;transition:width .5s}
+.tb-label{font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.35)}
+
+/* Hero section */
+.hero-section{min-height:100vh;display:flex;flex-direction:column;justify-content:flex-end;padding:80px 60px 80px;position:relative;overflow:hidden}
+.hs-bg{position:absolute;inset:0;background:radial-gradient(ellipse at 70% 30%,rgba(167,139,250,.15) 0%,transparent 55%),radial-gradient(ellipse at 10% 80%,rgba(52,211,153,.08) 0%,transparent 50%);pointer-events:none}
+.hero-eyebrow{font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.35);letter-spacing:3px;text-transform:uppercase;margin-bottom:24px}
+.hero-title{font-family:var(--serif);font-size:clamp(48px,7vw,88px);font-weight:700;line-height:1.0;letter-spacing:-1px;margin-bottom:24px;max-width:800px}
+.hero-title .grd{background:linear-gradient(135deg,#a78bfa,#34d399);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero-sub{font-size:18px;color:rgba(255,255,255,.6);max-width:540px;line-height:1.6;margin-bottom:48px;font-weight:300}
+.hero-cards{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:56px}
+.hcard{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:10px 18px;font-size:12px;color:rgba(255,255,255,.7)}
+.scroll-cue{display:flex;align-items:center;gap:10px;font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.3);animation:float 2s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(4px)}}
+
+/* Section wrapper */
+.story-section{min-height:100vh;display:flex;align-items:center;padding:80px 60px;position:relative}
+.ss-inner{max-width:800px;margin:0 auto;width:100%}
+.chapter-marker{font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.25);letter-spacing:3px;text-transform:uppercase;margin-bottom:20px;display:flex;align-items:center;gap:12px}
+.chapter-marker::after{content:'';flex:1;height:1px;background:rgba(255,255,255,.08)}
+.section-title{font-family:var(--serif);font-size:clamp(28px,4vw,44px);font-weight:400;line-height:1.2;margin-bottom:16px}
+.section-title em{font-style:italic;font-weight:300}
+.section-sub{font-size:16px;color:rgba(255,255,255,.5);line-height:1.7;margin-bottom:40px;font-weight:300;max-width:560px}
+
+/* Screen gate */
+.chapter-gate{display:none}
+.chapter-gate.visible{display:block}
+
+/* Concept cards */
+.concept-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:32px}
+.cc{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:20px;transition:border-color .2s}
+.cc:hover{border-color:rgba(255,255,255,.15)}
+.cc-icon{font-size:24px;margin-bottom:10px}
+.cc-title{font-size:14px;font-weight:600;margin-bottom:6px;color:#f0eeff}
+.cc-body{font-size:12px;color:rgba(255,255,255,.5);line-height:1.6}
+.cc-pill{display:inline-block;font-family:var(--mono);font-size:9px;padding:2px 8px;border-radius:10px;margin-top:8px;text-transform:uppercase;letter-spacing:1px}
+
+/* Journey */
+.journey-strip{display:grid;grid-template-columns:1fr 48px 1fr;gap:0;border-radius:12px;overflow:hidden;margin-bottom:32px}
+.js-from{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);padding:20px}
+.js-to{background:rgba(167,139,250,.08);border:1px solid rgba(167,139,250,.2);padding:20px}
+.js-arrow{background:linear-gradient(90deg,rgba(255,255,255,.05),rgba(167,139,250,.1));display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.3);font-size:18px}
+.jn-label{font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:2px;margin-bottom:8px}
+.jn-text{font-size:13px;color:rgba(255,255,255,.7);line-height:1.5;font-weight:300}
+
+/* Example tabs */
+.ex-pills{display:flex;gap:8px;margin-bottom:20px}
+.ex-pill{padding:8px 20px;border-radius:20px;border:1px solid rgba(255,255,255,.12);background:transparent;font-size:12px;font-weight:500;color:rgba(255,255,255,.5);cursor:pointer;transition:all .2s}
+.ex-pill.active{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2);color:#f0eeff}
+.ex-content{display:none}
+.ex-content.active{display:block}
+
+/* Scenario card */
+.scenario-card{background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.2);border-radius:12px;padding:20px;margin-bottom:16px}
+.sc-label{font-family:var(--mono);font-size:9px;color:#fbbf24;text-transform:uppercase;letter-spacing:2px;margin-bottom:8px}
+.sc-text{font-size:14px;color:rgba(255,255,255,.7);line-height:1.6;font-weight:300}
+.sc-docs{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.sc-doc{font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.4);background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:4px;padding:3px 10px}
+
+/* Prompt card */
+.prompt-card{background:#070614;border:1px solid rgba(255,255,255,.08);border-radius:12px;overflow:hidden;margin-bottom:16px}
+.pc-top{padding:10px 16px;border-bottom:1px solid rgba(255,255,255,.06);display:flex;justify-content:space-between;align-items:center}
+.pc-label{font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.25);text-transform:uppercase;letter-spacing:2px}
+.pc-copy{font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.25);cursor:pointer;background:none;border:none}
+.pc-body{padding:16px;font-family:var(--mono);font-size:12px;line-height:1.8;white-space:pre-wrap;color:rgba(255,255,255,.65)}
+.pc-body em{color:#fbbf24;font-style:normal}
+
+/* Insight */
+.insight-card{background:rgba(52,211,153,.06);border:1px solid rgba(52,211,153,.15);border-radius:12px;padding:16px 20px;margin-bottom:8px}
+.ins-label{font-family:var(--mono);font-size:9px;color:#34d399;text-transform:uppercase;letter-spacing:2px;margin-bottom:6px}
+.ins-text{font-size:13px;color:rgba(255,255,255,.6);line-height:1.6;font-weight:300}
+
+/* Builder */
+.builder-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.bg-form{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:20px}
+.bg-spec{background:#070614;border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:20px}
+.b-field{margin-bottom:14px}
+.b-label{font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:2px;margin-bottom:6px}
+textarea.b-input{width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:6px;color:#f0eeff;font-family:var(--sans);font-size:12px;padding:8px 10px;resize:none;line-height:1.5;transition:border-color .2s}
+textarea.b-input:focus{outline:none;border-color:rgba(167,139,250,.5)}
+.spec-label{font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.25);text-transform:uppercase;letter-spacing:2px;margin-bottom:10px}
+pre.spec-code{font-family:var(--mono);font-size:11px;line-height:1.8;white-space:pre-wrap;color:rgba(255,255,255,.6)}
+pre.spec-code .kw{color:#a78bfa}
+pre.spec-code .val{color:#34d399}
+pre.spec-code .cm{color:rgba(255,255,255,.2)}
+
+/* Complete */
+.complete-scene{text-align:center;padding:40px 0}
+.cs-glow{font-size:64px;margin-bottom:16px;display:block;filter:drop-shadow(0 0 20px rgba(167,139,250,.5))}
+.cs-title{font-family:var(--serif);font-size:40px;font-weight:700;margin-bottom:8px}
+.cs-title em{font-style:italic;font-weight:300;background:linear-gradient(135deg,#a78bfa,#34d399);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.cs-sub{font-size:15px;color:rgba(255,255,255,.4);margin-bottom:28px;font-weight:300}
+.badge-wrap{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:28px}
+.csbadge{font-family:var(--mono);font-size:10px;padding:5px 14px;border-radius:20px;border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.6)}
+.next-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:0 auto;max-width:560px}
+.nc{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:14px;cursor:pointer;transition:all .2s}
+.nc:hover{border-color:rgba(167,139,250,.3);background:rgba(167,139,250,.06)}
+.nc-id{font-family:var(--mono);font-size:9px;color:rgba(167,139,250,.7);margin-bottom:4px}
+.nc-title{font-size:12px;color:rgba(255,255,255,.7)}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;gap:8px;font-family:var(--sans);font-size:14px;font-weight:600;padding:14px 32px;border-radius:10px;border:none;cursor:pointer;transition:all .2s}
+.btn-primary{background:linear-gradient(135deg,#a78bfa,#7c3aed);color:#fff;box-shadow:0 4px 20px rgba(124,58,237,.3)}
+.btn-primary:hover{box-shadow:0 6px 28px rgba(124,58,237,.5);transform:translateY(-1px)}
+.btn-ghost{background:rgba(255,255,255,.06);color:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.12)}
+.btn-ghost:hover{background:rgba(255,255,255,.1);color:#fff}
+.nav-row{display:flex;justify-content:space-between;align-items:center;margin-top:40px;padding-top:20px;border-top:1px solid rgba(255,255,255,.06)}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="tb-skill">SK.AGT.000 · What are AI Agents</div>
+  <div class="tb-progress">
+    <div class="tb-bar"><div class="tb-fill" id="tb-fill" style="width:20%"></div></div>
+    <div class="tb-label" id="tb-label">1 of 5</div>
+  </div>
+</div>
+
+<!-- Hero / Scenario -->
+<div class="chapter-gate visible" id="g0" data-screen-label="01 Scenario">
+  <div class="hero-section">
+    <div class="hs-bg"></div>
+    <div class="hero-eyebrow">SK.AGT.000 · Healthcare Operations · Beginner</div>
+    <div class="hero-title">What are<br><span class="grd">AI Agents?</span></div>
+    <p class="hero-sub">A chapter for operations leaders who need clarity, not code. Understand agents, evaluate real use cases, and design one for your own team.</p>
+    <div class="hero-cards">
+      <div class="hcard">👤 VP of Operations</div>
+      <div class="hcard">🏥 Healthcare System</div>
+      <div class="hcard">📊 Beginner → Intermediate</div>
+      <div class="hcard">⏱ ~35 minutes</div>
+    </div>
+    <div class="journey-strip">
+      <div class="js-from">
+        <div class="jn-label">Where you are</div>
+        <div class="jn-text">AI agents sound abstract. You can't evaluate proposals or lead your team through adoption with confidence.</div>
+      </div>
+      <div class="js-arrow">→</div>
+      <div class="js-to">
+        <div class="jn-label">Where you're going</div>
+        <div class="jn-text">You can define agents clearly, evaluate healthcare use cases, and build a deployable operations agent spec.</div>
+      </div>
+    </div>
+    <div class="scroll-cue">↓ Begin reading</div>
+  </div>
+  <div style="display:flex;justify-content:center;padding:40px 0">
+    <button class="btn btn-primary" onclick="advance()">Start Chapter →</button>
+  </div>
+</div>
+
+<!-- Concepts -->
+<div class="chapter-gate" id="g1" data-screen-label="02 Concepts">
+  <div class="story-section" style="background:linear-gradient(180deg,#0a0914 0%,#0f0c1f 100%)">
+    <div class="ss-inner">
+      <div class="chapter-marker">Chapter Two · Core Concepts</div>
+      <div class="section-title">Three ideas that<br><em>change everything</em></div>
+      <p class="section-sub">You don't need to understand how agents work technically. You need to understand what makes them different — and why that difference matters in your department.</p>
+      <div class="concept-grid">
+        <div class="cc">
+          <div class="cc-icon">⚡</div>
+          <div class="cc-title">Agents Act</div>
+          <div class="cc-body">Not just answer. A chatbot stops after replying. An agent completes a sequence of real-world actions to accomplish a goal.</div>
+          <div class="cc-pill" style="background:rgba(239,68,68,.12);color:#f87171">Doing, not talking</div>
+        </div>
+        <div class="cc">
+          <div class="cc-icon">🔧</div>
+          <div class="cc-title">Agents Use Tools</div>
+          <div class="cc-body">EHRs, scheduling systems, notification services — agents decide which tool to use and when, based on the goal they're pursuing.</div>
+          <div class="cc-pill" style="background:rgba(167,139,250,.12);color:#a78bfa">Tool-use = power</div>
+        </div>
+        <div class="cc">
+          <div class="cc-icon">🛡</div>
+          <div class="cc-title">Guardrails Are the Product</div>
+          <div class="cc-body">In healthcare, the governance structure is as important as the capability. Permissions, audit trails, and escalation paths are non-negotiable.</div>
+          <div class="cc-pill" style="background:rgba(52,211,153,.12);color:#34d399">Safety = design</div>
+        </div>
+      </div>
+      <div class="nav-row">
+        <button class="btn btn-ghost" onclick="go(0)">← Back</button>
+        <button class="btn btn-primary" onclick="advance()">See Examples →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Examples -->
+<div class="chapter-gate" id="g2" data-screen-label="03 Examples">
+  <div class="story-section" style="background:linear-gradient(180deg,#0f0c1f 0%,#0a0f14 100%)">
+    <div class="ss-inner">
+      <div class="chapter-marker">Chapter Three · Live Examples</div>
+      <div class="section-title">Agents at work in<br><em>your world</em></div>
+      <p class="section-sub">Two real scenarios from healthcare operations. Each is deployable today at health systems of comparable scale.</p>
+      <div class="ex-pills">
+        <button class="ex-pill active" onclick="swEx(0,this)">📋 Discharge Coordination</button>
+        <button class="ex-pill" onclick="swEx(1,this)">🗓 Staffing Monitor</button>
+      </div>
+      <div class="ex-content active" id="ec0">
+        <div class="scenario-card">
+          <div class="sc-label">The situation</div>
+          <div class="sc-text">Discharge delays cost ~200 bed-hours per week. Pharmacy, transport, social work, and family notifications execute sequentially. An agent runs all four in parallel from a single EHR trigger.</div>
+          <div class="sc-docs"><div class="sc-doc">EHR discharge trigger</div><div class="sc-doc">Transport roster</div><div class="sc-doc">Family contact list</div></div>
+        </div>
+        <div class="prompt-card">
+          <div class="pc-top"><div class="pc-label">Agent instruction</div><button class="pc-copy" onclick="this.textContent='✓'">Copy</button></div>
+          <div class="pc-body"><em>Goal:</em> On discharge order, coordinate all downstream steps in parallel.
+
+<em>Step 1:</em> Notify pharmacy. Check-in after 30 minutes.
+<em>Step 2:</em> Reserve transport (soonest slot + 90-min buffer).
+<em>Step 3:</em> Alert social work if care flag present.
+<em>Step 4:</em> Send approved family notification SMS.
+<em>Rule:</em> On any step failure → escalate immediately to charge nurse.</div>
+        </div>
+        <div class="insight-card"><div class="ins-label">💡 Key technique</div><div class="ins-text">The explicit failure escalation rule is what makes this safe to deploy in a regulated environment. Agents without escalation paths fail silently — and in healthcare, silent failures are dangerous.</div></div>
+      </div>
+      <div class="ex-content" id="ec1">
+        <div class="scenario-card">
+          <div class="sc-label">The situation</div>
+          <div class="sc-text">Float pool coordinator spends 40% of their shift on manual gap checks. An agent monitors continuously and initiates outreach — every booking requires human confirmation before executing.</div>
+          <div class="sc-docs"><div class="sc-doc">Scheduling API</div><div class="sc-doc">Staff availability data</div><div class="sc-doc">Escalation rules</div></div>
+        </div>
+        <div class="prompt-card">
+          <div class="pc-top"><div class="pc-label">Agent instruction</div><button class="pc-copy" onclick="this.textContent='✓'">Copy</button></div>
+          <div class="pc-body"><em>Goal:</em> Monitor schedule for gaps 4+ hours in advance.
+
+<em>Step 1:</em> Check every 60 min for gaps in next 8 hours.
+<em>Step 2:</em> Cross-reference float pool availability.
+<em>Step 3:</em> Offer shift to top 3 available staff (seniority).
+<em>Step 4:</em> No response in 20 min → escalate to supervisor.
+<em>Rule:</em> Never confirm a booking without human approval.</div>
+        </div>
+        <div class="insight-card"><div class="ins-label">💡 Key technique</div><div class="ins-text">"Never confirm without human approval" keeps the agent fast and autonomous in monitoring and outreach, while preserving full human control over commitments. Speed + control.</div></div>
+      </div>
+      <div class="nav-row">
+        <button class="btn btn-ghost" onclick="go(1)">← Back</button>
+        <button class="btn btn-primary" onclick="advance()">Build Your Agent →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Agent Builder -->
+<div class="chapter-gate" id="g3" data-screen-label="04 Build Agent">
+  <div class="story-section" style="background:#0a0f14">
+    <div class="ss-inner">
+      <div class="chapter-marker">Chapter Four · Build Your Agent</div>
+      <div class="section-title">Your operations agent,<br><em>configured</em></div>
+      <p class="section-sub">Fill in the fields. Your specification assembles in real time on the right.</p>
+      <div class="builder-grid">
+        <div class="bg-form">
+          <div class="b-field"><div class="b-label">Agent Goal</div><textarea class="b-input" rows="2" id="f0" oninput="liveSpec()">Discharge coordination — parallel notification of all downstream teams</textarea></div>
+          <div class="b-field"><div class="b-label">Tools Available</div><textarea class="b-input" rows="3" id="f1" oninput="liveSpec()">EHR discharge trigger, transport booking API, SMS service, escalation system</textarea></div>
+          <div class="b-field"><div class="b-label">Guardrails</div><textarea class="b-input" rows="3" id="f2" oninput="liveSpec()">Never modify discharge orders; confirm transport before family notification; escalate all failures</textarea></div>
+          <div class="b-field"><div class="b-label">Success Metric</div><textarea class="b-input" rows="2" id="f3" oninput="liveSpec()">Coordination time reduced by 40% within 60 days</textarea></div>
+        </div>
+        <div class="bg-spec">
+          <div class="spec-label">Agent Specification · Live</div>
+          <pre class="spec-code"><span class="kw">agent</span> "ops-coordinator" {
+  goal: <span class="val" id="fv0">"Discharge coordination..."</span>
+
+  tools: [
+    <span class="val" id="fv1">"EHR trigger, Transport API..."</span>
+  ]
+
+  guardrails: [
+    <span class="val" id="fv2">"Never modify discharge orders..."</span>
+  ]
+
+  kpi: <span class="val" id="fv3">"Coordination time -40%"</span>
+
+  <span class="cm">// Non-negotiable in healthcare:</span>
+  human_in_loop: <span class="val">true</span>
+  audit_log:     <span class="val">true</span>
+}</pre>
+        </div>
+      </div>
+      <div class="nav-row">
+        <button class="btn btn-ghost" onclick="go(2)">← Back</button>
+        <button class="btn btn-primary" onclick="advance()">Complete Chapter →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Complete -->
+<div class="chapter-gate" id="g4" data-screen-label="05 Complete">
+  <div class="story-section" style="background:linear-gradient(180deg,#0a0f14 0%,#0a0914 100%);min-height:100vh">
+    <div class="ss-inner">
+      <div class="complete-scene">
+        <span class="cs-glow">✦</span>
+        <div class="cs-title">Chapter <em>Complete</em></div>
+        <p class="cs-sub">SK.AGT.000 · What are AI Agents · Beginner → Intermediate · Healthcare Operations</p>
+        <div class="badge-wrap">
+          <div class="csbadge">Agent Architecture</div>
+          <div class="csbadge">Healthcare Operations</div>
+          <div class="csbadge">Guardrail Design</div>
+        </div>
+        <div style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.25);text-transform:uppercase;letter-spacing:2px;margin-bottom:16px">Up Next</div>
+        <div class="next-cards">
+          <div class="nc"><div class="nc-id">SK.AGT.001</div><div class="nc-title">Tool definitions & validation</div></div>
+          <div class="nc"><div class="nc-id">SK.AGT.010</div><div class="nc-title">Single-agent loops</div></div>
+          <div class="nc"><div class="nc-id">SK.AGT.030</div><div class="nc-title">Guardrails & approval gates</div></div>
+        </div>
+        <div style="margin-top:32px">
+          <button class="btn btn-ghost" onclick="go(0)">Restart Chapter</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let cur=0,unlocked=1;
+function go(n){
+  if(n>=unlocked)return;
+  document.querySelectorAll('.chapter-gate').forEach((g,i)=>g.classList.toggle('visible',i===n));
+  cur=n;
+  document.getElementById('tb-fill').style.width=(((n+1)/5)*100)+'%';
+  document.getElementById('tb-label').textContent=(n+1)+' of 5';
+  window.scrollTo(0,0);
+}
+function advance(){unlocked=Math.max(unlocked,cur+2);go(cur+1);}
+function swEx(n,btn){
+  document.querySelectorAll('.ex-content').forEach(e=>e.classList.remove('active'));
+  document.getElementById('ec'+n).classList.add('active');
+  document.querySelectorAll('.ex-pill').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+function liveSpec(){
+  document.getElementById('fv0').textContent='"'+document.getElementById('f0').value+'"';
+  document.getElementById('fv1').textContent='"'+document.getElementById('f1').value+'"';
+  document.getElementById('fv2').textContent='"'+document.getElementById('f2').value+'"';
+  document.getElementById('fv3').textContent='"'+document.getElementById('f3').value+'"';
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,423 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GenAI Skills Ontology v2.0</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<style>
+:root{--bg:#080810;--bg2:#0d0d1c;--bg3:#13132a;--bg4:#191935;--br:#1e1e40;--br2:#28285a;--tx:#eeeeff;--mu:#b0b0d8;--di:#9090b8;--c1:#6366F1;--c2:#8B5CF6;--c3:#EC4899;--c4:#06B6D4;--c5:#10B981;--fh:'Space Grotesk',system-ui,sans-serif;--fm:'JetBrains Mono','Fira Code',monospace}
+*{box-sizing:border-box;margin:0;padding:0}html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--tx);font-family:var(--fh);font-size:14px;min-height:100vh;line-height:1.55}
+#bg{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;opacity:.4}
+.app{position:relative;z-index:1;max-width:1400px;margin:0 auto;padding:20px 16px 80px}
+.hdr{text-align:center;padding:40px 0 24px}
+.hdr h1{font-family:var(--fh);font-size:clamp(22px,4vw,40px);font-weight:700;background:linear-gradient(135deg,var(--c4),var(--c1),var(--c3));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:-.5px;margin-bottom:8px}
+.hdr p{color:var(--mu);font-size:13px;margin:0 auto 10px}
+.vtag{display:inline-flex;align-items:center;gap:6px;font-family:var(--fm);font-size:10px;border:1px solid var(--c1);color:var(--c1);padding:3px 12px;border-radius:20px;background:rgba(99,102,241,.08)}
+.stats-bar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;justify-content:center}
+.stat-chip{background:var(--bg2);border:1px solid var(--br);border-radius:10px;padding:10px 18px;text-align:center;min-width:100px}
+.stat-chip .n{font-family:var(--fh);font-size:26px;font-weight:700;background:linear-gradient(135deg,var(--c4),var(--c1));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.stat-chip .l{font-size:11px;color:var(--mu);margin-top:2px}
+.tab-nav{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:20px;justify-content:center}
+.tab-btn{background:var(--bg2);color:var(--mu);border:1px solid var(--br);padding:8px 16px;border-radius:8px;font-family:var(--fh);font-size:13px;font-weight:500;cursor:pointer;transition:all .2s}
+.tab-btn:hover{border-color:var(--c1);color:var(--tx);background:var(--bg3)}
+.tab-btn.active{background:var(--c1);color:#fff;border-color:var(--c1)}
+.view{display:none}.view.active{display:block}
+.new-badge{font-size:8px;padding:2px 5px;background:linear-gradient(135deg,var(--c1),var(--c3));color:#fff;border-radius:4px;font-family:var(--fm);font-weight:700;letter-spacing:.5px;vertical-align:middle;margin-left:4px}
+/* Mind Map */
+#mm-wrap{background:var(--bg2);border:1px solid var(--br);border-radius:12px;overflow:hidden;position:relative;height:680px}
+.mm-hint{position:absolute;top:12px;left:12px;background:var(--bg4);border:1px solid var(--br2);border-radius:8px;padding:7px 12px;font-size:11px;color:var(--mu);z-index:10;font-family:var(--fm);pointer-events:none}
+.mm-ctrl{position:absolute;top:12px;right:12px;display:flex;gap:6px;z-index:10}
+.mm-ctrl button{width:30px;height:30px;background:var(--bg4);border:1px solid var(--br2);border-radius:7px;color:var(--tx);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:border-color .2s}
+.mm-ctrl button:hover{border-color:var(--c1)}
+#mm-tt{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);background:var(--bg4);border:1px solid var(--br2);border-radius:8px;padding:8px 16px;font-size:12px;color:var(--tx);opacity:0;transition:opacity .2s;pointer-events:none;z-index:10;white-space:nowrap;max-width:420px;text-align:center}
+#mm-tt.vis{opacity:1}
+/* Layers */
+.layer-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:10px;margin-bottom:20px}
+.layer-card{background:var(--bg2);border:2px solid var(--br);border-radius:12px;padding:14px;cursor:pointer;transition:all .2s}
+.layer-card:hover{transform:translateY(-2px)}
+.layer-card.sel{transform:translateY(-2px);box-shadow:0 4px 20px rgba(0,0,0,.4)}
+.lc-dot{width:10px;height:10px;border-radius:50%;margin-bottom:10px}
+.lc-name{font-family:var(--fh);font-weight:700;font-size:13px;margin-bottom:3px}
+.lc-id{font-family:var(--fm);font-size:10px;color:var(--di);margin-bottom:6px}
+.lc-cnt{font-size:11px;color:var(--mu)}
+/* Domain cards */
+.domain-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
+.domain-card{background:var(--bg2);border:1px solid var(--br);border-radius:12px;padding:14px;cursor:pointer;transition:all .2s}
+.domain-card:hover{border-color:var(--br2);background:var(--bg3)}
+.dc-hdr{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.dc-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.dc-name{font-family:var(--fh);font-weight:600;font-size:13px;display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+.dc-id{font-family:var(--fm);font-size:10px;color:var(--di);margin-bottom:4px}
+.dc-desc{font-size:11px;color:var(--mu);margin-bottom:8px}
+.dc-foot{display:flex;align-items:center;gap:8px;font-size:11px}
+.dc-cnt{color:var(--tx);font-weight:600}
+.dc-new{color:var(--c3);font-family:var(--fm)}
+.skill-list{display:none;margin-top:10px;border-top:1px solid var(--br);padding-top:10px}
+.skill-list.open{display:block}
+.sl-item{display:flex;align-items:center;gap:6px;padding:4px 0;font-size:11px;font-family:var(--fm);border-bottom:1px solid rgba(255,255,255,.03)}
+.sl-item:last-child{border-bottom:none}
+.sl-id{color:var(--di);flex-shrink:0}
+/* Force graph */
+#fg-wrap{background:var(--bg2);border:1px solid var(--br);border-radius:12px;overflow:hidden;position:relative;height:680px}
+.fg-hint{position:absolute;top:12px;left:12px;background:var(--bg4);border:1px solid var(--br2);border-radius:8px;padding:7px 12px;font-size:11px;color:var(--mu);z-index:10;font-family:var(--fm);pointer-events:none}
+.fg-leg{position:absolute;top:12px;right:12px;background:var(--bg4);border:1px solid var(--br2);border-radius:8px;padding:10px 14px;z-index:10}
+.fgl-row{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--mu);margin-bottom:5px}
+.fgl-row:last-child{margin-bottom:0}
+/* Stats */
+.ss-title{font-family:var(--fh);font-weight:700;font-size:15px;margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid var(--br);color:var(--tx)}
+.ss-block{margin-bottom:28px}
+.dist-row{display:flex;align-items:center;gap:10px;margin-bottom:7px}
+.dist-lbl{font-family:var(--fm);font-size:11px;color:var(--mu);width:190px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dist-bar{flex:1;height:14px;background:var(--bg3);border-radius:4px;overflow:hidden}
+.dist-fill{height:100%;border-radius:4px;transition:width .6s ease}
+.dist-cnt{font-family:var(--fm);font-size:11px;color:var(--mu);width:50px;text-align:right;flex-shrink:0}
+.new-flag{display:inline-block;font-size:9px;padding:1px 5px;background:rgba(236,72,153,.18);color:var(--c3);border-radius:3px;margin-left:4px;font-family:var(--fm)}
+/* Tooltip */
+#tt{position:fixed;z-index:9999;background:var(--bg4);border:1px solid var(--br2);border-radius:8px;padding:10px 14px;max-width:260px;pointer-events:none;opacity:0;transition:opacity .15s;box-shadow:0 8px 28px rgba(0,0,0,.65)}
+#tt.vis{opacity:1}
+#ttl{font-family:var(--fh);font-weight:700;font-size:12px;margin-bottom:2px}
+#tts{font-family:var(--fm);font-size:10px;color:var(--di);margin-bottom:4px}
+#ttt{color:#d0d0ee;font-family:var(--fm);font-size:11px;line-height:1.45}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--br2);border-radius:3px}::-webkit-scrollbar-thumb:hover{background:var(--c1)}
+@media(max-width:640px){.domain-grid{grid-template-columns:1fr}.layer-grid{grid-template-columns:repeat(2,1fr)}}
+</style></head><body>
+<canvas id="bg"></canvas>
+<div id="tt"><div id="ttl"></div><div id="tts"></div><div id="ttt"></div></div>
+<div class="app">
+  <div class="hdr">
+    <h1>GenAI Skills Ontology</h1>
+    <p>8 Layers · 22 Domains · 186 Skills · 33 New in 2025–26</p>
+    <div class="vtag">v2.0.0 — March 2026</div>
+  </div>
+  <div class="stats-bar" id="stats-bar"></div>
+  <nav class="tab-nav">
+    <button class="tab-btn active" onclick="switchTab('mindmap')">Mind Map</button>
+    <button class="tab-btn" onclick="switchTab('layers')">Layers</button>
+    <button class="tab-btn" onclick="switchTab('domains')">All Domains</button>
+    <button class="tab-btn" onclick="switchTab('force')">Force Graph</button>
+    <button class="tab-btn" onclick="switchTab('stats')">Stats</button>
+  </nav>
+  <div id="view-mindmap" class="view active">
+    <div id="mm-wrap">
+      <div class="mm-hint">Drag to pan · Scroll to zoom · Hover domains for details</div>
+      <div class="mm-ctrl">
+        <button onclick="mmZoom(1.25)" title="Zoom in">+</button>
+        <button onclick="mmZoom(0.8)" title="Zoom out">−</button>
+        <button onclick="mmReset()" title="Reset">⟲</button>
+      </div>
+      <div id="mm-tt"></div>
+    </div>
+  </div>
+  <div id="view-layers" class="view">
+    <div class="layer-grid" id="layer-grid"></div>
+    <div class="domain-grid" id="layer-domains"></div>
+  </div>
+  <div id="view-domains" class="view">
+    <div class="domain-grid" id="all-domains"></div>
+  </div>
+  <div id="view-force" class="view">
+    <div id="fg-wrap">
+      <div class="fg-hint">Drag nodes · Scroll to zoom · Hover for info</div>
+      <div class="fg-leg" id="fg-leg"></div>
+    </div>
+  </div>
+  <div id="view-stats" class="view"></div>
+</div>
+<script>
+// Canvas background
+(function(){
+  const c=document.getElementById('bg'),ctx=c.getContext('2d');
+  const COLS=['#6366F1','#8B5CF6','#EC4899','#06B6D4','#10B981'];
+  let pts=[];
+  function resize(){c.width=window.innerWidth;c.height=window.innerHeight}
+  function init(){pts=[];const n=Math.min(45,Math.floor(window.innerWidth*window.innerHeight/18000));for(let i=0;i<n;i++)pts.push({x:Math.random()*c.width,y:Math.random()*c.height,vx:(Math.random()-.5)*.2,vy:(Math.random()-.5)*.2,r:Math.random()*1.5+.5,col:COLS[i%COLS.length]})}
+  let last=0;
+  function draw(ts){if(ts-last<33){requestAnimationFrame(draw);return}last=ts;ctx.clearRect(0,0,c.width,c.height);for(let i=0;i<pts.length;i++)for(let j=i+1;j<pts.length;j++){const dx=pts[i].x-pts[j].x,dy=pts[i].y-pts[j].y,d=Math.sqrt(dx*dx+dy*dy);if(d<140){const a=Math.floor((1-d/140)*28).toString(16).padStart(2,'0');ctx.beginPath();ctx.moveTo(pts[i].x,pts[i].y);ctx.lineTo(pts[j].x,pts[j].y);ctx.strokeStyle=pts[i].col+a;ctx.lineWidth=.5;ctx.stroke()}}pts.forEach(p=>{ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,6.28);ctx.fillStyle=p.col+'88';ctx.fill();p.x+=p.vx;p.y+=p.vy;if(p.x<0||p.x>c.width)p.vx*=-1;if(p.y<0||p.y>c.height)p.vy*=-1});requestAnimationFrame(draw)}
+  resize();init();requestAnimationFrame(draw);window.addEventListener('resize',()=>{resize();init()});
+})();
+
+// DATA
+const LAYERS=[
+  {id:'L.FOUNDATION',label:'Foundation',color:'#10B981',domains:['D.DIG','D.CTIC']},
+  {id:'L.THEORY',label:'Theory',color:'#6366F1',domains:['D.FND']},
+  {id:'L.APPLICATION',label:'Application',color:'#06B6D4',domains:['D.PRM','D.RAG','D.AGT','D.MOD','D.MUL','D.EVL','D.SEC','D.OPS']},
+  {id:'L.TOOLS',label:'Tools',color:'#8B5CF6',domains:['D.TOOL']},
+  {id:'L.TECH_PREREQ',label:'Tech Prerequisites',color:'#F59E0B',domains:['D.PRQ']},
+  {id:'L.DOMAIN',label:'Domain & Governance',color:'#EC4899',domains:['D.GOV','D.DOM']},
+  {id:'L.SOFT',label:'Strategy & Growth',color:'#10B981',domains:['D.PRD','D.COM','D.LRN']},
+  {id:'L.EMERGING',label:'Emerging (2025–26)',color:'#EC4899',domains:['D.RSN','D.ACODE','D.COMP','D.PROTO']}
+];
+const DOMAINS={
+  'D.DIG':{label:'Digital Literacy',desc:'Core digital skills for everyone'},
+  'D.CTIC':{label:'Critical Thinking & Info Eval',desc:'Evaluating sources and claims'},
+  'D.FND':{label:'AI Literacy & Foundations',desc:'Core AI/ML concepts'},
+  'D.PRM':{label:'Prompting & HITL Workflows',desc:'Effective AI interaction'},
+  'D.RAG':{label:'Retrieval & RAG Systems',desc:'Knowledge-grounded AI'},
+  'D.AGT':{label:'Agents & Orchestration',desc:'Autonomous AI systems'},
+  'D.MOD':{label:'Model Adaptation',desc:'Fine-tuning & customization'},
+  'D.MUL':{label:'Multimodal AI',desc:'Vision, audio, video AI'},
+  'D.EVL':{label:'Evaluation & Observability',desc:'Measuring AI quality'},
+  'D.SEC':{label:'Safety & Security',desc:'AI risk mitigation'},
+  'D.OPS':{label:'LLMOps & Deployment',desc:'Production AI systems'},
+  'D.TOOL':{label:'Tools & Frameworks',desc:'AI development tools'},
+  'D.PRQ':{label:'Technical Prerequisites',desc:'Engineering foundations'},
+  'D.GOV':{label:'Governance & Compliance',desc:'Policy and regulation'},
+  'D.DOM':{label:'Domain Applications',desc:'Industry-specific AI'},
+  'D.PRD':{label:'Product & UX',desc:'AI product management'},
+  'D.COM':{label:'Communication & Collaboration',desc:'Working with AI teams'},
+  'D.LRN':{label:'Learning & Adaptation',desc:'Continuous AI learning'},
+  'D.RSN':{label:'Extended Reasoning',desc:'Reasoning models & deep research'},
+  'D.ACODE':{label:'Agentic Coding',desc:'Vibe coding, CLI agents, AI IDEs'},
+  'D.COMP':{label:'Computer Use Agents',desc:'Browser & desktop automation'},
+  'D.PROTO':{label:'Agent Protocols',desc:'A2A, context engineering, security'}
+};
+const SKILLS={
+  'D.DIG':[{id:'SK.DIG.001',label:'Web browsing & search fundamentals'},{id:'SK.DIG.002',label:'File management & cloud storage'},{id:'SK.DIG.003',label:'Basic spreadsheet operations'},{id:'SK.DIG.004',label:'Email & digital communication'},{id:'SK.DIG.005',label:'Password & account security basics'},{id:'SK.DIG.006',label:'Installing & using applications'},{id:'SK.DIG.007',label:'Copy/paste & keyboard shortcuts'},{id:'SK.DIG.008',label:'Screen sharing & video calls'}],
+  'D.CTIC':[{id:'SK.CTIC.001',label:'Evaluating source credibility'},{id:'SK.CTIC.002',label:'Identifying misinformation patterns'},{id:'SK.CTIC.003',label:'Cross-referencing claims'},{id:'SK.CTIC.004',label:'Understanding bias in content'},{id:'SK.CTIC.005',label:'Distinguishing fact from opinion'},{id:'SK.CTIC.006',label:'Recognizing AI-generated content'}],
+  'D.FND':[{id:'SK.FND.000',label:'What is AI vs traditional software'},{id:'SK.FND.001',label:'LLM fundamentals (tokens, context, prediction)'},{id:'SK.FND.002',label:'Capabilities vs limitations (hallucinations)'},{id:'SK.FND.003',label:'Model families (open vs closed)'},{id:'SK.FND.004',label:'Reasoning vs retrieval vs tools'},{id:'SK.FND.005',label:'Training data & knowledge cutoffs'},{id:'SK.FND.006',label:'Temperature & sampling basics'},{id:'SK.FND.010',label:'Transformer architecture overview'},{id:'SK.FND.011',label:'Diffusion models overview'},{id:'SK.FND.012',label:'Embeddings & semantic similarity'},{id:'SK.FND.013',label:'Multimodal model basics'},{id:'SK.FND.020',label:'Privacy basics for GenAI'},{id:'SK.FND.021',label:'IP/copyright awareness'},{id:'SK.FND.022',label:'Bias & fairness basics'},{id:'SK.FND.023',label:'Environmental impact awareness'}],
+  'D.PRM':[{id:'SK.PRM.000',label:'Writing clear requests to AI'},{id:'SK.PRM.001',label:'Instructions + constraints + format'},{id:'SK.PRM.002',label:'Few-shot examples'},{id:'SK.PRM.003',label:'Prompt debugging & iteration'},{id:'SK.PRM.004',label:'Role & persona prompting'},{id:'SK.PRM.005',label:'Chain-of-thought prompting'},{id:'SK.PRM.006',label:'Breaking complex tasks into steps'},{id:'SK.PRM.010',label:'JSON/schema outputs'},{id:'SK.PRM.011',label:'Rubrics as prompts'},{id:'SK.PRM.020',label:'Draft \u2192 critique \u2192 revise'},{id:'SK.PRM.021',label:'Grounding & citations'},{id:'SK.PRM.022',label:'ReAct-style patterns'}],
+  'D.RAG':[{id:'SK.RAG.000',label:'What is RAG and why use it'},{id:'SK.RAG.001',label:'Query rewriting'},{id:'SK.RAG.002',label:'Chunking strategies'},{id:'SK.RAG.003',label:'Hybrid retrieval (vector + keyword)'},{id:'SK.RAG.010',label:'Reranking & scoring'},{id:'SK.RAG.011',label:'Context budgeting'},{id:'SK.RAG.012',label:'Lost in the middle mitigation'},{id:'SK.RAG.020',label:'Faithfulness evaluation'},{id:'SK.RAG.021',label:'Golden sets & regression testing'},{id:'SK.RAG.022',label:'Agentic RAG patterns',isNew:true},{id:'SK.RAG.023',label:'Temporal & time-aware RAG',isNew:true}],
+  'D.AGT':[{id:'SK.AGT.000',label:'What are AI agents'},{id:'SK.AGT.001',label:'Tool definitions & validation'},{id:'SK.AGT.002',label:'Error handling & retries'},{id:'SK.AGT.003',label:'State & memory management'},{id:'SK.AGT.010',label:'Single-agent loops'},{id:'SK.AGT.011',label:'Multi-agent patterns'},{id:'SK.AGT.012',label:'Graph-based orchestration'},{id:'SK.AGT.020',label:'MCP protocol concepts'},{id:'SK.AGT.021',label:'Agent permissions (least privilege)'},{id:'SK.AGT.030',label:'Guardrails & approval gates'},{id:'SK.AGT.031',label:'Agent auditability'}],
+  'D.MOD':[{id:'SK.MOD.000',label:'When to customize vs use off-the-shelf'},{id:'SK.MOD.001',label:'Prompt vs fine-tune decision'},{id:'SK.MOD.002',label:'Data requirements for tuning'},{id:'SK.MOD.010',label:'Instruction tuning basics'},{id:'SK.MOD.011',label:'PEFT/LoRA concepts'},{id:'SK.MOD.012',label:'Synthetic data generation'}],
+  'D.MUL':[{id:'SK.MUL.000',label:'Types of multimodal AI'},{id:'SK.MUL.001',label:'Image-to-text extraction'},{id:'SK.MUL.002',label:'Image generation prompting'},{id:'SK.MUL.003',label:'Image generation QA'},{id:'SK.MUL.010',label:'Speech-to-text & summarization'},{id:'SK.MUL.011',label:'Video understanding'},{id:'SK.MUL.012',label:'Text-to-speech applications'},{id:'SK.MUL.013',label:'Document/PDF understanding'},{id:'SK.MUL.014',label:'Native audio/video generation (Kling, Sora, Veo)',isNew:true},{id:'SK.MUL.015',label:'Multimodal RAG',isNew:true}],
+  'D.EVL':[{id:'SK.EVL.000',label:'Why AI evaluation matters'},{id:'SK.EVL.001',label:'Eval types (offline/online/red team)'},{id:'SK.EVL.002',label:'LLM-as-judge patterns'},{id:'SK.EVL.010',label:'Tracing & observability'},{id:'SK.EVL.011',label:'Quality dashboards & alerts'},{id:'SK.EVL.020',label:'Prompt unit tests'},{id:'SK.EVL.021',label:'Release gates & rollback'},{id:'SK.EVL.022',label:'A/B testing for AI'}],
+  'D.SEC':[{id:'SK.SEC.000',label:'AI security threat landscape'},{id:'SK.SEC.001',label:'Prompt injection mitigation'},{id:'SK.SEC.002',label:'Data leakage prevention'},{id:'SK.SEC.003',label:'Output security (XSS, injection)'},{id:'SK.SEC.010',label:'Agent permission design'},{id:'SK.SEC.011',label:'Tool sandboxing'},{id:'SK.SEC.012',label:'Red teaming basics'}],
+  'D.OPS':[{id:'SK.OPS.000',label:'What is LLMOps'},{id:'SK.OPS.001',label:'Latency drivers & optimization'},{id:'SK.OPS.002',label:'Cost modeling & token budgeting'},{id:'SK.OPS.010',label:'Caching, batching, streaming'},{id:'SK.OPS.011',label:'Model routing strategies'},{id:'SK.OPS.020',label:'SLOs/SLAs & incident response'},{id:'SK.OPS.021',label:'Security reviews & deployment gates'},{id:'SK.OPS.022',label:'Versioning prompts & models'}],
+  'D.TOOL':[{id:'SK.TOOL.000',label:'AI tool landscape overview'},{id:'SK.TOOL.001',label:'ChatGPT / Claude / Gemini usage'},{id:'SK.TOOL.002',label:'AI coding assistants (Copilot, Claude Code)'},{id:'SK.TOOL.003',label:'Image generation tools (Midjourney, DALL-E)'},{id:'SK.TOOL.010',label:'LangChain / LlamaIndex concepts'},{id:'SK.TOOL.011',label:'Hugging Face ecosystem'},{id:'SK.TOOL.020',label:'API key management'},{id:'SK.TOOL.021',label:'Provider selection criteria'},{id:'SK.TOOL.030',label:'Docker for AI apps'},{id:'SK.TOOL.031',label:'Kubernetes awareness'},{id:'SK.TOOL.032',label:'Claude Code & CLI coding agents',isNew:true},{id:'SK.TOOL.033',label:'Agentic IDEs (Cursor, Windsurf)',isNew:true},{id:'SK.TOOL.034',label:'Deep research tools (Perplexity, ChatGPT DR)',isNew:true}],
+  'D.PRQ':[{id:'SK.PRQ.000',label:'Command line basics'},{id:'SK.PRQ.001',label:'Version control (Git basics)'},{id:'SK.PRQ.010',label:'Python basics'},{id:'SK.PRQ.011',label:'Data handling (Pandas/NumPy)'},{id:'SK.PRQ.012',label:'JavaScript/TypeScript basics'},{id:'SK.PRQ.013',label:'SQL fundamentals'},{id:'SK.PRQ.020',label:'REST API basics'},{id:'SK.PRQ.021',label:'Authentication (OAuth, tokens)'},{id:'SK.PRQ.022',label:'Backend service fundamentals'},{id:'SK.PRQ.030',label:'Cloud primitives (compute, storage)'},{id:'SK.PRQ.031',label:'Secrets management'},{id:'SK.PRQ.032',label:'CI/CD concepts'}],
+  'D.GOV':[{id:'SK.GOV.000',label:'AI governance fundamentals'},{id:'SK.GOV.001',label:'AI risk framing'},{id:'SK.GOV.002',label:'Policy to controls mapping'},{id:'SK.GOV.010',label:'AI regulations landscape (EU AI Act)'},{id:'SK.GOV.020',label:'PII/PHI handling & retention'},{id:'SK.GOV.021',label:'Data minimization & anonymization'},{id:'SK.GOV.022',label:'AI-generated content disclosure',isNew:true},{id:'SK.GOV.023',label:'EU AI Act enforcement readiness',isNew:true}],
+  'D.DOM':[{id:'SK.DOM.HC.001',label:'Healthcare: Clinical risk awareness'},{id:'SK.DOM.HC.002',label:'Healthcare: Evidence synthesis'},{id:'SK.DOM.LGL.001',label:'Legal: Disclaimer & advice boundaries'},{id:'SK.DOM.LGL.002',label:'Legal: Hallucination eval frameworks'},{id:'SK.DOM.FIN.001',label:'Finance: Numerical auditability'},{id:'SK.DOM.EDU.001',label:'Education: Learning design with AI'},{id:'SK.DOM.MKT.001',label:'Marketing: Content generation ethics'},{id:'SK.DOM.HR.001',label:'HR: AI in hiring considerations'}],
+  'D.PRD':[{id:'SK.PRD.000',label:'AI product thinking basics'},{id:'SK.PRD.001',label:'Use-case selection & prioritization'},{id:'SK.PRD.002',label:'Workflow mapping'},{id:'SK.PRD.010',label:'Explainability UX design'},{id:'SK.PRD.011',label:'Feedback loop design'},{id:'SK.PRD.020',label:'AI enablement & training strategy'},{id:'SK.PRD.021',label:'Stakeholder management'},{id:'SK.PRD.022',label:'ROI measurement for AI'}],
+  'D.COM':[{id:'SK.COM.001',label:'Explaining AI to non-technical audiences'},{id:'SK.COM.002',label:'Writing AI project proposals'},{id:'SK.COM.003',label:'Facilitating AI workshops'},{id:'SK.COM.004',label:'Managing AI expectations'},{id:'SK.COM.005',label:'Cross-functional AI collaboration'},{id:'SK.COM.006',label:'AI documentation best practices'}],
+  'D.LRN':[{id:'SK.LRN.001',label:'Keeping up with AI developments'},{id:'SK.LRN.002',label:'Evaluating new AI tools'},{id:'SK.LRN.003',label:'Building personal AI workflows'},{id:'SK.LRN.004',label:'Teaching others AI skills'},{id:'SK.LRN.005',label:'Experimenting safely with AI'}],
+  'D.RSN':[{id:'SK.RSN.000',label:'What are reasoning models (o3, R1, extended thinking)',isNew:true},{id:'SK.RSN.001',label:'Extended thinking & test-time compute',isNew:true},{id:'SK.RSN.002',label:'Reasoning model selection & routing',isNew:true},{id:'SK.RSN.003',label:'Deep research agents',isNew:true},{id:'SK.RSN.004',label:'Chain-of-thought verification',isNew:true},{id:'SK.RSN.005',label:'Inference cost budgeting for reasoning models',isNew:true}],
+  'D.ACODE':[{id:'SK.ACODE.000',label:'Vibe coding & natural language development',isNew:true},{id:'SK.ACODE.001',label:'CLI coding agent usage (Claude Code)',isNew:true},{id:'SK.ACODE.002',label:'Agentic IDE mastery (Cursor, Windsurf)',isNew:true},{id:'SK.ACODE.003',label:'AI-assisted code review',isNew:true},{id:'SK.ACODE.004',label:'AI-generated test suites',isNew:true},{id:'SK.ACODE.005',label:'Autonomous debugging with AI',isNew:true},{id:'SK.ACODE.006',label:'Code architecture with AI',isNew:true},{id:'SK.ACODE.007',label:'AI code quality & slop prevention',isNew:true}],
+  'D.COMP':[{id:'SK.COMP.000',label:'Computer use agent concepts',isNew:true},{id:'SK.COMP.001',label:'Browser automation with AI',isNew:true},{id:'SK.COMP.002',label:'Desktop automation with AI',isNew:true},{id:'SK.COMP.003',label:'Operator-style task delegation',isNew:true},{id:'SK.COMP.004',label:'Computer use safety & governance',isNew:true}],
+  'D.PROTO':[{id:'SK.PROTO.000',label:'Agent-to-Agent (A2A) protocol',isNew:true},{id:'SK.PROTO.001',label:'Agent cards & capability discovery',isNew:true},{id:'SK.PROTO.002',label:'Context engineering',isNew:true},{id:'SK.PROTO.003',label:'Multi-protocol agent systems (MCP + A2A)',isNew:true},{id:'SK.PROTO.004',label:'Agent protocol security',isNew:true}]
+};
+
+// Helpers
+function allSkills(){return Object.values(SKILLS).flat()}
+function layerFor(dId){return LAYERS.find(l=>l.domains.includes(dId))||LAYERS[0]}
+const totalSk=allSkills().length;
+const newSk=allSkills().filter(s=>s.isNew).length;
+
+// Stats bar
+(function(){
+  const sb=document.getElementById('stats-bar');
+  [{n:totalSk,l:'Total Skills'},{n:newSk,l:'New in 2025–26'},{n:22,l:'Domains'},{n:8,l:'Layers'},{n:6,l:'Proficiency Levels'}].forEach(i=>{
+    const d=document.createElement('div');d.className='stat-chip';
+    d.innerHTML=`<div class="n">${i.n}</div><div class="l">${i.l}</div>`;
+    sb.appendChild(d);
+  });
+})();
+
+// Tab switching
+let _mmInit=false,_fgInit=false,_lyInit=false,_adInit=false,_stInit=false;
+function switchTab(tab){
+  document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active',['mindmap','layers','domains','force','stats'][i]===tab));
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-'+tab).classList.add('active');
+  if(tab==='mindmap'&&!_mmInit){initMindMap();_mmInit=true}
+  if(tab==='layers'&&!_lyInit){renderLayers();_lyInit=true}
+  if(tab==='domains'&&!_adInit){renderAllDomains();_adInit=true}
+  if(tab==='force'&&!_fgInit){initForceGraph();_fgInit=true}
+  if(tab==='stats'&&!_stInit){renderStats();_stInit=true}
+}
+
+// Tooltip
+const ttEl=document.getElementById('tt'),ttlEl=document.getElementById('ttl'),ttsEl=document.getElementById('tts'),tttEl=document.getElementById('ttt');
+function showTT(e,title,sub,body){ttlEl.textContent=title;ttsEl.textContent=sub||'';tttEl.textContent=body||'';ttEl.classList.add('vis');let l=e.clientX+14,t=e.clientY-10;if(l+270>window.innerWidth)l=e.clientX-280;ttEl.style.cssText+=`;left:${l}px;top:${t}px`}
+function hideTT(){ttEl.classList.remove('vis')}
+
+// Domain card
+function domainCard(dId,expanded){
+  const lyr=layerFor(dId);const dom=DOMAINS[dId];const sk=SKILLS[dId]||[];
+  const nc=sk.filter(s=>s.isNew).length;
+  return `<div class="domain-card" onclick="toggleCard(this)">
+    <div class="dc-hdr"><div class="dc-dot" style="background:${lyr.color}"></div>
+    <div class="dc-name">${dom.label}${nc?`<span class="new-badge">+${nc} NEW</span>`:''}</div></div>
+    <div class="dc-id">${dId}</div>
+    <div class="dc-desc">${dom.desc}</div>
+    <div class="dc-foot"><span class="dc-cnt">${sk.length} skills</span>${nc?`<span class="dc-new">${nc} new</span>`:''}</div>
+    <div class="skill-list${expanded?' open':''}">
+      ${sk.map(s=>`<div class="sl-item"><span class="sl-id">${s.id}</span>${s.label}${s.isNew?'<span class="new-badge">NEW</span>':''}</div>`).join('')}
+    </div></div>`;
+}
+function toggleCard(el){el.querySelector('.skill-list').classList.toggle('open')}
+
+// Layers view
+function renderLayers(){
+  const grid=document.getElementById('layer-grid');
+  const domsEl=document.getElementById('layer-domains');
+  LAYERS.forEach((l,i)=>{
+    const sk=l.domains.reduce((a,d)=>a+(SKILLS[d]||[]).length,0);
+    const card=document.createElement('div');
+    card.className='layer-card'+(i===0?' sel':'');
+    card.style.borderColor=i===0?l.color:l.color+'44';
+    card.dataset.lid=l.id;
+    card.innerHTML=`<div class="lc-dot" style="background:${l.color}"></div><div class="lc-name">${l.label}</div><div class="lc-id">${l.id}</div><div class="lc-cnt">${l.domains.length} domains · ${sk} skills</div>`;
+    card.onclick=()=>selectLayer(l.id);
+    grid.appendChild(card);
+  });
+  selectLayer(LAYERS[0].id);
+}
+function selectLayer(lid){
+  const lyr=LAYERS.find(l=>l.id===lid);
+  document.querySelectorAll('.layer-card').forEach(c=>{
+    const active=c.dataset.lid===lid;
+    c.classList.toggle('sel',active);
+    const l=LAYERS.find(x=>x.id===c.dataset.lid);
+    c.style.borderColor=active?l.color:l.color+'44';
+  });
+  document.getElementById('layer-domains').innerHTML=lyr.domains.map(d=>domainCard(d,false)).join('');
+}
+
+// All domains view
+function renderAllDomains(){
+  document.getElementById('all-domains').innerHTML=LAYERS.flatMap(l=>l.domains.map(d=>domainCard(d,false))).join('');
+}
+
+// Stats view
+function renderStats(){
+  const el=document.getElementById('view-stats');
+  const maxL=Math.max(...LAYERS.map(l=>l.domains.reduce((a,d)=>(SKILLS[d]||[]).length+a,0)));
+  const maxD=Math.max(...Object.values(SKILLS).map(s=>s.length));
+  el.innerHTML=`
+    <div class="ss-block"><div class="ss-title">Skills by Layer</div>
+    ${LAYERS.map(l=>{const c=l.domains.reduce((a,d)=>(SKILLS[d]||[]).length+a,0);const n=l.domains.reduce((a,d)=>(SKILLS[d]||[]).filter(s=>s.isNew).length+a,0);return `<div class="dist-row"><div class="dist-lbl">${l.label}</div><div class="dist-bar"><div class="dist-fill" style="width:${(c/maxL*100).toFixed(0)}%;background:${l.color}44;border-right:3px solid ${l.color}"></div></div><div class="dist-cnt">${c}${n?`<span class="new-flag">+${n}</span>`:''}</div></div>`}).join('')}
+    </div>
+    <div class="ss-block"><div class="ss-title">Skills by Domain</div>
+    ${LAYERS.flatMap(l=>l.domains.map(dId=>{const c=(SKILLS[dId]||[]).length;const n=(SKILLS[dId]||[]).filter(s=>s.isNew).length;return `<div class="dist-row"><div class="dist-lbl">${DOMAINS[dId].label}</div><div class="dist-bar"><div class="dist-fill" style="width:${(c/maxD*100).toFixed(0)}%;background:${l.color}44;border-right:3px solid ${l.color}"></div></div><div class="dist-cnt">${c}${n?`<span class="new-flag">+${n}</span>`:''}</div></div>`})).join('')}
+    </div>`;
+}
+
+// Mind Map — D3 radial tree
+let mmSvg,mmZoomB;
+function initMindMap(){
+  const cont=document.getElementById('mm-wrap');
+  const W=cont.clientWidth,H=cont.clientHeight;
+  const treeData={name:'GenAI Ontology v2.0',type:'root',color:'#eeeeff',children:LAYERS.map(l=>({
+    id:l.id,name:l.label,color:l.color,type:'layer',
+    children:l.domains.map(dId=>{const sk=SKILLS[dId]||[];return{id:dId,name:DOMAINS[dId].label,desc:DOMAINS[dId].desc,color:l.color,type:'domain',skillCount:sk.length,newCount:sk.filter(s=>s.isNew).length}})
+  }))};
+  const svg=d3.select('#mm-wrap').append('svg').attr('width',W).attr('height',H).style('display','block');
+  mmSvg=svg;
+  const g=svg.append('g').attr('id','mmg');
+  mmZoomB=d3.zoom().scaleExtent([0.25,3]).on('zoom',e=>g.attr('transform',e.transform));
+  svg.call(mmZoomB);
+  const root=d3.hierarchy(treeData);
+  const tree=d3.tree().size([2*Math.PI,Math.min(W,H)*0.42]).separation((a,b)=>a.parent===b.parent?1.1:2);
+  tree(root);
+  const linkGen=d3.linkRadial().angle(d=>d.x).radius(d=>d.y);
+  g.append('g').selectAll('path').data(root.links()).enter().append('path')
+    .attr('d',linkGen).attr('fill','none')
+    .attr('stroke',d=>d.target.data.color||'#333').attr('stroke-opacity',.2)
+    .attr('stroke-width',d=>d.target.data.type==='layer'?1.5:.8);
+  const node=g.append('g').selectAll('g').data(root.descendants()).enter().append('g')
+    .attr('transform',d=>`rotate(${d.x*180/Math.PI-90}) translate(${d.y},0)`);
+  node.append('circle')
+    .attr('r',d=>d.data.type==='root'?16:d.data.type==='layer'?10:6)
+    .attr('fill',d=>d.data.type==='root'?'#191935':d.data.color+'22')
+    .attr('stroke',d=>d.data.color||'#555').attr('stroke-width',d=>d.data.type==='root'?2:1.5);
+  // Root label
+  node.filter(d=>!d.data.type||d.data.type==='root').append('text')
+    .attr('text-anchor','middle').attr('dy','0.35em').attr('font-size',7)
+    .attr('fill','#eeeeff').attr('font-family','Space Grotesk').text('v2.0');
+  // Layer & domain labels
+  node.filter(d=>d.data.type==='layer'||d.data.type==='domain').append('text')
+    .attr('dy','0.35em')
+    .attr('x',d=>d.x<Math.PI?9:-9)
+    .attr('text-anchor',d=>d.x<Math.PI?'start':'end')
+    .attr('transform',d=>d.x>=Math.PI?'rotate(180)':null)
+    .attr('font-size',d=>d.data.type==='layer'?11:9)
+    .attr('font-weight',d=>d.data.type==='layer'?700:400)
+    .attr('fill',d=>d.data.color).attr('font-family','Space Grotesk')
+    .text(d=>{const n=d.data.name;return n.length>20?n.slice(0,18)+'\u2026':n});
+  // Domain hover
+  const mmTT=document.getElementById('mm-tt');
+  node.filter(d=>d.data.type==='domain')
+    .style('cursor','pointer')
+    .on('mouseover',function(e,d){
+      d3.select(this).select('circle').attr('r',9).attr('fill',d.data.color+'55');
+      mmTT.innerHTML=`<b>${d.data.name}</b> <span style="color:#9090b8;font-size:10px">${d.id}</span> · ${d.data.skillCount} skills${d.data.newCount?` · <span style="color:#EC4899">+${d.data.newCount} new</span>`:''}<br><span style="color:#b0b0d8">${d.data.desc}</span>`;
+      mmTT.classList.add('vis');
+    })
+    .on('mouseout',function(e,d){
+      d3.select(this).select('circle').attr('r',6).attr('fill',d.data.color+'22');
+      mmTT.classList.remove('vis');
+    });
+  // Center the view
+  svg.call(mmZoomB.transform,d3.zoomIdentity.translate(W/2,H/2));
+}
+function mmZoom(f){if(mmSvg)mmSvg.transition().duration(300).call(mmZoomB.scaleBy,f)}
+function mmReset(){
+  if(!mmSvg)return;
+  const c=document.getElementById('mm-wrap');
+  mmSvg.transition().duration(500).call(mmZoomB.transform,d3.zoomIdentity.translate(c.clientWidth/2,c.clientHeight/2));
+}
+
+// Force Graph — D3
+let fgSvg,fgZoomB;
+function initForceGraph(){
+  const cont=document.getElementById('fg-wrap');
+  const W=cont.clientWidth,H=cont.clientHeight;
+  const nodes=[];const links=[];
+  LAYERS.forEach(l=>{
+    nodes.push({id:l.id,label:l.label,type:'layer',color:l.color,r:20});
+    l.domains.forEach(dId=>{
+      const sk=SKILLS[dId]||[];
+      nodes.push({id:dId,label:DOMAINS[dId].label,type:'domain',color:l.color,r:12,sk:sk.length,nw:sk.filter(s=>s.isNew).length,desc:DOMAINS[dId].desc});
+      links.push({source:l.id,target:dId,color:l.color});
+    });
+  });
+  const svg=d3.select('#fg-wrap').append('svg').attr('width',W).attr('height',H).style('display','block');
+  fgSvg=svg;
+  const g=svg.append('g');
+  fgZoomB=d3.zoom().scaleExtent([0.2,3]).on('zoom',e=>g.attr('transform',e.transform));
+  svg.call(fgZoomB);
+  const sim=d3.forceSimulation(nodes)
+    .force('link',d3.forceLink(links).id(d=>d.id).distance(d=>d.source.type==='layer'?130:85).strength(.9))
+    .force('charge',d3.forceManyBody().strength(-350))
+    .force('center',d3.forceCenter(W/2,H/2))
+    .force('collision',d3.forceCollide().radius(d=>d.r+10));
+  const link=g.append('g').selectAll('line').data(links).enter().append('line')
+    .attr('stroke',d=>d.color+'33').attr('stroke-width',1.5);
+  const nodeG=g.append('g').selectAll('g').data(nodes).enter().append('g')
+    .style('cursor','grab')
+    .call(d3.drag()
+      .on('start',(e,d)=>{if(!e.active)sim.alphaTarget(.3).restart();d.fx=d.x;d.fy=d.y})
+      .on('drag',(e,d)=>{d.fx=e.x;d.fy=e.y})
+      .on('end',(e,d)=>{if(!e.active)sim.alphaTarget(0);d.fx=null;d.fy=null}));
+  nodeG.append('circle')
+    .attr('r',d=>d.r)
+    .attr('fill',d=>d.color+(d.type==='layer'?'33':'18'))
+    .attr('stroke',d=>d.color).attr('stroke-width',d=>d.type==='layer'?2:1.5);
+  nodeG.append('text')
+    .attr('text-anchor','middle').attr('dy',d=>d.r+13)
+    .attr('font-size',d=>d.type==='layer'?11:9)
+    .attr('font-weight',d=>d.type==='layer'?700:400)
+    .attr('fill',d=>d.color).attr('font-family','Space Grotesk')
+    .text(d=>{const n=d.label;return n.length>16?n.slice(0,14)+'\u2026':n});
+  nodeG.on('mousemove',(e,d)=>{
+    const body=d.type==='domain'?`${d.sk} skills${d.nw?` (+${d.nw} new)`:''} · ${d.desc}`:`Layer · ${LAYERS.find(l=>l.id===d.id)?.domains.length||0} domains`;
+    showTT(e,d.label,d.id,body);
+  }).on('mouseleave',hideTT);
+  sim.on('tick',()=>{
+    link.attr('x1',d=>d.source.x).attr('y1',d=>d.source.y).attr('x2',d=>d.target.x).attr('y2',d=>d.target.y);
+    nodeG.attr('transform',d=>`translate(${d.x},${d.y})`);
+  });
+  // Legend
+  const leg=document.getElementById('fg-leg');
+  leg.innerHTML=`<div style="font-size:11px;color:var(--mu);font-family:var(--fh);font-weight:600;margin-bottom:8px">Node Size</div>`;
+  [{r:20,label:'Layer'},{r:12,label:'Domain'}].forEach(item=>{
+    const row=document.createElement('div');row.className='fgl-row';
+    row.innerHTML=`<svg width="${item.r*2+4}" height="${item.r*2+4}" style="flex-shrink:0"><circle cx="${item.r+2}" cy="${item.r+2}" r="${item.r}" fill="none" stroke="#8B5CF6" stroke-width="1.5"/></svg>${item.label}`;
+    leg.appendChild(row);
+  });
+}
+
+// Init
+switchTab('mindmap');
+</script></body></html>

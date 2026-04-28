@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Learning Studio — Chain-of-Thought Prompting</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f8f7ff;
+  --white: #ffffff;
+  --ink: #1a1730;
+  --ink2: #3d3a5a;
+  --muted: #7e7a9a;
+  --dim: #b8b5d0;
+  --border: #e8e5f5;
+  --border2: #d0cce8;
+  --purple: #6c47ff;
+  --purple-l: rgba(108,71,255,.08);
+  --purple-m: rgba(108,71,255,.15);
+  --teal: #0fbba8;
+  --teal-l: rgba(15,187,168,.08);
+  --amber: #f59e0b;
+  --amber-l: rgba(245,158,11,.08);
+  --red: #ef4444;
+  --green: #22c55e;
+  --green-l: rgba(34,197,94,.08);
+  --sans: 'DM Sans', sans-serif;
+  --mono: 'DM Mono', monospace;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--ink); font-family: var(--sans); min-height: 100vh; }
+
+/* Header */
+.header { background: var(--white); border-bottom: 1px solid var(--border); padding: 0 32px; display: flex; align-items: center; justify-content: space-between; height: 64px; position: sticky; top: 0; z-index: 100; }
+.hdr-left { display: flex; align-items: center; gap: 16px; }
+.hdr-back { width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 14px; color: var(--muted); transition: all .2s; }
+.hdr-back:hover { border-color: var(--purple); color: var(--purple); }
+.hdr-info { }
+.hdr-course { font-size: 11px; color: var(--muted); font-weight: 500; }
+.hdr-title { font-size: 15px; font-weight: 600; color: var(--ink); }
+.hdr-right { display: flex; align-items: center; gap: 16px; }
+.xp-pill { display: flex; align-items: center; gap: 6px; background: var(--amber-l); border: 1px solid rgba(245,158,11,.2); border-radius: 20px; padding: 4px 12px; font-size: 12px; font-weight: 600; color: var(--amber); }
+.streak-pill { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 500; color: var(--muted); }
+
+/* Progress stepper */
+.stepper { background: var(--white); border-bottom: 1px solid var(--border); padding: 0 32px; }
+.stepper-inner { max-width: 720px; margin: 0 auto; display: flex; align-items: center; padding: 16px 0; }
+.step-item { display: flex; align-items: center; gap: 8px; flex: 1; }
+.step-item:last-child { flex: 0; }
+.step-circle { width: 32px; height: 32px; border-radius: 50%; border: 2px solid var(--border2); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: var(--dim); flex-shrink: 0; transition: all .3s; cursor: pointer; }
+.step-item.done .step-circle { background: var(--teal); border-color: var(--teal); color: #fff; }
+.step-item.active .step-circle { background: var(--purple); border-color: var(--purple); color: #fff; box-shadow: 0 0 0 4px var(--purple-m); }
+.step-item.locked .step-circle { opacity: .4; cursor: default; }
+.step-label { font-size: 11px; font-weight: 500; color: var(--muted); white-space: nowrap; }
+.step-item.active .step-label { color: var(--purple); font-weight: 600; }
+.step-item.done .step-label { color: var(--teal); }
+.step-line { flex: 1; height: 2px; background: var(--border); margin: 0 8px; transition: background .3s; }
+.step-item.done + .step-item .step-line,
+.step-line.done { background: var(--teal); }
+
+/* Main */
+.main { max-width: 720px; margin: 0 auto; padding: 40px 24px 120px; }
+
+/* Cards */
+.screen { display: none; }
+.screen.active { display: block; }
+
+/* Screen 1 */
+.scenario-hero { background: linear-gradient(135deg, #6c47ff 0%, #9b72ff 100%); border-radius: 20px; padding: 32px; margin-bottom: 24px; color: #fff; position: relative; overflow: hidden; }
+.sh-bg { position: absolute; right: -20px; top: -20px; width: 180px; height: 180px; border-radius: 50%; background: rgba(255,255,255,.06); }
+.sh-badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(255,255,255,.15); border-radius: 20px; padding: 4px 12px; font-size: 11px; font-weight: 600; margin-bottom: 16px; }
+.sh-title { font-size: 24px; font-weight: 700; line-height: 1.2; margin-bottom: 12px; }
+.sh-sub { font-size: 14px; opacity: .8; line-height: 1.6; }
+.sh-stats { display: flex; gap: 20px; margin-top: 20px; }
+.sh-stat { }
+.sh-stat-n { font-size: 22px; font-weight: 700; }
+.sh-stat-l { font-size: 11px; opacity: .7; }
+
+.profile-cards { display: grid; grid-template-columns: repeat(2,1fr); gap: 12px; margin-bottom: 24px; }
+.pcard { background: var(--white); border: 1px solid var(--border); border-radius: 14px; padding: 16px 20px; }
+.pc-icon { font-size: 20px; margin-bottom: 8px; }
+.pc-label { font-size: 11px; color: var(--muted); font-weight: 500; margin-bottom: 4px; }
+.pc-value { font-size: 15px; font-weight: 600; color: var(--ink); }
+
+.journey-card { background: var(--white); border: 1px solid var(--border); border-radius: 14px; padding: 20px; margin-bottom: 24px; }
+.jc-title { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px; }
+.jc-row { display: flex; align-items: stretch; gap: 12px; }
+.jc-node { flex: 1; border-radius: 10px; padding: 14px 16px; }
+.jc-node.from { background: var(--bg); border: 1px solid var(--border); }
+.jc-node.to { background: var(--purple-l); border: 1px solid rgba(108,71,255,.2); }
+.jcn-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 6px; }
+.jcn-label.to { color: var(--purple); }
+.jcn-text { font-size: 13px; color: var(--ink2); line-height: 1.5; }
+.jc-arrow { display: flex; align-items: center; color: var(--purple); font-size: 18px; }
+
+/* Screen 2 - Concepts */
+.concept-card { background: var(--white); border: 1px solid var(--border); border-radius: 14px; padding: 20px; margin-bottom: 14px; display: flex; gap: 16px; align-items: flex-start; transition: all .2s; }
+.concept-card:hover { border-color: var(--border2); box-shadow: 0 4px 16px rgba(0,0,0,.04); }
+.cc-icon-wrap { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+.cc-body { flex: 1; }
+.cc-title { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+.cc-text { font-size: 13px; color: var(--muted); line-height: 1.6; }
+.cc-tag { display: inline-block; font-size: 10px; font-weight: 600; padding: 2px 10px; border-radius: 20px; margin-top: 8px; text-transform: uppercase; letter-spacing: 1px; }
+
+.chain-card { background: var(--white); border: 1px solid var(--border); border-radius: 14px; padding: 20px; margin-bottom: 14px; }
+.chain-title { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 16px; }
+.chain-steps { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; }
+.cstep { border-radius: 10px; padding: 12px; text-align: center; background: var(--bg); border: 1px solid var(--border); position: relative; }
+.cstep::after { content: '→'; position: absolute; right: -12px; top: 50%; transform: translateY(-50%); font-size: 12px; color: var(--dim); z-index: 1; }
+.cstep:last-child::after { display: none; }
+.csn { font-family: var(--mono); font-size: 10px; color: var(--purple); font-weight: 500; margin-bottom: 4px; }
+.cst { font-size: 11px; color: var(--ink2); line-height: 1.4; }
+
+/* Screen 3 - Examples */
+.example-switcher { display: flex; gap: 8px; margin-bottom: 20px; }
+.eswitch { flex: 1; padding: 12px; border-radius: 12px; border: 2px solid var(--border); background: var(--white); font-size: 13px; font-weight: 600; color: var(--muted); cursor: pointer; text-align: center; transition: all .2s; }
+.eswitch.active { border-color: var(--purple); color: var(--purple); background: var(--purple-l); }
+.ex-content { display: none; }
+.ex-content.active { display: block; }
+.scenario-banner { background: var(--amber-l); border: 1px solid rgba(245,158,11,.2); border-radius: 12px; padding: 16px 20px; margin-bottom: 16px; }
+.sb-row { display: flex; align-items: flex-start; gap: 12px; }
+.sb-icon { font-size: 20px; flex-shrink: 0; margin-top: 2px; }
+.sb-label { font-size: 11px; font-weight: 600; color: var(--amber); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+.sb-text { font-size: 13px; color: var(--ink2); line-height: 1.5; }
+.doc-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+.doc-tag { display: flex; align-items: center; gap: 5px; font-family: var(--mono); font-size: 10px; color: var(--muted); background: var(--white); border: 1px solid var(--border); border-radius: 6px; padding: 3px 10px; }
+.prompt-card { background: var(--ink); border-radius: 12px; overflow: hidden; margin-bottom: 16px; }
+.prompt-top { padding: 10px 16px; border-bottom: 1px solid rgba(255,255,255,.08); display: flex; align-items: center; justify-content: space-between; }
+.prompt-top-label { font-family: var(--mono); font-size: 10px; color: rgba(255,255,255,.4); }
+.prompt-copy { font-family: var(--mono); font-size: 10px; color: rgba(255,255,255,.4); cursor: pointer; background: none; border: none; }
+.prompt-body { padding: 18px; font-family: var(--mono); font-size: 12px; color: rgba(255,255,255,.85); line-height: 1.8; white-space: pre-wrap; }
+.prompt-body .step { color: #fbbf24; }
+.insight-card { background: var(--teal-l); border: 1px solid rgba(15,187,168,.2); border-radius: 12px; padding: 16px 20px; }
+.ic-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--teal); margin-bottom: 6px; }
+.ic-text { font-size: 13px; color: var(--ink2); line-height: 1.6; }
+
+/* Screen 4 - Agent Builder */
+.builder-intro { background: var(--white); border: 1px solid var(--border); border-radius: 14px; padding: 20px; margin-bottom: 20px; display: flex; gap: 14px; align-items: flex-start; }
+.bi-icon { width: 40px; height: 40px; background: var(--purple-l); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+.bi-title { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+.bi-text { font-size: 13px; color: var(--muted); line-height: 1.5; }
+.build-cards { }
+.bcard { background: var(--white); border: 1px solid var(--border); border-radius: 14px; padding: 20px; margin-bottom: 12px; }
+.bcard-header { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.bcard-num { width: 28px; height: 28px; border-radius: 8px; background: var(--purple); color: #fff; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.bcard-title { font-size: 14px; font-weight: 600; }
+.bcard-desc { font-size: 12px; color: var(--muted); margin-bottom: 10px; line-height: 1.5; }
+textarea.b-input { width: 100%; border: 1.5px solid var(--border); border-radius: 8px; background: var(--bg); font-family: var(--mono); font-size: 12px; color: var(--ink); padding: 10px 14px; resize: none; line-height: 1.6; transition: border-color .2s; }
+textarea.b-input:focus { outline: none; border-color: var(--purple); background: var(--white); }
+.spec-preview { background: var(--ink); border-radius: 14px; padding: 20px; margin-top: 16px; }
+.sp-label { font-family: var(--mono); font-size: 10px; color: rgba(255,255,255,.3); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 2px; }
+.sp-code { font-family: var(--mono); font-size: 11px; color: rgba(255,255,255,.7); line-height: 1.8; white-space: pre-wrap; }
+.sp-code .kw { color: #bc8cff; }
+.sp-code .val { color: #7ee787; }
+
+/* Screen 5 - Complete */
+.complete-hero { text-align: center; padding: 40px 0; }
+.ch-trophy { font-size: 64px; margin-bottom: 16px; display: block; animation: bounce .6s ease; }
+@keyframes bounce { 0%,100%{transform:scale(1)} 50%{transform:scale(1.1)} }
+.ch-title { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
+.ch-sub { font-size: 15px; color: var(--muted); margin-bottom: 28px; }
+.xp-earned { background: linear-gradient(135deg, #f59e0b, #fbbf24); border-radius: 16px; padding: 20px; display: inline-flex; align-items: center; gap: 16px; margin-bottom: 28px; color: #fff; }
+.xpe-num { font-size: 36px; font-weight: 700; }
+.xpe-label { font-size: 13px; opacity: .85; }
+.badges { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-bottom: 28px; }
+.badge { background: var(--white); border: 2px solid var(--border); border-radius: 14px; padding: 14px 20px; text-align: center; min-width: 120px; }
+.badge-icon { font-size: 24px; margin-bottom: 6px; }
+.badge-name { font-size: 12px; font-weight: 600; color: var(--ink2); }
+.next-up { background: var(--white); border: 1px solid var(--border); border-radius: 14px; padding: 20px; max-width: 480px; margin: 0 auto 24px; text-align: left; }
+.nu-title { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 12px; }
+.nu-item { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.nu-item:last-child { border-bottom: none; }
+.nu-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--purple); flex-shrink: 0; }
+.nu-text { flex: 1; font-size: 13px; color: var(--ink2); }
+.nu-arrow { font-size: 14px; color: var(--dim); }
+
+/* Buttons */
+.btn-main { width: 100%; background: var(--purple); color: #fff; font-family: var(--sans); font-size: 15px; font-weight: 600; padding: 16px; border-radius: 12px; border: none; cursor: pointer; transition: all .2s; margin-top: 24px; }
+.btn-main:hover { background: #5835e0; transform: translateY(-1px); }
+.btn-back { width: 100%; background: transparent; color: var(--muted); font-family: var(--sans); font-size: 14px; font-weight: 500; padding: 12px; border-radius: 12px; border: 1px solid var(--border); cursor: pointer; transition: all .2s; margin-top: 8px; }
+.btn-back:hover { border-color: var(--border2); color: var(--ink); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="hdr-left">
+    <div class="hdr-back" onclick="goBack()">←</div>
+    <div class="hdr-info">
+      <div class="hdr-course">GenAI Pathway · Prompting Layer</div>
+      <div class="hdr-title">Chain-of-Thought Prompting</div>
+    </div>
+  </div>
+  <div class="hdr-right">
+    <div class="xp-pill">⚡ <span id="xp-count">0</span> XP</div>
+    <div class="streak-pill">🔥 3 day streak</div>
+  </div>
+</div>
+
+<div class="stepper">
+  <div class="stepper-inner">
+    <div class="step-item active" id="si0" onclick="goStep(0)">
+      <div class="step-circle">1</div>
+      <div class="step-label">Scenario</div>
+    </div>
+    <div class="step-line" id="sl0"></div>
+    <div class="step-item locked" id="si1" onclick="goStep(1)">
+      <div class="step-circle">2</div>
+      <div class="step-label">Concepts</div>
+    </div>
+    <div class="step-line" id="sl1"></div>
+    <div class="step-item locked" id="si2" onclick="goStep(2)">
+      <div class="step-circle">3</div>
+      <div class="step-label">Examples</div>
+    </div>
+    <div class="step-line" id="sl2"></div>
+    <div class="step-item locked" id="si3" onclick="goStep(3)">
+      <div class="step-circle">4</div>
+      <div class="step-label">Build Agent</div>
+    </div>
+    <div class="step-line" id="sl3"></div>
+    <div class="step-item locked" id="si4" onclick="goStep(4)">
+      <div class="step-circle">5</div>
+      <div class="step-label">Complete</div>
+    </div>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- Screen 1: Scenario -->
+  <div class="screen active" id="sc0">
+    <div class="scenario-hero">
+      <div class="sh-bg"></div>
+      <div class="sh-badge">🎯 Skill · SK.PRM.005</div>
+      <div class="sh-title">Chain-of-Thought<br>Prompting</div>
+      <div class="sh-sub">Stop babysitting AI outputs. Learn to structure reasoning so complex work arrives right the first time.</div>
+      <div class="sh-stats">
+        <div class="sh-stat"><div class="sh-stat-n">35</div><div class="sh-stat-l">Minutes</div></div>
+        <div class="sh-stat"><div class="sh-stat-n">5</div><div class="sh-stat-l">Sections</div></div>
+        <div class="sh-stat"><div class="sh-stat-n">+150</div><div class="sh-stat-l">XP earned</div></div>
+      </div>
+    </div>
+
+    <div class="profile-cards">
+      <div class="pcard">
+        <div class="pc-icon">👤</div>
+        <div class="pc-label">Your Role</div>
+        <div class="pc-value">Marketing Manager · B2B SaaS</div>
+      </div>
+      <div class="pcard">
+        <div class="pc-icon">📊</div>
+        <div class="pc-label">Skill Level</div>
+        <div class="pc-value">Intermediate → Advanced</div>
+      </div>
+    </div>
+
+    <div class="journey-card">
+      <div class="jc-title">Your Learning Journey</div>
+      <div class="jc-row">
+        <div class="jc-node from">
+          <div class="jcn-label">Today</div>
+          <div class="jcn-text">Complex campaigns need 8–10 AI rounds before the output is usable.</div>
+        </div>
+        <div class="jc-arrow">→</div>
+        <div class="jc-node to">
+          <div class="jcn-label to">After this lesson</div>
+          <div class="jcn-text">You'll structure AI reasoning upfront. One prompt. Boardroom-ready output.</div>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn-main" onclick="advance(25)">Let's Start →</button>
+  </div>
+
+  <!-- Screen 2: Concepts -->
+  <div class="screen" id="sc1">
+    <div class="concept-card">
+      <div class="cc-icon-wrap" style="background:rgba(239,68,68,.08)">🎯</div>
+      <div class="cc-body">
+        <div class="cc-title">The Prediction Problem</div>
+        <div class="cc-text">LLMs predict the most likely next token — they don't reason. Without guidance, they skip steps and jump to plausible-sounding conclusions. Complex questions get confident but shallow answers.</div>
+        <div class="cc-tag" style="background:rgba(239,68,68,.1);color:#ef4444">Why it fails</div>
+      </div>
+    </div>
+    <div class="concept-card">
+      <div class="cc-icon-wrap" style="background:var(--purple-l)">🔗</div>
+      <div class="cc-body">
+        <div class="cc-title">The Chain Mechanism</div>
+        <div class="cc-text">CoT forces the model to generate intermediate reasoning steps before concluding. Each step becomes context for the next — so the model's reasoning literally improves itself as it runs.</div>
+        <div class="cc-tag" style="background:var(--purple-l);color:var(--purple)">How it works</div>
+      </div>
+    </div>
+    <div class="concept-card">
+      <div class="cc-icon-wrap" style="background:var(--teal-l)">📈</div>
+      <div class="cc-body">
+        <div class="cc-title">Your Marketing Payoff</div>
+        <div class="cc-text">For B2B marketing: CoT is the difference between a generic outline and a campaign brief grounded in your ICP, competitive positioning, and real channel data — from a single prompt.</div>
+        <div class="cc-tag" style="background:var(--teal-l);color:var(--teal)">The result</div>
+      </div>
+    </div>
+
+    <div class="chain-card">
+      <div class="chain-title">CoT Execution Flow</div>
+      <div class="chain-steps">
+        <div class="cstep"><div class="csn">Step 1</div><div class="cst">Define problem & constraints</div></div>
+        <div class="cstep"><div class="csn">Step 2</div><div class="cst">Analyze each factor</div></div>
+        <div class="cstep"><div class="csn">Step 3</div><div class="cst">Synthesize across factors</div></div>
+        <div class="cstep"><div class="csn">Step 4</div><div class="cst">Structured output</div></div>
+      </div>
+    </div>
+
+    <button class="btn-main" onclick="advance(25)">Got it — See Examples →</button>
+    <button class="btn-back" onclick="goStep(0)">← Back</button>
+  </div>
+
+  <!-- Screen 3: Examples -->
+  <div class="screen" id="sc2">
+    <div class="example-switcher">
+      <button class="eswitch active" onclick="swEx(0,this)">📋 Campaign Brief</button>
+      <button class="eswitch" onclick="swEx(1,this)">📊 Competitive Memo</button>
+    </div>
+
+    <div class="ex-content active" id="exc0">
+      <div class="scenario-banner">
+        <div class="sb-row">
+          <div class="sb-icon">💼</div>
+          <div>
+            <div class="sb-label">Scenario</div>
+            <div class="sb-text">Q3 product launch for your AI analytics feature. You need a complete campaign brief from ICP data, past performance, and competitor positioning. Normally a 2-hour exercise.</div>
+            <div class="doc-row">
+              <div class="doc-tag">📊 Q2-campaign-results.csv</div>
+              <div class="doc-tag">📋 ICP-profile-2024.pdf</div>
+              <div class="doc-tag">📈 competitor-matrix.xlsx</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="prompt-card">
+        <div class="prompt-top">
+          <div class="prompt-top-label">chain-of-thought-prompt.txt</div>
+          <button class="prompt-copy" onclick="this.textContent='✓ Copied'">Copy</button>
+        </div>
+        <div class="prompt-body">I'm launching a B2B SaaS analytics feature in Q3.
+Work through this <span class="step">step by step</span>:
+
+<span class="step">Step 1 — Audience:</span> Review the ICP profile.
+Who is the primary buyer? What pain points
+does this feature address most acutely?
+
+<span class="step">Step 2 — Competitive context:</span> Using the
+competitor matrix, what gap are we filling?
+
+<span class="step">Step 3 — Channel strategy:</span> From Q2 results,
+which channels drove highest-quality pipeline?
+Explain reasoning before recommending.
+
+<span class="step">Step 4 — Brief synthesis:</span> Combine analysis
+into: positioning statement, 3 pillars,
+channel mix, Q3 KPIs.
+
+Show reasoning at each step before moving on.</div>
+      </div>
+      <div class="insight-card">
+        <div class="ic-label">💡 Why This Works</div>
+        <div class="ic-text">The final line "Show reasoning at each step before moving on" is the CoT trigger. Without it, the model synthesizes immediately and skips the analytical grounding that makes the brief trustworthy.</div>
+      </div>
+    </div>
+
+    <div class="ex-content" id="exc1">
+      <div class="scenario-banner">
+        <div class="sb-row">
+          <div class="sb-icon">📊</div>
+          <div>
+            <div class="sb-label">Scenario</div>
+            <div class="sb-text">VP needs competitive intelligence memo for Monday's board meeting. Sources: G2 reviews, Gartner report, competitor notes. You need a clear strategic recommendation.</div>
+            <div class="doc-row">
+              <div class="doc-tag">📊 g2-reviews-export.csv</div>
+              <div class="doc-tag">📋 gartner-report-2025.pdf</div>
+              <div class="doc-tag">🌐 competitor-websites.txt</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="prompt-card">
+        <div class="prompt-top">
+          <div class="prompt-top-label">competitive-memo-prompt.txt</div>
+          <button class="prompt-copy" onclick="this.textContent='✓ Copied'">Copy</button>
+        </div>
+        <div class="prompt-body">Competitive analysis for an executive memo.
+Build on each step before proceeding:
+
+<span class="step">Step 1:</span> From G2 reviews, top 3 complaints
+per competitor. Quantify where possible.
+
+<span class="step">Step 2:</span> How does Gartner frame the market?
+Where does it see white space?
+
+<span class="step">Step 3 — Triangulate:</span> Cross-reference
+Steps 1 &amp; 2. Which gaps appear in BOTH
+customer complaints AND analyst white space?
+
+<span class="step">Step 4:</span> Write 3-paragraph exec memo capturing
+the gap. Cite step-by-step reasoning inline.</div>
+      </div>
+      <div class="insight-card">
+        <div class="ic-label">💡 Advanced Technique</div>
+        <div class="ic-text">Step 3's "triangulation" forces the model to cross-reference two evidence sources before concluding. "Cite reasoning inline" in Step 4 creates an auditable output — executives can trace every claim to its source.</div>
+      </div>
+    </div>
+
+    <button class="btn-main" onclick="advance(50)">Build My Agent →</button>
+    <button class="btn-back" onclick="goStep(1)">← Back</button>
+  </div>
+
+  <!-- Screen 4: Agent Builder -->
+  <div class="screen" id="sc3">
+    <div class="builder-intro">
+      <div class="bi-icon">🤖</div>
+      <div>
+        <div class="bi-title">Build Your CoT Agent</div>
+        <div class="bi-text">Configure a reusable agent that applies chain-of-thought reasoning automatically to your marketing workflows.</div>
+      </div>
+    </div>
+
+    <div class="build-cards">
+      <div class="bcard">
+        <div class="bcard-header"><div class="bcard-num">1</div><div class="bcard-title">Agent Role</div></div>
+        <div class="bcard-desc">What specific marketing workflow does this agent handle?</div>
+        <textarea class="b-input" rows="2" id="b0" oninput="liveSpec()">Campaign brief generator for B2B SaaS product launches</textarea>
+      </div>
+      <div class="bcard">
+        <div class="bcard-header"><div class="bcard-num">2</div><div class="bcard-title">Reasoning Chain</div></div>
+        <div class="bcard-desc">Define 3–5 steps the agent works through before synthesizing.</div>
+        <textarea class="b-input" rows="3" id="b1" oninput="liveSpec()">Audience analysis → Competitive positioning → Channel fit → Brief synthesis</textarea>
+      </div>
+      <div class="bcard">
+        <div class="bcard-header"><div class="bcard-num">3</div><div class="bcard-title">Required Inputs</div></div>
+        <div class="bcard-desc">Documents that must always be provided to ground the reasoning.</div>
+        <textarea class="b-input" rows="2" id="b2" oninput="liveSpec()">ICP profile, campaign performance data, competitor matrix</textarea>
+      </div>
+      <div class="bcard">
+        <div class="bcard-header"><div class="bcard-num">4</div><div class="bcard-title">Output Format</div></div>
+        <div class="bcard-desc">What structure should the synthesized output follow?</div>
+        <textarea class="b-input" rows="2" id="b3" oninput="liveSpec()">Positioning statement · 3 messaging pillars · Channel mix · KPIs</textarea>
+      </div>
+    </div>
+
+    <div class="spec-preview">
+      <div class="sp-label">Live Agent Spec</div>
+      <pre class="sp-code"><span class="kw">agent</span> "mktg-cot-agent" {
+  role: <span class="val" id="sv0">"Campaign brief generator..."</span>
+  chain: <span class="val" id="sv1">"Audience → Competitive → Channel → Synthesis"</span>
+  inputs: [<span class="val" id="sv2">"ICP profile, campaign data, competitor matrix"</span>]
+  output: <span class="val" id="sv3">"Positioning · Pillars · Channels · KPIs"</span>
+  cot: <span class="val">"Think step by step. Show reasoning before synthesizing."</span>
+}</pre>
+    </div>
+
+    <button class="btn-main" onclick="advance(50)">Complete the Lesson →</button>
+    <button class="btn-back" onclick="goStep(2)">← Back</button>
+  </div>
+
+  <!-- Screen 5: Complete -->
+  <div class="screen" id="sc4">
+    <div class="complete-hero">
+      <span class="ch-trophy">🏆</span>
+      <div class="ch-title">Lesson Complete!</div>
+      <div class="ch-sub">You've mastered SK.PRM.005 — Chain-of-Thought Prompting</div>
+      <div class="xp-earned">
+        <div>
+          <div class="xpe-num">+150 XP</div>
+          <div class="xpe-label">Experience Earned</div>
+        </div>
+      </div>
+      <div class="badges">
+        <div class="badge"><div class="badge-icon">🔗</div><div class="badge-name">Chain Thinker</div></div>
+        <div class="badge"><div class="badge-icon">🤖</div><div class="badge-name">Agent Builder</div></div>
+        <div class="badge"><div class="badge-icon">📊</div><div class="badge-name">Data Reasoner</div></div>
+      </div>
+      <div class="next-up">
+        <div class="nu-title">Up Next in Your Path</div>
+        <div class="nu-item"><div class="nu-dot"></div><div class="nu-text">SK.PRM.022 — ReAct-style patterns</div><div class="nu-arrow">→</div></div>
+        <div class="nu-item"><div class="nu-dot"></div><div class="nu-text">SK.AGT.001 — Tool definitions & validation</div><div class="nu-arrow">→</div></div>
+        <div class="nu-item"><div class="nu-dot"></div><div class="nu-text">SK.RAG.022 — Agentic RAG patterns</div><div class="nu-arrow">→</div></div>
+      </div>
+      <button class="btn-main" onclick="goStep(0)">Restart Lesson</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+let cur = 0, unlocked = 1, xp = 0;
+function goStep(n) {
+  if (n >= unlocked) return;
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('sc'+n).classList.add('active');
+  document.querySelectorAll('.step-item').forEach((s,i) => {
+    s.classList.remove('active','done','locked');
+    if (i < n) { s.classList.add('done'); s.querySelector('.step-circle').textContent = '✓'; }
+    else if (i === n) { s.classList.add('active'); s.querySelector('.step-circle').textContent = i+1; }
+    else { s.classList.add(i < unlocked ? '' : 'locked'); s.querySelector('.step-circle').textContent = i+1; }
+  });
+  // Update step lines
+  document.querySelectorAll('.step-line').forEach((l,i) => {
+    l.classList.toggle('done', i < n);
+  });
+  cur = n;
+  window.scrollTo(0,0);
+}
+function advance(earnedXp) {
+  xp += earnedXp || 0;
+  document.getElementById('xp-count').textContent = xp;
+  unlocked = Math.max(unlocked, cur + 2);
+  goStep(cur + 1);
+}
+function goBack() { if (cur > 0) goStep(cur - 1); }
+function swEx(n, btn) {
+  document.querySelectorAll('.ex-content').forEach(e => e.classList.remove('active'));
+  document.getElementById('exc'+n).classList.add('active');
+  document.querySelectorAll('.eswitch').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+function liveSpec() {
+  document.getElementById('sv0').textContent = '"' + document.getElementById('b0').value + '"';
+  document.getElementById('sv1').textContent = '"' + document.getElementById('b1').value + '"';
+  document.getElementById('sv2').textContent = '"' + document.getElementById('b2').value + '"';
+  document.getElementById('sv3').textContent = '"' + document.getElementById('b3').value + '"';
+}
+</script>
+</body>
+</html>

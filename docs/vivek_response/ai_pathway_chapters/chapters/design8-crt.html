@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CRT Terminal — What are AI Agents</title>
+<link href="https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0f05;--green:#33ff33;--green-dim:#1a7a1a;--green-bright:#99ff99;
+  --amber:#ffb000;--cyan:#00ffff;--red:#ff3333;--white:#eeffee;
+  --mono:'Share Tech Mono','VT323',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#000}
+body{background:var(--bg);color:var(--green);font-family:var(--mono);min-height:100vh;position:relative;overflow-x:hidden}
+
+/* CRT effect overlay */
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.15) 2px,rgba(0,0,0,.15) 4px);pointer-events:none;z-index:1000}
+body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at center,transparent 60%,rgba(0,0,0,.7) 100%);pointer-events:none;z-index:999}
+
+/* Flicker animation */
+@keyframes flicker{0%{opacity:.98}10%{opacity:.95}50%{opacity:1}90%{opacity:.97}100%{opacity:.99}}
+.screen-wrap{animation:flicker 8s infinite}
+
+/* Cursor blink */
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+.cursor{display:inline-block;width:8px;height:14px;background:var(--green);animation:blink 1s infinite;vertical-align:middle;margin-left:2px}
+
+/* Typing animation */
+@keyframes typing{from{width:0}to{width:100%}}
+
+/* Main container */
+.terminal{max-width:900px;margin:0 auto;padding:24px 32px;min-height:100vh}
+
+/* Header */
+.term-header{border:1px solid var(--green-dim);padding:12px 16px;margin-bottom:24px;position:relative}
+.term-header::before{content:'GENAI LEARNING SYSTEM v2.0';position:absolute;top:-8px;left:12px;background:var(--bg);padding:0 6px;font-size:11px;color:var(--green-dim);letter-spacing:2px}
+.th-row{display:flex;justify-content:space-between;align-items:center}
+.th-skill{color:var(--cyan);font-size:12px;letter-spacing:2px}
+.th-status{color:var(--green-dim);font-size:11px}
+
+/* Nav bar */
+.nav-bar{display:flex;gap:0;margin-bottom:24px;border:1px solid var(--green-dim)}
+.nav-btn{flex:1;padding:8px;font-family:var(--mono);font-size:11px;color:var(--green-dim);background:transparent;border:none;border-right:1px solid var(--green-dim);cursor:pointer;transition:all .15s;text-transform:uppercase;letter-spacing:1px}
+.nav-btn:last-child{border-right:none}
+.nav-btn:hover{background:rgba(51,255,51,.08);color:var(--green)}
+.nav-btn.active{background:var(--green);color:var(--bg);font-weight:700}
+.nav-btn.locked{opacity:.25;cursor:default}
+
+/* Screen */
+.screen{display:none}
+.screen.active{display:block}
+
+/* Prompt line */
+.prompt-line{color:var(--green-dim);font-size:13px;margin-bottom:4px}
+.prompt-line::before{content:'> ';color:var(--green)}
+
+/* Section header */
+.sec-head{color:var(--amber);font-size:16px;letter-spacing:3px;margin:20px 0 12px;padding-bottom:8px;border-bottom:1px solid var(--green-dim)}
+.sec-head::before{content:'## '}
+
+/* Info table */
+.info-table{border:1px solid var(--green-dim);width:100%;margin:16px 0;border-collapse:collapse}
+.info-table td{padding:8px 12px;border:1px solid var(--green-dim);font-size:12px}
+.info-table td:first-child{color:var(--green-dim);width:140px}
+.info-table td:last-child{color:var(--green-bright)}
+
+/* Code block */
+.code-block{background:rgba(51,255,51,.04);border:1px solid var(--green-dim);padding:16px;margin:12px 0;font-size:12px;line-height:1.8}
+.cb-label{color:var(--green-dim);font-size:10px;letter-spacing:2px;margin-bottom:8px}
+.code-line{display:flex;gap:16px}
+.cl-n{color:var(--green-dim);width:24px;flex-shrink:0;text-align:right;user-select:none}
+.cl-t{color:var(--green)}
+.cl-t .hi{color:var(--amber)}
+.cl-t .cm{color:var(--green-dim)}
+
+/* Journey display */
+.journey-box{border:1px solid var(--green-dim);margin:16px 0;display:grid;grid-template-columns:1fr 40px 1fr}
+.jb-cell{padding:16px}
+.jb-cell:first-child{border-right:1px solid var(--green-dim)}
+.jb-arrow{display:flex;align-items:center;justify-content:center;color:var(--cyan);font-size:20px;border-right:1px solid var(--green-dim)}
+.jb-label{color:var(--green-dim);font-size:10px;letter-spacing:2px;margin-bottom:6px}
+.jb-text{font-size:12px;line-height:1.6}
+
+/* Concept display */
+.concept-entry{margin-bottom:12px;padding:12px;border-left:2px solid var(--green-dim)}
+.ce-num{color:var(--amber);font-size:11px;margin-bottom:4px}
+.ce-title{color:var(--green-bright);font-size:14px;margin-bottom:4px}
+.ce-text{color:var(--green-dim);font-size:12px;line-height:1.6}
+
+/* Example toggle */
+.ex-toggle{display:flex;gap:8px;margin-bottom:12px}
+.ex-t-btn{padding:6px 16px;border:1px solid var(--green-dim);background:transparent;color:var(--green-dim);font-family:var(--mono);font-size:11px;cursor:pointer;transition:all .15s;letter-spacing:1px}
+.ex-t-btn.active{background:var(--green);color:var(--bg);border-color:var(--green)}
+.ex-pane{display:none}
+.ex-pane.active{display:block}
+
+/* Scenario box */
+.scenario-box{border:1px solid var(--green-dim);padding:14px;margin-bottom:12px;background:rgba(51,255,51,.03)}
+.sb-label{color:var(--cyan);font-size:10px;letter-spacing:2px;margin-bottom:6px}
+.sb-text{font-size:12px;line-height:1.6;color:var(--green)}
+.doc-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.doc-item{font-size:10px;color:var(--green-dim);border:1px solid var(--green-dim);padding:2px 8px}
+
+/* Agent builder */
+.builder-grid{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--green-dim);margin:16px 0}
+.bg-inputs{padding:16px;border-right:1px solid var(--green-dim)}
+.bg-spec{padding:16px;background:rgba(51,255,51,.03)}
+.bg-field{margin-bottom:12px}
+.bg-label{color:var(--green-dim);font-size:10px;letter-spacing:2px;margin-bottom:4px}
+textarea.bg-input{width:100%;background:transparent;border:1px solid var(--green-dim);color:var(--green);font-family:var(--mono);font-size:11px;padding:6px 8px;resize:none;line-height:1.5}
+textarea.bg-input:focus{outline:1px solid var(--green);border-color:var(--green)}
+.spec-out{font-size:11px;line-height:1.8;white-space:pre-wrap;color:var(--green)}
+.spec-out .kw{color:var(--amber)}
+.spec-out .val{color:var(--cyan)}
+.spec-out .cm{color:var(--green-dim)}
+
+/* Progress / complete */
+.complete-box{border:1px solid var(--green);padding:32px;text-align:center;margin:20px 0;position:relative}
+.complete-box::before{content:'*** MISSION COMPLETE ***';position:absolute;top:-8px;left:50%;transform:translateX(-50%);background:var(--bg);padding:0 8px;color:var(--amber);font-size:11px;letter-spacing:3px}
+.comp-title{color:var(--green-bright);font-size:28px;letter-spacing:4px;margin-bottom:8px}
+.comp-sub{color:var(--green-dim);font-size:12px;margin-bottom:16px;letter-spacing:1px}
+.comp-badges{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:12px 0}
+.comp-badge{border:1px solid var(--green-dim);padding:4px 12px;font-size:10px;color:var(--green);letter-spacing:2px}
+.next-list{text-align:left;display:inline-block;margin-top:12px}
+.nl-item{font-size:12px;color:var(--green-dim);padding:5px 0;border-bottom:1px solid rgba(51,255,51,.1)}
+.nl-item span{color:var(--cyan)}
+
+/* Progress bar */
+.progress-wrap{margin-bottom:16px}
+.pw-label{font-size:10px;color:var(--green-dim);margin-bottom:4px;letter-spacing:2px}
+.pw-track{height:4px;background:var(--green-dim);border-radius:0;overflow:hidden}
+.pw-fill{height:100%;background:var(--green);transition:width .5s}
+
+/* Nav */
+.term-nav{display:flex;justify-content:space-between;margin-top:24px;padding-top:12px;border-top:1px solid var(--green-dim)}
+.tn-btn{background:transparent;border:1px solid var(--green-dim);color:var(--green);font-family:var(--mono);font-size:12px;padding:8px 20px;cursor:pointer;letter-spacing:1px;transition:all .15s}
+.tn-btn:hover{background:var(--green);color:var(--bg);border-color:var(--green)}
+.tn-btn.primary{border-color:var(--green);color:var(--green)}
+.tn-btn.primary:hover{background:var(--green);color:var(--bg)}
+</style>
+</head>
+<body class="screen-wrap">
+<div class="terminal">
+  <div class="term-header">
+    <div class="th-row">
+      <div class="th-skill">SKILL: SK.AGT.000 // WHAT ARE AI AGENTS</div>
+      <div class="th-status">USER: VP_OPERATIONS // HEALTHCARE // LVL: BEGINNER</div>
+    </div>
+  </div>
+
+  <div class="progress-wrap">
+    <div class="pw-label">CHAPTER PROGRESS</div>
+    <div class="pw-track"><div class="pw-fill" id="pwfill" style="width:20%"></div></div>
+  </div>
+
+  <div class="nav-bar">
+    <button class="nav-btn active" id="nb0" onclick="go(0)">[1] SCENARIO</button>
+    <button class="nav-btn locked" id="nb1" onclick="go(1)">[2] CONCEPTS</button>
+    <button class="nav-btn locked" id="nb2" onclick="go(2)">[3] EXAMPLES</button>
+    <button class="nav-btn locked" id="nb3" onclick="go(3)">[4] BUILD</button>
+    <button class="nav-btn locked" id="nb4" onclick="go(4)">[5] COMPLETE</button>
+  </div>
+
+  <!-- Screen 1 -->
+  <div class="screen active" id="sc0">
+    <div class="prompt-line">Loading scenario briefing for healthcare operations...</div>
+    <div class="sec-head">MISSION BRIEFING</div>
+    <div class="info-table"><table width="100%">
+      <tr><td>ROLE</td><td>VP of Operations</td></tr>
+      <tr><td>INDUSTRY</td><td>Healthcare System</td></tr>
+      <tr><td>SKILL</td><td>SK.AGT.000 — What are AI Agents</td></tr>
+      <tr><td>LEVEL</td><td>BEGINNER → INTERMEDIATE</td></tr>
+      <tr><td>DURATION</td><td>~35 minutes / 5 sections</td></tr>
+    </table></div>
+
+    <div class="sec-head">CURRENT STATE ANALYSIS</div>
+    <div class="journey-box">
+      <div class="jb-cell">
+        <div class="jb-label">CURRENT STATE (A)</div>
+        <div class="jb-text">AI agents sound like science fiction. Unable to evaluate vendor proposals or lead team through adoption discussions. Nodding along in meetings.</div>
+      </div>
+      <div class="jb-arrow">→</div>
+      <div class="jb-cell">
+        <div class="jb-label">TARGET STATE (B)</div>
+        <div class="jb-text">Can define agents clearly, evaluate real healthcare use cases, design guardrails, and build a deployable operations agent specification.</div>
+      </div>
+    </div>
+
+    <div class="prompt-line">Scenario loaded. Proceed to module [2] to begin.</div>
+    <div class="cursor"></div>
+    <div class="term-nav">
+      <span></span>
+      <button class="tn-btn primary" onclick="advance()">[ENTER] CONTINUE →</button>
+    </div>
+  </div>
+
+  <!-- Screen 2 -->
+  <div class="screen" id="sc1">
+    <div class="prompt-line">Loading concept modules...</div>
+    <div class="sec-head">AI AGENT CONCEPTS</div>
+    <div class="concept-entry">
+      <div class="ce-num">CONCEPT_01</div>
+      <div class="ce-title">AGENTS ACT, NOT JUST ANSWER</div>
+      <div class="ce-text">A chatbot responds to a question and stops. An agent completes a multi-step goal — searching databases, sending notifications, updating records — autonomously. Key shift: from answering to doing.</div>
+    </div>
+    <div class="concept-entry" style="border-left-color:var(--amber)">
+      <div class="ce-num">CONCEPT_02</div>
+      <div class="ce-title">AGENTS USE TOOLS</div>
+      <div class="ce-text">An agent has access to defined tools: your EHR, scheduling system, notification service. It decides which tools to use and in what order. That decision-making over tools is what makes agents operationally powerful.</div>
+    </div>
+    <div class="concept-entry" style="border-left-color:var(--cyan)">
+      <div class="ce-num">CONCEPT_03</div>
+      <div class="ce-title">GUARDRAILS ARE MANDATORY IN HEALTHCARE</div>
+      <div class="ce-text">Agents must operate within strict permissions, audit trails, and escalation paths. No agent should take clinical or operational action without a human approval gate. This is non-negotiable in regulated environments.</div>
+    </div>
+
+    <div class="sec-head">COMPARISON TABLE</div>
+    <div class="info-table"><table width="100%">
+      <tr><td>Simple AI Tool</td><td>Answers one prompt. No memory. No tools. You do all follow-up manually.</td></tr>
+      <tr><td>AI Agent</td><td>Breaks goals into steps, uses tools to execute, monitors outcomes, reports back.</td></tr>
+      <tr><td>Multi-Agent System</td><td>Specialist agents collaborate — scheduling, clinical docs, compliance — toward one goal.</td></tr>
+    </table></div>
+    <div class="cursor"></div>
+    <div class="term-nav">
+      <button class="tn-btn" onclick="go(0)">[B] BACK</button>
+      <button class="tn-btn primary" onclick="advance()">[ENTER] EXAMPLES →</button>
+    </div>
+  </div>
+
+  <!-- Screen 3 -->
+  <div class="screen" id="sc2">
+    <div class="prompt-line">Loading healthcare operations examples...</div>
+    <div class="sec-head">OPERATIONAL EXAMPLES</div>
+    <div class="ex-toggle">
+      <button class="ex-t-btn active" onclick="swex(0,this)">[1] DISCHARGE_COORD</button>
+      <button class="ex-t-btn" onclick="swex(1,this)">[2] STAFFING_MONITOR</button>
+    </div>
+    <div class="ex-pane active" id="exp0">
+      <div class="scenario-box">
+        <div class="sb-label">SITUATION_LOG</div>
+        <div class="sb-text">Discharge delays cost health system ~200 bed-hours/week. Bottleneck: coordination steps execute sequentially. An agent can trigger all downstream notifications in parallel from a single EHR event.</div>
+        <div class="doc-row">
+          <div class="doc-item">📋 ehr_discharge_trigger.api</div>
+          <div class="doc-item">📋 transport_roster.db</div>
+          <div class="doc-item">📋 family_contacts.csv</div>
+        </div>
+      </div>
+      <div class="code-block">
+        <div class="cb-label">AGENT_INSTRUCTION.txt</div>
+        <div class="code-line"><div class="cl-n">1</div><div class="cl-t"><span class="hi">GOAL:</span> On discharge order → coordinate all steps in parallel</div></div>
+        <div class="code-line"><div class="cl-n">2</div><div class="cl-t"><span class="cm">// Step 1:</span> Notify pharmacy. Check-in after 30 min.</div></div>
+        <div class="code-line"><div class="cl-n">3</div><div class="cl-t"><span class="cm">// Step 2:</span> Reserve transport (soonest + 90 min buffer).</div></div>
+        <div class="code-line"><div class="cl-n">4</div><div class="cl-t"><span class="cm">// Step 3:</span> Alert social work if flag in record.</div></div>
+        <div class="code-line"><div class="cl-n">5</div><div class="cl-t"><span class="cm">// Step 4:</span> Send family SMS (approved template).</div></div>
+        <div class="code-line"><div class="cl-n">6</div><div class="cl-t"><span class="hi">RULE:</span> On any failure → escalate to charge nurse immediately.</div></div>
+      </div>
+    </div>
+    <div class="ex-pane" id="exp1">
+      <div class="scenario-box">
+        <div class="sb-label">SITUATION_LOG</div>
+        <div class="sb-text">Float pool coordinator spends 40% of shift on manual gap checks. Agent monitors schedule continuously and initiates outreach — human confirms before any booking is made.</div>
+        <div class="doc-row">
+          <div class="doc-item">📋 scheduling_system.api</div>
+          <div class="doc-item">📋 staff_availability.db</div>
+          <div class="doc-item">📋 escalation_rules.json</div>
+        </div>
+      </div>
+      <div class="code-block">
+        <div class="cb-label">AGENT_INSTRUCTION.txt</div>
+        <div class="code-line"><div class="cl-n">1</div><div class="cl-t"><span class="hi">GOAL:</span> Monitor schedule for gaps 4+ hours in advance</div></div>
+        <div class="code-line"><div class="cl-n">2</div><div class="cl-t"><span class="cm">// Step 1:</span> Check every 60 min for gaps in next 8 hrs.</div></div>
+        <div class="code-line"><div class="cl-n">3</div><div class="cl-t"><span class="cm">// Step 2:</span> Cross-reference float pool availability.</div></div>
+        <div class="code-line"><div class="cl-n">4</div><div class="cl-t"><span class="cm">// Step 3:</span> Offer shift to top 3 staff (seniority order).</div></div>
+        <div class="code-line"><div class="cl-n">5</div><div class="cl-t"><span class="cm">// Step 4:</span> No response in 20 min → escalate to supervisor.</div></div>
+        <div class="code-line"><div class="cl-n">6</div><div class="cl-t"><span class="hi">RULE:</span> NEVER book without human confirmation.</div></div>
+      </div>
+    </div>
+    <div class="cursor"></div>
+    <div class="term-nav">
+      <button class="tn-btn" onclick="go(1)">[B] BACK</button>
+      <button class="tn-btn primary" onclick="advance()">[ENTER] BUILD AGENT →</button>
+    </div>
+  </div>
+
+  <!-- Screen 4 -->
+  <div class="screen" id="sc3">
+    <div class="prompt-line">Initialising agent configuration interface...</div>
+    <div class="sec-head">AGENT BUILDER :: CONFIGURE YOUR AGENT</div>
+    <div class="builder-grid">
+      <div class="bg-inputs">
+        <div class="bg-field"><div class="bg-label">AGENT_GOAL</div><textarea class="bg-input" rows="2" id="b0" oninput="buildSpec()">Discharge coordination — parallel notification of all downstream teams</textarea></div>
+        <div class="bg-field"><div class="bg-label">TOOLS_AVAILABLE</div><textarea class="bg-input" rows="3" id="b1" oninput="buildSpec()">EHR_discharge_trigger, transport_booking_api, sms_service, escalation_system</textarea></div>
+        <div class="bg-field"><div class="bg-label">GUARDRAILS</div><textarea class="bg-input" rows="3" id="b2" oninput="buildSpec()">NEVER modify discharge orders; confirm transport before family notification; escalate all failures</textarea></div>
+        <div class="bg-field"><div class="bg-label">KPI</div><textarea class="bg-input" rows="2" id="b3" oninput="buildSpec()">Coordination time reduced 40% in 60 days</textarea></div>
+      </div>
+      <div class="bg-spec">
+        <div class="bg-label">AGENT_SPEC.config :: LIVE</div>
+        <pre class="spec-out" id="spec-out"><span class="kw">agent</span> "ops-coordinator" {
+  goal: <span class="val" id="sv0">"Discharge coordination..."</span>
+  tools: [
+    <span class="val" id="sv1">"EHR_discharge_trigger"</span>
+  ]
+  guardrails: [
+    <span class="val" id="sv2">"NEVER modify discharge orders"</span>
+  ]
+  kpi: <span class="val" id="sv3">"Coordination time -40%"</span>
+  <span class="cm">// Required in all healthcare deployments:</span>
+  human_in_loop: <span class="val">TRUE</span>
+  audit_log: <span class="val">TRUE</span>
+  escalation_path: <span class="val">REQUIRED</span>
+}</pre>
+      </div>
+    </div>
+    <div class="cursor"></div>
+    <div class="term-nav">
+      <button class="tn-btn" onclick="go(2)">[B] BACK</button>
+      <button class="tn-btn primary" onclick="advance()">[ENTER] FINALISE →</button>
+    </div>
+  </div>
+
+  <!-- Screen 5 -->
+  <div class="screen" id="sc4">
+    <div class="prompt-line">Compiling results...</div>
+    <div class="complete-box">
+      <div class="comp-title">SK.AGT.000 // COMPLETE</div>
+      <div class="comp-sub">WHAT ARE AI AGENTS // BEGINNER → INTERMEDIATE // HEALTHCARE OPERATIONS</div>
+      <div class="comp-badges">
+        <div class="comp-badge">AGENT_ARCHITECTURE</div>
+        <div class="comp-badge">HEALTHCARE_OPS</div>
+        <div class="comp-badge">GUARDRAIL_DESIGN</div>
+      </div>
+      <div class="next-list">
+        <div class="nl-item"><span>[NEXT]</span> SK.AGT.001 — Tool definitions & validation</div>
+        <div class="nl-item"><span>[NEXT]</span> SK.AGT.010 — Single-agent loops</div>
+        <div class="nl-item"><span>[NEXT]</span> SK.AGT.030 — Guardrails & approval gates</div>
+      </div>
+    </div>
+    <div class="cursor"></div>
+    <div class="term-nav" style="justify-content:center">
+      <button class="tn-btn primary" onclick="go(0)">[R] RESTART MODULE</button>
+    </div>
+  </div>
+
+</div>
+<script>
+let cur=0,unlocked=1;
+function go(n){
+  if(n>=unlocked)return;
+  document.querySelectorAll('.screen').forEach((s,i)=>s.classList.toggle('active',i===n));
+  document.querySelectorAll('.nav-btn').forEach((b,i)=>{
+    b.classList.remove('active','locked');
+    if(i===n)b.classList.add('active');
+    else if(i>=unlocked)b.classList.add('locked');
+  });
+  cur=n;
+  document.getElementById('pwfill').style.width=(((n+1)/5)*100)+'%';
+  window.scrollTo(0,0);
+}
+function advance(){unlocked=Math.max(unlocked,cur+2);go(cur+1);}
+function swex(n,btn){
+  document.querySelectorAll('.ex-pane').forEach(p=>p.classList.remove('active'));
+  document.getElementById('exp'+n).classList.add('active');
+  document.querySelectorAll('.ex-t-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+function buildSpec(){
+  const v=[0,1,2,3].map(i=>document.getElementById('b'+i).value);
+  document.getElementById('sv0').textContent='"'+v[0]+'"';
+  document.getElementById('sv1').textContent=v[1].split(',').map(s=>'"'+s.trim()+'"').join(',\n    ');
+  document.getElementById('sv2').textContent=v[2].split(';').map(s=>'"'+s.trim()+'"').join(',\n    ');
+  document.getElementById('sv3').textContent='"'+v[3]+'"';
+}
+</script>
+</body>
+</html>

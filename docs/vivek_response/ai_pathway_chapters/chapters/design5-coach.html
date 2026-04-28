@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dialogue Coach — Chain-of-Thought Prompting</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f2f0fb;
+  --white: #ffffff;
+  --ink: #18162e;
+  --ink2: #3a3660;
+  --muted: #7b78a0;
+  --dim: #b8b6d4;
+  --border: #e4e0f5;
+  --coach-bg: #18162e;
+  --indigo: #4f46e5;
+  --indigo-l: rgba(79,70,229,.1);
+  --violet: #7c3aed;
+  --teal: #0d9488;
+  --teal-l: rgba(13,148,136,.08);
+  --amber: #d97706;
+  --green: #059669;
+  --sans: 'Sora', sans-serif;
+  --mono: 'JetBrains Mono', monospace;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body { background: var(--bg); color: var(--ink); font-family: var(--sans); display: flex; flex-direction: column; overflow: hidden; }
+
+/* Shell */
+.shell { display: flex; height: 100vh; overflow: hidden; }
+
+/* Left panel — Coach */
+.coach-panel { width: 300px; background: var(--coach-bg); display: flex; flex-direction: column; flex-shrink: 0; position: relative; overflow: hidden; }
+.coach-bg-grad { position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 0%, rgba(79,70,229,.3) 0%, transparent 65%); pointer-events: none; }
+.coach-header { padding: 28px 24px 20px; position: relative; z-index: 1; }
+.coach-skill-tag { font-family: var(--mono); font-size: 9px; color: rgba(255,255,255,.35); text-transform: uppercase; letter-spacing: 3px; margin-bottom: 20px; }
+.coach-avatar { width: 64px; height: 64px; border-radius: 20px; background: linear-gradient(135deg, #4f46e5, #7c3aed); display: flex; align-items: center; justify-content: center; font-size: 28px; margin-bottom: 14px; box-shadow: 0 8px 24px rgba(79,70,229,.4); }
+.coach-name { font-size: 16px; font-weight: 600; color: #fff; margin-bottom: 2px; }
+.coach-role { font-size: 11px; color: rgba(255,255,255,.4); font-family: var(--mono); }
+
+.coach-progress { padding: 0 24px 20px; position: relative; z-index: 1; }
+.cp-label { font-family: var(--mono); font-size: 9px; color: rgba(255,255,255,.3); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px; display: flex; justify-content: space-between; }
+.cp-steps { display: flex; flex-direction: column; gap: 2px; }
+.cp-step { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 8px; cursor: pointer; transition: all .2s; }
+.cp-step:hover { background: rgba(255,255,255,.06); }
+.cp-step.active { background: rgba(79,70,229,.25); }
+.cp-step.locked { opacity: .35; cursor: default; }
+.cp-dot { width: 8px; height: 8px; border-radius: 50%; border: 1.5px solid rgba(255,255,255,.2); flex-shrink: 0; transition: all .2s; }
+.cp-step.done .cp-dot { background: var(--teal); border-color: var(--teal); }
+.cp-step.active .cp-dot { background: var(--indigo); border-color: var(--indigo); box-shadow: 0 0 0 3px rgba(79,70,229,.3); }
+.cp-step-label { font-size: 12px; color: rgba(255,255,255,.5); }
+.cp-step.active .cp-step-label { color: #fff; font-weight: 500; }
+.cp-step.done .cp-step-label { color: rgba(255,255,255,.6); }
+
+.coach-context { flex: 1; overflow-y: auto; padding: 0 24px 20px; position: relative; z-index: 1; border-top: 1px solid rgba(255,255,255,.06); padding-top: 20px; margin-top: 8px; }
+.cc-title { font-family: var(--mono); font-size: 9px; color: rgba(255,255,255,.25); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 12px; }
+.cc-item { margin-bottom: 12px; }
+.cc-item-label { font-size: 10px; color: rgba(255,255,255,.3); margin-bottom: 3px; font-family: var(--mono); }
+.cc-item-value { font-size: 12px; color: rgba(255,255,255,.65); line-height: 1.4; }
+
+/* Right panel — Conversation */
+.convo-panel { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+/* Convo header */
+.convo-header { background: var(--white); border-bottom: 1px solid var(--border); padding: 14px 28px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+.ch-section { font-size: 13px; font-weight: 600; color: var(--ink); }
+.ch-progress { display: flex; align-items: center; gap: 10px; }
+.ch-prog-bar { width: 120px; height: 4px; background: var(--border); border-radius: 2px; }
+.ch-prog-fill { height: 100%; background: var(--indigo); border-radius: 2px; transition: width .4s; }
+.ch-prog-label { font-family: var(--mono); font-size: 10px; color: var(--muted); }
+
+/* Chat area */
+.chat { flex: 1; overflow-y: auto; padding: 24px 28px; display: flex; flex-direction: column; gap: 20px; }
+
+/* Messages */
+.msg { display: flex; gap: 12px; align-items: flex-start; max-width: 640px; }
+.msg.user { flex-direction: row-reverse; align-self: flex-end; }
+.msg-avatar { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+.msg.coach .msg-avatar { background: linear-gradient(135deg, #4f46e5, #7c3aed); }
+.msg.user .msg-avatar { background: var(--border); font-size: 14px; }
+.msg-bubble { padding: 14px 18px; border-radius: 16px; font-size: 14px; line-height: 1.6; }
+.msg.coach .msg-bubble { background: var(--white); border: 1px solid var(--border); color: var(--ink2); border-top-left-radius: 4px; }
+.msg.user .msg-bubble { background: var(--indigo); color: #fff; border-top-right-radius: 4px; }
+
+/* Typing indicator */
+.typing { display: flex; align-items: center; gap: 4px; padding: 14px 18px; background: var(--white); border: 1px solid var(--border); border-radius: 16px; border-top-left-radius: 4px; width: fit-content; }
+.typing span { width: 6px; height: 6px; border-radius: 50%; background: var(--dim); animation: blink 1.2s infinite; }
+.typing span:nth-child(2) { animation-delay: .2s; }
+.typing span:nth-child(3) { animation-delay: .4s; }
+@keyframes blink { 0%,80%,100%{opacity:.2} 40%{opacity:1} }
+
+/* Content cards inside messages */
+.info-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 8px; margin-top: 10px; }
+.info-tile { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; }
+.it-label { font-size: 10px; color: var(--muted); font-family: var(--mono); margin-bottom: 3px; text-transform: uppercase; letter-spacing: 1px; }
+.it-value { font-size: 13px; font-weight: 600; color: var(--ink); }
+
+.journey-inline { display: flex; align-items: stretch; gap: 8px; margin-top: 10px; }
+.ji-node { flex: 1; border-radius: 8px; padding: 10px 12px; }
+.ji-node.from { background: var(--bg); border: 1px solid var(--border); }
+.ji-node.to { background: var(--indigo-l); border: 1px solid rgba(79,70,229,.2); }
+.ji-label { font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 4px; }
+.ji-text { font-size: 12px; color: var(--ink2); line-height: 1.4; }
+.ji-arrow { display: flex; align-items: center; color: var(--indigo); font-size: 14px; flex-shrink: 0; }
+
+.concept-inline { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-top: 8px; }
+.ci-header { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.ci-icon { font-size: 16px; }
+.ci-title { font-size: 13px; font-weight: 600; color: var(--ink); }
+.ci-text { font-size: 12px; color: var(--muted); line-height: 1.5; }
+.ci-tag { display: inline-block; font-size: 9px; font-weight: 600; padding: 2px 8px; border-radius: 10px; margin-top: 6px; text-transform: uppercase; letter-spacing: 1px; }
+
+.chain-inline { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 14px; margin-top: 8px; }
+.chain-inline-title { font-size: 11px; color: var(--muted); font-family: var(--mono); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; }
+.chain-pills { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.chain-pill { background: var(--white); border: 1px solid var(--border); border-radius: 6px; padding: 5px 10px; font-size: 11px; color: var(--ink2); }
+.chain-arrow-sm { font-size: 10px; color: var(--dim); }
+
+.scenario-inline { background: rgba(217,119,6,.06); border: 1px solid rgba(217,119,6,.2); border-radius: 8px; padding: 12px; margin-top: 8px; }
+.si-label { font-size: 10px; font-weight: 600; color: var(--amber); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+.si-text { font-size: 13px; color: var(--ink2); line-height: 1.5; }
+.si-docs { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+.si-doc { font-family: var(--mono); font-size: 10px; color: var(--muted); background: var(--white); border: 1px solid var(--border); border-radius: 4px; padding: 2px 8px; }
+
+.prompt-inline { background: var(--ink); border-radius: 8px; overflow: hidden; margin-top: 8px; }
+.pi-header { padding: 8px 12px; border-bottom: 1px solid rgba(255,255,255,.07); display: flex; justify-content: space-between; }
+.pi-label { font-family: var(--mono); font-size: 9px; color: rgba(255,255,255,.3); text-transform: uppercase; letter-spacing: 2px; }
+.pi-copy { font-family: var(--mono); font-size: 9px; color: rgba(255,255,255,.3); cursor: pointer; background: none; border: none; }
+.pi-body { padding: 12px; font-family: var(--mono); font-size: 11px; color: rgba(255,255,255,.75); line-height: 1.8; white-space: pre-wrap; }
+.pi-body .hi { color: #fbbf24; }
+
+.insight-inline { background: var(--teal-l); border: 1px solid rgba(13,148,136,.2); border-radius: 8px; padding: 12px; margin-top: 8px; }
+.ins-label { font-size: 10px; font-weight: 600; color: var(--teal); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+.ins-text { font-size: 12px; color: var(--ink2); line-height: 1.5; }
+
+.agent-form-inline { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 14px; margin-top: 8px; }
+.af-title { font-size: 12px; font-weight: 600; color: var(--ink); margin-bottom: 12px; }
+.af-field { margin-bottom: 10px; }
+.af-label { font-family: var(--mono); font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+textarea.af-input { width: 100%; background: var(--white); border: 1px solid var(--border); border-radius: 6px; font-family: var(--mono); font-size: 11px; color: var(--ink); padding: 8px 10px; resize: none; line-height: 1.5; transition: border-color .2s; }
+textarea.af-input:focus { outline: none; border-color: var(--indigo); }
+.spec-inline { background: var(--ink); border-radius: 6px; padding: 10px 12px; margin-top: 10px; font-family: var(--mono); font-size: 10px; color: rgba(255,255,255,.6); line-height: 1.7; white-space: pre-wrap; }
+.spec-inline .kw { color: #a78bfa; }
+.spec-inline .val { color: #6ee7b7; }
+
+.complete-inline { text-align: center; padding: 8px 0; }
+.ci-trophy { font-size: 40px; margin-bottom: 8px; display: block; }
+.ci-title { font-size: 18px; font-weight: 700; color: var(--ink); margin-bottom: 4px; }
+.ci-sub { font-size: 13px; color: var(--muted); margin-bottom: 14px; }
+.badge-row { display: flex; gap: 8px; justify-content: center; margin-bottom: 14px; }
+.badge-sm { background: var(--white); border: 1px solid var(--border); border-radius: 10px; padding: 8px 14px; font-size: 12px; color: var(--ink2); }
+.next-inline { background: var(--indigo-l); border: 1px solid rgba(79,70,229,.15); border-radius: 8px; padding: 12px; text-align: left; }
+.ni-label { font-size: 10px; font-weight: 600; color: var(--indigo); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+.ni-item { font-size: 12px; color: var(--ink2); padding: 4px 0; display: flex; justify-content: space-between; }
+.ni-arrow { color: var(--indigo); }
+
+/* Response options */
+.response-area { background: var(--white); border-top: 1px solid var(--border); padding: 16px 28px; flex-shrink: 0; }
+.ra-label { font-size: 11px; color: var(--muted); margin-bottom: 10px; font-weight: 500; }
+.response-options { display: flex; gap: 8px; flex-wrap: wrap; }
+.resp-btn { background: var(--bg); border: 1.5px solid var(--border); border-radius: 20px; padding: 8px 18px; font-family: var(--sans); font-size: 13px; color: var(--ink2); cursor: pointer; transition: all .2s; }
+.resp-btn:hover { border-color: var(--indigo); color: var(--indigo); background: var(--indigo-l); }
+.resp-btn.primary { background: var(--indigo); border-color: var(--indigo); color: #fff; }
+.resp-btn.primary:hover { background: #4338ca; }
+</style>
+</head>
+<body>
+<div class="shell">
+  <!-- Left: Coach -->
+  <div class="coach-panel">
+    <div class="coach-bg-grad"></div>
+    <div class="coach-header">
+      <div class="coach-skill-tag">SK.PRM.005 · Chain-of-Thought</div>
+      <div class="coach-avatar">🧠</div>
+      <div class="coach-name">Coach Aria</div>
+      <div class="coach-role">GenAI Skills Instructor</div>
+    </div>
+    <div class="coach-progress">
+      <div class="cp-label"><span>Your progress</span><span id="cp-pct">20%</span></div>
+      <div class="cp-steps">
+        <div class="cp-step active" id="cps0" onclick="goStep(0)"><div class="cp-dot"></div><div class="cp-step-label">1. Scenario</div></div>
+        <div class="cp-step locked" id="cps1" onclick="goStep(1)"><div class="cp-dot"></div><div class="cp-step-label">2. AI Concepts</div></div>
+        <div class="cp-step locked" id="cps2" onclick="goStep(2)"><div class="cp-dot"></div><div class="cp-step-label">3. Examples</div></div>
+        <div class="cp-step locked" id="cps3" onclick="goStep(3)"><div class="cp-dot"></div><div class="cp-step-label">4. Build Agent</div></div>
+        <div class="cp-step locked" id="cps4" onclick="goStep(4)"><div class="cp-dot"></div><div class="cp-step-label">5. Complete</div></div>
+      </div>
+    </div>
+    <div class="coach-context">
+      <div class="cc-title">Your profile</div>
+      <div class="cc-item"><div class="cc-item-label">Role</div><div class="cc-item-value">Marketing Manager · B2B SaaS</div></div>
+      <div class="cc-item"><div class="cc-item-label">Level</div><div class="cc-item-value">Intermediate → Advanced</div></div>
+      <div class="cc-item"><div class="cc-item-label">Skill</div><div class="cc-item-value">Chain-of-Thought Prompting</div></div>
+      <div class="cc-item"><div class="cc-item-label">Layer</div><div class="cc-item-value">Prompting & HITL Workflows</div></div>
+    </div>
+  </div>
+
+  <!-- Right: Conversation -->
+  <div class="convo-panel">
+    <div class="convo-header">
+      <div class="ch-section" id="section-label">Section 1 — Scenario & Objectives</div>
+      <div class="ch-progress">
+        <div class="ch-prog-bar"><div class="ch-prog-fill" id="prog-fill" style="width:20%"></div></div>
+        <div class="ch-prog-label" id="prog-label">1 / 5</div>
+      </div>
+    </div>
+
+    <div class="chat" id="chat">
+      <!-- Messages rendered by JS -->
+    </div>
+
+    <div class="response-area" id="resp-area">
+      <div class="ra-label">Choose your response:</div>
+      <div class="response-options" id="resp-options"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+let cur = 0, unlocked = 1;
+
+const sections = [
+  { label: 'Section 1 — Scenario & Objectives' },
+  { label: 'Section 2 — AI Concepts' },
+  { label: 'Section 3 — Live Examples' },
+  { label: 'Section 4 — Build Your Agent' },
+  { label: 'Section 5 — Complete' },
+];
+
+const FLOWS = [
+  // Step 0: Scenario
+  {
+    coach: `Hey! I'm Coach Aria — your guide through the GenAI Skills Pathway. Today we're working on <strong>SK.PRM.005: Chain-of-Thought Prompting</strong>.<br><br>I've pulled your profile. Here's where we're starting:`,
+    coachExtra: `<div class="info-grid">
+      <div class="info-tile"><div class="it-label">Role</div><div class="it-value">Marketing Manager</div></div>
+      <div class="info-tile"><div class="it-label">Industry</div><div class="it-value">B2B SaaS</div></div>
+      <div class="info-tile"><div class="it-label">Level</div><div class="it-value">Intermediate</div></div>
+      <div class="info-tile"><div class="it-label">Duration</div><div class="it-value">~35 mins</div></div>
+    </div>
+    <div style="margin-top:10px;font-size:13px;color:var(--ink2)">Sound right? Let me show you where this lesson takes you.</div>`,
+    coachFollow: `Here's the journey we'll take together:
+    <div class="journey-inline">
+      <div class="ji-node from"><div class="ji-label">Today</div><div class="ji-text">Complex campaigns need 8–10 AI rounds before output is usable</div></div>
+      <div class="ji-arrow">→</div>
+      <div class="ji-node to"><div class="ji-label" style="color:var(--indigo)">After this lesson</div><div class="ji-text">Structure AI reasoning upfront. One prompt. Boardroom-ready output.</div></div>
+    </div>`,
+    options: [
+      { text: "Sounds good — let's go!", next: 1 },
+      { text: "Tell me more about CoT first", next: 1 }
+    ]
+  },
+  // Step 1: Concepts
+  {
+    coach: `Great! Let me explain what's actually happening when you use chain-of-thought prompting. Three concepts you need:`,
+    coachExtra: `
+    <div class="concept-inline"><div class="ci-header"><div class="ci-icon">🎯</div><div class="ci-title">The Prediction Problem</div></div><div class="ci-text">LLMs predict the next token — they don't reason. Without structure, they skip steps and jump to plausible conclusions. Complex questions get confident but shallow answers.</div><div class="ci-tag" style="background:rgba(239,68,68,.1);color:#ef4444">Why it fails</div></div>
+    <div class="concept-inline"><div class="ci-header"><div class="ci-icon">🔗</div><div class="ci-title">The Chain Mechanism</div></div><div class="ci-text">CoT forces intermediate reasoning steps before concluding. Each step becomes context for the next — so the model's reasoning improves itself as it runs.</div><div class="ci-tag" style="background:var(--indigo-l);color:var(--indigo)">How it works</div></div>
+    <div class="concept-inline"><div class="ci-header"><div class="ci-icon">📈</div><div class="ci-title">Your Marketing Payoff</div></div><div class="ci-text">CoT means a campaign brief grounded in your ICP, competitive positioning, and real channel data — from a single prompt instead of 10 rounds.</div><div class="ci-tag" style="background:var(--teal-l);color:var(--teal)">The result</div></div>`,
+    coachFollow: `Here's how a CoT prompt actually flows:
+    <div class="chain-inline">
+      <div class="chain-inline-title">Execution chain</div>
+      <div class="chain-pills">
+        <div class="chain-pill">Define problem</div><div class="chain-arrow-sm">→</div>
+        <div class="chain-pill">Analyze factors</div><div class="chain-arrow-sm">→</div>
+        <div class="chain-pill">Cross-reference</div><div class="chain-arrow-sm">→</div>
+        <div class="chain-pill">Structured output</div>
+      </div>
+    </div>
+    <div style="margin-top:10px;font-size:13px;color:var(--ink2)">Make sense? Want to see it applied to your actual marketing work?</div>`,
+    options: [
+      { text: "Yes — show me real examples", next: 2 },
+      { text: "Explain the mechanism more", next: 2 }
+    ]
+  },
+  // Step 2: Examples
+  {
+    coach: `Let's look at two real scenarios from your marketing work. I'll show you the prompt and break down why it works.`,
+    coachExtra: `<div style="font-weight:600;font-size:14px;margin-bottom:8px">Example 1 — Campaign Brief</div>
+    <div class="scenario-inline"><div class="si-label">Situation</div><div class="si-text">Q3 product launch for your AI analytics feature. Need a complete brief from ICP data, past performance, and competitor positioning.</div>
+    <div class="si-docs"><div class="si-doc">📊 Q2-campaign.csv</div><div class="si-doc">📋 ICP-profile.pdf</div><div class="si-doc">📈 competitor-matrix.xlsx</div></div></div>
+    <div class="prompt-inline">
+      <div class="pi-header"><div class="pi-label">Your CoT Prompt</div><button class="pi-copy" onclick="this.textContent='✓'">Copy</button></div>
+      <div class="pi-body">I'm launching a B2B SaaS analytics feature in Q3.
+Work through this step by step:
+
+<span class="hi">Step 1 — Audience:</span> Review ICP profile. Who is
+the primary buyer? What pain points does this
+feature address most acutely?
+
+<span class="hi">Step 2 — Competitive context:</span> What gap are
+we filling that competitors leave open?
+
+<span class="hi">Step 3 — Channel strategy:</span> From Q2 results,
+which channels drove highest-quality pipeline?
+Explain reasoning before recommending.
+
+<span class="hi">Step 4 — Synthesis:</span> Positioning statement,
+3 pillars, channel mix, Q3 KPIs.
+
+Show reasoning at each step before moving on.</div>
+    </div>
+    <div class="insight-inline"><div class="ins-label">💡 Why it works</div><div class="ins-text">The final line "Show reasoning at each step before moving on" is the CoT trigger — without it the model synthesizes immediately and skips analytical grounding.</div></div>`,
+    coachFollow: `<div style="font-weight:600;font-size:14px;margin-bottom:8px">Example 2 — Competitive Memo</div>
+    <div class="scenario-inline"><div class="si-label">Situation</div><div class="si-text">VP needs a competitive intelligence memo before Monday's board meeting. Sources: G2 reviews, Gartner report, competitor notes.</div>
+    <div class="si-docs"><div class="si-doc">📊 g2-reviews.csv</div><div class="si-doc">📋 gartner-2025.pdf</div></div></div>
+    <div class="prompt-inline">
+      <div class="pi-header"><div class="pi-label">Your CoT Prompt</div><button class="pi-copy" onclick="this.textContent='✓'">Copy</button></div>
+      <div class="pi-body">Competitive analysis. Build on each step:
+
+<span class="hi">Step 1:</span> Top 3 complaints per competitor from
+G2 reviews. Quantify where possible.
+
+<span class="hi">Step 2:</span> How does Gartner frame the market?
+Where is the white space?
+
+<span class="hi">Step 3 — Triangulate:</span> Cross-reference Steps
+1 &amp; 2. Which gaps appear in BOTH customer
+complaints AND analyst white space?
+
+<span class="hi">Step 4:</span> 3-paragraph exec memo. Cite reasoning inline.</div>
+    </div>
+    <div class="insight-inline"><div class="ins-label">💡 Advanced technique</div><div class="ins-text">Step 3 "triangulation" forces cross-referencing two evidence sources. "Cite reasoning inline" makes every claim auditable for the board.</div></div>
+    <div style="margin-top:10px;font-size:13px;color:var(--ink2)">Ready to build your own agent that does this automatically?</div>`,
+    options: [
+      { text: "Ready — let's build!", next: 3 },
+      { text: "Can you clarify triangulation?", next: 3 }
+    ]
+  },
+  // Step 3: Agent Builder
+  {
+    coach: `Let's build your CoT marketing agent. Fill in the fields below — I'll assemble your agent spec in real time.`,
+    coachExtra: `<div class="agent-form-inline">
+      <div class="af-title">🤖 Configure Your Agent</div>
+      <div class="af-field"><div class="af-label">Agent Role</div><textarea class="af-input" rows="2" id="a0" oninput="liveSpec()">Campaign brief generator for B2B SaaS product launches</textarea></div>
+      <div class="af-field"><div class="af-label">Reasoning Chain</div><textarea class="af-input" rows="2" id="a1" oninput="liveSpec()">Audience → Competitive context → Channel fit → Brief synthesis</textarea></div>
+      <div class="af-field"><div class="af-label">Required Inputs</div><textarea class="af-input" rows="2" id="a2" oninput="liveSpec()">ICP profile, campaign performance data, competitor matrix</textarea></div>
+      <div class="af-field"><div class="af-label">Output Format</div><textarea class="af-input" rows="2" id="a3" oninput="liveSpec()">Positioning statement · 3 pillars · Channel mix · KPIs</textarea></div>
+      <pre class="spec-inline" id="spec-out"><span class="kw">agent</span> "mktg-cot-agent" {
+  role: <span class="val" id="sv0">"Campaign brief generator..."</span>
+  chain: <span class="val" id="sv1">"Audience → Competitive → Channel → Synthesis"</span>
+  inputs: [<span class="val" id="sv2">"ICP profile, campaign data, competitor matrix"</span>]
+  output: <span class="val" id="sv3">"Positioning · Pillars · Channels · KPIs"</span>
+  cot: <span class="val">"Think step by step. Show reasoning before synthesizing."</span>
+}</pre>
+    </div>`,
+    coachFollow: `Your agent is configured and ready to deploy! You can use this spec with any LLM API or no-code agent builder.<br><br>One last step — let me summarise what you've accomplished today.`,
+    options: [
+      { text: "This looks great — finish up!", next: 4 },
+      { text: "Save my agent spec", next: 4 }
+    ]
+  },
+  // Step 4: Complete
+  {
+    coach: ``,
+    coachExtra: `<div class="complete-inline">
+      <span class="ci-trophy">🏆</span>
+      <div class="ci-title">Lesson Complete!</div>
+      <div class="ci-sub">You've mastered SK.PRM.005 — Chain-of-Thought Prompting</div>
+      <div class="badge-row">
+        <div class="badge-sm">🔗 Chain Thinker</div>
+        <div class="badge-sm">🤖 Agent Builder</div>
+        <div class="badge-sm">📊 Data Reasoner</div>
+      </div>
+      <div class="next-inline">
+        <div class="ni-label">Up Next in Your Path</div>
+        <div class="ni-item"><span>SK.PRM.022 — ReAct-style patterns</span><span class="ni-arrow">→</span></div>
+        <div class="ni-item"><span>SK.AGT.001 — Tool definitions & validation</span><span class="ni-arrow">→</span></div>
+        <div class="ni-item"><span>SK.RAG.022 — Agentic RAG patterns</span><span class="ni-arrow">→</span></div>
+      </div>
+    </div>`,
+    coachFollow: null,
+    options: [
+      { text: "Start next lesson →", next: null },
+      { text: "Restart this lesson", next: 0 }
+    ]
+  }
+];
+
+function renderMessage(role, html, delay) {
+  const chat = document.getElementById('chat');
+  return new Promise(resolve => {
+    setTimeout(() => {
+      if (role === 'typing') {
+        const t = document.createElement('div');
+        t.className = 'msg coach'; t.id = 'typing-ind';
+        t.innerHTML = `<div class="msg-avatar">🧠</div><div class="typing"><span></span><span></span><span></span></div>`;
+        chat.appendChild(t);
+        chat.scrollTop = chat.scrollHeight;
+        resolve(t);
+        return;
+      }
+      const m = document.createElement('div');
+      m.className = 'msg ' + role;
+      const avatarHtml = role === 'coach' ? `<div class="msg-avatar">🧠</div>` : `<div class="msg-avatar">👤</div>`;
+      m.innerHTML = avatarHtml + `<div class="msg-bubble">${html}</div>`;
+      chat.appendChild(m);
+      chat.scrollTop = chat.scrollHeight;
+      resolve(m);
+    }, delay || 0);
+  });
+}
+
+async function showStep(n) {
+  // Update UI
+  document.getElementById('section-label').textContent = sections[n].label;
+  document.getElementById('prog-fill').style.width = (((n+1)/5)*100)+'%';
+  document.getElementById('prog-label').textContent = (n+1)+' / 5';
+  document.getElementById('cp-pct').textContent = Math.round(((n+1)/5)*100)+'%';
+  document.querySelectorAll('[id^=cps]').forEach((el,i) => {
+    el.classList.remove('active','done','locked');
+    if (i < n) el.classList.add('done');
+    else if (i === n) el.classList.add('active');
+    else el.classList.add('locked');
+  });
+  document.getElementById('resp-area').style.display = 'none';
+  const flow = FLOWS[n];
+  const typing = await renderMessage('typing', '', 300);
+  await new Promise(r => setTimeout(r, 900));
+  typing.remove();
+  if (flow.coach) await renderMessage('coach', flow.coach, 0);
+  if (flow.coachExtra) {
+    await new Promise(r => setTimeout(r, 300));
+    const typing2 = await renderMessage('typing', '', 100);
+    await new Promise(r => setTimeout(r, 700));
+    typing2.remove();
+    await renderMessage('coach', flow.coachExtra, 0);
+  }
+  if (flow.coachFollow) {
+    await new Promise(r => setTimeout(r, 500));
+    const typing3 = await renderMessage('typing', '', 100);
+    await new Promise(r => setTimeout(r, 800));
+    typing3.remove();
+    await renderMessage('coach', flow.coachFollow, 0);
+  }
+  // Show response options
+  document.getElementById('resp-area').style.display = 'block';
+  const optContainer = document.getElementById('resp-options');
+  optContainer.innerHTML = '';
+  flow.options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'resp-btn' + (i === 0 ? ' primary' : '');
+    btn.textContent = opt.text;
+    btn.onclick = async () => {
+      optContainer.innerHTML = '';
+      document.getElementById('resp-area').style.display = 'none';
+      await renderMessage('user', opt.text, 0);
+      await new Promise(r => setTimeout(r, 300));
+      if (opt.next !== null && opt.next !== undefined) {
+        unlocked = Math.max(unlocked, opt.next + 1);
+        cur = opt.next;
+        showStep(opt.next);
+      } else {
+        await renderMessage('coach', 'Great work! You can restart the lesson anytime using the button below.', 400);
+        const restartBtn = document.createElement('button');
+        restartBtn.className = 'resp-btn primary';
+        restartBtn.textContent = 'Restart lesson';
+        restartBtn.onclick = () => { 
+          document.getElementById('chat').innerHTML = ''; 
+          cur = 0; unlocked = 1; 
+          showStep(0); 
+        };
+        document.getElementById('resp-area').style.display = 'block';
+        document.getElementById('resp-options').appendChild(restartBtn);
+      }
+    };
+    optContainer.appendChild(btn);
+  });
+}
+
+function goStep(n) {
+  if (n >= unlocked) return;
+  document.getElementById('chat').innerHTML = '';
+  cur = n;
+  showStep(n);
+}
+
+function liveSpec() {
+  const ids = ['a0','a1','a2','a3'];
+  const svIds = ['sv0','sv1','sv2','sv3'];
+  ids.forEach((id,i) => {
+    const el = document.getElementById(id);
+    const sv = document.getElementById(svIds[i]);
+    if (el && sv) sv.textContent = '"' + el.value + '"';
+  });
+}
+
+// Start
+showStep(0);
+</script>
+</body>
+</html>
