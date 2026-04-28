@@ -64,7 +64,6 @@ export default function SelfAssessment({ skills, assessments, onAssess }: SelfAs
                     </span>
                   )}
                 </div>
-                <p className="text-sm text-gray-500">{skill.rationale}</p>
               </div>
               <div className="text-right flex-shrink-0 ml-4">
                 <span className="text-xs text-gray-400">Target</span>

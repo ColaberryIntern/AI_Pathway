@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { GraduationCap, Rocket, Loader2, AlertCircle } from 'lucide-react'
+import { GraduationCap, Loader2, AlertCircle } from 'lucide-react'
 import { getLearningDashboard, activateLearningPath } from '../services/api'
 import { useLearningStore } from '../stores/learningStore'
 import ModuleSidebar from '../components/learning/ModuleSidebar'
@@ -50,57 +50,40 @@ export default function LearningDashboardPage() {
     }
   }, [dashboard])
 
-  // Not activated state
+  // Not activated state - auto-activate (no manual gate)
   const needsActivation = error && (error as { response?: { status?: number } })?.response?.status === 400
 
-  if (isLoading) {
+  useEffect(() => {
+    if (needsActivation && !activateMutation.isPending && !activateMutation.isSuccess && !activateMutation.isError) {
+      activateMutation.mutate()
+    }
+  }, [needsActivation])
+
+  if (isLoading || (needsActivation && !activateMutation.isError)) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center space-y-3">
           <Loader2 className="h-8 w-8 text-indigo-600 animate-spin mx-auto" />
-          <p className="text-gray-500">Loading your learning dashboard...</p>
+          <p className="text-gray-500">
+            {activateMutation.isPending ? 'Generating your learning path...' : 'Loading your learning dashboard...'}
+          </p>
         </div>
       </div>
     )
   }
 
-  if (needsActivation || (!dashboard && !isLoading)) {
+  if (activateMutation.isError) {
     return (
       <div className="max-w-2xl mx-auto py-16 px-4 text-center">
-        <div className="card p-8 space-y-6">
-          <div className="mx-auto w-16 h-16 rounded-full bg-indigo-100 flex items-center justify-center">
-            <Rocket className="h-8 w-8 text-indigo-600" />
-          </div>
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900">Ready to Start Learning?</h2>
-            <p className="text-gray-500 mt-2">
-              We'll create your personalized learning modules and generate a lesson plan
-              tailored to your skill gaps and target role.
-            </p>
-          </div>
+        <div className="card p-8 space-y-4">
+          <AlertCircle className="h-8 w-8 text-red-500 mx-auto" />
+          <p className="text-gray-700">Failed to load your learning path. Please refresh the page.</p>
           <button
             onClick={() => activateMutation.mutate()}
-            disabled={activateMutation.isPending}
-            className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-indigo-600 to-sky-600 text-white font-semibold rounded-lg hover:from-indigo-700 hover:to-sky-700 transition-all shadow-md hover:shadow-lg disabled:opacity-50"
+            className="btn btn-primary"
           >
-            {activateMutation.isPending ? (
-              <>
-                <Loader2 className="h-5 w-5 animate-spin" />
-                Generating lesson plans...
-              </>
-            ) : (
-              <>
-                <Rocket className="h-5 w-5" />
-                Activate My Learning Path
-              </>
-            )}
+            Try Again
           </button>
-          {activateMutation.isError && (
-            <div className="flex items-center gap-2 text-red-600 text-sm justify-center">
-              <AlertCircle className="h-4 w-4" />
-              Failed to activate. Please try again.
-            </div>
-          )}
         </div>
       </div>
     )

@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
-import { useParams, useSearchParams } from 'react-router-dom'
+import { useParams, useSearchParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getProfile, runFullAnalysis, parseJDProfile, parseJDSkills, getVisualization, updateProfile, getAnalysisResults } from '../services/api'
 import {
@@ -37,6 +37,7 @@ type AnalysisStep = 'jd_input' | 'skill_selection' | 'self_assessment' | 'analyz
 
 export default function AnalysisPage() {
   const { profileId } = useParams<{ profileId: string }>()
+  const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const viewProfile = searchParams.get('view') === 'profile'
   const [step, setStep] = useState<AnalysisStep>('jd_input')
@@ -822,10 +823,6 @@ export default function AnalysisPage() {
       const assessed = selfAssessedSkills[s.skill_id]
       return assessed !== undefined && assessed >= s.required_level
     })
-    const skillsNeedingWork = selectedSkills.filter(s => {
-      const assessed = selfAssessedSkills[s.skill_id]
-      return assessed === undefined || assessed < s.required_level
-    })
 
     return (
       <div className="max-w-4xl mx-auto space-y-6">
@@ -901,12 +898,12 @@ export default function AnalysisPage() {
           <div className="card bg-emerald-50 border-emerald-200">
             <p className="text-emerald-800">
               Since {skillsAtTarget.length} skill{skillsAtTarget.length > 1 ? 's' : ''} match{skillsAtTarget.length === 1 ? 'es' : ''} your targeted level,
-              we will proceed with the remaining {skillsNeedingWork.length} skill{skillsNeedingWork.length !== 1 ? 's' : ''}.
+              we will add other relevant skills to build a learning path consisting of 5 chapters.
               {' '}<button
                 onClick={() => {/* Keep all - no action needed, they stay selected */}}
                 className="text-emerald-700 underline font-medium"
               >
-                Click here to keep all skills in your path.
+                Click here to keep all originally selected skills in your path.
               </button>
             </p>
           </div>
@@ -1273,10 +1270,14 @@ export default function AnalysisPage() {
           </div>
         )}
 
-        {/* Continue to Learning Path */}
+        {/* Continue to Learning Path - skip Journey Roadmap, go straight to chapters */}
         <div className="flex justify-center">
           <button
-            onClick={() => setStep('complete')}
+            onClick={() => {
+              if (result?.learning_path_id) {
+                navigate(`/learn/${result.learning_path_id}`)
+              }
+            }}
             className="btn flex items-center gap-2 text-lg px-8 py-4 shadow-lg hover:shadow-xl transition-shadow bg-gradient-to-r from-emerald-500 to-teal-500 text-white hover:from-emerald-600 hover:to-teal-600"
           >
             Continue to Learning Path

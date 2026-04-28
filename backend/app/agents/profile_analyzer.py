@@ -117,7 +117,7 @@ the user's profile (job title, responsibilities, tools used, or background)."""
             "required": ["top_10_current_skills", "state_a_skills", "profile_summary", "recommended_focus_domains"]
         }
 
-        result = await self._call_llm_structured(prompt, output_schema)
+        result = await self._call_llm_structured(prompt, output_schema, temperature=0.0)
 
         if not result or not isinstance(result, dict):
             result = {
