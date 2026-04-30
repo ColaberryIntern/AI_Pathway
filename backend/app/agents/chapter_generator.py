@@ -90,7 +90,9 @@ class ChapterGeneratorAgent(BaseAgent):
                 "technical_background": learner_ctx.get("technical_background", ""),
             }
 
-        # Call LLM with structured output schema
+        # Call LLM with structured output schema. The user prompt below repeats
+        # the critical depth requirements from the system prompt because Gemini
+        # via Vertex tends to weight the user message more than the system message.
         prompt = f"""Generate a 15-minute interactive chapter for this skill and level gap.
 
 INPUT:
@@ -105,6 +107,49 @@ Generate the chapter content with these 5 sections:
 
 Use the rubric_by_level strings to frame the A->B progression.
 Make examples specific to the skill domain, not generic.
+
+DEPTH REQUIREMENTS (NON-NEGOTIABLE — your output will be rejected if it does not meet these):
+
+scenario.narrative MUST be 80+ words describing a concrete, named situation with specific
+artifacts (a real customer email, a quarterly memo, a regulatory filing). Not "a document."
+
+concepts MUST include:
+- a `mnemonic` field (e.g., "IVL = Isolate, Vary, Log")
+- a `pull_quote` field (one memorable sentence)
+- 2-4 cards each with all 6 fields: identifier, word, headline, body (35+ words),
+  analogy (a non-AI metaphor), color_role.
+
+example_1 MUST include both `original_prompt` AND `iterated_prompt`. Each must have:
+- `prompt`: 30+ words of full unparaphrased prompt text
+- `output`: 40+ words of the actual LLM output written out (not "[output here]" placeholder)
+- `rating`: integer 1-5
+- `diagnosis`: 1-2 sentences explaining the rating
+
+example_1 MUST include a `steps` array with EXACTLY 3 entries in this order:
+1. {{"step_number": 1, "title": "Isolate: which part is broken?", "content_type": "diagnosis_checklist",
+    "checklist_items": [{{"part": "<prompt-part>", "status": "<clear|partial|vague|missing|broken>", "is_broken": <true|false>}}, ...3-5 items]}}
+2. {{"step_number": 2, "title": "Vary one thing: <description>", "content_type": "prompt_variant",
+    "prompt_variant_ref": "iterated_prompt"}}
+3. {{"step_number": 3, "title": "Log it: what did you learn?", "content_type": "log_entry",
+    "log_entries": [{{"key": "prompt_id", "value": "..."}}, {{"key": "change", "value": "..."}}, {{"key": "output_quality", "value": "..."}}, {{"key": "lesson", "value": "..."}}, {{"key": "reuse", "value": "..."}}]}}
+
+example_2 MUST have a `comparison` with EXACTLY 2 variants (id "A", id "B"). Each variant must have:
+- `prompt`: 30+ words of full prompt text
+- `output`: 40+ words written out (no placeholders)
+- `rating`: integer 1-5
+- `why`: 25+ words explaining the result
+
+agent_build MUST include:
+- `intro`: 40+ words explaining the artifact
+- `capability_chips`: EXACTLY 3 entries, each with title and description
+- `personalization_fields`: 3 fields with input_type "text" or "textarea"
+- `system_prompt_template`: 150+ words of the actual system prompt, with {{key}} placeholders
+  for each personalization field. Write the FULL prompt — do not write "<insert system prompt here>".
+- `usage_steps`: 4-5 imperative steps starting with verbs
+- `final_affirmation` with `rubric_quote` (first-person paraphrase of target rubric) and `tie_back`
+
+DO NOT paraphrase or summarize prompts/outputs. Write them in full so the learner can copy and run them.
+DO NOT skip the `steps` arrays. They are critical — the renderer expects them.
 """
 
         output_schema = {
