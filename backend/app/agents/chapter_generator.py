@@ -213,6 +213,7 @@ DO NOT skip the `steps` arrays. They are critical — the renderer expects them.
                         }},
                         "steps": {
                             "type": "array",
+                            "minItems": 3,
                             "items": {
                                 "type": "object",
                                 "properties": {
@@ -243,10 +244,12 @@ DO NOT skip the `steps` arrays. They are critical — the renderer expects them.
                                     },
                                     "commentary": {"type": "string"},
                                 },
+                                "required": ["step_number", "title", "content_type"],
                             },
                         },
                         "wrap_up": {"type": "string"},
                     },
+                    "required": ["title", "setup", "original_prompt", "iterated_prompt", "steps"],
                 },
                 "example_2": {
                     "type": "object",
@@ -255,16 +258,17 @@ DO NOT skip the `steps` arrays. They are critical — the renderer expects them.
                         "setup": {"type": "string"},
                         "comparison": {"type": "object", "properties": {
                             "test_question": {"type": "string"},
-                            "variants": {"type": "array", "items": {
+                            "variants": {"type": "array", "minItems": 2, "items": {
                                 "type": "object",
                                 "properties": {
                                     "id": {"type": "string"}, "label": {"type": "string"},
                                     "prompt": {"type": "string"}, "output": {"type": "string"},
                                     "rating": {"type": "integer"}, "why": {"type": "string"},
                                 },
+                                "required": ["id", "label", "prompt", "output", "rating", "why"],
                             }},
                             "takeaway": {"type": "string"},
-                        }},
+                        }, "required": ["test_question", "variants", "takeaway"]},
                         "steps": {
                             "type": "array",
                             "items": {
@@ -279,30 +283,34 @@ DO NOT skip the `steps` arrays. They are critical — the renderer expects them.
                         },
                         "wrap_up": {"type": "string"},
                     },
+                    "required": ["title", "setup", "comparison"],
                 },
                 "agent_build": {
                     "type": "object",
                     "properties": {
                         "title": {"type": "string"},
                         "intro": {"type": "string"},
-                        "capability_chips": {"type": "array", "items": {
+                        "capability_chips": {"type": "array", "minItems": 3, "items": {
                             "type": "object",
                             "properties": {"title": {"type": "string"}, "description": {"type": "string"}},
+                            "required": ["title", "description"],
                         }},
-                        "personalization_fields": {"type": "array", "items": {
+                        "personalization_fields": {"type": "array", "minItems": 3, "items": {
                             "type": "object",
                             "properties": {
                                 "key": {"type": "string"}, "label": {"type": "string"},
                                 "placeholder": {"type": "string"}, "input_type": {"type": "string"},
                             },
+                            "required": ["key", "label", "input_type"],
                         }},
                         "system_prompt_template": {"type": "string"},
-                        "usage_steps": {"type": "array", "items": {"type": "string"}},
+                        "usage_steps": {"type": "array", "minItems": 3, "items": {"type": "string"}},
                         "final_affirmation": {"type": "object", "properties": {
                             "rubric_quote": {"type": "string"}, "tie_back": {"type": "string"},
-                        }},
+                        }, "required": ["rubric_quote", "tie_back"]},
                         "next_skill_hint": {"type": "string"},
                     },
+                    "required": ["title", "intro", "capability_chips", "personalization_fields", "system_prompt_template", "usage_steps", "final_affirmation"],
                 },
             },
             "required": ["meta", "scenario", "concepts", "example_1", "example_2", "agent_build"],
