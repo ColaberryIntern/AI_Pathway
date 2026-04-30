@@ -23,6 +23,86 @@ _SYSTEM_PROMPT = _PROMPT_PATH.read_text(encoding="utf-8") if _PROMPT_PATH.exists
 LEVEL_LABELS = ["Unaware", "Awareness", "Literacy", "Practitioner", "Expert", "Architect"]
 
 
+def _wc(s) -> int:
+    return len(str(s or "").split())
+
+
+def _audit_depth(chapter_spec: dict) -> list[str]:
+    """Return a list of depth warnings for a generated chapter."""
+    warnings = []
+
+    scenario = chapter_spec.get("scenario", {}) or {}
+    if _wc(scenario.get("narrative")) < 60:
+        warnings.append(f"scenario.narrative thin ({_wc(scenario.get('narrative'))}w, want >=80)")
+
+    concepts = chapter_spec.get("concepts", {}) or {}
+    if not concepts.get("mnemonic"):
+        warnings.append("concepts.mnemonic missing")
+    if not concepts.get("pull_quote"):
+        warnings.append("concepts.pull_quote missing")
+
+    ex1 = chapter_spec.get("example_1", {}) or {}
+    if _wc(ex1.get("setup")) < 30:
+        warnings.append(f"example_1.setup thin ({_wc(ex1.get('setup'))}w, want >=40)")
+    for key in ("original_prompt", "iterated_prompt"):
+        block = ex1.get(key, {}) or {}
+        if _wc(block.get("output")) < 30:
+            warnings.append(f"example_1.{key}.output thin ({_wc(block.get('output'))}w, want >=40)")
+    ex1_steps = ex1.get("steps") or []
+    if len(ex1_steps) < 3:
+        warnings.append(f"example_1.steps has {len(ex1_steps)} entries, want exactly 3 (diagnosis_checklist, prompt_variant, log_entry)")
+    else:
+        expected_types = ["diagnosis_checklist", "prompt_variant", "log_entry"]
+        actual_types = [s.get("content_type") for s in ex1_steps[:3]]
+        if actual_types != expected_types:
+            warnings.append(f"example_1.steps content_types {actual_types}, want {expected_types}")
+
+    ex2 = chapter_spec.get("example_2", {}) or {}
+    if _wc(ex2.get("setup")) < 30:
+        warnings.append(f"example_2.setup thin ({_wc(ex2.get('setup'))}w, want >=40)")
+    comparison = ex2.get("comparison", {}) or {}
+    variants = comparison.get("variants") or []
+    if len(variants) != 2:
+        warnings.append(f"example_2.comparison.variants has {len(variants)}, want 2")
+    for v in variants:
+        if _wc(v.get("output")) < 30:
+            warnings.append(f"example_2 variant {v.get('id', '?')} output thin ({_wc(v.get('output'))}w, want >=40)")
+        if _wc(v.get("why")) < 20:
+            warnings.append(f"example_2 variant {v.get('id', '?')} why thin ({_wc(v.get('why'))}w, want >=25)")
+
+    agent_build = chapter_spec.get("agent_build", {}) or {}
+    if _wc(agent_build.get("system_prompt_template")) < 100:
+        warnings.append(f"agent_build.system_prompt_template thin ({_wc(agent_build.get('system_prompt_template'))}w, want >=150)")
+    chips = agent_build.get("capability_chips") or []
+    if len(chips) < 3:
+        warnings.append(f"agent_build.capability_chips has {len(chips)}, want >=3")
+
+    return warnings
+
+
+def _build_retry_prompt(prev_spec: dict, warnings: list[str]) -> str:
+    """Build a follow-up prompt asking the LLM to fix specific depth issues."""
+    warnings_list = "\n".join(f"- {w}" for w in warnings)
+    return f"""Your previous chapter draft had depth issues. Generate the FULL chapter again, applying these specific fixes:
+
+PROBLEMS WITH YOUR PREVIOUS DRAFT:
+{warnings_list}
+
+PREVIOUS DRAFT (for reference; do NOT just edit it — regenerate completely with depth):
+{json.dumps(prev_spec, indent=2)[:6000]}
+
+REGENERATE the entire chapter. This time:
+- Write narratives at full length (scenario.narrative >= 80 words with concrete situation).
+- Write FULL prompts and FULL outputs (not summaries). Outputs should be paragraph-length (>=40 words each).
+- Include the example_1.steps array with EXACTLY 3 entries: diagnosis_checklist, prompt_variant, log_entry.
+- Each step needs its specific structure (checklist_items array, prompt_variant_ref string, log_entries array).
+- Write a 150-word system_prompt_template with method/rules/{{key}} placeholders.
+- 3 capability_chips, 3 personalization_fields.
+- variant.why fields need 25+ words explaining the result.
+
+Output the complete chapter JSON. Do NOT skip any structural fields."""
+
+
 class ChapterGeneratorAgent(BaseAgent):
     """Agent for generating 15-minute interactive chapters."""
 
@@ -350,61 +430,51 @@ DO NOT skip the `steps` arrays. They are critical — the renderer expects them.
         if missing_opt:
             logger.info("ChapterSpec missing optional sections (will use defaults): %s", missing_opt)
 
-        # Depth audit: log thin sections (does not raise or retry)
-        def _wc(s):
-            return len(str(s or "").split())
-
-        depth_warnings = []
-        scenario = chapter_spec.get("scenario", {}) or {}
-        if _wc(scenario.get("narrative")) < 60:
-            depth_warnings.append(f"scenario.narrative thin ({_wc(scenario.get('narrative'))}w, want ≥80)")
-
-        concepts = chapter_spec.get("concepts", {}) or {}
-        if not concepts.get("mnemonic"):
-            depth_warnings.append("concepts.mnemonic missing")
-        if not concepts.get("pull_quote"):
-            depth_warnings.append("concepts.pull_quote missing")
-
-        ex1 = chapter_spec.get("example_1", {}) or {}
-        if _wc(ex1.get("setup")) < 30:
-            depth_warnings.append(f"example_1.setup thin ({_wc(ex1.get('setup'))}w, want ≥40)")
-        for key in ("original_prompt", "iterated_prompt"):
-            block = ex1.get(key, {}) or {}
-            if _wc(block.get("output")) < 30:
-                depth_warnings.append(f"example_1.{key}.output thin ({_wc(block.get('output'))}w, want ≥40)")
-        ex1_steps = ex1.get("steps") or []
-        if len(ex1_steps) < 3:
-            depth_warnings.append(f"example_1.steps has {len(ex1_steps)} entries, want exactly 3")
-        else:
-            expected_types = ["diagnosis_checklist", "prompt_variant", "log_entry"]
-            actual_types = [s.get("content_type") for s in ex1_steps[:3]]
-            if actual_types != expected_types:
-                depth_warnings.append(
-                    f"example_1.steps content_types {actual_types}, want {expected_types}"
-                )
-
-        ex2 = chapter_spec.get("example_2", {}) or {}
-        comparison = ex2.get("comparison", {}) or {}
-        variants = comparison.get("variants") or []
-        if len(variants) != 2:
-            depth_warnings.append(f"example_2.comparison.variants has {len(variants)}, want 2")
-        for v in variants:
-            if _wc(v.get("output")) < 30:
-                depth_warnings.append(
-                    f"example_2 variant {v.get('id', '?')} output thin ({_wc(v.get('output'))}w, want ≥40)"
-                )
-
-        agent_build = chapter_spec.get("agent_build", {}) or {}
-        if _wc(agent_build.get("system_prompt_template")) < 100:
-            depth_warnings.append(
-                f"agent_build.system_prompt_template thin ({_wc(agent_build.get('system_prompt_template'))}w, want ≥150)"
-            )
-
+        # Depth audit + one retry pass if too thin
+        depth_warnings = _audit_depth(chapter_spec)
         if depth_warnings:
             logger.warning(
-                "Chapter depth audit for %s L%s->L%s: %s",
+                "Chapter depth audit for %s L%s->L%s (attempt 1): %s",
                 skill_id, current_level, target_level, depth_warnings,
             )
+            # Retry once with explicit feedback
+            try:
+                retry_prompt = _build_retry_prompt(chapter_spec, depth_warnings)
+                retry_spec = await self._call_llm_structured(
+                    retry_prompt, output_schema, temperature=0.7, max_tokens=16384
+                )
+                # Apply same normalizations
+                if "examples" in retry_spec and "example_1" not in retry_spec:
+                    examples = retry_spec.pop("examples", [])
+                    if isinstance(examples, list):
+                        if len(examples) >= 1:
+                            retry_spec["example_1"] = examples[0]
+                        if len(examples) >= 2:
+                            retry_spec["example_2"] = examples[1]
+
+                retry_warnings = _audit_depth(retry_spec)
+                if len(retry_warnings) < len(depth_warnings):
+                    logger.info(
+                        "Chapter depth retry improved for %s: %d -> %d warnings",
+                        skill_id, len(depth_warnings), len(retry_warnings),
+                    )
+                    chapter_spec = retry_spec
+                    depth_warnings = retry_warnings
+                else:
+                    logger.warning(
+                        "Chapter depth retry did not improve for %s, keeping original",
+                        skill_id,
+                    )
+            except Exception as exc:
+                logger.warning("Chapter depth retry failed for %s: %s", skill_id, exc)
+
+            if depth_warnings:
+                logger.warning(
+                    "Chapter depth final for %s L%s->L%s: %s",
+                    skill_id, current_level, target_level, depth_warnings,
+                )
+            else:
+                logger.info("Chapter depth audit passed after retry for %s L%s->L%s", skill_id, current_level, target_level)
         else:
             logger.info("Chapter depth audit passed for %s L%s->L%s", skill_id, current_level, target_level)
 
