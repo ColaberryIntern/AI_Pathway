@@ -4,11 +4,12 @@
  * 5 sections: Scenario, Concepts, Example 1, Example 2, Agent Build
  * Based on Vivek's chapter format specification.
  */
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   CheckCircle, ChevronRight, Clock, Target, BookOpen,
-  Lightbulb, Beaker, Wrench, Copy, Check,
+  Lightbulb, Beaker, Wrench, Copy, Check, ExternalLink,
 } from 'lucide-react'
+import { openInLLM, getRunLabel, getPreferredLLM } from '../../utils/llm'
 
 // Types matching ChapterSpec schema
 interface ChapterMeta {
@@ -153,6 +154,30 @@ export default function ChapterRenderer({ chapter }: { chapter: ChapterSpec }) {
   const [selectedVariant, setSelectedVariant] = useState<string | null>(null)
   const [fieldValues, setFieldValues] = useState<Record<string, string>>({})
   const [copied, setCopied] = useState(false)
+  const [llmKey, setLlmKey] = useState(getPreferredLLM)
+
+  useEffect(() => {
+    const handler = (e: Event) => setLlmKey((e as CustomEvent).detail)
+    window.addEventListener('llm-changed', handler)
+    return () => window.removeEventListener('llm-changed', handler)
+  }, [])
+
+  const TryInLLMButton = ({ prompt }: { prompt: string }) => {
+    if (!prompt?.trim()) return null
+    return (
+      <button
+        onClick={(e) => {
+          e.stopPropagation()
+          openInLLM(prompt, llmKey)
+        }}
+        className="inline-flex items-center gap-1.5 text-xs font-medium text-indigo-600 hover:text-indigo-700 transition-colors px-2.5 py-1 rounded-md bg-indigo-50 hover:bg-indigo-100 border border-indigo-200"
+        title={`Send this prompt to ${getRunLabel(llmKey).replace(/^(Run in |Copy & open )/, '')}`}
+      >
+        <ExternalLink className="h-3 w-3" />
+        {getRunLabel(llmKey)}
+      </button>
+    )
+  }
 
   const completeSection = () => {
     setCompleted(prev => new Set([...prev, activeSection]))
@@ -288,10 +313,11 @@ export default function ChapterRenderer({ chapter }: { chapter: ChapterSpec }) {
               <div className="text-xs font-semibold text-gray-500 mb-2">{example.original_prompt.label}</div>
               <pre className="text-sm bg-white p-3 rounded border font-mono whitespace-pre-wrap mb-2">{example.original_prompt.prompt}</pre>
               <div className="text-sm text-gray-600 bg-white p-3 rounded border mb-2">{example.original_prompt.output}</div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 mb-3">
                 <span className="text-amber-500">{renderStars(example.original_prompt.rating)}</span>
                 <span className="text-xs text-gray-500">{example.original_prompt.diagnosis}</span>
               </div>
+              <TryInLLMButton prompt={example.original_prompt.prompt} />
             </div>
           </div>
         )}
@@ -339,10 +365,11 @@ export default function ChapterRenderer({ chapter }: { chapter: ChapterSpec }) {
                       <div className="text-xs font-semibold text-indigo-500 mb-2">{example.iterated_prompt.label}</div>
                       <pre className="text-sm bg-white p-3 rounded border font-mono whitespace-pre-wrap mb-2">{example.iterated_prompt.prompt}</pre>
                       <div className="text-sm text-gray-600 bg-white p-3 rounded border mb-2">{example.iterated_prompt.output}</div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 mb-3">
                         <span className="text-amber-500">{renderStars(example.iterated_prompt.rating)}</span>
                         <span className="text-xs text-gray-500">{example.iterated_prompt.diagnosis}</span>
                       </div>
+                      <TryInLLMButton prompt={example.iterated_prompt.prompt} />
                     </div>
                   )}
                 </div>
@@ -366,6 +393,9 @@ export default function ChapterRenderer({ chapter }: { chapter: ChapterSpec }) {
                 >
                   <div className="text-sm font-semibold mb-2">{v.label}</div>
                   <pre className="text-xs bg-white p-2 rounded border font-mono whitespace-pre-wrap mb-2">{v.prompt}</pre>
+                  <div className="mb-2">
+                    <TryInLLMButton prompt={v.prompt} />
+                  </div>
                   {selectedVariant === v.id && (
                     <>
                       <div className="text-sm bg-white p-2 rounded border mb-2">{v.output}</div>
@@ -442,12 +472,23 @@ export default function ChapterRenderer({ chapter }: { chapter: ChapterSpec }) {
           <pre className="bg-gray-900 text-green-400 p-4 rounded-xl font-mono text-xs whitespace-pre-wrap leading-relaxed">
             {interpolated}
           </pre>
-          <button
-            onClick={() => copyToClipboard(interpolated)}
-            className="absolute top-2 right-2 p-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors"
-          >
-            {copied ? <Check className="h-4 w-4 text-green-400" /> : <Copy className="h-4 w-4 text-gray-300" />}
-          </button>
+          <div className="absolute top-2 right-2 flex items-center gap-2">
+            <button
+              onClick={() => openInLLM(interpolated, llmKey)}
+              className="flex items-center gap-1.5 text-xs font-medium text-teal-300 hover:text-teal-200 transition-colors px-2.5 py-1.5 rounded-md bg-gray-700 hover:bg-gray-600 border border-gray-600"
+              title={`Send this filled-in prompt to ${getRunLabel(llmKey).replace(/^(Run in |Copy & open )/, '')}`}
+            >
+              <ExternalLink className="h-3.5 w-3.5" />
+              {getRunLabel(llmKey)}
+            </button>
+            <button
+              onClick={() => copyToClipboard(interpolated)}
+              className="p-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors"
+              title="Copy to clipboard"
+            >
+              {copied ? <Check className="h-4 w-4 text-green-400" /> : <Copy className="h-4 w-4 text-gray-300" />}
+            </button>
+          </div>
         </div>
 
         {/* Usage Steps */}

@@ -166,6 +166,41 @@ Make examples specific to the skill domain, not generic.
                             "output": {"type": "string"}, "rating": {"type": "integer"},
                             "diagnosis": {"type": "string"},
                         }},
+                        "steps": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "step_number": {"type": "integer"},
+                                    "title": {"type": "string"},
+                                    "content_type": {"type": "string"},
+                                    "checklist_items": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object",
+                                            "properties": {
+                                                "part": {"type": "string"},
+                                                "status": {"type": "string"},
+                                                "is_broken": {"type": "boolean"},
+                                            },
+                                        },
+                                    },
+                                    "prompt_variant_ref": {"type": "string"},
+                                    "log_entries": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object",
+                                            "properties": {
+                                                "key": {"type": "string"},
+                                                "value": {"type": "string"},
+                                            },
+                                        },
+                                    },
+                                    "commentary": {"type": "string"},
+                                },
+                            },
+                        },
+                        "wrap_up": {"type": "string"},
                     },
                 },
                 "example_2": {
@@ -185,6 +220,19 @@ Make examples specific to the skill domain, not generic.
                             }},
                             "takeaway": {"type": "string"},
                         }},
+                        "steps": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "step_number": {"type": "integer"},
+                                    "title": {"type": "string"},
+                                    "content_type": {"type": "string"},
+                                    "commentary": {"type": "string"},
+                                },
+                            },
+                        },
+                        "wrap_up": {"type": "string"},
                     },
                 },
                 "agent_build": {
@@ -208,13 +256,16 @@ Make examples specific to the skill domain, not generic.
                         "final_affirmation": {"type": "object", "properties": {
                             "rubric_quote": {"type": "string"}, "tie_back": {"type": "string"},
                         }},
+                        "next_skill_hint": {"type": "string"},
                     },
                 },
             },
             "required": ["meta", "scenario", "concepts", "example_1", "example_2", "agent_build"],
         }
 
-        chapter_spec = await self._call_llm_structured(prompt, output_schema, temperature=0.7)
+        chapter_spec = await self._call_llm_structured(
+            prompt, output_schema, temperature=0.7, max_tokens=16384
+        )
 
         # Normalize: LLM may use slightly different keys
         # Handle "examples" array instead of "example_1"/"example_2"
@@ -245,6 +296,64 @@ Make examples specific to the skill domain, not generic.
         missing_opt = [s for s in optional if s not in chapter_spec]
         if missing_opt:
             logger.info("ChapterSpec missing optional sections (will use defaults): %s", missing_opt)
+
+        # Depth audit: log thin sections (does not raise or retry)
+        def _wc(s):
+            return len(str(s or "").split())
+
+        depth_warnings = []
+        scenario = chapter_spec.get("scenario", {}) or {}
+        if _wc(scenario.get("narrative")) < 60:
+            depth_warnings.append(f"scenario.narrative thin ({_wc(scenario.get('narrative'))}w, want ≥80)")
+
+        concepts = chapter_spec.get("concepts", {}) or {}
+        if not concepts.get("mnemonic"):
+            depth_warnings.append("concepts.mnemonic missing")
+        if not concepts.get("pull_quote"):
+            depth_warnings.append("concepts.pull_quote missing")
+
+        ex1 = chapter_spec.get("example_1", {}) or {}
+        if _wc(ex1.get("setup")) < 30:
+            depth_warnings.append(f"example_1.setup thin ({_wc(ex1.get('setup'))}w, want ≥40)")
+        for key in ("original_prompt", "iterated_prompt"):
+            block = ex1.get(key, {}) or {}
+            if _wc(block.get("output")) < 30:
+                depth_warnings.append(f"example_1.{key}.output thin ({_wc(block.get('output'))}w, want ≥40)")
+        ex1_steps = ex1.get("steps") or []
+        if len(ex1_steps) < 3:
+            depth_warnings.append(f"example_1.steps has {len(ex1_steps)} entries, want exactly 3")
+        else:
+            expected_types = ["diagnosis_checklist", "prompt_variant", "log_entry"]
+            actual_types = [s.get("content_type") for s in ex1_steps[:3]]
+            if actual_types != expected_types:
+                depth_warnings.append(
+                    f"example_1.steps content_types {actual_types}, want {expected_types}"
+                )
+
+        ex2 = chapter_spec.get("example_2", {}) or {}
+        comparison = ex2.get("comparison", {}) or {}
+        variants = comparison.get("variants") or []
+        if len(variants) != 2:
+            depth_warnings.append(f"example_2.comparison.variants has {len(variants)}, want 2")
+        for v in variants:
+            if _wc(v.get("output")) < 30:
+                depth_warnings.append(
+                    f"example_2 variant {v.get('id', '?')} output thin ({_wc(v.get('output'))}w, want ≥40)"
+                )
+
+        agent_build = chapter_spec.get("agent_build", {}) or {}
+        if _wc(agent_build.get("system_prompt_template")) < 100:
+            depth_warnings.append(
+                f"agent_build.system_prompt_template thin ({_wc(agent_build.get('system_prompt_template'))}w, want ≥150)"
+            )
+
+        if depth_warnings:
+            logger.warning(
+                "Chapter depth audit for %s L%s->L%s: %s",
+                skill_id, current_level, target_level, depth_warnings,
+            )
+        else:
+            logger.info("Chapter depth audit passed for %s L%s->L%s", skill_id, current_level, target_level)
 
         # Ensure meta has correct skill info
         if "meta" in chapter_spec:
