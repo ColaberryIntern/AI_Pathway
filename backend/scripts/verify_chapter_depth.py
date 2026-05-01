@@ -97,6 +97,18 @@ def verify(spec, skill_id, current_level, target_level):
     check(bool(aff.get("rubric_quote")), "final_affirmation.rubric_quote present")
     check(bool(aff.get("tie_back")), "final_affirmation.tie_back present")
 
+    # Implementation task (6th section)
+    it = spec.get("implementation_task", {}) or {}
+    check(bool(it), "implementation_task section present")
+    if it:
+        check(bool(it.get("title")), "implementation_task.title present")
+        check(wc(it.get("description")) >= 30, f"implementation_task.description >= 30w (got {wc(it.get('description'))}w)")
+        reqs = it.get("requirements", []) or []
+        check(len(reqs) >= 3, f"implementation_task.requirements >= 3 (got {len(reqs)})")
+        check(bool(it.get("deliverable")), "implementation_task.deliverable present")
+        ev = it.get("evidence_requirements", []) or []
+        check(len(ev) >= 1, f"implementation_task.evidence_requirements >= 1 (got {len(ev)})")
+
     return passed, len(failures), failures
 
 
