@@ -12,6 +12,7 @@ interface ImplementationTaskCardProps {
   lessonId?: string
   lessonTitle?: string
   onSubmit?: () => void
+  hideMentorStep?: boolean
 }
 
 interface UploadSlot {
@@ -20,17 +21,24 @@ interface UploadSlot {
   label: string
 }
 
-const STEPS = [
+const STEPS_FULL = [
   { label: 'Review Assignment', description: 'Read the task details above' },
   { label: 'Get AI Mentor Briefing', description: 'Your mentor will prepare a plan and open your workspace' },
+  { label: 'Submit & Get Graded', description: 'Upload your required artifacts for AI grading' },
+]
+const STEPS_NO_MENTOR = [
+  { label: 'Review Assignment', description: 'Read the task details above' },
   { label: 'Submit & Get Graded', description: 'Upload your required artifacts for AI grading' },
 ]
 
 const ACCEPTED_TYPES = '.pdf,.docx,.doc,.py,.js,.ts,.jsx,.tsx,.json,.yaml,.yml,.md,.txt,.html,.css,.csv,.xml,.sql,.png,.jpg,.jpeg,.gif,.webp,.bmp'
 
 export default function ImplementationTaskCard({
-  task, pathId, lessonId, lessonTitle, onSubmit,
+  task, pathId, lessonId, lessonTitle, onSubmit, hideMentorStep = false,
 }: ImplementationTaskCardProps) {
+  const STEPS = hideMentorStep ? STEPS_NO_MENTOR : STEPS_FULL
+  const MENTOR_STEP = hideMentorStep ? -1 : 2  // 1-based; -1 = no mentor step
+  const SUBMIT_STEP = STEPS.length  // 2 in no-mentor mode, 3 in full mode
   // Step 1 is always done (they're reading the card), so start at step 2
   const [completedStep, setCompletedStep] = useState(1)
   const [briefingRequested, setBriefingRequested] = useState(false)
@@ -137,7 +145,7 @@ export default function ImplementationTaskCard({
       setGradeResult(result)
       if (result.passed) {
         setSubmitted(true)
-        setCompletedStep(3)
+        setCompletedStep(SUBMIT_STEP)
         onSubmit?.()
       }
     } catch {
@@ -163,7 +171,7 @@ export default function ImplementationTaskCard({
       setGradeResult(result)
       if (result.passed) {
         setSubmitted(true)
-        setCompletedStep(3)
+        setCompletedStep(SUBMIT_STEP)
         onSubmit?.()
       }
     } catch {
@@ -271,7 +279,7 @@ export default function ImplementationTaskCard({
             {STEPS.map((step, i) => {
               const stepNum = i + 1
               const isComplete = completedStep >= stepNum
-              const isActive = completedStep === stepNum - 1 || (stepNum === 2 && briefingRequested)
+              const isActive = completedStep === stepNum - 1 || (stepNum === MENTOR_STEP && briefingRequested)
 
               return (
                 <div key={stepNum}>
@@ -302,8 +310,8 @@ export default function ImplementationTaskCard({
                           {step.label}
                         </span>
 
-                        {/* Step 2: Briefing button */}
-                        {stepNum === 2 && isActive && !briefingRequested && (
+                        {/* Mentor briefing button */}
+                        {stepNum === MENTOR_STEP && isActive && !briefingRequested && (
                           <button
                             onClick={handleGetBriefing}
                             className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700 transition-all shadow-sm"
@@ -313,8 +321,8 @@ export default function ImplementationTaskCard({
                           </button>
                         )}
 
-                        {/* Step 2: Waiting for briefing */}
-                        {stepNum === 2 && briefingRequested && (
+                        {/* Mentor: Waiting for briefing */}
+                        {stepNum === MENTOR_STEP && briefingRequested && (
                           <span className="text-xs text-purple-600 font-medium animate-pulse">
                             Mentor is preparing your briefing...
                           </span>
@@ -330,8 +338,8 @@ export default function ImplementationTaskCard({
                     </div>
                   </div>
 
-                  {/* Step 3: Named upload slots (renders below the step header) */}
-                  {stepNum === 3 && isActive && !submitted && !gradeResult && (
+                  {/* Submit step: Named upload slots (renders below the step header) */}
+                  {stepNum === SUBMIT_STEP && isActive && !submitted && !gradeResult && (
                     <div className="ml-9 mt-3 space-y-4">
                       {requiredUploads.map(slot => {
                         const files = slotFiles[slot.id] || []
@@ -454,8 +462,8 @@ export default function ImplementationTaskCard({
                     </div>
                   )}
 
-                  {/* Step 3: Grading results */}
-                  {stepNum === 3 && gradeResult && (
+                  {/* Submit step: Grading results */}
+                  {stepNum === SUBMIT_STEP && gradeResult && (
                     <div className="ml-9 mt-3">
                       <div className={`rounded-lg p-4 border ${
                         gradeResult.passed

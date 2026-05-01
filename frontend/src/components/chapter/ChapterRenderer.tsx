@@ -10,6 +10,8 @@ import {
   Lightbulb, Beaker, Wrench, Copy, Check, ExternalLink,
 } from 'lucide-react'
 import { openInLLM, getRunLabel, getPreferredLLM } from '../../utils/llm'
+import ImplementationTaskCard from '../learning/ImplementationTaskCard'
+import type { ImplementationTask } from '../../types'
 
 // Types matching ChapterSpec schema
 interface ChapterMeta {
@@ -129,6 +131,15 @@ interface ChapterSpec {
     final_affirmation: { rubric_quote: string; tie_back: string }
     next_skill_hint?: string
   }
+  implementation_task?: {
+    title: string
+    description: string
+    requirements: string[]
+    deliverable: string
+    estimated_minutes?: number
+    tools?: Array<{ name: string; url?: string; is_free: boolean }>
+    evidence_requirements: Array<{ name: string; description: string; format: string }>
+  }
 }
 
 const SECTIONS = [
@@ -137,6 +148,7 @@ const SECTIONS = [
   { id: 'example_1', label: 'Example 1', icon: BookOpen, minutes: 3 },
   { id: 'example_2', label: 'Example 2', icon: Beaker, minutes: 4 },
   { id: 'agent_build', label: 'Build', icon: Wrench, minutes: 3 },
+  { id: 'implementation_task', label: 'Assignment', icon: CheckCircle, minutes: 30 },
 ]
 
 const COLOR_MAP: Record<string, string> = {
@@ -146,7 +158,7 @@ const COLOR_MAP: Record<string, string> = {
   accent: 'bg-amber-50 border-amber-200 text-amber-800',
 }
 
-export default function ChapterRenderer({ chapter }: { chapter: ChapterSpec }) {
+export default function ChapterRenderer({ chapter, pathId, lessonId }: { chapter: ChapterSpec; pathId?: string; lessonId?: string }) {
   const [activeSection, setActiveSection] = useState(0)
   const [completed, setCompleted] = useState<Set<number>>(new Set())
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set())
@@ -517,9 +529,52 @@ export default function ChapterRenderer({ chapter }: { chapter: ChapterSpec }) {
     )
   }
 
+  const renderImplementationTask = () => {
+    const it = chapter.implementation_task
+    if (!it) {
+      return (
+        <div className="space-y-3">
+          <p className="text-sm font-medium text-gray-400 uppercase tracking-wider">Section 6</p>
+          <h2 className="text-2xl font-bold text-gray-900">Assignment</h2>
+          <p className="text-gray-500">No assignment was generated for this chapter.</p>
+        </div>
+      )
+    }
+    // Map chapter implementation_task to ImplementationTask shape
+    const task: ImplementationTask = {
+      title: it.title,
+      description: it.description,
+      requirements: it.requirements,
+      deliverable: it.deliverable,
+      requires_architecture_explanation: false,
+      estimated_minutes: it.estimated_minutes ?? 30,
+      tools: it.tools,
+      evidence_requirements: it.evidence_requirements,
+    }
+    return (
+      <div className="space-y-4">
+        <p className="text-sm font-medium text-gray-400 uppercase tracking-wider">Your turn — apply what you learned.</p>
+        <ImplementationTaskCard
+          task={task}
+          pathId={pathId}
+          lessonId={lessonId}
+          lessonTitle={chapter.meta.chapter_title}
+          hideMentorStep
+        />
+      </div>
+    )
+  }
+
   // ── Main Render ──
 
-  const sectionRenderers = [renderScenario, renderConcepts, () => renderExample(chapter.example_1, 'ex1'), () => renderExample(chapter.example_2, 'ex2'), renderAgentBuild]
+  const sectionRenderers = [
+    renderScenario,
+    renderConcepts,
+    () => renderExample(chapter.example_1, 'ex1'),
+    () => renderExample(chapter.example_2, 'ex2'),
+    renderAgentBuild,
+    renderImplementationTask,
+  ]
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">

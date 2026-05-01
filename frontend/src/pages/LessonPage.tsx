@@ -19,7 +19,7 @@ import LessonReactions from '../components/learning/LessonReactions'
 import ConfusionRecoveryDrawer from '../components/learning/ConfusionRecoveryDrawer'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function ChapterFormatView({ content, pathId, navigate, completeMutation }: { content: any; pathId: string; navigate: (path: string) => void; completeMutation: any }) {
+function ChapterFormatView({ content, pathId, lessonId, navigate, completeMutation }: { content: any; pathId: string; lessonId: string; navigate: (path: string) => void; completeMutation: any }) {
   const handleComplete = () => {
     completeMutation.mutate(undefined, {
       onSuccess: () => {
@@ -38,7 +38,7 @@ function ChapterFormatView({ content, pathId, navigate, completeMutation }: { co
           &larr; Back to Dashboard
         </button>
       </div>
-      <ChapterRenderer chapter={content} />
+      <ChapterRenderer chapter={content} pathId={pathId} lessonId={lessonId} />
       <div className="flex justify-center gap-4 pt-4">
         <button
           onClick={() => navigate(`/learn/${pathId}`)}
@@ -206,7 +206,7 @@ export default function LessonPage() {
 
   // Render Vivek's chapter format
   if (isChapterFormat && contentAny) {
-    return <ChapterFormatView content={contentAny} pathId={pathId!} navigate={navigate} completeMutation={completeMutation} />
+    return <ChapterFormatView content={contentAny} pathId={pathId!} lessonId={lessonId!} navigate={navigate} completeMutation={completeMutation} />
   }
 
   return (

@@ -112,6 +112,18 @@ Every chapter has exactly these 5 sections, totaling 15 minutes:
 - `next_skill_hint` OPTIONAL but recommended — format: "SK.XXX.NNN — short title".
 - Must produce a usable artifact they can take to work the same day.
 
+**Implementation task (Section 6) — MANDATORY:**
+- A hands-on assignment that takes 30–60 minutes OUTSIDE the 15-min chapter time budget.
+- INDEPENDENT of the agent built in Section 5 — the learner can use any tool of their choice (ChatGPT, Claude, Google Docs, etc.).
+- `title` REQUIRED — short, action-oriented (e.g., "Debug a customer support prompt").
+- `description` REQUIRED — 2–3 sentences (40–80 words) describing what the learner will produce. Frame it as a real task tied to their target role.
+- `requirements` REQUIRED — 3–5 specific, testable requirement strings. Each requirement is something a grader can verify from the uploaded artifact.
+- `deliverable` REQUIRED — 1–2 sentences naming the concrete artifact (e.g., "A markdown document showing 3 prompt iterations with quality ratings and a final lesson summary").
+- `estimated_minutes` REQUIRED — integer between 30 and 60.
+- `tools` OPTIONAL — 1–3 entries with `name`, `url`, `is_free`. Default to free tools where possible.
+- `evidence_requirements` REQUIRED — 1–3 upload slots the learner submits for grading. Each: `name` (short label), `description` (what to submit), `format` ("file" | "screenshot" | "code"). Always require concrete proof — screenshots of AI conversations, exported documents, code files.
+- The task should make the learner DEMONSTRATE the target-level rubric, not the current-level rubric.
+
 ---
 
 ## REQUIRED CONTENT DEPTH (READ BEFORE GENERATING)
@@ -259,6 +271,8 @@ Where `label` is the fluency label: 0=Unaware, 1=Awareness, 2=Literacy, 3=Practi
 - [ ] No prompt or output is summarized — every one is written in full
 - [ ] agent_build.system_prompt_template is ≥150 words and uses all 3 personalization {keys}
 - [ ] agent_build.capability_chips has exactly 3 entries
+- [ ] implementation_task has title, description, 3-5 requirements, deliverable, evidence_requirements (≥1)
+- [ ] implementation_task is independent of the agent built in Section 5
 - [ ] JSX has no external dependencies beyond React, no browser storage APIs
 - [ ] Aesthetic direction is consistent across all sections
 - [ ] No emoji inside component content

@@ -77,6 +77,23 @@ def _audit_depth(chapter_spec: dict) -> list[str]:
     if len(chips) < 3:
         warnings.append(f"agent_build.capability_chips has {len(chips)}, want >=3")
 
+    impl = chapter_spec.get("implementation_task", {}) or {}
+    if not impl:
+        warnings.append("implementation_task missing")
+    else:
+        if not impl.get("title"):
+            warnings.append("implementation_task.title missing")
+        if _wc(impl.get("description")) < 30:
+            warnings.append(f"implementation_task.description thin ({_wc(impl.get('description'))}w, want >=40)")
+        reqs = impl.get("requirements") or []
+        if len(reqs) < 3:
+            warnings.append(f"implementation_task.requirements has {len(reqs)}, want >=3")
+        if not impl.get("deliverable"):
+            warnings.append("implementation_task.deliverable missing")
+        evidence = impl.get("evidence_requirements") or []
+        if len(evidence) < 1:
+            warnings.append(f"implementation_task.evidence_requirements has {len(evidence)}, want >=1")
+
     return warnings
 
 
@@ -178,12 +195,13 @@ class ChapterGeneratorAgent(BaseAgent):
 INPUT:
 {json.dumps(input_payload, indent=2)}
 
-Generate the chapter content with these 5 sections:
+Generate the chapter content with these 6 sections:
 1. scenario (2 min): A realistic situation with A->B level progression, objectives
 2. concepts (3 min): 2-4 concept cards with analogies, a mnemonic if natural
 3. example_1 (3 min): Applied use case with prompt, output, rating, diagnosis
 4. example_2 (4 min): Second use case with A/B comparison of two prompt variants
 5. agent_build (3 min): Build a reusable artifact (system prompt template with personalization fields)
+6. implementation_task: A hands-on assignment INDEPENDENT of the agent built in section 5. The learner uses any tool of their choice to produce an artifact, then uploads it for AI grading.
 
 Use the rubric_by_level strings to frame the A->B progression.
 Make examples specific to the skill domain, not generic.
@@ -230,6 +248,15 @@ agent_build MUST include:
 
 DO NOT paraphrase or summarize prompts/outputs. Write them in full so the learner can copy and run them.
 DO NOT skip the `steps` arrays. They are critical — the renderer expects them.
+
+implementation_task MUST include:
+- `title`: Short, action-oriented (e.g., "Debug a customer support prompt")
+- `description`: 2-3 sentences (40-80 words) describing what the learner will build/produce. Independent of the agent built in section 5 — the learner picks their own tools.
+- `requirements`: 3-5 specific, testable requirements as strings
+- `deliverable`: 1-2 sentences naming the concrete artifact (e.g., "A markdown document showing 3 prompt iterations with quality ratings")
+- `estimated_minutes`: 30-60 (this is OUTSIDE the 15-min chapter time budget)
+- `tools`: 1-3 entries (name, url, is_free). Default to free tools (ChatGPT free tier, Claude free tier, Google Docs, etc.)
+- `evidence_requirements`: 1-3 entries the learner uploads for grading. Each: name (short label), description (what to submit), format ("file" | "screenshot" | "code"). Always require proof that demonstrates the work was actually done — uploaded screenshots of AI conversations, exported documents, code files, etc.
 """
 
         output_schema = {
@@ -392,8 +419,44 @@ DO NOT skip the `steps` arrays. They are critical — the renderer expects them.
                     },
                     "required": ["title", "intro", "capability_chips", "personalization_fields", "system_prompt_template", "usage_steps", "final_affirmation"],
                 },
+                "implementation_task": {
+                    "type": "object",
+                    "properties": {
+                        "title": {"type": "string"},
+                        "description": {"type": "string"},
+                        "requirements": {"type": "array", "minItems": 3, "items": {"type": "string"}},
+                        "deliverable": {"type": "string"},
+                        "estimated_minutes": {"type": "integer"},
+                        "tools": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {"type": "string"},
+                                    "url": {"type": "string"},
+                                    "is_free": {"type": "boolean"},
+                                },
+                                "required": ["name", "is_free"],
+                            },
+                        },
+                        "evidence_requirements": {
+                            "type": "array",
+                            "minItems": 1,
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {"type": "string"},
+                                    "description": {"type": "string"},
+                                    "format": {"type": "string"},
+                                },
+                                "required": ["name", "description", "format"],
+                            },
+                        },
+                    },
+                    "required": ["title", "description", "requirements", "deliverable", "evidence_requirements"],
+                },
             },
-            "required": ["meta", "scenario", "concepts", "example_1", "example_2", "agent_build"],
+            "required": ["meta", "scenario", "concepts", "example_1", "example_2", "agent_build", "implementation_task"],
         }
 
         chapter_spec = await self._call_llm_structured(
