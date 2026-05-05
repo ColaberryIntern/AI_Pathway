@@ -1,20 +1,22 @@
-"""Convert the walkthrough_report.json data into a rich, browsable HTML page.
+"""Generate the browsable HTML walkthrough with built-in feedback capture.
 
-Reads the markdown report (or regenerates from scratch) and produces
-a single self-contained HTML file with:
-- Sticky sidebar table of contents
-- Each change in a card with full-size screenshot (click to zoom)
-- Filter/search box
-- Copy-to-clipboard for URLs
-- Color-coded categories (Luda fix, Vivek fix, NEW)
+For each visual change, the HTML lets the client mark Approved / Issue / Question
+and write notes. A floating "Generate Feedback Email" button compiles all
+responses into a parseable email body that Claude Code can pick up and act on
+directly.
+
+The email body uses a magic header (ai-pathway-walkthrough-feedback-v1) and a
+strict per-change format so a return reply can be parsed deterministically:
+each change becomes either an APPROVED line or a NEEDS-CHANGE / QUESTION
+block with its files, URL, and the client's notes.
 """
-import json
+from datetime import datetime
 from pathlib import Path
 
 REPORT_DIR = Path(__file__).parent.parent.parent / "docs" / "walkthrough_report"
 
-# Re-define the changes here so we can add metadata (category, etc.) without
-# parsing the markdown. Keep in sync with walkthrough_report.py.
+# Keep this list as the single source of truth. walkthrough_report.py also
+# uses these IDs when capturing screenshots.
 CHANGES = [
     {"id": "01_homepage_simplified", "title": "Homepage simplified", "category": "Luda Apr 15", "page_url": "/",
      "what": "Removed 'How It Works' section and 'Ready to start your AI learning journey?' CTA block.",
@@ -28,7 +30,7 @@ CHANGES = [
      "what": "Combined two previously separate pages (skill selection, then self-assessment) into one unified page. When a skill is selected, the proficiency rating appears inline below it.",
      "why": "Per Luda Apr 15: reduce step count and let user adjust skills + ratings in one view.",
      "files": ["frontend/src/pages/AnalysisPage.tsx", "frontend/src/components/SelfAssessment.tsx"], "to_see": "Open the URL above."},
-    {"id": "04_skill_hover_tooltip", "title": "Hover tooltip with ontology description on skill name", "category": "Vivek Apr 29 (NEW today)", "page_url": "/analysis/{pid}",
+    {"id": "04_skill_hover_tooltip", "title": "Hover tooltip with ontology description on skill name", "category": "Vivek Apr 29 (NEW)", "page_url": "/analysis/{pid}",
      "what": "Skill names now have a dotted underline + cursor:help. Hovering shows the canonical ontology description and skill_id in a dark tooltip.",
      "why": "Per Vivek Apr 29 (confirmed Agreed): users shouldn't have to guess what a skill means. Show the authoritative ontology definition on hover.",
      "files": ["frontend/src/components/SelfAssessment.tsx", "frontend/src/pages/AnalysisPage.tsx"], "to_see": "Open URL, then hover over any skill name."},
@@ -48,11 +50,11 @@ CHANGES = [
      "what": "Removed the entire 'Your Journey Roadmap' page that previously appeared between skill review and the learning dashboard.",
      "why": "Per Luda Apr 28: the roadmap page was duplicative - same info already shown on the skill review page.",
      "files": ["frontend/src/pages/AnalysisPage.tsx"], "to_see": "Open URL above and click Continue to Learning Path - goes directly to dashboard."},
-    {"id": "09_chapter_section_nav", "title": "Chapter section navigation (6 sections, 15 min)", "category": "Vivek + Apr 30", "page_url": "/learn/{path_id}/lesson/{lesson_id}",
+    {"id": "09_chapter_section_nav", "title": "Chapter section navigation (6 sections, 15 min)", "category": "Vivek + User Apr 30", "page_url": "/learn/{path_id}/lesson/{lesson_id}",
      "what": "Chapter renderer shows 6 section tabs at top: Scenario (2m), Concepts (3m), Example 1 (3m), Example 2 (4m), Build (3m), Assignment (30m). The Assignment tab is the new 6th section.",
-     "why": "Per Vivek's chapter spec (5 sections totaling 15 min) + user's request to bring back the Implementation Task assignment workflow.",
+     "why": "Per Vivek's chapter spec (5 sections totaling 15 min) + user's Apr 30 request to bring back the Implementation Task assignment workflow.",
      "files": ["frontend/src/components/chapter/ChapterRenderer.tsx", "backend/app/agents/chapter_generator.py", "backend/app/data/chapter-generator-prompt.md"], "to_see": "Open URL above."},
-    {"id": "10_chapter_title_ontology_name", "title": "Chapter title uses ontology canonical name", "category": "Vivek Apr 29 (NEW today)", "page_url": "/learn/{path_id}/lesson/{lesson_id}",
+    {"id": "10_chapter_title_ontology_name", "title": "Chapter title uses ontology canonical name", "category": "Vivek Apr 29 (NEW)", "page_url": "/learn/{path_id}/lesson/{lesson_id}",
      "what": "Chapter title now displays the ontology canonical skill name (e.g. 'Prompt debugging & iteration') instead of the LLM-generated story title (e.g. 'Iterating on Prompts: From Literacy to Practitioner').",
      "why": "Per Vivek Apr 29 (confirmed Agreed) on Luda's request: skills should be named consistently using ontology names throughout the tool.",
      "files": ["frontend/src/components/chapter/ChapterRenderer.tsx"], "to_see": "Open URL above."},
@@ -87,19 +89,17 @@ CHANGES = [
 ]
 
 CATEGORY_COLORS = {
-    "Luda Apr 15": "#3b82f6",      # blue
-    "Luda Apr 28": "#8b5cf6",      # purple
-    "Vivek Apr 29 (NEW today)": "#10b981",  # green
+    "Luda Apr 15": "#3b82f6",
+    "Luda Apr 28": "#8b5cf6",
     "Vivek Apr 29 (NEW)": "#10b981",
-    "Vivek depth fix": "#f59e0b",  # amber
+    "Vivek depth fix": "#f59e0b",
     "Vivek spec": "#f59e0b",
-    "Vivek + Apr 30": "#10b981",
-    "User Apr 30 (NEW)": "#ef4444", # red
+    "Vivek + User Apr 30": "#10b981",
+    "User Apr 30 (NEW)": "#ef4444",
 }
 
 
 def render_html():
-    # Read profile/path/lesson IDs from the markdown report if available
     md_path = REPORT_DIR / "WALKTHROUGH_REPORT.md"
     pid = path_id = lesson_id = ""
     if md_path.exists():
@@ -113,11 +113,12 @@ def render_html():
                 lesson_id = line.split("`")[1] if "`" in line else ""
 
     base = "http://95.216.199.47:3000"
+    today = datetime.now().strftime("%B %d, %Y")
+    iso_date = datetime.now().strftime("%Y-%m-%d")
 
     def url(template):
         return base + template.format(pid=pid, path_id=path_id, lesson_id=lesson_id)
 
-    # Build the cards
     cards_html = []
     toc_items = []
 
@@ -127,8 +128,11 @@ def render_html():
         files_html = "".join(f"<li><code>{f}</code></li>" for f in c["files"])
 
         toc_items.append(
-            f'<li><a href="#change-{c["id"]}"><span class="num">{i}</span>{c["title"]}</a>'
-            f'<span class="cat-pill" style="background:{color}">{c["category"]}</span></li>'
+            f'<li data-id="{c["id"]}" data-category="{c["category"]}">'
+            f'<a href="#change-{c["id"]}"><span class="num">{i}</span>{c["title"]}</a>'
+            f'<span class="cat-pill" style="background:{color}">{c["category"]}</span>'
+            f'<span class="status-dot" data-id="{c["id"]}"></span>'
+            f'</li>'
         )
 
         screenshot_html = (
@@ -136,6 +140,28 @@ def render_html():
             f'<img src="{c["id"]}.png" alt="{c["title"]}" loading="lazy">'
             f'<div class="zoom-hint">Click to enlarge</div></a>'
         )
+
+        # Per-card feedback widget
+        feedback_html = f'''
+<div class="feedback" data-id="{c["id"]}" data-title="{c["title"].replace(chr(34), '&quot;')}" data-url="{full_url}" data-files="{','.join(c["files"])}">
+    <div class="feedback-head">Your review:</div>
+    <div class="feedback-radios">
+        <label class="status-pill" data-status="approved">
+            <input type="radio" name="status-{c["id"]}" value="approved">
+            <span>Approved</span>
+        </label>
+        <label class="status-pill" data-status="issue">
+            <input type="radio" name="status-{c["id"]}" value="issue">
+            <span>Issue</span>
+        </label>
+        <label class="status-pill" data-status="question">
+            <input type="radio" name="status-{c["id"]}" value="question">
+            <span>Question</span>
+        </label>
+    </div>
+    <textarea class="feedback-notes" placeholder="Notes (optional for Approved, required for Issue/Question)... e.g. 'Tooltip text is too small' or 'How does grading work?'"></textarea>
+</div>
+'''
 
         cards_html.append(f'''
 <div class="card" id="change-{c["id"]}" data-category="{c["category"]}" data-search="{c["title"].lower()} {c["what"].lower()}">
@@ -166,11 +192,17 @@ def render_html():
             <h3>Files modified</h3>
             <ul>{files_html}</ul>
         </div>
+        {feedback_html}
     </div>
 </div>
 ''')
 
-    # Build the HTML
+    cat_filter_buttons = "".join(
+        f'<button class="cat-btn" data-cat="{cat}" style="border-color:{color}">{cat}</button>'
+        for cat, color in CATEGORY_COLORS.items()
+        if any(c["category"] == cat for c in CHANGES)
+    )
+
     html = f'''<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -185,7 +217,7 @@ body {{
     color: #111827;
     line-height: 1.5;
 }}
-.layout {{ display: grid; grid-template-columns: 320px 1fr; min-height: 100vh; }}
+.layout {{ display: grid; grid-template-columns: 340px 1fr; min-height: 100vh; }}
 .sidebar {{
     background: white;
     border-right: 1px solid #e5e7eb;
@@ -205,18 +237,38 @@ body {{
     font-size: 13px;
     margin-bottom: 16px;
 }}
+.progress-strip {{
+    margin-bottom: 16px;
+    padding: 10px 12px;
+    background: linear-gradient(to right, #ecfdf5, #fef3c7);
+    border: 1px solid #d1fae5;
+    border-radius: 8px;
+    font-size: 12px;
+}}
+.progress-strip strong {{ display: block; font-size: 14px; margin-bottom: 4px; }}
+.progress-strip .counts {{ display: flex; gap: 12px; }}
+.progress-strip .counts span {{ display: inline-flex; align-items: center; gap: 4px; }}
+.dot {{
+    display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+}}
+.dot.approved {{ background: #10b981; }}
+.dot.issue {{ background: #ef4444; }}
+.dot.question {{ background: #f59e0b; }}
+.dot.pending {{ background: #d1d5db; }}
 .toc {{ list-style: none; padding: 0; margin: 0; }}
 .toc li {{
     margin: 0;
     padding: 6px 0;
     border-top: 1px solid #f3f4f6;
+    position: relative;
 }}
 .toc a {{
     text-decoration: none;
     color: #1f2937;
     font-size: 13px;
     display: block;
-    padding: 4px 6px;
+    padding: 4px 6px 4px 6px;
+    padding-right: 24px;
     border-radius: 4px;
 }}
 .toc a:hover {{ background: #f3f4f6; }}
@@ -243,7 +295,19 @@ body {{
     margin-top: 2px;
     font-weight: 500;
 }}
-.main {{ padding: 32px 40px; max-width: 1100px; }}
+.status-dot {{
+    position: absolute;
+    right: 6px;
+    top: 12px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #d1d5db;
+}}
+.status-dot.approved {{ background: #10b981; }}
+.status-dot.issue {{ background: #ef4444; }}
+.status-dot.question {{ background: #f59e0b; }}
+.main {{ padding: 32px 40px; max-width: 1100px; padding-bottom: 100px; }}
 .page-head {{ margin-bottom: 32px; }}
 .page-head h1 {{ font-size: 28px; margin: 0 0 8px; }}
 .page-head .summary {{ color: #4b5563; font-size: 14px; }}
@@ -268,6 +332,9 @@ body {{
     overflow: hidden;
     box-shadow: 0 1px 3px rgba(0,0,0,0.05);
 }}
+.card.has-issue {{ border-left: 4px solid #ef4444; }}
+.card.has-question {{ border-left: 4px solid #f59e0b; }}
+.card.has-approved {{ border-left: 4px solid #10b981; }}
 .card-head {{
     padding: 16px 20px;
     background: linear-gradient(to bottom, #f9fafb, white);
@@ -361,7 +428,6 @@ body {{
 .shot:hover .zoom-hint {{ opacity: 1; }}
 .card-body {{ padding: 20px 24px; }}
 .section {{ margin-bottom: 16px; }}
-.section:last-child {{ margin-bottom: 0; }}
 .section h3 {{
     margin: 0 0 6px;
     font-size: 12px;
@@ -381,7 +447,167 @@ body {{
     font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     color: #1e40af;
 }}
+
+.feedback {{
+    margin-top: 20px;
+    padding: 16px;
+    background: #f9fafb;
+    border: 1px dashed #d1d5db;
+    border-radius: 8px;
+}}
+.feedback-head {{
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #6b7280;
+    font-weight: 600;
+    margin-bottom: 8px;
+}}
+.feedback-radios {{ display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; }}
+.status-pill {{
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 16px;
+    font-size: 12px;
+    cursor: pointer;
+    background: white;
+    user-select: none;
+}}
+.status-pill input {{ display: none; }}
+.status-pill[data-status="approved"] {{ color: #065f46; }}
+.status-pill[data-status="issue"] {{ color: #991b1b; }}
+.status-pill[data-status="question"] {{ color: #92400e; }}
+.status-pill.selected[data-status="approved"] {{ background: #d1fae5; border-color: #10b981; }}
+.status-pill.selected[data-status="issue"] {{ background: #fee2e2; border-color: #ef4444; }}
+.status-pill.selected[data-status="question"] {{ background: #fef3c7; border-color: #f59e0b; }}
+.feedback-notes {{
+    width: 100%;
+    min-height: 60px;
+    padding: 8px 10px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 13px;
+    resize: vertical;
+}}
 .card.hidden {{ display: none; }}
+
+/* Floating action bar */
+.fab {{
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: #4f46e5;
+    color: white;
+    padding: 14px 24px;
+    border: none;
+    border-radius: 50px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 10px 25px rgba(79, 70, 229, 0.3);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}}
+.fab .badge {{
+    background: white;
+    color: #4f46e5;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+}}
+.fab:hover {{ background: #4338ca; }}
+
+/* Modal */
+.modal-bg {{
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.6);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+}}
+.modal-bg.show {{ display: flex; }}
+.modal {{
+    background: white;
+    width: 800px;
+    max-width: 95vw;
+    max-height: 85vh;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}}
+.modal-head {{
+    padding: 16px 20px;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}}
+.modal-head h3 {{ margin: 0; font-size: 18px; flex: 1; }}
+.modal-close {{
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 20px;
+    color: #6b7280;
+}}
+.modal-body {{ padding: 16px 20px; overflow-y: auto; flex: 1; }}
+.modal-body label {{
+    display: block;
+    margin-bottom: 8px;
+    font-size: 13px;
+    color: #4b5563;
+}}
+.modal-body input[type=text] {{
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 13px;
+    margin-bottom: 12px;
+}}
+.email-preview {{
+    width: 100%;
+    min-height: 320px;
+    max-height: 50vh;
+    padding: 12px;
+    background: #f9fafb;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 12px;
+    white-space: pre;
+    overflow: auto;
+    resize: vertical;
+}}
+.modal-foot {{
+    padding: 14px 20px;
+    border-top: 1px solid #e5e7eb;
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+}}
+.btn {{
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid transparent;
+}}
+.btn-primary {{ background: #4f46e5; color: white; border-color: #4f46e5; }}
+.btn-primary:hover {{ background: #4338ca; }}
+.btn-secondary {{ background: white; color: #4b5563; border-color: #d1d5db; }}
+.btn-secondary:hover {{ background: #f3f4f6; }}
+
 @media (max-width: 900px) {{
     .layout {{ grid-template-columns: 1fr; }}
     .sidebar {{ position: static; height: auto; border-right: none; border-bottom: 1px solid #e5e7eb; }}
@@ -392,7 +618,16 @@ body {{
 <div class="layout">
     <aside class="sidebar">
         <h1>Visual Changes</h1>
-        <div class="sub">{len(CHANGES)} changes deployed Apr 28 - May 5</div>
+        <div class="sub">{len(CHANGES)} changes - generated {today}</div>
+        <div class="progress-strip">
+            <strong>Your review progress: <span id="reviewed-count">0</span> / {len(CHANGES)}</strong>
+            <div class="counts">
+                <span><span class="dot approved"></span> <span id="cnt-approved">0</span> approved</span>
+                <span><span class="dot issue"></span> <span id="cnt-issue">0</span> issue</span>
+                <span><span class="dot question"></span> <span id="cnt-question">0</span> question</span>
+                <span><span class="dot pending"></span> <span id="cnt-pending">{len(CHANGES)}</span> pending</span>
+            </div>
+        </div>
         <input type="search" placeholder="Search changes..." id="search">
         <ul class="toc">
             {"".join(toc_items)}
@@ -402,19 +637,132 @@ body {{
         <div class="page-head">
             <h1>AI Pathway - Visual Changes Walkthrough</h1>
             <div class="summary">
-                Tool URL: <strong><a href="{base}/" target="_blank">{base}</a></strong><br>
-                {len(CHANGES)} visual changes covering Luda Apr 15 + Apr 28 feedback, Vivek Apr 29 critique,
-                and the new Implementation Task workflow. Click any screenshot to enlarge.
+                <strong>Generated:</strong> {today} &nbsp;|&nbsp;
+                <strong>Tool URL:</strong> <a href="{base}/" target="_blank">{base}</a><br>
+                Walk through {len(CHANGES)} visual changes. For each one, click the live URL to verify it in the tool,
+                then mark <strong>Approved</strong>, <strong>Issue</strong>, or <strong>Question</strong> below the screenshot
+                and add a note. When done, click the floating "Generate Feedback Email" button bottom-right
+                to compile your feedback into a copy-paste-ready email.
             </div>
             <div class="cat-filters">
                 <button class="cat-btn active" data-cat="all">All ({len(CHANGES)})</button>
-                {"".join(f'<button class="cat-btn" data-cat="{cat}" style="border-color:{color}">{cat}</button>' for cat, color in CATEGORY_COLORS.items() if any(c["category"] == cat for c in CHANGES))}
+                {cat_filter_buttons}
             </div>
         </div>
         {"".join(cards_html)}
     </main>
 </div>
+
+<button class="fab" id="generate-feedback">
+    Generate Feedback Email <span class="badge" id="fab-count">0/{len(CHANGES)}</span>
+</button>
+
+<div class="modal-bg" id="modal-bg">
+    <div class="modal">
+        <div class="modal-head">
+            <h3>Feedback email - copy and send to Ali</h3>
+            <button class="modal-close" id="modal-close">&times;</button>
+        </div>
+        <div class="modal-body">
+            <label>Your name (will appear in email signature):</label>
+            <input type="text" id="reviewer-name" placeholder="e.g. Luda Kopeikina">
+            <label>Email body (preformatted - just copy and paste):</label>
+            <textarea class="email-preview" id="email-body" readonly></textarea>
+        </div>
+        <div class="modal-foot">
+            <button class="btn btn-secondary" id="copy-email">Copy email body to clipboard</button>
+            <button class="btn btn-primary" id="open-mail">Open in email client</button>
+        </div>
+    </div>
+</div>
+
 <script>
+const REPORT_DATE = "{iso_date}";
+const TOOL_URL = "{base}";
+const CHANGES = {len(CHANGES)};
+
+// LocalStorage key tied to this report so refreshes don't lose progress
+const STORAGE_KEY = "ai-pathway-walkthrough-feedback-" + REPORT_DATE;
+
+function saveState() {{
+    const state = {{}};
+    document.querySelectorAll('.feedback').forEach(fb => {{
+        const id = fb.dataset.id;
+        const status = fb.querySelector('input[type=radio]:checked')?.value || '';
+        const notes = fb.querySelector('.feedback-notes').value || '';
+        if (status || notes) state[id] = {{ status, notes }};
+    }});
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    localStorage.setItem('ai-pathway-reviewer-name', document.getElementById('reviewer-name').value || '');
+}}
+
+function loadState() {{
+    try {{
+        const state = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{{}}');
+        Object.keys(state).forEach(id => {{
+            const fb = document.querySelector(`.feedback[data-id="${{id}}"]`);
+            if (!fb) return;
+            const {{ status, notes }} = state[id];
+            if (status) {{
+                const radio = fb.querySelector(`input[value="${{status}}"]`);
+                if (radio) {{
+                    radio.checked = true;
+                    radio.closest('.status-pill').classList.add('selected');
+                    updateCardStyle(fb.closest('.card'), status);
+                    updateStatusDot(id, status);
+                }}
+            }}
+            if (notes) fb.querySelector('.feedback-notes').value = notes;
+        }});
+        const name = localStorage.getItem('ai-pathway-reviewer-name');
+        if (name) document.getElementById('reviewer-name').value = name;
+    }} catch (e) {{ console.error(e); }}
+    updateCounts();
+}}
+
+function updateCardStyle(card, status) {{
+    card.classList.remove('has-approved', 'has-issue', 'has-question');
+    if (status) card.classList.add('has-' + status);
+}}
+function updateStatusDot(id, status) {{
+    const dot = document.querySelector(`.status-dot[data-id="${{id}}"]`);
+    if (!dot) return;
+    dot.classList.remove('approved', 'issue', 'question');
+    if (status) dot.classList.add(status);
+}}
+
+function updateCounts() {{
+    let approved = 0, issue = 0, question = 0;
+    document.querySelectorAll('.feedback').forEach(fb => {{
+        const status = fb.querySelector('input[type=radio]:checked')?.value || '';
+        if (status === 'approved') approved++;
+        else if (status === 'issue') issue++;
+        else if (status === 'question') question++;
+    }});
+    const reviewed = approved + issue + question;
+    document.getElementById('reviewed-count').textContent = reviewed;
+    document.getElementById('cnt-approved').textContent = approved;
+    document.getElementById('cnt-issue').textContent = issue;
+    document.getElementById('cnt-question').textContent = question;
+    document.getElementById('cnt-pending').textContent = CHANGES - reviewed;
+    document.getElementById('fab-count').textContent = reviewed + '/' + CHANGES;
+}}
+
+document.querySelectorAll('.feedback').forEach(fb => {{
+    fb.querySelectorAll('input[type=radio]').forEach(radio => {{
+        radio.addEventListener('change', () => {{
+            fb.querySelectorAll('.status-pill').forEach(p => p.classList.remove('selected'));
+            radio.closest('.status-pill').classList.add('selected');
+            const status = radio.value;
+            updateCardStyle(fb.closest('.card'), status);
+            updateStatusDot(fb.dataset.id, status);
+            saveState();
+            updateCounts();
+        }});
+    }});
+    fb.querySelector('.feedback-notes').addEventListener('input', () => {{ saveState(); }});
+}});
+
 // Search filter
 const search = document.getElementById('search');
 search.addEventListener('input', () => {{
@@ -423,7 +771,6 @@ search.addEventListener('input', () => {{
         const text = card.dataset.search || '';
         card.classList.toggle('hidden', q && !text.includes(q));
     }});
-    // Update TOC visibility too
     document.querySelectorAll('.toc li').forEach(li => {{
         const link = li.querySelector('a');
         if (!link) return;
@@ -432,7 +779,6 @@ search.addEventListener('input', () => {{
     }});
 }});
 
-// Category filters
 document.querySelectorAll('.cat-btn').forEach(btn => {{
     btn.addEventListener('click', () => {{
         document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
@@ -450,7 +796,6 @@ document.querySelectorAll('.cat-btn').forEach(btn => {{
     }});
 }});
 
-// Copy URL buttons
 document.querySelectorAll('.copy-btn').forEach(btn => {{
     btn.addEventListener('click', async () => {{
         try {{
@@ -462,6 +807,105 @@ document.querySelectorAll('.copy-btn').forEach(btn => {{
         }} catch (e) {{}}
     }});
 }});
+
+// Generate feedback email body
+function buildEmailBody() {{
+    const reviewer = document.getElementById('reviewer-name').value.trim() || '<your name>';
+    const approved = [], issues = [], questions = [], pending = [];
+    document.querySelectorAll('.feedback').forEach(fb => {{
+        const id = fb.dataset.id;
+        const title = fb.dataset.title;
+        const url = fb.dataset.url;
+        const files = fb.dataset.files;
+        const status = fb.querySelector('input[type=radio]:checked')?.value || '';
+        const notes = (fb.querySelector('.feedback-notes').value || '').trim();
+        const entry = {{ id, title, url, files, notes }};
+        if (status === 'approved') approved.push(entry);
+        else if (status === 'issue') issues.push(entry);
+        else if (status === 'question') questions.push(entry);
+        else pending.push(entry);
+    }});
+
+    const lines = [];
+    lines.push('[ai-pathway-walkthrough-feedback-v1]');
+    lines.push('Report-Date: ' + REPORT_DATE);
+    lines.push('Reviewer: ' + reviewer);
+    lines.push('Total: ' + CHANGES + ' | Approved: ' + approved.length + ' | Issues: ' + issues.length + ' | Questions: ' + questions.length + ' | Pending: ' + pending.length);
+    lines.push('');
+    lines.push('=== APPROVED (' + approved.length + ') ===');
+    if (approved.length === 0) {{
+        lines.push('(none)');
+    }} else {{
+        approved.forEach(e => {{
+            lines.push('- [' + e.id + '] ' + e.title + (e.notes ? ' -- ' + e.notes : ''));
+        }});
+    }}
+    lines.push('');
+    lines.push('=== NEEDS CHANGE (' + issues.length + ') ===');
+    if (issues.length === 0) {{
+        lines.push('(none)');
+    }} else {{
+        issues.forEach(e => {{
+            lines.push('');
+            lines.push('### ' + e.id);
+            lines.push('Title: ' + e.title);
+            lines.push('URL: ' + e.url);
+            lines.push('Files: ' + e.files);
+            lines.push('Feedback: ' + (e.notes || '(no notes provided)'));
+        }});
+    }}
+    lines.push('');
+    lines.push('=== QUESTIONS (' + questions.length + ') ===');
+    if (questions.length === 0) {{
+        lines.push('(none)');
+    }} else {{
+        questions.forEach(e => {{
+            lines.push('');
+            lines.push('### ' + e.id);
+            lines.push('Title: ' + e.title);
+            lines.push('URL: ' + e.url);
+            lines.push('Question: ' + (e.notes || '(no notes provided)'));
+        }});
+    }}
+    if (pending.length > 0) {{
+        lines.push('');
+        lines.push('=== NOT YET REVIEWED (' + pending.length + ') ===');
+        pending.forEach(e => {{ lines.push('- [' + e.id + '] ' + e.title); }});
+    }}
+    lines.push('');
+    lines.push('[end-feedback]');
+    lines.push('');
+    lines.push('---');
+    lines.push('Thanks,');
+    lines.push(reviewer);
+    return lines.join('\\n');
+}}
+
+const modalBg = document.getElementById('modal-bg');
+document.getElementById('generate-feedback').addEventListener('click', () => {{
+    document.getElementById('email-body').value = buildEmailBody();
+    modalBg.classList.add('show');
+}});
+document.getElementById('modal-close').addEventListener('click', () => modalBg.classList.remove('show'));
+modalBg.addEventListener('click', (e) => {{ if (e.target === modalBg) modalBg.classList.remove('show'); }});
+document.getElementById('reviewer-name').addEventListener('input', () => {{
+    saveState();
+    document.getElementById('email-body').value = buildEmailBody();
+}});
+document.getElementById('copy-email').addEventListener('click', async (e) => {{
+    try {{
+        await navigator.clipboard.writeText(document.getElementById('email-body').value);
+        e.target.textContent = 'copied!';
+        setTimeout(() => {{ e.target.textContent = 'Copy email body to clipboard'; }}, 2000);
+    }} catch (err) {{}}
+}});
+document.getElementById('open-mail').addEventListener('click', () => {{
+    const subject = encodeURIComponent('AI Pathway walkthrough feedback - ' + REPORT_DATE);
+    const body = encodeURIComponent(document.getElementById('email-body').value);
+    window.location.href = 'mailto:ali@colaberry.com?subject=' + subject + '&body=' + body;
+}});
+
+loadState();
 </script>
 </body>
 </html>

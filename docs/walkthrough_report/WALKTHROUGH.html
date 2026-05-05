@@ -12,7 +12,7 @@ body {
     color: #111827;
     line-height: 1.5;
 }
-.layout { display: grid; grid-template-columns: 320px 1fr; min-height: 100vh; }
+.layout { display: grid; grid-template-columns: 340px 1fr; min-height: 100vh; }
 .sidebar {
     background: white;
     border-right: 1px solid #e5e7eb;
@@ -32,18 +32,38 @@ body {
     font-size: 13px;
     margin-bottom: 16px;
 }
+.progress-strip {
+    margin-bottom: 16px;
+    padding: 10px 12px;
+    background: linear-gradient(to right, #ecfdf5, #fef3c7);
+    border: 1px solid #d1fae5;
+    border-radius: 8px;
+    font-size: 12px;
+}
+.progress-strip strong { display: block; font-size: 14px; margin-bottom: 4px; }
+.progress-strip .counts { display: flex; gap: 12px; }
+.progress-strip .counts span { display: inline-flex; align-items: center; gap: 4px; }
+.dot {
+    display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+}
+.dot.approved { background: #10b981; }
+.dot.issue { background: #ef4444; }
+.dot.question { background: #f59e0b; }
+.dot.pending { background: #d1d5db; }
 .toc { list-style: none; padding: 0; margin: 0; }
 .toc li {
     margin: 0;
     padding: 6px 0;
     border-top: 1px solid #f3f4f6;
+    position: relative;
 }
 .toc a {
     text-decoration: none;
     color: #1f2937;
     font-size: 13px;
     display: block;
-    padding: 4px 6px;
+    padding: 4px 6px 4px 6px;
+    padding-right: 24px;
     border-radius: 4px;
 }
 .toc a:hover { background: #f3f4f6; }
@@ -70,7 +90,19 @@ body {
     margin-top: 2px;
     font-weight: 500;
 }
-.main { padding: 32px 40px; max-width: 1100px; }
+.status-dot {
+    position: absolute;
+    right: 6px;
+    top: 12px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #d1d5db;
+}
+.status-dot.approved { background: #10b981; }
+.status-dot.issue { background: #ef4444; }
+.status-dot.question { background: #f59e0b; }
+.main { padding: 32px 40px; max-width: 1100px; padding-bottom: 100px; }
 .page-head { margin-bottom: 32px; }
 .page-head h1 { font-size: 28px; margin: 0 0 8px; }
 .page-head .summary { color: #4b5563; font-size: 14px; }
@@ -95,6 +127,9 @@ body {
     overflow: hidden;
     box-shadow: 0 1px 3px rgba(0,0,0,0.05);
 }
+.card.has-issue { border-left: 4px solid #ef4444; }
+.card.has-question { border-left: 4px solid #f59e0b; }
+.card.has-approved { border-left: 4px solid #10b981; }
 .card-head {
     padding: 16px 20px;
     background: linear-gradient(to bottom, #f9fafb, white);
@@ -188,7 +223,6 @@ body {
 .shot:hover .zoom-hint { opacity: 1; }
 .card-body { padding: 20px 24px; }
 .section { margin-bottom: 16px; }
-.section:last-child { margin-bottom: 0; }
 .section h3 {
     margin: 0 0 6px;
     font-size: 12px;
@@ -208,7 +242,167 @@ body {
     font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     color: #1e40af;
 }
+
+.feedback {
+    margin-top: 20px;
+    padding: 16px;
+    background: #f9fafb;
+    border: 1px dashed #d1d5db;
+    border-radius: 8px;
+}
+.feedback-head {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #6b7280;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+.feedback-radios { display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; }
+.status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 16px;
+    font-size: 12px;
+    cursor: pointer;
+    background: white;
+    user-select: none;
+}
+.status-pill input { display: none; }
+.status-pill[data-status="approved"] { color: #065f46; }
+.status-pill[data-status="issue"] { color: #991b1b; }
+.status-pill[data-status="question"] { color: #92400e; }
+.status-pill.selected[data-status="approved"] { background: #d1fae5; border-color: #10b981; }
+.status-pill.selected[data-status="issue"] { background: #fee2e2; border-color: #ef4444; }
+.status-pill.selected[data-status="question"] { background: #fef3c7; border-color: #f59e0b; }
+.feedback-notes {
+    width: 100%;
+    min-height: 60px;
+    padding: 8px 10px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 13px;
+    resize: vertical;
+}
 .card.hidden { display: none; }
+
+/* Floating action bar */
+.fab {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: #4f46e5;
+    color: white;
+    padding: 14px 24px;
+    border: none;
+    border-radius: 50px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 10px 25px rgba(79, 70, 229, 0.3);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.fab .badge {
+    background: white;
+    color: #4f46e5;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+}
+.fab:hover { background: #4338ca; }
+
+/* Modal */
+.modal-bg {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.6);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+}
+.modal-bg.show { display: flex; }
+.modal {
+    background: white;
+    width: 800px;
+    max-width: 95vw;
+    max-height: 85vh;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+.modal-head {
+    padding: 16px 20px;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.modal-head h3 { margin: 0; font-size: 18px; flex: 1; }
+.modal-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 20px;
+    color: #6b7280;
+}
+.modal-body { padding: 16px 20px; overflow-y: auto; flex: 1; }
+.modal-body label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 13px;
+    color: #4b5563;
+}
+.modal-body input[type=text] {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 13px;
+    margin-bottom: 12px;
+}
+.email-preview {
+    width: 100%;
+    min-height: 320px;
+    max-height: 50vh;
+    padding: 12px;
+    background: #f9fafb;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 12px;
+    white-space: pre;
+    overflow: auto;
+    resize: vertical;
+}
+.modal-foot {
+    padding: 14px 20px;
+    border-top: 1px solid #e5e7eb;
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+}
+.btn {
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid transparent;
+}
+.btn-primary { background: #4f46e5; color: white; border-color: #4f46e5; }
+.btn-primary:hover { background: #4338ca; }
+.btn-secondary { background: white; color: #4b5563; border-color: #d1d5db; }
+.btn-secondary:hover { background: #f3f4f6; }
+
 @media (max-width: 900px) {
     .layout { grid-template-columns: 1fr; }
     .sidebar { position: static; height: auto; border-right: none; border-bottom: 1px solid #e5e7eb; }
@@ -219,23 +413,35 @@ body {
 <div class="layout">
     <aside class="sidebar">
         <h1>Visual Changes</h1>
-        <div class="sub">17 changes deployed Apr 28 - May 5</div>
+        <div class="sub">17 changes - generated May 05, 2026</div>
+        <div class="progress-strip">
+            <strong>Your review progress: <span id="reviewed-count">0</span> / 17</strong>
+            <div class="counts">
+                <span><span class="dot approved"></span> <span id="cnt-approved">0</span> approved</span>
+                <span><span class="dot issue"></span> <span id="cnt-issue">0</span> issue</span>
+                <span><span class="dot question"></span> <span id="cnt-question">0</span> question</span>
+                <span><span class="dot pending"></span> <span id="cnt-pending">17</span> pending</span>
+            </div>
+        </div>
         <input type="search" placeholder="Search changes..." id="search">
         <ul class="toc">
-            <li><a href="#change-01_homepage_simplified"><span class="num">1</span>Homepage simplified</a><span class="cat-pill" style="background:#3b82f6">Luda Apr 15</span></li><li><a href="#change-02_profiles_copy"><span class="num">2</span>Profiles page copy update</a><span class="cat-pill" style="background:#3b82f6">Luda Apr 15</span></li><li><a href="#change-03_skills_review_merged"><span class="num">3</span>Skill selection + self-assessment merged</a><span class="cat-pill" style="background:#3b82f6">Luda Apr 15</span></li><li><a href="#change-04_skill_hover_tooltip"><span class="num">4</span>Hover tooltip with ontology description on skill name</a><span class="cat-pill" style="background:#10b981">Vivek Apr 29 (NEW today)</span></li><li><a href="#change-05_targeted_role_label"><span class="num">5</span>Detected Role -> Targeted Role rename</a><span class="cat-pill" style="background:#3b82f6">Luda Apr 15</span></li><li><a href="#change-06_skill_match_messaging"><span class="num">6</span>End-of-page messaging when skills match target</a><span class="cat-pill" style="background:#8b5cf6">Luda Apr 28</span></li><li><a href="#change-07_learning_dashboard_no_gate"><span class="num">7</span>Learning dashboard auto-activates (no Ready to Start gate)</a><span class="cat-pill" style="background:#8b5cf6">Luda Apr 28</span></li><li><a href="#change-08_journey_roadmap_removed"><span class="num">8</span>Your Journey Roadmap page removed</a><span class="cat-pill" style="background:#8b5cf6">Luda Apr 28</span></li><li><a href="#change-09_chapter_section_nav"><span class="num">9</span>Chapter section navigation (6 sections, 15 min)</a><span class="cat-pill" style="background:#10b981">Vivek + Apr 30</span></li><li><a href="#change-10_chapter_title_ontology_name"><span class="num">10</span>Chapter title uses ontology canonical name</a><span class="cat-pill" style="background:#10b981">Vivek Apr 29 (NEW today)</span></li><li><a href="#change-11_concepts_with_mnemonic"><span class="num">11</span>Concepts section with mnemonic + pull_quote</a><span class="cat-pill" style="background:#f59e0b">Vivek depth fix</span></li><li><a href="#change-12_example1_steps_array"><span class="num">12</span>Example 1 with 3-step structure (diagnosis_checklist / prompt_variant / log_entry)</a><span class="cat-pill" style="background:#f59e0b">Vivek depth fix</span></li><li><a href="#change-13_example2_ab_comparison"><span class="num">13</span>Example 2 A/B comparison</a><span class="cat-pill" style="background:#f59e0b">Vivek depth fix</span></li><li><a href="#change-14_agent_build_section"><span class="num">14</span>Build Your Agent section</a><span class="cat-pill" style="background:#f59e0b">Vivek spec</span></li><li><a href="#change-15_try_in_llm_buttons"><span class="num">15</span>Try-in-LLM buttons (Run in ChatGPT / Claude)</a><span class="cat-pill" style="background:#10b981">Vivek Apr 29 (NEW)</span></li><li><a href="#change-16_implementation_task_section"><span class="num">16</span>Implementation Task as 6th section (NEW)</a><span class="cat-pill" style="background:#ef4444">User Apr 30 (NEW)</span></li><li><a href="#change-17_deterministic_skill_ordering"><span class="num">17</span>Deterministic skill ordering between runs</a><span class="cat-pill" style="background:#8b5cf6">Luda Apr 28</span></li>
+            <li data-id="01_homepage_simplified" data-category="Luda Apr 15"><a href="#change-01_homepage_simplified"><span class="num">1</span>Homepage simplified</a><span class="cat-pill" style="background:#3b82f6">Luda Apr 15</span><span class="status-dot" data-id="01_homepage_simplified"></span></li><li data-id="02_profiles_copy" data-category="Luda Apr 15"><a href="#change-02_profiles_copy"><span class="num">2</span>Profiles page copy update</a><span class="cat-pill" style="background:#3b82f6">Luda Apr 15</span><span class="status-dot" data-id="02_profiles_copy"></span></li><li data-id="03_skills_review_merged" data-category="Luda Apr 15"><a href="#change-03_skills_review_merged"><span class="num">3</span>Skill selection + self-assessment merged</a><span class="cat-pill" style="background:#3b82f6">Luda Apr 15</span><span class="status-dot" data-id="03_skills_review_merged"></span></li><li data-id="04_skill_hover_tooltip" data-category="Vivek Apr 29 (NEW)"><a href="#change-04_skill_hover_tooltip"><span class="num">4</span>Hover tooltip with ontology description on skill name</a><span class="cat-pill" style="background:#10b981">Vivek Apr 29 (NEW)</span><span class="status-dot" data-id="04_skill_hover_tooltip"></span></li><li data-id="05_targeted_role_label" data-category="Luda Apr 15"><a href="#change-05_targeted_role_label"><span class="num">5</span>Detected Role -> Targeted Role rename</a><span class="cat-pill" style="background:#3b82f6">Luda Apr 15</span><span class="status-dot" data-id="05_targeted_role_label"></span></li><li data-id="06_skill_match_messaging" data-category="Luda Apr 28"><a href="#change-06_skill_match_messaging"><span class="num">6</span>End-of-page messaging when skills match target</a><span class="cat-pill" style="background:#8b5cf6">Luda Apr 28</span><span class="status-dot" data-id="06_skill_match_messaging"></span></li><li data-id="07_learning_dashboard_no_gate" data-category="Luda Apr 28"><a href="#change-07_learning_dashboard_no_gate"><span class="num">7</span>Learning dashboard auto-activates (no Ready to Start gate)</a><span class="cat-pill" style="background:#8b5cf6">Luda Apr 28</span><span class="status-dot" data-id="07_learning_dashboard_no_gate"></span></li><li data-id="08_journey_roadmap_removed" data-category="Luda Apr 28"><a href="#change-08_journey_roadmap_removed"><span class="num">8</span>Your Journey Roadmap page removed</a><span class="cat-pill" style="background:#8b5cf6">Luda Apr 28</span><span class="status-dot" data-id="08_journey_roadmap_removed"></span></li><li data-id="09_chapter_section_nav" data-category="Vivek + User Apr 30"><a href="#change-09_chapter_section_nav"><span class="num">9</span>Chapter section navigation (6 sections, 15 min)</a><span class="cat-pill" style="background:#10b981">Vivek + User Apr 30</span><span class="status-dot" data-id="09_chapter_section_nav"></span></li><li data-id="10_chapter_title_ontology_name" data-category="Vivek Apr 29 (NEW)"><a href="#change-10_chapter_title_ontology_name"><span class="num">10</span>Chapter title uses ontology canonical name</a><span class="cat-pill" style="background:#10b981">Vivek Apr 29 (NEW)</span><span class="status-dot" data-id="10_chapter_title_ontology_name"></span></li><li data-id="11_concepts_with_mnemonic" data-category="Vivek depth fix"><a href="#change-11_concepts_with_mnemonic"><span class="num">11</span>Concepts section with mnemonic + pull_quote</a><span class="cat-pill" style="background:#f59e0b">Vivek depth fix</span><span class="status-dot" data-id="11_concepts_with_mnemonic"></span></li><li data-id="12_example1_steps_array" data-category="Vivek depth fix"><a href="#change-12_example1_steps_array"><span class="num">12</span>Example 1 with 3-step structure (diagnosis_checklist / prompt_variant / log_entry)</a><span class="cat-pill" style="background:#f59e0b">Vivek depth fix</span><span class="status-dot" data-id="12_example1_steps_array"></span></li><li data-id="13_example2_ab_comparison" data-category="Vivek depth fix"><a href="#change-13_example2_ab_comparison"><span class="num">13</span>Example 2 A/B comparison</a><span class="cat-pill" style="background:#f59e0b">Vivek depth fix</span><span class="status-dot" data-id="13_example2_ab_comparison"></span></li><li data-id="14_agent_build_section" data-category="Vivek spec"><a href="#change-14_agent_build_section"><span class="num">14</span>Build Your Agent section</a><span class="cat-pill" style="background:#f59e0b">Vivek spec</span><span class="status-dot" data-id="14_agent_build_section"></span></li><li data-id="15_try_in_llm_buttons" data-category="Vivek Apr 29 (NEW)"><a href="#change-15_try_in_llm_buttons"><span class="num">15</span>Try-in-LLM buttons (Run in ChatGPT / Claude)</a><span class="cat-pill" style="background:#10b981">Vivek Apr 29 (NEW)</span><span class="status-dot" data-id="15_try_in_llm_buttons"></span></li><li data-id="16_implementation_task_section" data-category="User Apr 30 (NEW)"><a href="#change-16_implementation_task_section"><span class="num">16</span>Implementation Task as 6th section (NEW)</a><span class="cat-pill" style="background:#ef4444">User Apr 30 (NEW)</span><span class="status-dot" data-id="16_implementation_task_section"></span></li><li data-id="17_deterministic_skill_ordering" data-category="Luda Apr 28"><a href="#change-17_deterministic_skill_ordering"><span class="num">17</span>Deterministic skill ordering between runs</a><span class="cat-pill" style="background:#8b5cf6">Luda Apr 28</span><span class="status-dot" data-id="17_deterministic_skill_ordering"></span></li>
         </ul>
     </aside>
     <main class="main">
         <div class="page-head">
             <h1>AI Pathway - Visual Changes Walkthrough</h1>
             <div class="summary">
-                Tool URL: <strong><a href="http://95.216.199.47:3000/" target="_blank">http://95.216.199.47:3000</a></strong><br>
-                17 visual changes covering Luda Apr 15 + Apr 28 feedback, Vivek Apr 29 critique,
-                and the new Implementation Task workflow. Click any screenshot to enlarge.
+                <strong>Generated:</strong> May 05, 2026 &nbsp;|&nbsp;
+                <strong>Tool URL:</strong> <a href="http://95.216.199.47:3000/" target="_blank">http://95.216.199.47:3000</a><br>
+                Walk through 17 visual changes. For each one, click the live URL to verify it in the tool,
+                then mark <strong>Approved</strong>, <strong>Issue</strong>, or <strong>Question</strong> below the screenshot
+                and add a note. When done, click the floating "Generate Feedback Email" button bottom-right
+                to compile your feedback into a copy-paste-ready email.
             </div>
             <div class="cat-filters">
                 <button class="cat-btn active" data-cat="all">All (17)</button>
-                <button class="cat-btn" data-cat="Luda Apr 15" style="border-color:#3b82f6">Luda Apr 15</button><button class="cat-btn" data-cat="Luda Apr 28" style="border-color:#8b5cf6">Luda Apr 28</button><button class="cat-btn" data-cat="Vivek Apr 29 (NEW today)" style="border-color:#10b981">Vivek Apr 29 (NEW today)</button><button class="cat-btn" data-cat="Vivek Apr 29 (NEW)" style="border-color:#10b981">Vivek Apr 29 (NEW)</button><button class="cat-btn" data-cat="Vivek depth fix" style="border-color:#f59e0b">Vivek depth fix</button><button class="cat-btn" data-cat="Vivek spec" style="border-color:#f59e0b">Vivek spec</button><button class="cat-btn" data-cat="Vivek + Apr 30" style="border-color:#10b981">Vivek + Apr 30</button><button class="cat-btn" data-cat="User Apr 30 (NEW)" style="border-color:#ef4444">User Apr 30 (NEW)</button>
+                <button class="cat-btn" data-cat="Luda Apr 15" style="border-color:#3b82f6">Luda Apr 15</button><button class="cat-btn" data-cat="Luda Apr 28" style="border-color:#8b5cf6">Luda Apr 28</button><button class="cat-btn" data-cat="Vivek Apr 29 (NEW)" style="border-color:#10b981">Vivek Apr 29 (NEW)</button><button class="cat-btn" data-cat="Vivek depth fix" style="border-color:#f59e0b">Vivek depth fix</button><button class="cat-btn" data-cat="Vivek spec" style="border-color:#f59e0b">Vivek spec</button><button class="cat-btn" data-cat="Vivek + User Apr 30" style="border-color:#10b981">Vivek + User Apr 30</button><button class="cat-btn" data-cat="User Apr 30 (NEW)" style="border-color:#ef4444">User Apr 30 (NEW)</button>
             </div>
         </div>
         
@@ -267,6 +473,26 @@ body {
             <h3>Files modified</h3>
             <ul><li><code>frontend/src/pages/HomePage.tsx</code></li></ul>
         </div>
+        
+<div class="feedback" data-id="01_homepage_simplified" data-title="Homepage simplified" data-url="http://95.216.199.47:3000/" data-files="frontend/src/pages/HomePage.tsx">
+    <div class="feedback-head">Your review:</div>
+    <div class="feedback-radios">
+        <label class="status-pill" data-status="approved">
+            <input type="radio" name="status-01_homepage_simplified" value="approved">
+            <span>Approved</span>
+        </label>
+        <label class="status-pill" data-status="issue">
+            <input type="radio" name="status-01_homepage_simplified" value="issue">
+            <span>Issue</span>
+        </label>
+        <label class="status-pill" data-status="question">
+            <input type="radio" name="status-01_homepage_simplified" value="question">
+            <span>Question</span>
+        </label>
+    </div>
+    <textarea class="feedback-notes" placeholder="Notes (optional for Approved, required for Issue/Question)... e.g. 'Tooltip text is too small' or 'How does grading work?'"></textarea>
+</div>
+
     </div>
 </div>
 
@@ -298,6 +524,26 @@ body {
             <h3>Files modified</h3>
             <ul><li><code>frontend/src/pages/ProfileSelectionPage.tsx</code></li></ul>
         </div>
+        
+<div class="feedback" data-id="02_profiles_copy" data-title="Profiles page copy update" data-url="http://95.216.199.47:3000/profiles" data-files="frontend/src/pages/ProfileSelectionPage.tsx">
+    <div class="feedback-head">Your review:</div>
+    <div class="feedback-radios">
+        <label class="status-pill" data-status="approved">
+            <input type="radio" name="status-02_profiles_copy" value="approved">
+            <span>Approved</span>
+        </label>
+        <label class="status-pill" data-status="issue">
+            <input type="radio" name="status-02_profiles_copy" value="issue">
+            <span>Issue</span>
+        </label>
+        <label class="status-pill" data-status="question">
+            <input type="radio" name="status-02_profiles_copy" value="question">
+            <span>Question</span>
+        </label>
+    </div>
+    <textarea class="feedback-notes" placeholder="Notes (optional for Approved, required for Issue/Question)... e.g. 'Tooltip text is too small' or 'How does grading work?'"></textarea>
+</div>
+
     </div>
 </div>
 
@@ -329,14 +575,34 @@ body {
             <h3>Files modified</h3>
             <ul><li><code>frontend/src/pages/AnalysisPage.tsx</code></li><li><code>frontend/src/components/SelfAssessment.tsx</code></li></ul>
         </div>
+        
+<div class="feedback" data-id="03_skills_review_merged" data-title="Skill selection + self-assessment merged" data-url="http://95.216.199.47:3000/analysis/**" data-files="frontend/src/pages/AnalysisPage.tsx,frontend/src/components/SelfAssessment.tsx">
+    <div class="feedback-head">Your review:</div>
+    <div class="feedback-radios">
+        <label class="status-pill" data-status="approved">
+            <input type="radio" name="status-03_skills_review_merged" value="approved">
+            <span>Approved</span>
+        </label>
+        <label class="status-pill" data-status="issue">
+            <input type="radio" name="status-03_skills_review_merged" value="issue">
+            <span>Issue</span>
+        </label>
+        <label class="status-pill" data-status="question">
+            <input type="radio" name="status-03_skills_review_merged" value="question">
+            <span>Question</span>
+        </label>
+    </div>
+    <textarea class="feedback-notes" placeholder="Notes (optional for Approved, required for Issue/Question)... e.g. 'Tooltip text is too small' or 'How does grading work?'"></textarea>
+</div>
+
     </div>
 </div>
 
-<div class="card" id="change-04_skill_hover_tooltip" data-category="Vivek Apr 29 (NEW today)" data-search="hover tooltip with ontology description on skill name skill names now have a dotted underline + cursor:help. hovering shows the canonical ontology description and skill_id in a dark tooltip.">
+<div class="card" id="change-04_skill_hover_tooltip" data-category="Vivek Apr 29 (NEW)" data-search="hover tooltip with ontology description on skill name skill names now have a dotted underline + cursor:help. hovering shows the canonical ontology description and skill_id in a dark tooltip.">
     <div class="card-head">
         <span class="card-num">4</span>
         <h2>Hover tooltip with ontology description on skill name</h2>
-        <span class="cat-pill" style="background:#10b981">Vivek Apr 29 (NEW today)</span>
+        <span class="cat-pill" style="background:#10b981">Vivek Apr 29 (NEW)</span>
     </div>
     <div class="card-url">
         <span class="label">Live URL:</span>
@@ -360,6 +626,26 @@ body {
             <h3>Files modified</h3>
             <ul><li><code>frontend/src/components/SelfAssessment.tsx</code></li><li><code>frontend/src/pages/AnalysisPage.tsx</code></li></ul>
         </div>
+        
+<div class="feedback" data-id="04_skill_hover_tooltip" data-title="Hover tooltip with ontology description on skill name" data-url="http://95.216.199.47:3000/analysis/**" data-files="frontend/src/components/SelfAssessment.tsx,frontend/src/pages/AnalysisPage.tsx">
+    <div class="feedback-head">Your review:</div>
+    <div class="feedback-radios">
+        <label class="status-pill" data-status="approved">
+            <input type="radio" name="status-04_skill_hover_tooltip" value="approved">
+            <span>Approved</span>
+        </label>
+        <label class="status-pill" data-status="issue">
+            <input type="radio" name="status-04_skill_hover_tooltip" value="issue">
+            <span>Issue</span>
+        </label>
+        <label class="status-pill" data-status="question">
+            <input type="radio" name="status-04_skill_hover_tooltip" value="question">
+            <span>Question</span>
+        </label>
+    </div>
+    <textarea class="feedback-notes" placeholder="Notes (optional for Approved, required for Issue/Question)... e.g. 'Tooltip text is too small' or 'How does grading work?'"></textarea>
+</div>
+
     </div>
 </div>
 
@@ -391,6 +677,26 @@ body {
             <h3>Files modified</h3>
             <ul><li><code>frontend/src/components/profile/TargetGoalPanel.tsx</code></li></ul>
         </div>
+        
+<div class="feedback" data-id="05_targeted_role_label" data-title="Detected Role -> Targeted Role rename" data-url="http://95.216.199.47:3000/analysis/**" data-files="frontend/src/components/profile/TargetGoalPanel.tsx">
+    <div class="feedback-head">Your review:</div>
+    <div class="feedback-radios">
+        <label class="status-pill" data-status="approved">
+            <input type="radio" name="status-05_targeted_role_label" value="approved">
+            <span>Approved</span>
+        </label>
+        <label class="status-pill" data-status="issue">
+            <input type="radio" name="status-05_targeted_role_label" value="issue">
+            <span>Issue</span>
+        </label>
+        <label class="status-pill" data-status="question">
+            <input type="radio" name="status-05_targeted_role_label" value="question">
+            <span>Question</span>
+        </label>
+    </div>
+    <textarea class="feedback-notes" placeholder="Notes (optional for Approved, required for Issue/Question)... e.g. 'Tooltip text is too small' or 'How does grading work?'"></textarea>
+</div>
+
     </div>
 </div>
 
@@ -422,6 +728,26 @@ body {
             <h3>Files modified</h3>
             <ul><li><code>frontend/src/pages/AnalysisPage.tsx</code></li></ul>
         </div>
+        
+<div class="feedback" data-id="06_skill_match_messaging" data-title="End-of-page messaging when skills match target" data-url="http://95.216.199.47:3000/analysis/**" data-files="frontend/src/pages/AnalysisPage.tsx">
+    <div class="feedback-head">Your review:</div>
+    <div class="feedback-radios">
+        <label class="status-pill" data-status="approved">
+            <input type="radio" name="status-06_skill_match_messaging" value="approved">
+            <span>Approved</span>
+        </label>
+        <label class="status-pill" data-status="issue">
+            <input type="radio" name="status-06_skill_match_messaging" value="issue">
+            <span>Issue</span>
+        </label>
+        <label class="status-pill" data-status="question">
+            <input type="radio" name="status-06_skill_match_messaging" value="question">
+            <span>Question</span>
+        </label>
+    </div>
+    <textarea class="feedback-notes" placeholder="Notes (optional for Approved, required for Issue/Question)... e.g. 'Tooltip text is too small' or 'How does grading work?'"></textarea>
+</div>
+
     </div>
 </div>
 
@@ -453,6 +779,26 @@ body {
             <h3>Files modified</h3>
             <ul><li><code>frontend/src/pages/LearningDashboardPage.tsx</code></li></ul>
         </div>
+        
+<div class="feedback" data-id="07_learning_dashboard_no_gate" data-title="Learning dashboard auto-activates (no Ready to Start gate)" data-url="http://95.216.199.47:3000/learn/43b55c6b-1d35-466e-b942-7fa8dbcaf4ac" data-files="frontend/src/pages/LearningDashboardPage.tsx">
+    <div class="feedback-head">Your review:</div>
+    <div class="feedback-radios">
+        <label class="status-pill" data-status="approved">
+            <input type="radio" name="status-07_learning_dashboard_no_gate" value="approved">
+            <span>Approved</span>
+        </label>
+        <label class="status-pill" data-status="issue">
+            <input type="radio" name="status-07_learning_dashboard_no_gate" value="issue">
+            <span>Issue</span>
+        </label>
+        <label class="status-pill" data-status="question">
+            <input type="radio" name="status-07_learning_dashboard_no_gate" value="question">
+            <span>Question</span>
+        </label>
+    </div>
+    <textarea class="feedback-notes" placeholder="Notes (optional for Approved, required for Issue/Question)... e.g. 'Tooltip text is too small' or 'How does grading work?'"></textarea>
+</div>
+
     </div>
 </div>
 
@@ -484,14 +830,34 @@ body {
             <h3>Files modified</h3>
             <ul><li><code>frontend/src/pages/AnalysisPage.tsx</code></li></ul>
         </div>
+        
+<div class="feedback" data-id="08_journey_roadmap_removed" data-title="Your Journey Roadmap page removed" data-url="http://95.216.199.47:3000/analysis/**" data-files="frontend/src/pages/AnalysisPage.tsx">
+    <div class="feedback-head">Your review:</div>
+    <div class="feedback-radios">
+        <label class="status-pill" data-status="approved">
+            <input type="radio" name="status-08_journey_roadmap_removed" value="approved">
+            <span>Approved</span>
+        </label>
+        <label class="status-pill" data-status="issue">
+            <input type="radio" name="status-08_journey_roadmap_removed" value="issue">
+            <span>Issue</span>
+        </label>
+        <label class="status-pill" data-status="question">
+            <input type="radio" name="status-08_journey_roadmap_removed" value="question">
+            <span>Question</span>
+        </label>
+    </div>
+    <textarea class="feedback-notes" placeholder="Notes (optional for Approved, required for Issue/Question)... e.g. 'Tooltip text is too small' or 'How does grading work?'"></textarea>
+</div>
+
     </div>
 </div>
 
-<div class="card" id="change-09_chapter_section_nav" data-category="Vivek + Apr 30" data-search="chapter section navigation (6 sections, 15 min) chapter renderer shows 6 section tabs at top: scenario (2m), concepts (3m), example 1 (3m), example 2 (4m), build (3m), assignment (30m). the assignment tab is the new 6th section.">
+<div class="card" id="change-09_chapter_section_nav" data-category="Vivek + User Apr 30" data-search="chapter section navigation (6 sections, 15 min) chapter renderer shows 6 section tabs at top: scenario (2m), concepts (3m), example 1 (3m), example 2 (4m), build (3m), assignment (30m). the assignment tab is the new 6th section.">
     <div class="card-head">
         <span class="card-num">9</span>
         <h2>Chapter section navigation (6 sections, 15 min)</h2>
-        <span class="cat-pill" style="background:#10b981">Vivek + Apr 30</span>
+        <span class="cat-pill" style="background:#10b981">Vivek + User Apr 30</span>
     </div>
     <div class="card-url">
         <span class="label">Live URL:</span>
@@ -509,20 +875,40 @@ body {
         </div>
         <div class="section">
             <h3>Why</h3>
-            <p>Per Vivek's chapter spec (5 sections totaling 15 min) + user's request to bring back the Implementation Task assignment workflow.</p>
+            <p>Per Vivek's chapter spec (5 sections totaling 15 min) + user's Apr 30 request to bring back the Implementation Task assignment workflow.</p>
         </div>
         <div class="section">
             <h3>Files modified</h3>
             <ul><li><code>frontend/src/components/chapter/ChapterRenderer.tsx</code></li><li><code>backend/app/agents/chapter_generator.py</code></li><li><code>backend/app/data/chapter-generator-prompt.md</code></li></ul>
         </div>
+        
+<div class="feedback" data-id="09_chapter_section_nav" data-title="Chapter section navigation (6 sections, 15 min)" data-url="http://95.216.199.47:3000/learn/43b55c6b-1d35-466e-b942-7fa8dbcaf4ac/lesson/c12b8c7e-977f-4ceb-b174-0f830026bad7" data-files="frontend/src/components/chapter/ChapterRenderer.tsx,backend/app/agents/chapter_generator.py,backend/app/data/chapter-generator-prompt.md">
+    <div class="feedback-head">Your review:</div>
+    <div class="feedback-radios">
+        <label class="status-pill" data-status="approved">
+            <input type="radio" name="status-09_chapter_section_nav" value="approved">
+            <span>Approved</span>
+        </label>
+        <label class="status-pill" data-status="issue">
+            <input type="radio" name="status-09_chapter_section_nav" value="issue">
+            <span>Issue</span>
+        </label>
+        <label class="status-pill" data-status="question">
+            <input type="radio" name="status-09_chapter_section_nav" value="question">
+            <span>Question</span>
+        </label>
+    </div>
+    <textarea class="feedback-notes" placeholder="Notes (optional for Approved, required for Issue/Question)... e.g. 'Tooltip text is too small' or 'How does grading work?'"></textarea>
+</div>
+
     </div>
 </div>
 
-<div class="card" id="change-10_chapter_title_ontology_name" data-category="Vivek Apr 29 (NEW today)" data-search="chapter title uses ontology canonical name chapter title now displays the ontology canonical skill name (e.g. 'prompt debugging & iteration') instead of the llm-generated story title (e.g. 'iterating on prompts: from literacy to practitioner').">
+<div class="card" id="change-10_chapter_title_ontology_name" data-category="Vivek Apr 29 (NEW)" data-search="chapter title uses ontology canonical name chapter title now displays the ontology canonical skill name (e.g. 'prompt debugging & iteration') instead of the llm-generated story title (e.g. 'iterating on prompts: from literacy to practitioner').">
     <div class="card-head">
         <span class="card-num">10</span>
         <h2>Chapter title uses ontology canonical name</h2>
-        <span class="cat-pill" style="background:#10b981">Vivek Apr 29 (NEW today)</span>
+        <span class="cat-pill" style="background:#10b981">Vivek Apr 29 (NEW)</span>
     </div>
     <div class="card-url">
         <span class="label">Live URL:</span>
@@ -546,6 +932,26 @@ body {
             <h3>Files modified</h3>
             <ul><li><code>frontend/src/components/chapter/ChapterRenderer.tsx</code></li></ul>
         </div>
+        
+<div class="feedback" data-id="10_chapter_title_ontology_name" data-title="Chapter title uses ontology canonical name" data-url="http://95.216.199.47:3000/learn/43b55c6b-1d35-466e-b942-7fa8dbcaf4ac/lesson/c12b8c7e-977f-4ceb-b174-0f830026bad7" data-files="frontend/src/components/chapter/ChapterRenderer.tsx">
+    <div class="feedback-head">Your review:</div>
+    <div class="feedback-radios">
+        <label class="status-pill" data-status="approved">
+            <input type="radio" name="status-10_chapter_title_ontology_name" value="approved">
+            <span>Approved</span>
+        </label>
+        <label class="status-pill" data-status="issue">
+            <input type="radio" name="status-10_chapter_title_ontology_name" value="issue">
+            <span>Issue</span>
+        </label>
+        <label class="status-pill" data-status="question">
+            <input type="radio" name="status-10_chapter_title_ontology_name" value="question">
+            <span>Question</span>
+        </label>
+    </div>
+    <textarea class="feedback-notes" placeholder="Notes (optional for Approved, required for Issue/Question)... e.g. 'Tooltip text is too small' or 'How does grading work?'"></textarea>
+</div>
+
     </div>
 </div>
 
@@ -577,6 +983,26 @@ body {
             <h3>Files modified</h3>
             <ul><li><code>backend/app/data/chapter-generator-prompt.md</code></li><li><code>backend/app/agents/chapter_generator.py</code></li></ul>
         </div>
+        
+<div class="feedback" data-id="11_concepts_with_mnemonic" data-title="Concepts section with mnemonic + pull_quote" data-url="http://95.216.199.47:3000/learn/43b55c6b-1d35-466e-b942-7fa8dbcaf4ac/lesson/c12b8c7e-977f-4ceb-b174-0f830026bad7" data-files="backend/app/data/chapter-generator-prompt.md,backend/app/agents/chapter_generator.py">
+    <div class="feedback-head">Your review:</div>
+    <div class="feedback-radios">
+        <label class="status-pill" data-status="approved">
+            <input type="radio" name="status-11_concepts_with_mnemonic" value="approved">
+            <span>Approved</span>
+        </label>
+        <label class="status-pill" data-status="issue">
+            <input type="radio" name="status-11_concepts_with_mnemonic" value="issue">
+            <span>Issue</span>
+        </label>
+        <label class="status-pill" data-status="question">
+            <input type="radio" name="status-11_concepts_with_mnemonic" value="question">
+            <span>Question</span>
+        </label>
+    </div>
+    <textarea class="feedback-notes" placeholder="Notes (optional for Approved, required for Issue/Question)... e.g. 'Tooltip text is too small' or 'How does grading work?'"></textarea>
+</div>
+
     </div>
 </div>
 
@@ -608,6 +1034,26 @@ body {
             <h3>Files modified</h3>
             <ul><li><code>backend/app/agents/chapter_generator.py</code></li><li><code>backend/app/data/chapter-generator-prompt.md</code></li><li><code>frontend/src/components/chapter/ChapterRenderer.tsx</code></li></ul>
         </div>
+        
+<div class="feedback" data-id="12_example1_steps_array" data-title="Example 1 with 3-step structure (diagnosis_checklist / prompt_variant / log_entry)" data-url="http://95.216.199.47:3000/learn/43b55c6b-1d35-466e-b942-7fa8dbcaf4ac/lesson/c12b8c7e-977f-4ceb-b174-0f830026bad7" data-files="backend/app/agents/chapter_generator.py,backend/app/data/chapter-generator-prompt.md,frontend/src/components/chapter/ChapterRenderer.tsx">
+    <div class="feedback-head">Your review:</div>
+    <div class="feedback-radios">
+        <label class="status-pill" data-status="approved">
+            <input type="radio" name="status-12_example1_steps_array" value="approved">
+            <span>Approved</span>
+        </label>
+        <label class="status-pill" data-status="issue">
+            <input type="radio" name="status-12_example1_steps_array" value="issue">
+            <span>Issue</span>
+        </label>
+        <label class="status-pill" data-status="question">
+            <input type="radio" name="status-12_example1_steps_array" value="question">
+            <span>Question</span>
+        </label>
+    </div>
+    <textarea class="feedback-notes" placeholder="Notes (optional for Approved, required for Issue/Question)... e.g. 'Tooltip text is too small' or 'How does grading work?'"></textarea>
+</div>
+
     </div>
 </div>
 
@@ -639,6 +1085,26 @@ body {
             <h3>Files modified</h3>
             <ul><li><code>backend/app/agents/chapter_generator.py</code></li><li><code>backend/app/data/chapter-generator-prompt.md</code></li></ul>
         </div>
+        
+<div class="feedback" data-id="13_example2_ab_comparison" data-title="Example 2 A/B comparison" data-url="http://95.216.199.47:3000/learn/43b55c6b-1d35-466e-b942-7fa8dbcaf4ac/lesson/c12b8c7e-977f-4ceb-b174-0f830026bad7" data-files="backend/app/agents/chapter_generator.py,backend/app/data/chapter-generator-prompt.md">
+    <div class="feedback-head">Your review:</div>
+    <div class="feedback-radios">
+        <label class="status-pill" data-status="approved">
+            <input type="radio" name="status-13_example2_ab_comparison" value="approved">
+            <span>Approved</span>
+        </label>
+        <label class="status-pill" data-status="issue">
+            <input type="radio" name="status-13_example2_ab_comparison" value="issue">
+            <span>Issue</span>
+        </label>
+        <label class="status-pill" data-status="question">
+            <input type="radio" name="status-13_example2_ab_comparison" value="question">
+            <span>Question</span>
+        </label>
+    </div>
+    <textarea class="feedback-notes" placeholder="Notes (optional for Approved, required for Issue/Question)... e.g. 'Tooltip text is too small' or 'How does grading work?'"></textarea>
+</div>
+
     </div>
 </div>
 
@@ -670,6 +1136,26 @@ body {
             <h3>Files modified</h3>
             <ul><li><code>backend/app/agents/chapter_generator.py</code></li><li><code>frontend/src/components/chapter/ChapterRenderer.tsx</code></li></ul>
         </div>
+        
+<div class="feedback" data-id="14_agent_build_section" data-title="Build Your Agent section" data-url="http://95.216.199.47:3000/learn/43b55c6b-1d35-466e-b942-7fa8dbcaf4ac/lesson/c12b8c7e-977f-4ceb-b174-0f830026bad7" data-files="backend/app/agents/chapter_generator.py,frontend/src/components/chapter/ChapterRenderer.tsx">
+    <div class="feedback-head">Your review:</div>
+    <div class="feedback-radios">
+        <label class="status-pill" data-status="approved">
+            <input type="radio" name="status-14_agent_build_section" value="approved">
+            <span>Approved</span>
+        </label>
+        <label class="status-pill" data-status="issue">
+            <input type="radio" name="status-14_agent_build_section" value="issue">
+            <span>Issue</span>
+        </label>
+        <label class="status-pill" data-status="question">
+            <input type="radio" name="status-14_agent_build_section" value="question">
+            <span>Question</span>
+        </label>
+    </div>
+    <textarea class="feedback-notes" placeholder="Notes (optional for Approved, required for Issue/Question)... e.g. 'Tooltip text is too small' or 'How does grading work?'"></textarea>
+</div>
+
     </div>
 </div>
 
@@ -701,6 +1187,26 @@ body {
             <h3>Files modified</h3>
             <ul><li><code>frontend/src/components/chapter/ChapterRenderer.tsx</code></li></ul>
         </div>
+        
+<div class="feedback" data-id="15_try_in_llm_buttons" data-title="Try-in-LLM buttons (Run in ChatGPT / Claude)" data-url="http://95.216.199.47:3000/learn/43b55c6b-1d35-466e-b942-7fa8dbcaf4ac/lesson/c12b8c7e-977f-4ceb-b174-0f830026bad7" data-files="frontend/src/components/chapter/ChapterRenderer.tsx">
+    <div class="feedback-head">Your review:</div>
+    <div class="feedback-radios">
+        <label class="status-pill" data-status="approved">
+            <input type="radio" name="status-15_try_in_llm_buttons" value="approved">
+            <span>Approved</span>
+        </label>
+        <label class="status-pill" data-status="issue">
+            <input type="radio" name="status-15_try_in_llm_buttons" value="issue">
+            <span>Issue</span>
+        </label>
+        <label class="status-pill" data-status="question">
+            <input type="radio" name="status-15_try_in_llm_buttons" value="question">
+            <span>Question</span>
+        </label>
+    </div>
+    <textarea class="feedback-notes" placeholder="Notes (optional for Approved, required for Issue/Question)... e.g. 'Tooltip text is too small' or 'How does grading work?'"></textarea>
+</div>
+
     </div>
 </div>
 
@@ -732,6 +1238,26 @@ body {
             <h3>Files modified</h3>
             <ul><li><code>backend/app/agents/chapter_generator.py</code></li><li><code>backend/app/data/chapter-generator-prompt.md</code></li><li><code>frontend/src/components/chapter/ChapterRenderer.tsx</code></li><li><code>frontend/src/components/learning/ImplementationTaskCard.tsx</code></li></ul>
         </div>
+        
+<div class="feedback" data-id="16_implementation_task_section" data-title="Implementation Task as 6th section (NEW)" data-url="http://95.216.199.47:3000/learn/43b55c6b-1d35-466e-b942-7fa8dbcaf4ac/lesson/c12b8c7e-977f-4ceb-b174-0f830026bad7" data-files="backend/app/agents/chapter_generator.py,backend/app/data/chapter-generator-prompt.md,frontend/src/components/chapter/ChapterRenderer.tsx,frontend/src/components/learning/ImplementationTaskCard.tsx">
+    <div class="feedback-head">Your review:</div>
+    <div class="feedback-radios">
+        <label class="status-pill" data-status="approved">
+            <input type="radio" name="status-16_implementation_task_section" value="approved">
+            <span>Approved</span>
+        </label>
+        <label class="status-pill" data-status="issue">
+            <input type="radio" name="status-16_implementation_task_section" value="issue">
+            <span>Issue</span>
+        </label>
+        <label class="status-pill" data-status="question">
+            <input type="radio" name="status-16_implementation_task_section" value="question">
+            <span>Question</span>
+        </label>
+    </div>
+    <textarea class="feedback-notes" placeholder="Notes (optional for Approved, required for Issue/Question)... e.g. 'Tooltip text is too small' or 'How does grading work?'"></textarea>
+</div>
+
     </div>
 </div>
 
@@ -763,12 +1289,142 @@ body {
             <h3>Files modified</h3>
             <ul><li><code>backend/app/agents/profile_analyzer.py</code></li></ul>
         </div>
+        
+<div class="feedback" data-id="17_deterministic_skill_ordering" data-title="Deterministic skill ordering between runs" data-url="http://95.216.199.47:3000/analysis/**" data-files="backend/app/agents/profile_analyzer.py">
+    <div class="feedback-head">Your review:</div>
+    <div class="feedback-radios">
+        <label class="status-pill" data-status="approved">
+            <input type="radio" name="status-17_deterministic_skill_ordering" value="approved">
+            <span>Approved</span>
+        </label>
+        <label class="status-pill" data-status="issue">
+            <input type="radio" name="status-17_deterministic_skill_ordering" value="issue">
+            <span>Issue</span>
+        </label>
+        <label class="status-pill" data-status="question">
+            <input type="radio" name="status-17_deterministic_skill_ordering" value="question">
+            <span>Question</span>
+        </label>
+    </div>
+    <textarea class="feedback-notes" placeholder="Notes (optional for Approved, required for Issue/Question)... e.g. 'Tooltip text is too small' or 'How does grading work?'"></textarea>
+</div>
+
     </div>
 </div>
 
     </main>
 </div>
+
+<button class="fab" id="generate-feedback">
+    Generate Feedback Email <span class="badge" id="fab-count">0/17</span>
+</button>
+
+<div class="modal-bg" id="modal-bg">
+    <div class="modal">
+        <div class="modal-head">
+            <h3>Feedback email - copy and send to Ali</h3>
+            <button class="modal-close" id="modal-close">&times;</button>
+        </div>
+        <div class="modal-body">
+            <label>Your name (will appear in email signature):</label>
+            <input type="text" id="reviewer-name" placeholder="e.g. Luda Kopeikina">
+            <label>Email body (preformatted - just copy and paste):</label>
+            <textarea class="email-preview" id="email-body" readonly></textarea>
+        </div>
+        <div class="modal-foot">
+            <button class="btn btn-secondary" id="copy-email">Copy email body to clipboard</button>
+            <button class="btn btn-primary" id="open-mail">Open in email client</button>
+        </div>
+    </div>
+</div>
+
 <script>
+const REPORT_DATE = "2026-05-05";
+const TOOL_URL = "http://95.216.199.47:3000";
+const CHANGES = 17;
+
+// LocalStorage key tied to this report so refreshes don't lose progress
+const STORAGE_KEY = "ai-pathway-walkthrough-feedback-" + REPORT_DATE;
+
+function saveState() {
+    const state = {};
+    document.querySelectorAll('.feedback').forEach(fb => {
+        const id = fb.dataset.id;
+        const status = fb.querySelector('input[type=radio]:checked')?.value || '';
+        const notes = fb.querySelector('.feedback-notes').value || '';
+        if (status || notes) state[id] = { status, notes };
+    });
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    localStorage.setItem('ai-pathway-reviewer-name', document.getElementById('reviewer-name').value || '');
+}
+
+function loadState() {
+    try {
+        const state = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+        Object.keys(state).forEach(id => {
+            const fb = document.querySelector(`.feedback[data-id="${id}"]`);
+            if (!fb) return;
+            const { status, notes } = state[id];
+            if (status) {
+                const radio = fb.querySelector(`input[value="${status}"]`);
+                if (radio) {
+                    radio.checked = true;
+                    radio.closest('.status-pill').classList.add('selected');
+                    updateCardStyle(fb.closest('.card'), status);
+                    updateStatusDot(id, status);
+                }
+            }
+            if (notes) fb.querySelector('.feedback-notes').value = notes;
+        });
+        const name = localStorage.getItem('ai-pathway-reviewer-name');
+        if (name) document.getElementById('reviewer-name').value = name;
+    } catch (e) { console.error(e); }
+    updateCounts();
+}
+
+function updateCardStyle(card, status) {
+    card.classList.remove('has-approved', 'has-issue', 'has-question');
+    if (status) card.classList.add('has-' + status);
+}
+function updateStatusDot(id, status) {
+    const dot = document.querySelector(`.status-dot[data-id="${id}"]`);
+    if (!dot) return;
+    dot.classList.remove('approved', 'issue', 'question');
+    if (status) dot.classList.add(status);
+}
+
+function updateCounts() {
+    let approved = 0, issue = 0, question = 0;
+    document.querySelectorAll('.feedback').forEach(fb => {
+        const status = fb.querySelector('input[type=radio]:checked')?.value || '';
+        if (status === 'approved') approved++;
+        else if (status === 'issue') issue++;
+        else if (status === 'question') question++;
+    });
+    const reviewed = approved + issue + question;
+    document.getElementById('reviewed-count').textContent = reviewed;
+    document.getElementById('cnt-approved').textContent = approved;
+    document.getElementById('cnt-issue').textContent = issue;
+    document.getElementById('cnt-question').textContent = question;
+    document.getElementById('cnt-pending').textContent = CHANGES - reviewed;
+    document.getElementById('fab-count').textContent = reviewed + '/' + CHANGES;
+}
+
+document.querySelectorAll('.feedback').forEach(fb => {
+    fb.querySelectorAll('input[type=radio]').forEach(radio => {
+        radio.addEventListener('change', () => {
+            fb.querySelectorAll('.status-pill').forEach(p => p.classList.remove('selected'));
+            radio.closest('.status-pill').classList.add('selected');
+            const status = radio.value;
+            updateCardStyle(fb.closest('.card'), status);
+            updateStatusDot(fb.dataset.id, status);
+            saveState();
+            updateCounts();
+        });
+    });
+    fb.querySelector('.feedback-notes').addEventListener('input', () => { saveState(); });
+});
+
 // Search filter
 const search = document.getElementById('search');
 search.addEventListener('input', () => {
@@ -777,7 +1433,6 @@ search.addEventListener('input', () => {
         const text = card.dataset.search || '';
         card.classList.toggle('hidden', q && !text.includes(q));
     });
-    // Update TOC visibility too
     document.querySelectorAll('.toc li').forEach(li => {
         const link = li.querySelector('a');
         if (!link) return;
@@ -786,7 +1441,6 @@ search.addEventListener('input', () => {
     });
 });
 
-// Category filters
 document.querySelectorAll('.cat-btn').forEach(btn => {
     btn.addEventListener('click', () => {
         document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
@@ -804,7 +1458,6 @@ document.querySelectorAll('.cat-btn').forEach(btn => {
     });
 });
 
-// Copy URL buttons
 document.querySelectorAll('.copy-btn').forEach(btn => {
     btn.addEventListener('click', async () => {
         try {
@@ -816,6 +1469,105 @@ document.querySelectorAll('.copy-btn').forEach(btn => {
         } catch (e) {}
     });
 });
+
+// Generate feedback email body
+function buildEmailBody() {
+    const reviewer = document.getElementById('reviewer-name').value.trim() || '<your name>';
+    const approved = [], issues = [], questions = [], pending = [];
+    document.querySelectorAll('.feedback').forEach(fb => {
+        const id = fb.dataset.id;
+        const title = fb.dataset.title;
+        const url = fb.dataset.url;
+        const files = fb.dataset.files;
+        const status = fb.querySelector('input[type=radio]:checked')?.value || '';
+        const notes = (fb.querySelector('.feedback-notes').value || '').trim();
+        const entry = { id, title, url, files, notes };
+        if (status === 'approved') approved.push(entry);
+        else if (status === 'issue') issues.push(entry);
+        else if (status === 'question') questions.push(entry);
+        else pending.push(entry);
+    });
+
+    const lines = [];
+    lines.push('[ai-pathway-walkthrough-feedback-v1]');
+    lines.push('Report-Date: ' + REPORT_DATE);
+    lines.push('Reviewer: ' + reviewer);
+    lines.push('Total: ' + CHANGES + ' | Approved: ' + approved.length + ' | Issues: ' + issues.length + ' | Questions: ' + questions.length + ' | Pending: ' + pending.length);
+    lines.push('');
+    lines.push('=== APPROVED (' + approved.length + ') ===');
+    if (approved.length === 0) {
+        lines.push('(none)');
+    } else {
+        approved.forEach(e => {
+            lines.push('- [' + e.id + '] ' + e.title + (e.notes ? ' -- ' + e.notes : ''));
+        });
+    }
+    lines.push('');
+    lines.push('=== NEEDS CHANGE (' + issues.length + ') ===');
+    if (issues.length === 0) {
+        lines.push('(none)');
+    } else {
+        issues.forEach(e => {
+            lines.push('');
+            lines.push('### ' + e.id);
+            lines.push('Title: ' + e.title);
+            lines.push('URL: ' + e.url);
+            lines.push('Files: ' + e.files);
+            lines.push('Feedback: ' + (e.notes || '(no notes provided)'));
+        });
+    }
+    lines.push('');
+    lines.push('=== QUESTIONS (' + questions.length + ') ===');
+    if (questions.length === 0) {
+        lines.push('(none)');
+    } else {
+        questions.forEach(e => {
+            lines.push('');
+            lines.push('### ' + e.id);
+            lines.push('Title: ' + e.title);
+            lines.push('URL: ' + e.url);
+            lines.push('Question: ' + (e.notes || '(no notes provided)'));
+        });
+    }
+    if (pending.length > 0) {
+        lines.push('');
+        lines.push('=== NOT YET REVIEWED (' + pending.length + ') ===');
+        pending.forEach(e => { lines.push('- [' + e.id + '] ' + e.title); });
+    }
+    lines.push('');
+    lines.push('[end-feedback]');
+    lines.push('');
+    lines.push('---');
+    lines.push('Thanks,');
+    lines.push(reviewer);
+    return lines.join('\n');
+}
+
+const modalBg = document.getElementById('modal-bg');
+document.getElementById('generate-feedback').addEventListener('click', () => {
+    document.getElementById('email-body').value = buildEmailBody();
+    modalBg.classList.add('show');
+});
+document.getElementById('modal-close').addEventListener('click', () => modalBg.classList.remove('show'));
+modalBg.addEventListener('click', (e) => { if (e.target === modalBg) modalBg.classList.remove('show'); });
+document.getElementById('reviewer-name').addEventListener('input', () => {
+    saveState();
+    document.getElementById('email-body').value = buildEmailBody();
+});
+document.getElementById('copy-email').addEventListener('click', async (e) => {
+    try {
+        await navigator.clipboard.writeText(document.getElementById('email-body').value);
+        e.target.textContent = 'copied!';
+        setTimeout(() => { e.target.textContent = 'Copy email body to clipboard'; }, 2000);
+    } catch (err) {}
+});
+document.getElementById('open-mail').addEventListener('click', () => {
+    const subject = encodeURIComponent('AI Pathway walkthrough feedback - ' + REPORT_DATE);
+    const body = encodeURIComponent(document.getElementById('email-body').value);
+    window.location.href = 'mailto:ali@colaberry.com?subject=' + subject + '&body=' + body;
+});
+
+loadState();
 </script>
 </body>
 </html>
