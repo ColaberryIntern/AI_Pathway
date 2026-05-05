@@ -558,7 +558,7 @@ export default function ChapterRenderer({ chapter, pathId, lessonId }: { chapter
           task={task}
           pathId={pathId}
           lessonId={lessonId}
-          lessonTitle={chapter.meta.chapter_title}
+          lessonTitle={chapter.meta.skill_name}
           hideMentorStep
         />
       </div>
@@ -585,8 +585,9 @@ export default function ChapterRenderer({ chapter, pathId, lessonId }: { chapter
           <span>{chapter.meta.skill_id}</span>
           <span className="ml-auto flex items-center gap-1"><Clock className="h-3.5 w-3.5" />{chapter.meta.total_minutes} min</span>
         </div>
-        <h1 className="text-2xl font-bold text-gray-900">{chapter.meta.chapter_title}</h1>
-        <p className="text-gray-500 italic">{chapter.meta.chapter_subtitle}</p>
+        {/* Use ontology canonical skill name as title; show story-style as subtitle for context */}
+        <h1 className="text-2xl font-bold text-gray-900">{chapter.meta.skill_name}</h1>
+        <p className="text-gray-500 italic">{chapter.meta.chapter_title || chapter.meta.chapter_subtitle}</p>
         <div className="flex items-center gap-2 mt-2 text-sm">
           <span className="px-2 py-1 bg-gray-100 rounded text-gray-600">L{chapter.meta.current_level} {chapter.meta.current_level_label}</span>
           <ChevronRight className="h-4 w-4 text-gray-400" />

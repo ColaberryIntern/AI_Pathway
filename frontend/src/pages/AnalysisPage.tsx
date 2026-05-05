@@ -862,7 +862,12 @@ export default function AnalysisPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         <span className="text-xs font-mono text-gray-400">#{skill.rank}</span>
-                        <h3 className="font-semibold text-gray-900">{skill.skill_name}</h3>
+                        <h3
+                          className="font-semibold text-gray-900 cursor-help underline decoration-dotted decoration-gray-400 underline-offset-4"
+                          title={skill.skill_description ? `${skill.skill_id}\n\n${skill.skill_description}` : skill.skill_id}
+                        >
+                          {skill.skill_name}
+                        </h3>
                         <span className="text-xs bg-primary-50 text-primary-700 px-2 py-0.5 rounded-full border border-primary-200">{skill.domain_label}</span>
                       </div>
                       <p className="text-sm text-gray-500 line-clamp-2">{skill.rationale}</p>

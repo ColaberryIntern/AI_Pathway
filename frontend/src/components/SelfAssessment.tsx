@@ -53,8 +53,20 @@ export default function SelfAssessment({ skills, assessments, onAssess }: SelfAs
             {/* Skill Header */}
             <div className="flex items-start justify-between mb-3">
               <div className="flex-1">
-                <div className="flex items-center gap-2 mb-1">
-                  <h3 className="font-semibold text-gray-900">{skill.skill_name}</h3>
+                <div className="flex items-center gap-2 mb-1 relative">
+                  <h3
+                    className="font-semibold text-gray-900 cursor-help underline decoration-dotted decoration-gray-400 underline-offset-4"
+                    onMouseEnter={() => setHoveredTooltip(`${skill.skill_id}-name`)}
+                    onMouseLeave={() => setHoveredTooltip(null)}
+                  >
+                    {skill.skill_name}
+                  </h3>
+                  {skill.skill_description && hoveredTooltip === `${skill.skill_id}-name` && (
+                    <div className="absolute z-20 top-full left-0 mt-1 w-80 p-3 bg-gray-900 text-white text-xs rounded-lg shadow-lg pointer-events-none">
+                      <div className="font-semibold mb-1 text-indigo-300">{skill.skill_id}</div>
+                      <div>{skill.skill_description}</div>
+                    </div>
+                  )}
                   <span className="text-xs bg-primary-50 text-primary-700 px-2 py-0.5 rounded-full border border-primary-200">
                     {skill.domain_label}
                   </span>
