@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>AI Pathway - Visual Changes Walkthrough</title>
+<style>
+* { box-sizing: border-box; }
+body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: #f9fafb;
+    color: #111827;
+    line-height: 1.5;
+}
+.layout { display: grid; grid-template-columns: 320px 1fr; min-height: 100vh; }
+.sidebar {
+    background: white;
+    border-right: 1px solid #e5e7eb;
+    padding: 20px;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+}
+.sidebar h1 { font-size: 18px; margin: 0 0 4px; }
+.sidebar .sub { font-size: 12px; color: #6b7280; margin-bottom: 16px; }
+.sidebar input[type=search] {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 13px;
+    margin-bottom: 16px;
+}
+.toc { list-style: none; padding: 0; margin: 0; }
+.toc li {
+    margin: 0;
+    padding: 6px 0;
+    border-top: 1px solid #f3f4f6;
+}
+.toc a {
+    text-decoration: none;
+    color: #1f2937;
+    font-size: 13px;
+    display: block;
+    padding: 4px 6px;
+    border-radius: 4px;
+}
+.toc a:hover { background: #f3f4f6; }
+.toc .num {
+    display: inline-block;
+    width: 24px;
+    height: 20px;
+    line-height: 20px;
+    text-align: center;
+    background: #6366f1;
+    color: white;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    margin-right: 8px;
+}
+.toc .cat-pill {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 8px;
+    font-size: 9px;
+    color: white;
+    margin-left: 32px;
+    margin-top: 2px;
+    font-weight: 500;
+}
+.main { padding: 32px 40px; max-width: 1100px; }
+.page-head { margin-bottom: 32px; }
+.page-head h1 { font-size: 28px; margin: 0 0 8px; }
+.page-head .summary { color: #4b5563; font-size: 14px; }
+.page-head .summary strong { color: #111827; }
+.cat-filters { margin: 16px 0; display: flex; gap: 8px; flex-wrap: wrap; }
+.cat-btn {
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    border: 1px solid #d1d5db;
+    background: white;
+    cursor: pointer;
+    color: #4b5563;
+}
+.cat-btn.active { background: #1f2937; color: white; border-color: #1f2937; }
+
+.card {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    margin-bottom: 32px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+.card-head {
+    padding: 16px 20px;
+    background: linear-gradient(to bottom, #f9fafb, white);
+    border-bottom: 1px solid #f3f4f6;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.card-num {
+    background: #1f2937;
+    color: white;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+.card-head h2 { font-size: 18px; margin: 0; flex: 1; }
+.cat-pill {
+    padding: 3px 10px;
+    border-radius: 12px;
+    color: white;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+.card-url {
+    padding: 12px 20px;
+    background: #f3f4f6;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+}
+.card-url .label { font-weight: 600; color: #4b5563; }
+.card-url .url {
+    color: #2563eb;
+    text-decoration: none;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    flex: 1;
+    word-break: break-all;
+}
+.card-url .url:hover { text-decoration: underline; }
+.copy-btn {
+    padding: 2px 8px;
+    border: 1px solid #d1d5db;
+    background: white;
+    border-radius: 4px;
+    font-size: 11px;
+    cursor: pointer;
+    color: #4b5563;
+}
+.copy-btn:hover { background: #f3f4f6; }
+.copy-btn.copied { background: #10b981; color: white; border-color: #10b981; }
+.card-tosee {
+    padding: 10px 20px;
+    background: #fef3c7;
+    border-bottom: 1px solid #fde68a;
+    font-size: 13px;
+    color: #78350f;
+}
+.shot {
+    display: block;
+    background: #1f2937;
+    text-align: center;
+    position: relative;
+    text-decoration: none;
+}
+.shot img {
+    max-width: 100%;
+    display: block;
+    margin: 0 auto;
+    cursor: zoom-in;
+}
+.zoom-hint {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: rgba(0,0,0,0.7);
+    color: white;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    opacity: 0;
+    transition: opacity 0.15s;
+}
+.shot:hover .zoom-hint { opacity: 1; }
+.card-body { padding: 20px 24px; }
+.section { margin-bottom: 16px; }
+.section:last-child { margin-bottom: 0; }
+.section h3 {
+    margin: 0 0 6px;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #6b7280;
+    font-weight: 600;
+}
+.section p { margin: 0; color: #1f2937; }
+.section ul { margin: 0; padding-left: 20px; }
+.section ul li { margin: 2px 0; }
+.section code {
+    background: #f3f4f6;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    color: #1e40af;
+}
+.card.hidden { display: none; }
+@media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; }
+    .sidebar { position: static; height: auto; border-right: none; border-bottom: 1px solid #e5e7eb; }
+}
+</style>
+</head>
+<body>
+<div class="layout">
+    <aside class="sidebar">
+        <h1>Visual Changes</h1>
+        <div class="sub">17 changes deployed Apr 28 - May 5</div>
+        <input type="search" placeholder="Search changes..." id="search">
+        <ul class="toc">
+            <li><a href="#change-01_homepage_simplified"><span class="num">1</span>Homepage simplified</a><span class="cat-pill" style="background:#3b82f6">Luda Apr 15</span></li><li><a href="#change-02_profiles_copy"><span class="num">2</span>Profiles page copy update</a><span class="cat-pill" style="background:#3b82f6">Luda Apr 15</span></li><li><a href="#change-03_skills_review_merged"><span class="num">3</span>Skill selection + self-assessment merged</a><span class="cat-pill" style="background:#3b82f6">Luda Apr 15</span></li><li><a href="#change-04_skill_hover_tooltip"><span class="num">4</span>Hover tooltip with ontology description on skill name</a><span class="cat-pill" style="background:#10b981">Vivek Apr 29 (NEW today)</span></li><li><a href="#change-05_targeted_role_label"><span class="num">5</span>Detected Role -> Targeted Role rename</a><span class="cat-pill" style="background:#3b82f6">Luda Apr 15</span></li><li><a href="#change-06_skill_match_messaging"><span class="num">6</span>End-of-page messaging when skills match target</a><span class="cat-pill" style="background:#8b5cf6">Luda Apr 28</span></li><li><a href="#change-07_learning_dashboard_no_gate"><span class="num">7</span>Learning dashboard auto-activates (no Ready to Start gate)</a><span class="cat-pill" style="background:#8b5cf6">Luda Apr 28</span></li><li><a href="#change-08_journey_roadmap_removed"><span class="num">8</span>Your Journey Roadmap page removed</a><span class="cat-pill" style="background:#8b5cf6">Luda Apr 28</span></li><li><a href="#change-09_chapter_section_nav"><span class="num">9</span>Chapter section navigation (6 sections, 15 min)</a><span class="cat-pill" style="background:#10b981">Vivek + Apr 30</span></li><li><a href="#change-10_chapter_title_ontology_name"><span class="num">10</span>Chapter title uses ontology canonical name</a><span class="cat-pill" style="background:#10b981">Vivek Apr 29 (NEW today)</span></li><li><a href="#change-11_concepts_with_mnemonic"><span class="num">11</span>Concepts section with mnemonic + pull_quote</a><span class="cat-pill" style="background:#f59e0b">Vivek depth fix</span></li><li><a href="#change-12_example1_steps_array"><span class="num">12</span>Example 1 with 3-step structure (diagnosis_checklist / prompt_variant / log_entry)</a><span class="cat-pill" style="background:#f59e0b">Vivek depth fix</span></li><li><a href="#change-13_example2_ab_comparison"><span class="num">13</span>Example 2 A/B comparison</a><span class="cat-pill" style="background:#f59e0b">Vivek depth fix</span></li><li><a href="#change-14_agent_build_section"><span class="num">14</span>Build Your Agent section</a><span class="cat-pill" style="background:#f59e0b">Vivek spec</span></li><li><a href="#change-15_try_in_llm_buttons"><span class="num">15</span>Try-in-LLM buttons (Run in ChatGPT / Claude)</a><span class="cat-pill" style="background:#10b981">Vivek Apr 29 (NEW)</span></li><li><a href="#change-16_implementation_task_section"><span class="num">16</span>Implementation Task as 6th section (NEW)</a><span class="cat-pill" style="background:#ef4444">User Apr 30 (NEW)</span></li><li><a href="#change-17_deterministic_skill_ordering"><span class="num">17</span>Deterministic skill ordering between runs</a><span class="cat-pill" style="background:#8b5cf6">Luda Apr 28</span></li>
+        </ul>
+    </aside>
+    <main class="main">
+        <div class="page-head">
+            <h1>AI Pathway - Visual Changes Walkthrough</h1>
+            <div class="summary">
+                Tool URL: <strong><a href="http://95.216.199.47:3000/" target="_blank">http://95.216.199.47:3000</a></strong><br>
+                17 visual changes covering Luda Apr 15 + Apr 28 feedback, Vivek Apr 29 critique,
+                and the new Implementation Task workflow. Click any screenshot to enlarge.
+            </div>
+            <div class="cat-filters">
+                <button class="cat-btn active" data-cat="all">All (17)</button>
+                <button class="cat-btn" data-cat="Luda Apr 15" style="border-color:#3b82f6">Luda Apr 15</button><button class="cat-btn" data-cat="Luda Apr 28" style="border-color:#8b5cf6">Luda Apr 28</button><button class="cat-btn" data-cat="Vivek Apr 29 (NEW today)" style="border-color:#10b981">Vivek Apr 29 (NEW today)</button><button class="cat-btn" data-cat="Vivek Apr 29 (NEW)" style="border-color:#10b981">Vivek Apr 29 (NEW)</button><button class="cat-btn" data-cat="Vivek depth fix" style="border-color:#f59e0b">Vivek depth fix</button><button class="cat-btn" data-cat="Vivek spec" style="border-color:#f59e0b">Vivek spec</button><button class="cat-btn" data-cat="Vivek + Apr 30" style="border-color:#10b981">Vivek + Apr 30</button><button class="cat-btn" data-cat="User Apr 30 (NEW)" style="border-color:#ef4444">User Apr 30 (NEW)</button>
+            </div>
+        </div>
+        
+<div class="card" id="change-01_homepage_simplified" data-category="Luda Apr 15" data-search="homepage simplified removed 'how it works' section and 'ready to start your ai learning journey?' cta block.">
+    <div class="card-head">
+        <span class="card-num">1</span>
+        <h2>Homepage simplified</h2>
+        <span class="cat-pill" style="background:#3b82f6">Luda Apr 15</span>
+    </div>
+    <div class="card-url">
+        <span class="label">Live URL:</span>
+        <a href="http://95.216.199.47:3000/" target="_blank" class="url">http://95.216.199.47:3000/</a>
+        <button class="copy-btn" data-copy="http://95.216.199.47:3000/" title="Copy URL">copy</button>
+    </div>
+    <div class="card-tosee">
+        <strong>To see this change:</strong> Open the URL above.
+    </div>
+    <a href="01_homepage_simplified.png" target="_blank" class="shot"><img src="01_homepage_simplified.png" alt="Homepage simplified" loading="lazy"><div class="zoom-hint">Click to enlarge</div></a>
+    <div class="card-body">
+        <div class="section">
+            <h3>What was changed</h3>
+            <p>Removed 'How It Works' section and 'Ready to start your AI learning journey?' CTA block.</p>
+        </div>
+        <div class="section">
+            <h3>Why</h3>
+            <p>Per Luda Apr 15: page should fit on a single screen.</p>
+        </div>
+        <div class="section">
+            <h3>Files modified</h3>
+            <ul><li><code>frontend/src/pages/HomePage.tsx</code></li></ul>
+        </div>
+    </div>
+</div>
+
+<div class="card" id="change-02_profiles_copy" data-category="Luda Apr 15" data-search="profiles page copy update subhead changed from 'create and manage learner profiles' to 'create profiles for different career goals'.">
+    <div class="card-head">
+        <span class="card-num">2</span>
+        <h2>Profiles page copy update</h2>
+        <span class="cat-pill" style="background:#3b82f6">Luda Apr 15</span>
+    </div>
+    <div class="card-url">
+        <span class="label">Live URL:</span>
+        <a href="http://95.216.199.47:3000/profiles" target="_blank" class="url">http://95.216.199.47:3000/profiles</a>
+        <button class="copy-btn" data-copy="http://95.216.199.47:3000/profiles" title="Copy URL">copy</button>
+    </div>
+    <div class="card-tosee">
+        <strong>To see this change:</strong> Open the URL above.
+    </div>
+    <a href="02_profiles_copy.png" target="_blank" class="shot"><img src="02_profiles_copy.png" alt="Profiles page copy update" loading="lazy"><div class="zoom-hint">Click to enlarge</div></a>
+    <div class="card-body">
+        <div class="section">
+            <h3>What was changed</h3>
+            <p>Subhead changed from 'Create and manage learner profiles' to 'Create profiles for different career goals'.</p>
+        </div>
+        <div class="section">
+            <h3>Why</h3>
+            <p>Per Luda Apr 15: language tailored for individuals creating multiple profiles for themselves.</p>
+        </div>
+        <div class="section">
+            <h3>Files modified</h3>
+            <ul><li><code>frontend/src/pages/ProfileSelectionPage.tsx</code></li></ul>
+        </div>
+    </div>
+</div>
+
+<div class="card" id="change-03_skills_review_merged" data-category="Luda Apr 15" data-search="skill selection + self-assessment merged combined two previously separate pages (skill selection, then self-assessment) into one unified page. when a skill is selected, the proficiency rating appears inline below it.">
+    <div class="card-head">
+        <span class="card-num">3</span>
+        <h2>Skill selection + self-assessment merged</h2>
+        <span class="cat-pill" style="background:#3b82f6">Luda Apr 15</span>
+    </div>
+    <div class="card-url">
+        <span class="label">Live URL:</span>
+        <a href="http://95.216.199.47:3000/analysis/**" target="_blank" class="url">http://95.216.199.47:3000/analysis/**</a>
+        <button class="copy-btn" data-copy="http://95.216.199.47:3000/analysis/**" title="Copy URL">copy</button>
+    </div>
+    <div class="card-tosee">
+        <strong>To see this change:</strong> Open the URL above.
+    </div>
+    <a href="03_skills_review_merged.png" target="_blank" class="shot"><img src="03_skills_review_merged.png" alt="Skill selection + self-assessment merged" loading="lazy"><div class="zoom-hint">Click to enlarge</div></a>
+    <div class="card-body">
+        <div class="section">
+            <h3>What was changed</h3>
+            <p>Combined two previously separate pages (skill selection, then self-assessment) into one unified page. When a skill is selected, the proficiency rating appears inline below it.</p>
+        </div>
+        <div class="section">
+            <h3>Why</h3>
+            <p>Per Luda Apr 15: reduce step count and let user adjust skills + ratings in one view.</p>
+        </div>
+        <div class="section">
+            <h3>Files modified</h3>
+            <ul><li><code>frontend/src/pages/AnalysisPage.tsx</code></li><li><code>frontend/src/components/SelfAssessment.tsx</code></li></ul>
+        </div>
+    </div>
+</div>
+
+<div class="card" id="change-04_skill_hover_tooltip" data-category="Vivek Apr 29 (NEW today)" data-search="hover tooltip with ontology description on skill name skill names now have a dotted underline + cursor:help. hovering shows the canonical ontology description and skill_id in a dark tooltip.">
+    <div class="card-head">
+        <span class="card-num">4</span>
+        <h2>Hover tooltip with ontology description on skill name</h2>
+        <span class="cat-pill" style="background:#10b981">Vivek Apr 29 (NEW today)</span>
+    </div>
+    <div class="card-url">
+        <span class="label">Live URL:</span>
+        <a href="http://95.216.199.47:3000/analysis/**" target="_blank" class="url">http://95.216.199.47:3000/analysis/**</a>
+        <button class="copy-btn" data-copy="http://95.216.199.47:3000/analysis/**" title="Copy URL">copy</button>
+    </div>
+    <div class="card-tosee">
+        <strong>To see this change:</strong> Open URL, then hover over any skill name.
+    </div>
+    <a href="04_skill_hover_tooltip.png" target="_blank" class="shot"><img src="04_skill_hover_tooltip.png" alt="Hover tooltip with ontology description on skill name" loading="lazy"><div class="zoom-hint">Click to enlarge</div></a>
+    <div class="card-body">
+        <div class="section">
+            <h3>What was changed</h3>
+            <p>Skill names now have a dotted underline + cursor:help. Hovering shows the canonical ontology description and skill_id in a dark tooltip.</p>
+        </div>
+        <div class="section">
+            <h3>Why</h3>
+            <p>Per Vivek Apr 29 (confirmed Agreed): users shouldn't have to guess what a skill means. Show the authoritative ontology definition on hover.</p>
+        </div>
+        <div class="section">
+            <h3>Files modified</h3>
+            <ul><li><code>frontend/src/components/SelfAssessment.tsx</code></li><li><code>frontend/src/pages/AnalysisPage.tsx</code></li></ul>
+        </div>
+    </div>
+</div>
+
+<div class="card" id="change-05_targeted_role_label" data-category="Luda Apr 15" data-search="detected role -> targeted role rename label 'detected role' renamed to 'targeted role' throughout the tool.">
+    <div class="card-head">
+        <span class="card-num">5</span>
+        <h2>Detected Role -> Targeted Role rename</h2>
+        <span class="cat-pill" style="background:#3b82f6">Luda Apr 15</span>
+    </div>
+    <div class="card-url">
+        <span class="label">Live URL:</span>
+        <a href="http://95.216.199.47:3000/analysis/**" target="_blank" class="url">http://95.216.199.47:3000/analysis/**</a>
+        <button class="copy-btn" data-copy="http://95.216.199.47:3000/analysis/**" title="Copy URL">copy</button>
+    </div>
+    <div class="card-tosee">
+        <strong>To see this change:</strong> Open URL above.
+    </div>
+    <a href="05_targeted_role_label.png" target="_blank" class="shot"><img src="05_targeted_role_label.png" alt="Detected Role -> Targeted Role rename" loading="lazy"><div class="zoom-hint">Click to enlarge</div></a>
+    <div class="card-body">
+        <div class="section">
+            <h3>What was changed</h3>
+            <p>Label 'Detected role' renamed to 'Targeted role' throughout the tool.</p>
+        </div>
+        <div class="section">
+            <h3>Why</h3>
+            <p>Per Luda Apr 15: 'Targeted' is more accurate - the user is selecting a target, not having a role 'detected'.</p>
+        </div>
+        <div class="section">
+            <h3>Files modified</h3>
+            <ul><li><code>frontend/src/components/profile/TargetGoalPanel.tsx</code></li></ul>
+        </div>
+    </div>
+</div>
+
+<div class="card" id="change-06_skill_match_messaging" data-category="Luda Apr 28" data-search="end-of-page messaging when skills match target changed messaging from 'we will proceed with the remaining x skills' to 'we will add other relevant skills to build a learning path consisting of 5 chapters'.">
+    <div class="card-head">
+        <span class="card-num">6</span>
+        <h2>End-of-page messaging when skills match target</h2>
+        <span class="cat-pill" style="background:#8b5cf6">Luda Apr 28</span>
+    </div>
+    <div class="card-url">
+        <span class="label">Live URL:</span>
+        <a href="http://95.216.199.47:3000/analysis/**" target="_blank" class="url">http://95.216.199.47:3000/analysis/**</a>
+        <button class="copy-btn" data-copy="http://95.216.199.47:3000/analysis/**" title="Copy URL">copy</button>
+    </div>
+    <div class="card-tosee">
+        <strong>To see this change:</strong> Open URL, rate at least one skill at its target level.
+    </div>
+    <a href="06_skill_match_messaging.png" target="_blank" class="shot"><img src="06_skill_match_messaging.png" alt="End-of-page messaging when skills match target" loading="lazy"><div class="zoom-hint">Click to enlarge</div></a>
+    <div class="card-body">
+        <div class="section">
+            <h3>What was changed</h3>
+            <p>Changed messaging from 'we will proceed with the remaining X skills' to 'we will add other relevant skills to build a learning path consisting of 5 chapters'.</p>
+        </div>
+        <div class="section">
+            <h3>Why</h3>
+            <p>Per Luda Apr 28: clarify that the system backfills with new skills rather than just dropping the matched ones.</p>
+        </div>
+        <div class="section">
+            <h3>Files modified</h3>
+            <ul><li><code>frontend/src/pages/AnalysisPage.tsx</code></li></ul>
+        </div>
+    </div>
+</div>
+
+<div class="card" id="change-07_learning_dashboard_no_gate" data-category="Luda Apr 28" data-search="learning dashboard auto-activates (no ready to start gate) removed 'ready to start learning?' confirmation page that previously appeared between skill review and the dashboard. path now auto-activates on load.">
+    <div class="card-head">
+        <span class="card-num">7</span>
+        <h2>Learning dashboard auto-activates (no Ready to Start gate)</h2>
+        <span class="cat-pill" style="background:#8b5cf6">Luda Apr 28</span>
+    </div>
+    <div class="card-url">
+        <span class="label">Live URL:</span>
+        <a href="http://95.216.199.47:3000/learn/43b55c6b-1d35-466e-b942-7fa8dbcaf4ac" target="_blank" class="url">http://95.216.199.47:3000/learn/43b55c6b-1d35-466e-b942-7fa8dbcaf4ac</a>
+        <button class="copy-btn" data-copy="http://95.216.199.47:3000/learn/43b55c6b-1d35-466e-b942-7fa8dbcaf4ac" title="Copy URL">copy</button>
+    </div>
+    <div class="card-tosee">
+        <strong>To see this change:</strong> Open URL above.
+    </div>
+    <a href="07_learning_dashboard_no_gate.png" target="_blank" class="shot"><img src="07_learning_dashboard_no_gate.png" alt="Learning dashboard auto-activates (no Ready to Start gate)" loading="lazy"><div class="zoom-hint">Click to enlarge</div></a>
+    <div class="card-body">
+        <div class="section">
+            <h3>What was changed</h3>
+            <p>Removed 'Ready to Start Learning?' confirmation page that previously appeared between skill review and the dashboard. Path now auto-activates on load.</p>
+        </div>
+        <div class="section">
+            <h3>Why</h3>
+            <p>Per Luda Apr 28: the gate page was duplicative of the skill review confirmation.</p>
+        </div>
+        <div class="section">
+            <h3>Files modified</h3>
+            <ul><li><code>frontend/src/pages/LearningDashboardPage.tsx</code></li></ul>
+        </div>
+    </div>
+</div>
+
+<div class="card" id="change-08_journey_roadmap_removed" data-category="Luda Apr 28" data-search="your journey roadmap page removed removed the entire 'your journey roadmap' page that previously appeared between skill review and the learning dashboard.">
+    <div class="card-head">
+        <span class="card-num">8</span>
+        <h2>Your Journey Roadmap page removed</h2>
+        <span class="cat-pill" style="background:#8b5cf6">Luda Apr 28</span>
+    </div>
+    <div class="card-url">
+        <span class="label">Live URL:</span>
+        <a href="http://95.216.199.47:3000/analysis/**" target="_blank" class="url">http://95.216.199.47:3000/analysis/**</a>
+        <button class="copy-btn" data-copy="http://95.216.199.47:3000/analysis/**" title="Copy URL">copy</button>
+    </div>
+    <div class="card-tosee">
+        <strong>To see this change:</strong> Open URL above and click Continue to Learning Path - goes directly to dashboard.
+    </div>
+    <a href="08_journey_roadmap_removed.png" target="_blank" class="shot"><img src="08_journey_roadmap_removed.png" alt="Your Journey Roadmap page removed" loading="lazy"><div class="zoom-hint">Click to enlarge</div></a>
+    <div class="card-body">
+        <div class="section">
+            <h3>What was changed</h3>
+            <p>Removed the entire 'Your Journey Roadmap' page that previously appeared between skill review and the learning dashboard.</p>
+        </div>
+        <div class="section">
+            <h3>Why</h3>
+            <p>Per Luda Apr 28: the roadmap page was duplicative - same info already shown on the skill review page.</p>
+        </div>
+        <div class="section">
+            <h3>Files modified</h3>
+            <ul><li><code>frontend/src/pages/AnalysisPage.tsx</code></li></ul>
+        </div>
+    </div>
+</div>
+
+<div class="card" id="change-09_chapter_section_nav" data-category="Vivek + Apr 30" data-search="chapter section navigation (6 sections, 15 min) chapter renderer shows 6 section tabs at top: scenario (2m), concepts (3m), example 1 (3m), example 2 (4m), build (3m), assignment (30m). the assignment tab is the new 6th section.">
+    <div class="card-head">
+        <span class="card-num">9</span>
+        <h2>Chapter section navigation (6 sections, 15 min)</h2>
+        <span class="cat-pill" style="background:#10b981">Vivek + Apr 30</span>
+    </div>
+    <div class="card-url">
+        <span class="label">Live URL:</span>
+        <a href="http://95.216.199.47:3000/learn/43b55c6b-1d35-466e-b942-7fa8dbcaf4ac/lesson/c12b8c7e-977f-4ceb-b174-0f830026bad7" target="_blank" class="url">http://95.216.199.47:3000/learn/43b55c6b-1d35-466e-b942-7fa8dbcaf4ac/lesson/c12b8c7e-977f-4ceb-b174-0f830026bad7</a>
+        <button class="copy-btn" data-copy="http://95.216.199.47:3000/learn/43b55c6b-1d35-466e-b942-7fa8dbcaf4ac/lesson/c12b8c7e-977f-4ceb-b174-0f830026bad7" title="Copy URL">copy</button>
+    </div>
+    <div class="card-tosee">
+        <strong>To see this change:</strong> Open URL above.
+    </div>
+    <a href="09_chapter_section_nav.png" target="_blank" class="shot"><img src="09_chapter_section_nav.png" alt="Chapter section navigation (6 sections, 15 min)" loading="lazy"><div class="zoom-hint">Click to enlarge</div></a>
+    <div class="card-body">
+        <div class="section">
+            <h3>What was changed</h3>
+            <p>Chapter renderer shows 6 section tabs at top: Scenario (2m), Concepts (3m), Example 1 (3m), Example 2 (4m), Build (3m), Assignment (30m). The Assignment tab is the new 6th section.</p>
+        </div>
+        <div class="section">
+            <h3>Why</h3>
+            <p>Per Vivek's chapter spec (5 sections totaling 15 min) + user's request to bring back the Implementation Task assignment workflow.</p>
+        </div>
+        <div class="section">
+            <h3>Files modified</h3>
+            <ul><li><code>frontend/src/components/chapter/ChapterRenderer.tsx</code></li><li><code>backend/app/agents/chapter_generator.py</code></li><li><code>backend/app/data/chapter-generator-prompt.md</code></li></ul>
+        </div>
+    </div>
+</div>
+
+<div class="card" id="change-10_chapter_title_ontology_name" data-category="Vivek Apr 29 (NEW today)" data-search="chapter title uses ontology canonical name chapter title now displays the ontology canonical skill name (e.g. 'prompt debugging & iteration') instead of the llm-generated story title (e.g. 'iterating on prompts: from literacy to practitioner').">
+    <div class="card-head">
+        <span class="card-num">10</span>
+        <h2>Chapter title uses ontology canonical name</h2>
+        <span class="cat-pill" style="background:#10b981">Vivek Apr 29 (NEW today)</span>
+    </div>
+    <div class="card-url">
+        <span class="label">Live URL:</span>
+        <a href="http://95.216.199.47:3000/learn/43b55c6b-1d35-466e-b942-7fa8dbcaf4ac/lesson/c12b8c7e-977f-4ceb-b174-0f830026bad7" target="_blank" class="url">http://95.216.199.47:3000/learn/43b55c6b-1d35-466e-b942-7fa8dbcaf4ac/lesson/c12b8c7e-977f-4ceb-b174-0f830026bad7</a>
+        <button class="copy-btn" data-copy="http://95.216.199.47:3000/learn/43b55c6b-1d35-466e-b942-7fa8dbcaf4ac/lesson/c12b8c7e-977f-4ceb-b174-0f830026bad7" title="Copy URL">copy</button>
+    </div>
+    <div class="card-tosee">
+        <strong>To see this change:</strong> Open URL above.
+    </div>
+    <a href="10_chapter_title_ontology_name.png" target="_blank" class="shot"><img src="10_chapter_title_ontology_name.png" alt="Chapter title uses ontology canonical name" loading="lazy"><div class="zoom-hint">Click to enlarge</div></a>
+    <div class="card-body">
+        <div class="section">
+            <h3>What was changed</h3>
+            <p>Chapter title now displays the ontology canonical skill name (e.g. 'Prompt debugging & iteration') instead of the LLM-generated story title (e.g. 'Iterating on Prompts: From Literacy to Practitioner').</p>
+        </div>
+        <div class="section">
+            <h3>Why</h3>
+            <p>Per Vivek Apr 29 (confirmed Agreed) on Luda's request: skills should be named consistently using ontology names throughout the tool.</p>
+        </div>
+        <div class="section">
+            <h3>Files modified</h3>
+            <ul><li><code>frontend/src/components/chapter/ChapterRenderer.tsx</code></li></ul>
+        </div>
+    </div>
+</div>
+
+<div class="card" id="change-11_concepts_with_mnemonic" data-category="Vivek depth fix" data-search="concepts section with mnemonic + pull_quote concepts section now requires a mnemonic field (e.g. 'ivl'), a pull_quote (single memorable sentence), and 2-4 concept cards each with identifier, word, headline, body, analogy, color_role.">
+    <div class="card-head">
+        <span class="card-num">11</span>
+        <h2>Concepts section with mnemonic + pull_quote</h2>
+        <span class="cat-pill" style="background:#f59e0b">Vivek depth fix</span>
+    </div>
+    <div class="card-url">
+        <span class="label">Live URL:</span>
+        <a href="http://95.216.199.47:3000/learn/43b55c6b-1d35-466e-b942-7fa8dbcaf4ac/lesson/c12b8c7e-977f-4ceb-b174-0f830026bad7" target="_blank" class="url">http://95.216.199.47:3000/learn/43b55c6b-1d35-466e-b942-7fa8dbcaf4ac/lesson/c12b8c7e-977f-4ceb-b174-0f830026bad7</a>
+        <button class="copy-btn" data-copy="http://95.216.199.47:3000/learn/43b55c6b-1d35-466e-b942-7fa8dbcaf4ac/lesson/c12b8c7e-977f-4ceb-b174-0f830026bad7" title="Copy URL">copy</button>
+    </div>
+    <div class="card-tosee">
+        <strong>To see this change:</strong> Open URL above, click Concepts tab.
+    </div>
+    <a href="11_concepts_with_mnemonic.png" target="_blank" class="shot"><img src="11_concepts_with_mnemonic.png" alt="Concepts section with mnemonic + pull_quote" loading="lazy"><div class="zoom-hint">Click to enlarge</div></a>
+    <div class="card-body">
+        <div class="section">
+            <h3>What was changed</h3>
+            <p>Concepts section now requires a mnemonic field (e.g. 'IVL'), a pull_quote (single memorable sentence), and 2-4 concept cards each with identifier, word, headline, body, analogy, color_role.</p>
+        </div>
+        <div class="section">
+            <h3>Why</h3>
+            <p>Per Vivek's depth spec: chapters lacked structural depth. Mnemonic + pull_quote help retention.</p>
+        </div>
+        <div class="section">
+            <h3>Files modified</h3>
+            <ul><li><code>backend/app/data/chapter-generator-prompt.md</code></li><li><code>backend/app/agents/chapter_generator.py</code></li></ul>
+        </div>
+    </div>
+</div>
+
+<div class="card" id="change-12_example1_steps_array" data-category="Vivek depth fix" data-search="example 1 with 3-step structure (diagnosis_checklist / prompt_variant / log_entry) example 1 now requires a steps array with exactly 3 entries: (1) diagnosis_checklist with broken/clear status flags, (2) prompt_variant ref, (3) log_entry table with key/value pairs.">
+    <div class="card-head">
+        <span class="card-num">12</span>
+        <h2>Example 1 with 3-step structure (diagnosis_checklist / prompt_variant / log_entry)</h2>
+        <span class="cat-pill" style="background:#f59e0b">Vivek depth fix</span>
+    </div>
+    <div class="card-url">
+        <span class="label">Live URL:</span>
+        <a href="http://95.216.199.47:3000/learn/43b55c6b-1d35-466e-b942-7fa8dbcaf4ac/lesson/c12b8c7e-977f-4ceb-b174-0f830026bad7" target="_blank" class="url">http://95.216.199.47:3000/learn/43b55c6b-1d35-466e-b942-7fa8dbcaf4ac/lesson/c12b8c7e-977f-4ceb-b174-0f830026bad7</a>
+        <button class="copy-btn" data-copy="http://95.216.199.47:3000/learn/43b55c6b-1d35-466e-b942-7fa8dbcaf4ac/lesson/c12b8c7e-977f-4ceb-b174-0f830026bad7" title="Copy URL">copy</button>
+    </div>
+    <div class="card-tosee">
+        <strong>To see this change:</strong> Open URL above, click Example 1 tab.
+    </div>
+    <a href="12_example1_steps_array.png" target="_blank" class="shot"><img src="12_example1_steps_array.png" alt="Example 1 with 3-step structure (diagnosis_checklist / prompt_variant / log_entry)" loading="lazy"><div class="zoom-hint">Click to enlarge</div></a>
+    <div class="card-body">
+        <div class="section">
+            <h3>What was changed</h3>
+            <p>Example 1 now requires a steps array with EXACTLY 3 entries: (1) diagnosis_checklist with broken/clear status flags, (2) prompt_variant ref, (3) log_entry table with key/value pairs.</p>
+        </div>
+        <div class="section">
+            <h3>Why</h3>
+            <p>Per Vivek's spec: Example 1 should walk learner through the diagnostic process, not just show a prompt and result.</p>
+        </div>
+        <div class="section">
+            <h3>Files modified</h3>
+            <ul><li><code>backend/app/agents/chapter_generator.py</code></li><li><code>backend/app/data/chapter-generator-prompt.md</code></li><li><code>frontend/src/components/chapter/ChapterRenderer.tsx</code></li></ul>
+        </div>
+    </div>
+</div>
+
+<div class="card" id="change-13_example2_ab_comparison" data-category="Vivek depth fix" data-search="example 2 a/b comparison example 2 must have a comparison object with test_question, exactly 2 variants (id a, id b) with full prompt/output/rating/why, and a takeaway.">
+    <div class="card-head">
+        <span class="card-num">13</span>
+        <h2>Example 2 A/B comparison</h2>
+        <span class="cat-pill" style="background:#f59e0b">Vivek depth fix</span>
+    </div>
+    <div class="card-url">
+        <span class="label">Live URL:</span>
+        <a href="http://95.216.199.47:3000/learn/43b55c6b-1d35-466e-b942-7fa8dbcaf4ac/lesson/c12b8c7e-977f-4ceb-b174-0f830026bad7" target="_blank" class="url">http://95.216.199.47:3000/learn/43b55c6b-1d35-466e-b942-7fa8dbcaf4ac/lesson/c12b8c7e-977f-4ceb-b174-0f830026bad7</a>
+        <button class="copy-btn" data-copy="http://95.216.199.47:3000/learn/43b55c6b-1d35-466e-b942-7fa8dbcaf4ac/lesson/c12b8c7e-977f-4ceb-b174-0f830026bad7" title="Copy URL">copy</button>
+    </div>
+    <div class="card-tosee">
+        <strong>To see this change:</strong> Open URL above, click Example 2 tab.
+    </div>
+    <a href="13_example2_ab_comparison.png" target="_blank" class="shot"><img src="13_example2_ab_comparison.png" alt="Example 2 A/B comparison" loading="lazy"><div class="zoom-hint">Click to enlarge</div></a>
+    <div class="card-body">
+        <div class="section">
+            <h3>What was changed</h3>
+            <p>Example 2 must have a comparison object with test_question, exactly 2 variants (id A, id B) with full prompt/output/rating/why, and a takeaway.</p>
+        </div>
+        <div class="section">
+            <h3>Why</h3>
+            <p>Per Vivek's spec: Example 2 demonstrates the target-level skill (A/B testing) by example.</p>
+        </div>
+        <div class="section">
+            <h3>Files modified</h3>
+            <ul><li><code>backend/app/agents/chapter_generator.py</code></li><li><code>backend/app/data/chapter-generator-prompt.md</code></li></ul>
+        </div>
+    </div>
+</div>
+
+<div class="card" id="change-14_agent_build_section" data-category="Vivek spec" data-search="build your agent section agent build section requires: 3 capability_chips, 3 personalization_fields, system_prompt_template, usage_steps, and final_affirmation tying back to the rubric.">
+    <div class="card-head">
+        <span class="card-num">14</span>
+        <h2>Build Your Agent section</h2>
+        <span class="cat-pill" style="background:#f59e0b">Vivek spec</span>
+    </div>
+    <div class="card-url">
+        <span class="label">Live URL:</span>
+        <a href="http://95.216.199.47:3000/learn/43b55c6b-1d35-466e-b942-7fa8dbcaf4ac/lesson/c12b8c7e-977f-4ceb-b174-0f830026bad7" target="_blank" class="url">http://95.216.199.47:3000/learn/43b55c6b-1d35-466e-b942-7fa8dbcaf4ac/lesson/c12b8c7e-977f-4ceb-b174-0f830026bad7</a>
+        <button class="copy-btn" data-copy="http://95.216.199.47:3000/learn/43b55c6b-1d35-466e-b942-7fa8dbcaf4ac/lesson/c12b8c7e-977f-4ceb-b174-0f830026bad7" title="Copy URL">copy</button>
+    </div>
+    <div class="card-tosee">
+        <strong>To see this change:</strong> Open URL above, click Build tab.
+    </div>
+    <a href="14_agent_build_section.png" target="_blank" class="shot"><img src="14_agent_build_section.png" alt="Build Your Agent section" loading="lazy"><div class="zoom-hint">Click to enlarge</div></a>
+    <div class="card-body">
+        <div class="section">
+            <h3>What was changed</h3>
+            <p>Agent Build section requires: 3 capability_chips, 3 personalization_fields, system_prompt_template, usage_steps, and final_affirmation tying back to the rubric.</p>
+        </div>
+        <div class="section">
+            <h3>Why</h3>
+            <p>Per Vivek's spec: each chapter ends with a takeaway artifact the learner can use the same day.</p>
+        </div>
+        <div class="section">
+            <h3>Files modified</h3>
+            <ul><li><code>backend/app/agents/chapter_generator.py</code></li><li><code>frontend/src/components/chapter/ChapterRenderer.tsx</code></li></ul>
+        </div>
+    </div>
+</div>
+
+<div class="card" id="change-15_try_in_llm_buttons" data-category="Vivek Apr 29 (NEW)" data-search="try-in-llm buttons (run in chatgpt / claude) added 'run in chatgpt' / 'run in claude' buttons next to every prompt in the chapter: original_prompt, iterated_prompt, a/b variants, and the interpolated agent build template.">
+    <div class="card-head">
+        <span class="card-num">15</span>
+        <h2>Try-in-LLM buttons (Run in ChatGPT / Claude)</h2>
+        <span class="cat-pill" style="background:#10b981">Vivek Apr 29 (NEW)</span>
+    </div>
+    <div class="card-url">
+        <span class="label">Live URL:</span>
+        <a href="http://95.216.199.47:3000/learn/43b55c6b-1d35-466e-b942-7fa8dbcaf4ac/lesson/c12b8c7e-977f-4ceb-b174-0f830026bad7" target="_blank" class="url">http://95.216.199.47:3000/learn/43b55c6b-1d35-466e-b942-7fa8dbcaf4ac/lesson/c12b8c7e-977f-4ceb-b174-0f830026bad7</a>
+        <button class="copy-btn" data-copy="http://95.216.199.47:3000/learn/43b55c6b-1d35-466e-b942-7fa8dbcaf4ac/lesson/c12b8c7e-977f-4ceb-b174-0f830026bad7" title="Copy URL">copy</button>
+    </div>
+    <div class="card-tosee">
+        <strong>To see this change:</strong> Open URL above, click Example 1 tab.
+    </div>
+    <a href="15_try_in_llm_buttons.png" target="_blank" class="shot"><img src="15_try_in_llm_buttons.png" alt="Try-in-LLM buttons (Run in ChatGPT / Claude)" loading="lazy"><div class="zoom-hint">Click to enlarge</div></a>
+    <div class="card-body">
+        <div class="section">
+            <h3>What was changed</h3>
+            <p>Added 'Run in ChatGPT' / 'Run in Claude' buttons next to every prompt in the chapter: original_prompt, iterated_prompt, A/B variants, and the interpolated agent build template.</p>
+        </div>
+        <div class="section">
+            <h3>Why</h3>
+            <p>Per Vivek Apr 29: 'I also liked aspects of your previous build especially around giving links to try out the prompts in chatgpt or claude.'</p>
+        </div>
+        <div class="section">
+            <h3>Files modified</h3>
+            <ul><li><code>frontend/src/components/chapter/ChapterRenderer.tsx</code></li></ul>
+        </div>
+    </div>
+</div>
+
+<div class="card" id="change-16_implementation_task_section" data-category="User Apr 30 (NEW)" data-search="implementation task as 6th section (new) brought back the implementation task assignment workflow as a 6th chapter section. includes title, description, requirements, deliverable, tools, evidence_requirements (file uploads). submit & get graded uses existing ai grading endpoint.">
+    <div class="card-head">
+        <span class="card-num">16</span>
+        <h2>Implementation Task as 6th section (NEW)</h2>
+        <span class="cat-pill" style="background:#ef4444">User Apr 30 (NEW)</span>
+    </div>
+    <div class="card-url">
+        <span class="label">Live URL:</span>
+        <a href="http://95.216.199.47:3000/learn/43b55c6b-1d35-466e-b942-7fa8dbcaf4ac/lesson/c12b8c7e-977f-4ceb-b174-0f830026bad7" target="_blank" class="url">http://95.216.199.47:3000/learn/43b55c6b-1d35-466e-b942-7fa8dbcaf4ac/lesson/c12b8c7e-977f-4ceb-b174-0f830026bad7</a>
+        <button class="copy-btn" data-copy="http://95.216.199.47:3000/learn/43b55c6b-1d35-466e-b942-7fa8dbcaf4ac/lesson/c12b8c7e-977f-4ceb-b174-0f830026bad7" title="Copy URL">copy</button>
+    </div>
+    <div class="card-tosee">
+        <strong>To see this change:</strong> Open URL above, click Assignment tab.
+    </div>
+    <a href="16_implementation_task_section.png" target="_blank" class="shot"><img src="16_implementation_task_section.png" alt="Implementation Task as 6th section (NEW)" loading="lazy"><div class="zoom-hint">Click to enlarge</div></a>
+    <div class="card-body">
+        <div class="section">
+            <h3>What was changed</h3>
+            <p>Brought back the Implementation Task assignment workflow as a 6th chapter section. Includes title, description, requirements, deliverable, tools, evidence_requirements (file uploads). Submit & Get Graded uses existing AI grading endpoint.</p>
+        </div>
+        <div class="section">
+            <h3>Why</h3>
+            <p>Per user's Apr 30 request: the assignment functionality from the old multi-lesson format was missing.</p>
+        </div>
+        <div class="section">
+            <h3>Files modified</h3>
+            <ul><li><code>backend/app/agents/chapter_generator.py</code></li><li><code>backend/app/data/chapter-generator-prompt.md</code></li><li><code>frontend/src/components/chapter/ChapterRenderer.tsx</code></li><li><code>frontend/src/components/learning/ImplementationTaskCard.tsx</code></li></ul>
+        </div>
+    </div>
+</div>
+
+<div class="card" id="change-17_deterministic_skill_ordering" data-category="Luda Apr 28" data-search="deterministic skill ordering between runs set profile_analyzer llm call to temperature=0. verified across 20 consecutive runs - identical top 5 every time.">
+    <div class="card-head">
+        <span class="card-num">17</span>
+        <h2>Deterministic skill ordering between runs</h2>
+        <span class="cat-pill" style="background:#8b5cf6">Luda Apr 28</span>
+    </div>
+    <div class="card-url">
+        <span class="label">Live URL:</span>
+        <a href="http://95.216.199.47:3000/analysis/**" target="_blank" class="url">http://95.216.199.47:3000/analysis/**</a>
+        <button class="copy-btn" data-copy="http://95.216.199.47:3000/analysis/**" title="Copy URL">copy</button>
+    </div>
+    <div class="card-tosee">
+        <strong>To see this change:</strong> Open URL above. Compare with another fresh run - same input gives same top 5.
+    </div>
+    <a href="17_deterministic_skill_ordering.png" target="_blank" class="shot"><img src="17_deterministic_skill_ordering.png" alt="Deterministic skill ordering between runs" loading="lazy"><div class="zoom-hint">Click to enlarge</div></a>
+    <div class="card-body">
+        <div class="section">
+            <h3>What was changed</h3>
+            <p>Set profile_analyzer LLM call to temperature=0. Verified across 20 consecutive runs - identical top 5 every time.</p>
+        </div>
+        <div class="section">
+            <h3>Why</h3>
+            <p>Per Luda Apr 28: she ran Jennifer C twice and got different top 5 skills.</p>
+        </div>
+        <div class="section">
+            <h3>Files modified</h3>
+            <ul><li><code>backend/app/agents/profile_analyzer.py</code></li></ul>
+        </div>
+    </div>
+</div>
+
+    </main>
+</div>
+<script>
+// Search filter
+const search = document.getElementById('search');
+search.addEventListener('input', () => {
+    const q = search.value.toLowerCase().trim();
+    document.querySelectorAll('.card').forEach(card => {
+        const text = card.dataset.search || '';
+        card.classList.toggle('hidden', q && !text.includes(q));
+    });
+    // Update TOC visibility too
+    document.querySelectorAll('.toc li').forEach(li => {
+        const link = li.querySelector('a');
+        if (!link) return;
+        const target = document.querySelector(link.getAttribute('href'));
+        li.style.display = (target && !target.classList.contains('hidden')) ? '' : 'none';
+    });
+});
+
+// Category filters
+document.querySelectorAll('.cat-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const cat = btn.dataset.cat;
+        document.querySelectorAll('.card').forEach(card => {
+            card.classList.toggle('hidden', cat !== 'all' && card.dataset.category !== cat);
+        });
+        document.querySelectorAll('.toc li').forEach(li => {
+            const link = li.querySelector('a');
+            if (!link) return;
+            const target = document.querySelector(link.getAttribute('href'));
+            li.style.display = (target && !target.classList.contains('hidden')) ? '' : 'none';
+        });
+    });
+});
+
+// Copy URL buttons
+document.querySelectorAll('.copy-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+        try {
+            await navigator.clipboard.writeText(btn.dataset.copy);
+            btn.classList.add('copied');
+            const orig = btn.textContent;
+            btn.textContent = 'copied!';
+            setTimeout(() => { btn.classList.remove('copied'); btn.textContent = orig; }, 1500);
+        } catch (e) {}
+    });
+});
+</script>
+</body>
+</html>
