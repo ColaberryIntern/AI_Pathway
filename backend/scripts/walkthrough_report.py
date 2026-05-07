@@ -20,6 +20,8 @@ BASE = "http://95.216.199.47:3000"
 API = f"{BASE}/api"
 REPORT_DIR = Path(__file__).parent.parent.parent / "docs" / "walkthrough_report"
 REPORT_DIR.mkdir(parents=True, exist_ok=True)
+SCREENSHOTS_DIR = REPORT_DIR / "screenshots"
+SCREENSHOTS_DIR.mkdir(parents=True, exist_ok=True)
 
 JENNIFER_JD = (
     "AI Content Editor. Evaluate and edit AI-generated content for accuracy, "
@@ -105,18 +107,23 @@ CLEAR_HIGHLIGHT_JS = """
 """
 
 
-async def setup_test_data():
-    """Create profile and generate chapter content. Returns ids for testing."""
-    print("Setting up test data...")
+async def create_profile() -> str | None:
+    """Create the test profile only. Returns the profile id, or None on failure."""
+    print("Creating test profile...")
     async with httpx.AsyncClient(timeout=240) as client:
         r = await client.post(f"{API}/profiles/", json=JENNIFER_PROFILE)
         if r.status_code not in (200, 201):
             print(f"  FAIL: {r.status_code}")
             return None
-        profile = r.json()
-        pid = profile["id"]
+        pid = r.json()["id"]
         print(f"  Profile: {pid}")
+        return pid
 
+
+async def complete_analysis_and_chapter(pid: str) -> tuple[str | None, str | None]:
+    """Run analysis, activate path, generate first chapter. Returns (path_id, lesson_id)."""
+    print("Running analysis + chapter generation...")
+    async with httpx.AsyncClient(timeout=240) as client:
         r = await client.post(f"{API}/analysis/full", json={
             "profile_id": pid,
             "target_jd_text": JENNIFER_JD,
@@ -125,8 +132,7 @@ async def setup_test_data():
         })
         if r.status_code != 200:
             print(f"  FAIL analysis: {r.status_code}")
-            await client.delete(f"{API}/profiles/{pid}")
-            return None
+            return None, None
         path_id = r.json().get("learning_path_id")
         print(f"  Path: {path_id}")
 
@@ -141,21 +147,19 @@ async def setup_test_data():
             if r.status_code == 200:
                 print("  Chapter generated.")
 
-        return {
-            "profile_id": pid,
-            "path_id": path_id,
-            "lesson_id": first_lesson_id,
-        }
+        return path_id, first_lesson_id
 
 
 async def main():
-    data = await setup_test_data()
-    if not data:
+    pid = await create_profile()
+    if not pid:
         sys.exit(1)
 
-    pid = data["profile_id"]
-    path_id = data["path_id"]
-    lesson_id = data["lesson_id"]
+    # Path and lesson IDs only exist after analysis runs. CHANGES still
+    # references them in URL templates, so use empty strings as placeholders
+    # for pre-analysis items (they don't navigate to /learn anyway).
+    path_id = ""
+    lesson_id = ""
 
     # Each entry: dict with keys: id, title, page_url, click_path, highlight_selector, highlight_text, description, what_changed, why_changed
     changes = [
@@ -182,17 +186,18 @@ async def main():
         {
             "id": "03_skills_review_merged",
             "title": "Skill selection + self-assessment merged",
-            "page_url": f"{BASE}/analysis/{pid}",
+            "page_url": f"{BASE}/analysis/{pid}?view=skill_selection",
             "highlight_text": "Top 5 Skills for the Targeted Role",
             "highlight_label": "Merged page heading",
             "what_changed": "Combined two previously separate pages (skill selection, then self-assessment) into one unified page. When a skill is selected, the proficiency rating appears inline below it.",
             "why_changed": "Per Luda Apr 15: reduce step count and let user adjust skills + ratings in one view.",
             "files_modified": ["frontend/src/pages/AnalysisPage.tsx", "frontend/src/components/SelfAssessment.tsx"],
+            "phase": "pre_analysis",
         },
         {
             "id": "04_skill_hover_tooltip",
             "title": "Hover tooltip with ontology description on skill name",
-            "page_url": f"{BASE}/analysis/{pid}",
+            "page_url": f"{BASE}/analysis/{pid}?view=skill_selection",
             "highlight_selector": "h3",
             "highlight_text": "Prompt debugging",
             "highlight_label": "Hover for ontology description",
@@ -200,27 +205,30 @@ async def main():
             "why_changed": "Per Vivek Apr 29 (confirmed Agreed): users shouldn't have to guess what a skill means. Show the authoritative ontology definition on hover.",
             "files_modified": ["frontend/src/components/SelfAssessment.tsx", "frontend/src/pages/AnalysisPage.tsx"],
             "hover_first": True,
+            "phase": "pre_analysis",
         },
         {
             "id": "05_targeted_role_label",
             "title": "Detected Role -> Targeted Role rename",
-            "page_url": f"{BASE}/analysis/{pid}",
-            "highlight_text": "Detected role",  # This should be GONE - if found, fail
-            "highlight_label": "Renamed (was 'Detected role')",
+            "page_url": f"{BASE}/analysis/{pid}?view=skill_selection",
+            "highlight_text": "Targeted role",  # New label after rename
+            "highlight_label": "Renamed from 'Detected role'",
             "what_changed": "Label 'Detected role' renamed to 'Targeted role' throughout the tool.",
             "why_changed": "Per Luda Apr 15: 'Targeted' is more accurate - the user is selecting a target, not having a role 'detected'.",
             "files_modified": ["frontend/src/components/profile/TargetGoalPanel.tsx"],
+            "phase": "pre_analysis",
         },
         {
             "id": "06_skill_match_messaging",
             "title": "End-of-page messaging when skills match target",
-            "page_url": f"{BASE}/analysis/{pid}",
+            "page_url": f"{BASE}/analysis/{pid}?view=skill_selection",
             "highlight_text": "build a learning path consisting of 5 chapters",
             "highlight_label": "New messaging (only shows if skills are at target)",
             "what_changed": "Changed messaging from 'we will proceed with the remaining X skills' to 'we will add other relevant skills to build a learning path consisting of 5 chapters'.",
             "why_changed": "Per Luda Apr 28: clarify that the system backfills with new skills rather than just dropping the matched ones.",
             "files_modified": ["frontend/src/pages/AnalysisPage.tsx"],
             "may_not_render": True,  # only shows when skills are at target
+            "phase": "pre_analysis",
         },
         {
             "id": "07_learning_dashboard_no_gate",
@@ -289,8 +297,8 @@ async def main():
             "title": "Example 2 A/B comparison",
             "page_url": f"{BASE}/learn/{path_id}/lesson/{lesson_id}",
             "click_tab": "Example 2",
-            "highlight_text": "Variant",
-            "highlight_label": "A/B side-by-side",
+            "highlight_selector": ".grid-cols-2",
+            "highlight_label": "A/B side-by-side comparison",
             "what_changed": "Example 2 must have a comparison object with test_question, exactly 2 variants (id A, id B) with full prompt/output/rating/why, and a takeaway.",
             "why_changed": "Per Vivek's spec: Example 2 demonstrates the target-level skill (A/B testing) by example, not just description.",
             "files_modified": ["backend/app/agents/chapter_generator.py", "backend/app/data/chapter-generator-prompt.md"],
@@ -331,78 +339,130 @@ async def main():
         {
             "id": "17_deterministic_skill_ordering",
             "title": "Deterministic skill ordering between runs",
-            "page_url": f"{BASE}/analysis/{pid}",
+            "page_url": f"{BASE}/analysis/{pid}?view=skill_selection",
             "highlight_text": "Top 5",
             "highlight_label": "Same input -> same top 5 every run",
             "what_changed": "Set profile_analyzer LLM call to temperature=0 (was 0.3). Combined with already-zero temperature on JD parser and gap analyzer. Verified across 20 consecutive runs - identical top 5 every time.",
             "why_changed": "Per Luda Apr 28: she ran Jennifer C twice and got different top 5 skills. The variance came from the profile analyzer's LLM call running at a non-zero temperature.",
             "files_modified": ["backend/app/agents/profile_analyzer.py"],
+            "phase": "pre_analysis",
         },
     ]
 
-    print(f"\nCapturing {len(changes)} highlighted screenshots...")
+    async def capture_one(change: dict, page) -> None:
+        """Navigate, optionally hover/click, highlight, screenshot. Mutates change dict."""
+        try:
+            # `domcontentloaded` fires as soon as the DOM is parsed; we then
+            # wait for the highlight target text to appear (or a default
+            # timeout) instead of relying on networkidle, which can never
+            # fire on the analysis page because the skill-parsing LLM call
+            # holds the network busy beyond Playwright's 30s ceiling.
+            await page.goto(change["page_url"], wait_until="domcontentloaded", timeout=60000)
+            target_text = change.get("highlight_text")
+            if target_text:
+                try:
+                    await page.wait_for_function(
+                        "(t) => document.body && document.body.textContent && document.body.textContent.includes(t)",
+                        arg=target_text,
+                        timeout=45000,
+                    )
+                except Exception:
+                    pass
+            await page.wait_for_timeout(1500)
 
+            if change.get("click_tab"):
+                try:
+                    tab = await page.query_selector(f'button:has-text("{change["click_tab"]}")')
+                    if tab:
+                        await tab.click()
+                        await page.wait_for_timeout(1500)
+                except Exception:
+                    pass
+
+            if change.get("hover_first"):
+                try:
+                    target = await page.query_selector("h3.cursor-help")
+                    if target:
+                        await target.hover()
+                        await page.wait_for_timeout(800)
+                except Exception:
+                    pass
+
+            args = {
+                "selector": change.get("highlight_selector"),
+                "contains": change.get("highlight_text"),
+                "label": change.get("highlight_label", ""),
+            }
+            args = {k: v for k, v in args.items() if v is not None}
+            highlighted = await page.evaluate(HIGHLIGHT_JS, args)
+            if not highlighted:
+                # Content may still be loading. Wait and retry once.
+                await page.wait_for_timeout(3000)
+                highlighted = await page.evaluate(HIGHLIGHT_JS, args)
+            if not highlighted:
+                print(f"    (could not highlight, taking page screenshot)")
+            await page.wait_for_timeout(500)
+
+            shot_path = SCREENSHOTS_DIR / f"{change['id']}.png"
+            await page.screenshot(path=str(shot_path), full_page=False)
+            change["screenshot"] = f"screenshots/{shot_path.name}"
+
+            await page.evaluate(CLEAR_HIGHLIGHT_JS)
+        except Exception as e:
+            print(f"    failed: {e}")
+            change["screenshot"] = None
+            change["error"] = str(e)[:100]
+
+    # Phase 1: capture pre-analysis screenshots (skill_selection step).
+    # The page lands on jd_input briefly, auto-load fails (no analysis yet),
+    # falls into parseJDSkills, sets step='skill_selection'. That is the
+    # state these items document.
+    pre_changes = [c for c in changes if c.get("phase") == "pre_analysis"]
+    print(f"\n[Phase 1] Capturing {len(pre_changes)} pre-analysis screenshots...")
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True)
         page = await browser.new_page(viewport={"width": 1280, "height": 1100})
-
-        for change in changes:
-            print(f"  - {change['id']}: {change['title']}")
-            try:
-                await page.goto(change["page_url"], wait_until="networkidle", timeout=30000)
-                await page.wait_for_timeout(2500)
-
-                # Click a tab if specified
-                if change.get("click_tab"):
-                    try:
-                        tab = await page.query_selector(f'button:has-text("{change["click_tab"]}")')
-                        if tab:
-                            await tab.click()
-                            await page.wait_for_timeout(1500)
-                    except Exception:
-                        pass
-
-                # Hover over an element first (for tooltip changes)
-                if change.get("hover_first"):
-                    try:
-                        target = await page.query_selector("h3.cursor-help")
-                        if target:
-                            await target.hover()
-                            await page.wait_for_timeout(800)
-                    except Exception:
-                        pass
-
-                # Highlight the change
-                args = {
-                    "selector": change.get("highlight_selector"),
-                    "contains": change.get("highlight_text"),
-                    "label": change.get("highlight_label", ""),
-                }
-                # Filter None
-                args = {k: v for k, v in args.items() if v is not None}
-                highlighted = await page.evaluate(HIGHLIGHT_JS, args)
-                if not highlighted:
-                    print(f"    (could not highlight, taking page screenshot)")
-                await page.wait_for_timeout(500)
-
-                # Screenshot
-                shot_path = REPORT_DIR / f"{change['id']}.png"
-                await page.screenshot(path=str(shot_path), full_page=False)
-                change["screenshot"] = shot_path.name
-
-                # Clear highlight for next iteration
-                await page.evaluate(CLEAR_HIGHLIGHT_JS)
-            except Exception as e:
-                print(f"    failed: {e}")
-                change["screenshot"] = None
-                change["error"] = str(e)[:100]
-
+        for c in pre_changes:
+            print(f"  - {c['id']}: {c['title']}")
+            await capture_one(c, page)
         await browser.close()
 
-    # Cleanup
-    print("\nCleanup...")
-    async with httpx.AsyncClient(timeout=30) as client:
-        await client.delete(f"{API}/profiles/{pid}")
+    # Run analysis + activate path + generate first chapter so post-analysis
+    # URLs (/learn/...) actually have content.
+    path_id, lesson_id = await complete_analysis_and_chapter(pid)
+    if not path_id:
+        sys.exit(1)
+
+    # Fill in the post-analysis URL placeholders. CHANGES was built with
+    # path_id="" / lesson_id="" so /learn URLs were malformed.
+    PATH_AND_LESSON_IDS = {
+        "09_chapter_section_nav", "10_chapter_title_ontology_name",
+        "11_concepts_with_mnemonic", "12_example1_steps_array",
+        "13_example2_ab_comparison", "14_agent_build_section",
+        "15_try_in_llm_buttons", "16_implementation_task_section",
+    }
+    for c in changes:
+        if c["id"] == "07_learning_dashboard_no_gate":
+            c["page_url"] = f"{BASE}/learn/{path_id}"
+        elif c["id"] in PATH_AND_LESSON_IDS:
+            c["page_url"] = f"{BASE}/learn/{path_id}/lesson/{lesson_id}"
+
+    # Phase 2: capture post-analysis screenshots.
+    post_changes = [c for c in changes if c.get("phase") != "pre_analysis"]
+    print(f"\n[Phase 2] Capturing {len(post_changes)} post-analysis screenshots...")
+    async with async_playwright() as p:
+        browser = await p.chromium.launch(headless=True)
+        page = await browser.new_page(viewport={"width": 1280, "height": 1100})
+        for c in post_changes:
+            print(f"  - {c['id']}: {c['title']}")
+            await capture_one(c, page)
+        await browser.close()
+
+    # NOTE: Test profile is intentionally kept alive after the run so the
+    # live URLs in the walkthrough HTML actually work for the reviewer.
+    # Run scripts/walkthrough_cleanup.py to delete it once the review round
+    # is complete.
+    print("\nKeeping profile alive for client review (run walkthrough_cleanup.py to remove later).")
 
     # ===== Generate report =====
     print("\nWriting report...")
@@ -411,7 +471,7 @@ async def main():
     lines.append("")
     lines.append("**Tool URL:** http://95.216.199.47:3000")
     lines.append("")
-    lines.append(f"**Test profile created for this report:** {pid} (deleted after run)")
+    lines.append(f"**Test profile created for this report:** `{pid}` (kept alive for review)")
     lines.append(f"**Test learning path:** `{path_id}`")
     lines.append(f"**Test lesson:** `{lesson_id}`")
     lines.append("")

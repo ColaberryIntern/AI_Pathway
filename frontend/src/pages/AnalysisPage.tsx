@@ -36,6 +36,7 @@ export default function AnalysisPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const viewProfile = searchParams.get('view') === 'profile'
+  const forceSkillSelection = searchParams.get('view') === 'skill_selection'
   const [step, setStep] = useState<AnalysisStep>('jd_input')
   const [targetJD, setTargetJD] = useState('')
   const [targetRole, setTargetRole] = useState('')
@@ -208,7 +209,13 @@ export default function AnalysisPage() {
           // First 5 are default selected
           setSelectedSkillIds(allSkills.slice(0, 5).map(s => (s.skill_id as string) || ''))
         }
-        setStep('complete')
+        // Revisit case: show the results review page directly.
+        // (Fresh analysis goes through analysisMutation.onSuccess which sets
+        // 'complete' and triggers the auto-redirect to the learning dashboard.)
+        // ?view=skill_selection on the URL forces the merged skill review
+        // layout instead, so direct links from the walkthrough land on the
+        // right page state.
+        setStep(forceSkillSelection ? 'skill_selection' : 'results_review')
       })
       .catch(async () => {
         // No saved results — parse JD skills and show skill selection + self-assessment

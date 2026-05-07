@@ -1,12 +1,12 @@
 # AI Pathway - Visual Changes Walkthrough Report
 
-Generated: 324873.328
+Generated: 508024.0
 
 **Tool URL:** http://95.216.199.47:3000
 
-**Test profile created for this report:** e7812785-d66a-4fe6-9cf6-0ccf49f5669a (deleted after run)
-**Test learning path:** `43b55c6b-1d35-466e-b942-7fa8dbcaf4ac`
-**Test lesson:** `c12b8c7e-977f-4ceb-b174-0f830026bad7`
+**Test profile created for this report:** `ee4279e2-fa46-4ad5-ac60-2e0150047869` (kept alive for review)
+**Test learning path:** `ba8387e4-d02e-4917-861c-0f032dd03f36`
+**Test lesson:** `34a3041f-00d3-4742-9add-8322bfcbd038`
 
 Each section below covers one visual change. The screenshot shows the change with a red rectangle around the affected element.
 
@@ -18,7 +18,7 @@ Each section below covers one visual change. The screenshot shows the change wit
 
 **To see this change:** Open the URL above.
 
-![Homepage simplified](01_homepage_simplified.png)
+![Homepage simplified](screenshots/01_homepage_simplified.png)
 
 **What was changed:**
 
@@ -40,7 +40,7 @@ Per Luda Apr 15: page should fit on a single screen. Was previously requiring mu
 
 **To see this change:** Open the URL above.
 
-![Profiles page copy update](02_profiles_copy.png)
+![Profiles page copy update](screenshots/02_profiles_copy.png)
 
 **What was changed:**
 
@@ -58,11 +58,11 @@ Per Luda Apr 15: language tailored for individuals creating multiple profiles fo
 
 ## 3. Skill selection + self-assessment merged
 
-**Live URL:** http://95.216.199.47:3000/analysis/e7812785-d66a-4fe6-9cf6-0ccf49f5669a
+**Live URL:** http://95.216.199.47:3000/analysis/ee4279e2-fa46-4ad5-ac60-2e0150047869
 
 **To see this change:** Open the URL above.
 
-![Skill selection + self-assessment merged](03_skills_review_merged.png)
+![Skill selection + self-assessment merged](screenshots/03_skills_review_merged.png)
 
 **What was changed:**
 
@@ -81,11 +81,11 @@ Per Luda Apr 15: reduce step count and let user adjust skills + ratings in one v
 
 ## 4. Hover tooltip with ontology description on skill name
 
-**Live URL:** http://95.216.199.47:3000/analysis/e7812785-d66a-4fe6-9cf6-0ccf49f5669a
+**Live URL:** http://95.216.199.47:3000/analysis/ee4279e2-fa46-4ad5-ac60-2e0150047869
 
 **To see this change:** Open the URL above, then hover over a skill name.
 
-![Hover tooltip with ontology description on skill name](04_skill_hover_tooltip.png)
+![Hover tooltip with ontology description on skill name](screenshots/04_skill_hover_tooltip.png)
 
 **What was changed:**
 
@@ -104,11 +104,11 @@ Per Vivek Apr 29 (confirmed Agreed): users shouldn't have to guess what a skill 
 
 ## 5. Detected Role -> Targeted Role rename
 
-**Live URL:** http://95.216.199.47:3000/analysis/e7812785-d66a-4fe6-9cf6-0ccf49f5669a
+**Live URL:** http://95.216.199.47:3000/analysis/ee4279e2-fa46-4ad5-ac60-2e0150047869
 
 **To see this change:** Open the URL above.
 
-![Detected Role -> Targeted Role rename](05_targeted_role_label.png)
+![Detected Role -> Targeted Role rename](screenshots/05_targeted_role_label.png)
 
 **What was changed:**
 
@@ -126,11 +126,11 @@ Per Luda Apr 15: 'Targeted' is more accurate - the user is selecting a target, n
 
 ## 6. End-of-page messaging when skills match target
 
-**Live URL:** http://95.216.199.47:3000/analysis/e7812785-d66a-4fe6-9cf6-0ccf49f5669a
+**Live URL:** http://95.216.199.47:3000/analysis/ee4279e2-fa46-4ad5-ac60-2e0150047869
 
 **To see this change:** Open the URL above.
 
-![End-of-page messaging when skills match target](06_skill_match_messaging.png)
+![End-of-page messaging when skills match target](screenshots/06_skill_match_messaging.png)
 
 **What was changed:**
 
@@ -148,11 +148,11 @@ Per Luda Apr 28: clarify that the system backfills with new skills rather than j
 
 ## 7. Learning dashboard auto-activates (no Ready to Start gate)
 
-**Live URL:** http://95.216.199.47:3000/learn/43b55c6b-1d35-466e-b942-7fa8dbcaf4ac
+**Live URL:** http://95.216.199.47:3000/learn/ba8387e4-d02e-4917-861c-0f032dd03f36
 
 **To see this change:** Open the URL above.
 
-![Learning dashboard auto-activates (no Ready to Start gate)](07_learning_dashboard_no_gate.png)
+![Learning dashboard auto-activates (no Ready to Start gate)](screenshots/07_learning_dashboard_no_gate.png)
 
 **What was changed:**
 
@@ -170,11 +170,11 @@ Per Luda Apr 28: the gate page was duplicative of the skill review confirmation.
 
 ## 8. Your Journey Roadmap page removed
 
-**Live URL:** http://95.216.199.47:3000/analysis/e7812785-d66a-4fe6-9cf6-0ccf49f5669a
+**Live URL:** http://95.216.199.47:3000/analysis/ee4279e2-fa46-4ad5-ac60-2e0150047869
 
 **To see this change:** Open the URL above.
 
-![Your Journey Roadmap page removed](08_journey_roadmap_removed.png)
+![Your Journey Roadmap page removed](screenshots/08_journey_roadmap_removed.png)
 
 **What was changed:**
 
@@ -192,11 +192,11 @@ Per Luda Apr 28: the roadmap page was duplicative - same info already shown on t
 
 ## 9. Chapter section navigation (6 sections, 15 min)
 
-**Live URL:** http://95.216.199.47:3000/learn/43b55c6b-1d35-466e-b942-7fa8dbcaf4ac/lesson/c12b8c7e-977f-4ceb-b174-0f830026bad7
+**Live URL:** http://95.216.199.47:3000/learn/ba8387e4-d02e-4917-861c-0f032dd03f36/lesson/34a3041f-00d3-4742-9add-8322bfcbd038
 
 **To see this change:** Open the URL above.
 
-![Chapter section navigation (6 sections, 15 min)](09_chapter_section_nav.png)
+![Chapter section navigation (6 sections, 15 min)](screenshots/09_chapter_section_nav.png)
 
 **What was changed:**
 
@@ -216,11 +216,11 @@ Per Vivek's chapter spec (5 sections totaling 15 min) + user's request to bring 
 
 ## 10. Chapter title uses ontology canonical name
 
-**Live URL:** http://95.216.199.47:3000/learn/43b55c6b-1d35-466e-b942-7fa8dbcaf4ac/lesson/c12b8c7e-977f-4ceb-b174-0f830026bad7
+**Live URL:** http://95.216.199.47:3000/learn/ba8387e4-d02e-4917-861c-0f032dd03f36/lesson/34a3041f-00d3-4742-9add-8322bfcbd038
 
 **To see this change:** Open the URL above.
 
-![Chapter title uses ontology canonical name](10_chapter_title_ontology_name.png)
+![Chapter title uses ontology canonical name](screenshots/10_chapter_title_ontology_name.png)
 
 **What was changed:**
 
@@ -238,11 +238,11 @@ Per Vivek Apr 29 (confirmed Agreed) on Luda's request: skills should be named co
 
 ## 11. Concepts section with mnemonic + pull_quote
 
-**Live URL:** http://95.216.199.47:3000/learn/43b55c6b-1d35-466e-b942-7fa8dbcaf4ac/lesson/c12b8c7e-977f-4ceb-b174-0f830026bad7
+**Live URL:** http://95.216.199.47:3000/learn/ba8387e4-d02e-4917-861c-0f032dd03f36/lesson/34a3041f-00d3-4742-9add-8322bfcbd038
 
 **To see this change:** Open the URL above, then click the **Concepts** tab.
 
-![Concepts section with mnemonic + pull_quote](11_concepts_with_mnemonic.png)
+![Concepts section with mnemonic + pull_quote](screenshots/11_concepts_with_mnemonic.png)
 
 **What was changed:**
 
@@ -261,11 +261,11 @@ Per Vivek's depth spec: chapters lacked structural depth. Mnemonic + pull_quote 
 
 ## 12. Example 1 with 3-step structure (diagnosis_checklist / prompt_variant / log_entry)
 
-**Live URL:** http://95.216.199.47:3000/learn/43b55c6b-1d35-466e-b942-7fa8dbcaf4ac/lesson/c12b8c7e-977f-4ceb-b174-0f830026bad7
+**Live URL:** http://95.216.199.47:3000/learn/ba8387e4-d02e-4917-861c-0f032dd03f36/lesson/34a3041f-00d3-4742-9add-8322bfcbd038
 
 **To see this change:** Open the URL above, then click the **Example 1** tab.
 
-![Example 1 with 3-step structure (diagnosis_checklist / prompt_variant / log_entry)](12_example1_steps_array.png)
+![Example 1 with 3-step structure (diagnosis_checklist / prompt_variant / log_entry)](screenshots/12_example1_steps_array.png)
 
 **What was changed:**
 
@@ -285,11 +285,11 @@ Per Vivek's spec: Example 1 should walk learner through the diagnostic process, 
 
 ## 13. Example 2 A/B comparison
 
-**Live URL:** http://95.216.199.47:3000/learn/43b55c6b-1d35-466e-b942-7fa8dbcaf4ac/lesson/c12b8c7e-977f-4ceb-b174-0f830026bad7
+**Live URL:** http://95.216.199.47:3000/learn/ba8387e4-d02e-4917-861c-0f032dd03f36/lesson/34a3041f-00d3-4742-9add-8322bfcbd038
 
 **To see this change:** Open the URL above, then click the **Example 2** tab.
 
-![Example 2 A/B comparison](13_example2_ab_comparison.png)
+![Example 2 A/B comparison](screenshots/13_example2_ab_comparison.png)
 
 **What was changed:**
 
@@ -308,11 +308,11 @@ Per Vivek's spec: Example 2 demonstrates the target-level skill (A/B testing) by
 
 ## 14. Build Your Agent section
 
-**Live URL:** http://95.216.199.47:3000/learn/43b55c6b-1d35-466e-b942-7fa8dbcaf4ac/lesson/c12b8c7e-977f-4ceb-b174-0f830026bad7
+**Live URL:** http://95.216.199.47:3000/learn/ba8387e4-d02e-4917-861c-0f032dd03f36/lesson/34a3041f-00d3-4742-9add-8322bfcbd038
 
 **To see this change:** Open the URL above, then click the **Build** tab.
 
-![Build Your Agent section](14_agent_build_section.png)
+![Build Your Agent section](screenshots/14_agent_build_section.png)
 
 **What was changed:**
 
@@ -331,11 +331,11 @@ Per Vivek's spec: each chapter ends with a takeaway artifact the learner can use
 
 ## 15. Try-in-LLM buttons (Run in ChatGPT)
 
-**Live URL:** http://95.216.199.47:3000/learn/43b55c6b-1d35-466e-b942-7fa8dbcaf4ac/lesson/c12b8c7e-977f-4ceb-b174-0f830026bad7
+**Live URL:** http://95.216.199.47:3000/learn/ba8387e4-d02e-4917-861c-0f032dd03f36/lesson/34a3041f-00d3-4742-9add-8322bfcbd038
 
 **To see this change:** Open the URL above, then click the **Example 1** tab.
 
-![Try-in-LLM buttons (Run in ChatGPT)](15_try_in_llm_buttons.png)
+![Try-in-LLM buttons (Run in ChatGPT)](screenshots/15_try_in_llm_buttons.png)
 
 **What was changed:**
 
@@ -353,11 +353,11 @@ Per Vivek Apr 29: 'I also liked aspects of your previous build especially around
 
 ## 16. Implementation Task as 6th section (NEW)
 
-**Live URL:** http://95.216.199.47:3000/learn/43b55c6b-1d35-466e-b942-7fa8dbcaf4ac/lesson/c12b8c7e-977f-4ceb-b174-0f830026bad7
+**Live URL:** http://95.216.199.47:3000/learn/ba8387e4-d02e-4917-861c-0f032dd03f36/lesson/34a3041f-00d3-4742-9add-8322bfcbd038
 
 **To see this change:** Open the URL above, then click the **Assignment** tab.
 
-![Implementation Task as 6th section (NEW)](16_implementation_task_section.png)
+![Implementation Task as 6th section (NEW)](screenshots/16_implementation_task_section.png)
 
 **What was changed:**
 
@@ -378,11 +378,11 @@ Per user's Apr 30 request: the assignment functionality from the old multi-lesso
 
 ## 17. Deterministic skill ordering between runs
 
-**Live URL:** http://95.216.199.47:3000/analysis/e7812785-d66a-4fe6-9cf6-0ccf49f5669a
+**Live URL:** http://95.216.199.47:3000/analysis/ee4279e2-fa46-4ad5-ac60-2e0150047869
 
 **To see this change:** Open the URL above.
 
-![Deterministic skill ordering between runs](17_deterministic_skill_ordering.png)
+![Deterministic skill ordering between runs](screenshots/17_deterministic_skill_ordering.png)
 
 **What was changed:**
 

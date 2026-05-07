@@ -26,19 +26,19 @@ CHANGES = [
      "what": "Subhead changed from 'Create and manage learner profiles' to 'Create profiles for different career goals'.",
      "why": "Per Luda Apr 15: language tailored for individuals creating multiple profiles for themselves.",
      "files": ["frontend/src/pages/ProfileSelectionPage.tsx"], "to_see": "Open the URL above."},
-    {"id": "03_skills_review_merged", "title": "Skill selection + self-assessment merged", "category": "Luda Apr 15", "page_url": "/analysis/{pid}",
+    {"id": "03_skills_review_merged", "title": "Skill selection + self-assessment merged", "category": "Luda Apr 15", "page_url": "/analysis/{pid}?view=skill_selection",
      "what": "Combined two previously separate pages (skill selection, then self-assessment) into one unified page. When a skill is selected, the proficiency rating appears inline below it.",
      "why": "Per Luda Apr 15: reduce step count and let user adjust skills + ratings in one view.",
      "files": ["frontend/src/pages/AnalysisPage.tsx", "frontend/src/components/SelfAssessment.tsx"], "to_see": "Open the URL above."},
-    {"id": "04_skill_hover_tooltip", "title": "Hover tooltip with ontology description on skill name", "category": "Vivek Apr 29 (NEW)", "page_url": "/analysis/{pid}",
+    {"id": "04_skill_hover_tooltip", "title": "Hover tooltip with ontology description on skill name", "category": "Vivek Apr 29 (NEW)", "page_url": "/analysis/{pid}?view=skill_selection",
      "what": "Skill names now have a dotted underline + cursor:help. Hovering shows the canonical ontology description and skill_id in a dark tooltip.",
      "why": "Per Vivek Apr 29 (confirmed Agreed): users shouldn't have to guess what a skill means. Show the authoritative ontology definition on hover.",
      "files": ["frontend/src/components/SelfAssessment.tsx", "frontend/src/pages/AnalysisPage.tsx"], "to_see": "Open URL, then hover over any skill name."},
-    {"id": "05_targeted_role_label", "title": "Detected Role -> Targeted Role rename", "category": "Luda Apr 15", "page_url": "/analysis/{pid}",
+    {"id": "05_targeted_role_label", "title": "Detected Role -> Targeted Role rename", "category": "Luda Apr 15", "page_url": "/analysis/{pid}?view=skill_selection",
      "what": "Label 'Detected role' renamed to 'Targeted role' throughout the tool.",
      "why": "Per Luda Apr 15: 'Targeted' is more accurate - the user is selecting a target, not having a role 'detected'.",
      "files": ["frontend/src/components/profile/TargetGoalPanel.tsx"], "to_see": "Open URL above."},
-    {"id": "06_skill_match_messaging", "title": "End-of-page messaging when skills match target", "category": "Luda Apr 28", "page_url": "/analysis/{pid}",
+    {"id": "06_skill_match_messaging", "title": "End-of-page messaging when skills match target", "category": "Luda Apr 28", "page_url": "/analysis/{pid}?view=skill_selection",
      "what": "Changed messaging from 'we will proceed with the remaining X skills' to 'we will add other relevant skills to build a learning path consisting of 5 chapters'.",
      "why": "Per Luda Apr 28: clarify that the system backfills with new skills rather than just dropping the matched ones.",
      "files": ["frontend/src/pages/AnalysisPage.tsx"], "to_see": "Open URL, rate at least one skill at its target level."},
@@ -82,7 +82,7 @@ CHANGES = [
      "what": "Brought back the Implementation Task assignment workflow as a 6th chapter section. Includes title, description, requirements, deliverable, tools, evidence_requirements (file uploads). Submit & Get Graded uses existing AI grading endpoint.",
      "why": "Per user's Apr 30 request: the assignment functionality from the old multi-lesson format was missing.",
      "files": ["backend/app/agents/chapter_generator.py", "backend/app/data/chapter-generator-prompt.md", "frontend/src/components/chapter/ChapterRenderer.tsx", "frontend/src/components/learning/ImplementationTaskCard.tsx"], "to_see": "Open URL above, click Assignment tab."},
-    {"id": "17_deterministic_skill_ordering", "title": "Deterministic skill ordering between runs", "category": "Luda Apr 28", "page_url": "/analysis/{pid}",
+    {"id": "17_deterministic_skill_ordering", "title": "Deterministic skill ordering between runs", "category": "Luda Apr 28", "page_url": "/analysis/{pid}?view=skill_selection",
      "what": "Set profile_analyzer LLM call to temperature=0. Verified across 20 consecutive runs - identical top 5 every time.",
      "why": "Per Luda Apr 28: she ran Jennifer C twice and got different top 5 skills.",
      "files": ["backend/app/agents/profile_analyzer.py"], "to_see": "Open URL above. Compare with another fresh run - same input gives same top 5."},
@@ -106,7 +106,13 @@ def render_html():
         text = md_path.read_text(encoding="utf-8")
         for line in text.split("\n"):
             if "Test profile created" in line:
-                pid = line.split(":")[1].strip().split()[0]
+                # Markdown wraps the UUID in backticks; fall back to whitespace
+                # parsing for older reports that didn't.
+                if "`" in line:
+                    pid = line.split("`")[1]
+                else:
+                    cleaned = line.replace("**", "").split(":", 1)[1].strip()
+                    pid = cleaned.split()[0] if cleaned else ""
             if "Test learning path:" in line:
                 path_id = line.split("`")[1] if "`" in line else ""
             if "Test lesson:" in line:
@@ -136,8 +142,8 @@ def render_html():
         )
 
         screenshot_html = (
-            f'<a href="{c["id"]}.png" target="_blank" class="shot">'
-            f'<img src="{c["id"]}.png" alt="{c["title"]}" loading="lazy">'
+            f'<a href="screenshots/{c["id"]}.png" target="_blank" class="shot">'
+            f'<img src="screenshots/{c["id"]}.png" alt="{c["title"]}" loading="lazy">'
             f'<div class="zoom-hint">Click to enlarge</div></a>'
         )
 
@@ -883,6 +889,13 @@ function buildEmailBody() {{
 
 const modalBg = document.getElementById('modal-bg');
 document.getElementById('generate-feedback').addEventListener('click', () => {{
+    const nameInput = document.getElementById('reviewer-name');
+    if (!nameInput.value.trim()) {{
+        alert('Please fill in your name in the sidebar before generating the feedback email.');
+        nameInput.focus();
+        nameInput.scrollIntoView({{ behavior: 'smooth', block: 'center' }});
+        return;
+    }}
     document.getElementById('email-body').value = buildEmailBody();
     modalBg.classList.add('show');
 }});
