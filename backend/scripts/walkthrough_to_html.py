@@ -10,6 +10,7 @@ strict per-change format so a return reply can be parsed deterministically:
 each change becomes either an APPROVED line or a NEEDS-CHANGE / QUESTION
 block with its files, URL, and the client's notes.
 """
+import base64
 from datetime import datetime
 from pathlib import Path
 
@@ -141,9 +142,20 @@ def render_html():
             f'</li>'
         )
 
+        # Embed the screenshot as a base64 data URI so the HTML is fully
+        # self-contained. No external file dependencies; the reviewer just
+        # opens the HTML and everything renders.
+        png_path = REPORT_DIR / "screenshots" / f"{c['id']}.png"
+        if png_path.exists():
+            data_uri = (
+                "data:image/png;base64,"
+                + base64.b64encode(png_path.read_bytes()).decode("ascii")
+            )
+        else:
+            data_uri = ""
         screenshot_html = (
-            f'<a href="screenshots/{c["id"]}.png" target="_blank" class="shot">'
-            f'<img src="screenshots/{c["id"]}.png" alt="{c["title"]}" loading="lazy">'
+            f'<a href="{data_uri}" target="_blank" class="shot">'
+            f'<img src="{data_uri}" alt="{c["title"]}" loading="lazy">'
             f'<div class="zoom-hint">Click to enlarge</div></a>'
         )
 
