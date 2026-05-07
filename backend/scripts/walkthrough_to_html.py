@@ -255,6 +255,42 @@ body {{
     font-size: 13px;
     margin-bottom: 16px;
 }}
+.reviewer-block {{
+    background: #fef9c3;
+    border: 1px solid #fde047;
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-bottom: 16px;
+}}
+.reviewer-block label {{
+    display: block;
+    font-size: 13px;
+    color: #1f2937;
+    margin-bottom: 6px;
+}}
+.reviewer-block .req {{ color: #b91c1c; font-weight: 600; }}
+.reviewer-block input[type=text] {{
+    width: 100%;
+    padding: 7px 9px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 13px;
+    background: #fff;
+}}
+.reviewer-block input[type=text]:focus {{
+    outline: none;
+    border-color: #f59e0b;
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2);
+}}
+.reviewer-block input[type=text].error {{
+    border-color: #dc2626;
+    background: #fef2f2;
+}}
+.reviewer-block .reviewer-hint {{
+    font-size: 11px;
+    color: #6b7280;
+    margin-top: 4px;
+}}
 .progress-strip {{
     margin-bottom: 16px;
     padding: 10px 12px;
@@ -646,6 +682,11 @@ body {{
                 <span><span class="dot pending"></span> <span id="cnt-pending">{len(CHANGES)}</span> pending</span>
             </div>
         </div>
+        <div class="reviewer-block">
+            <label for="reviewer-name"><strong>Your name</strong> <span class="req">(required)</span></label>
+            <input type="text" id="reviewer-name" placeholder="e.g. Luda Kopeikina" autocomplete="name">
+            <div class="reviewer-hint">Used in your feedback email signature. Saved automatically.</div>
+        </div>
         <input type="search" placeholder="Search changes..." id="search">
         <ul class="toc">
             {"".join(toc_items)}
@@ -682,8 +723,6 @@ body {{
             <button class="modal-close" id="modal-close">&times;</button>
         </div>
         <div class="modal-body">
-            <label>Your name (will appear in email signature):</label>
-            <input type="text" id="reviewer-name" placeholder="e.g. Luda Kopeikina">
             <label>Email body (preformatted - just copy and paste):</label>
             <textarea class="email-preview" id="email-body" readonly></textarea>
         </div>
@@ -903,11 +942,13 @@ const modalBg = document.getElementById('modal-bg');
 document.getElementById('generate-feedback').addEventListener('click', () => {{
     const nameInput = document.getElementById('reviewer-name');
     if (!nameInput.value.trim()) {{
-        alert('Please fill in your name in the sidebar before generating the feedback email.');
+        nameInput.classList.add('error');
         nameInput.focus();
         nameInput.scrollIntoView({{ behavior: 'smooth', block: 'center' }});
+        alert('Please fill in your name in the highlighted yellow box at the top of the left sidebar, then click Generate Feedback Email again.');
         return;
     }}
+    nameInput.classList.remove('error');
     document.getElementById('email-body').value = buildEmailBody();
     modalBg.classList.add('show');
 }});

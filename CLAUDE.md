@@ -545,6 +545,8 @@ See also: **Failure-First Design** (correlation IDs are mandatory in failure rep
 
 Whenever the team ships visual/UX changes, produce a single self-contained HTML file the client (Luda, Vivek, Ram, or any reviewer) can walk through, mark up, and email back. Their reply is structured so that Claude Code can parse it and start the next round of fixes immediately. Mandatory for any project where non-technical reviewers approve UI work.
 
+**Delivery standard (NON-NEGOTIABLE):** ship ONE HTML file. Screenshots are embedded as base64 `data:image/png;base64,...` URIs inside the HTML, so there is no zip, no folder, no extraction step on the reviewer's side. Attaching `WALKTHROUGH.html` directly to email is the only approved delivery format. Folder-based delivery (zip with separate PNGs) is forbidden because it caused repeat confusion in early rounds (clients clicked PNGs instead of the HTML, opened them in image viewers, lost the feedback widget).
+
 ## When to run
 
 Run AFTER every batch of visual or UX changes: new/removed pages or sections, copy/label/layout changes, new components/modals/tooltips, visible style changes. A change qualifies if a screenshot can show "before" vs "after."
@@ -567,14 +569,16 @@ Do NOT run for: backend-only changes, schema changes with no UI surface, infrast
 
 ### `backend/scripts/walkthrough_to_html.py` - renders self-contained HTML
 
+Each PNG in `docs/walkthrough_report/screenshots/` is base64-encoded and inlined into the HTML as a `data:image/png;base64,...` URI. The output HTML is a single ~5-6 MB file that contains everything the reviewer needs.
+
 **Required HTML features (all must be preserved in any reimplementation):**
 
-1. **Sticky left sidebar:** numbered TOC linking to cards, color-coded category pills, status dots updating on Approved/Issue/Question, live progress strip (approved/issue/question/pending counts), live search filter
+1. **Sticky left sidebar with required reviewer-name input at top:** A yellow-highlighted "Your name" text input is the FIRST thing in the sidebar, before the search box and TOC. It is required to generate the feedback email; clicking Generate without it shows an alert and adds a red error border to the field. The value is saved to localStorage so it persists across reloads. Below it: numbered TOC linking to cards, color-coded category pills, status dots updating on Approved/Issue/Question, live progress strip (approved/issue/question/pending counts), live search filter.
 2. **Category filter pills** at top of main column
-3. **One card per change:** numbered header + title + category pill, live URL with copy button, yellow "To see this change" instruction strip, full screenshot (click to open at full resolution), "What was changed" / "Why" / "Files modified" sections
+3. **One card per change:** numbered header + title + category pill, live URL with copy button, yellow "To see this change" instruction strip, embedded screenshot (click to open at full resolution in new tab), "What was changed" / "Why" / "Files modified" sections
 4. **Per-card feedback widget (CRITICAL):** Approved/Issue/Question radios, notes textarea (required for Issue/Question, optional for Approved), status colors card's left border (green/red/amber), notes auto-saved to localStorage
 5. **Floating "Generate Feedback Email" button** bottom-right with reviewed-vs-total count
-6. **Modal compiling all feedback** into the parseable email body (format below)
+6. **Modal compiling all feedback** into the parseable email body (format below). The reviewer-name input lives in the SIDEBAR, never in the modal — the modal only shows after validation passes.
 7. **mailto: handoff** pre-filling `ali@colaberry.com` with subject `AI Pathway walkthrough feedback - <YYYY-MM-DD>`
 
 ## Email format contract (DO NOT CHANGE LIGHTLY)
@@ -635,26 +639,36 @@ When Claude receives an email containing `[ai-pathway-walkthrough-feedback-v1]`:
 
 ## Keeping CHANGES list in sync
 
-`walkthrough_report.py` is canonical (it captures screenshots). `walkthrough_to_html.py` mirrors with extra metadata. When adding a change: add to report.py, mirror in to_html.py with same `id`, run report.py (screenshots), run to_html.py (HTML), send `docs/walkthrough_report/` to client.
+`walkthrough_report.py` is canonical (it captures screenshots and persists the test profile so live URLs in the HTML stay clickable). `walkthrough_to_html.py` mirrors the CHANGES list with extra metadata and inlines each screenshot as base64. When adding a change: add to report.py, mirror in to_html.py with same `id`, run report.py (screenshots), run to_html.py (HTML), attach the resulting HTML directly to email.
+
+`walkthrough_report.py` runs in two phases so URL/screenshot pairs always match the page state the reviewer will land on:
+
+- **Phase 1 (pre-analysis):** captures items whose URL needs the `skill_selection` step (currently 03, 04, 05, 06, 17). The script navigates to `/analysis/{pid}?view=skill_selection` BEFORE running analysis, so the page renders the merged skill review layout. The `?view=skill_selection` URL param is honored by `AnalysisPage.tsx` as a state override on revisit.
+- **Phase 2 (post-analysis):** runs `/analysis/full`, activates the path, generates the first chapter, then captures every other item on `/learn/...` URLs and item 08 on `results_review`.
+
+After every run, verify with `walkthrough_verify.py` (Playwright audit) before sending. The audit fetches each card's URL, optionally clicks the named tab, and confirms the live page contains the text the card describes. All 17 cards must show `URL OK: yes` and `TEXT OK: yes` (or `n/a` for cards without a text expectation) before the HTML is shipped.
 
 ## Outputs and one-command rebuild
 
 ```
 docs/walkthrough_report/
-|-- WALKTHROUGH.html             # Main client-facing file
-|-- WALKTHROUGH_REPORT.md        # Markdown fallback
-|-- 01_homepage_simplified.png   # One screenshot per change (named by id)
-`-- ...
+|-- WALKTHROUGH.html             # Single self-contained file (~5-6 MB) - ATTACH THIS
+|-- WALKTHROUGH_REPORT.md        # Markdown fallback (internal reference)
+|-- README.txt                   # Internal note about folder structure
+`-- screenshots/                 # Source PNGs (already inlined into the HTML)
+    |-- 01_homepage_simplified.png
+    `-- ...
 ```
 
 ```bash
 cd backend
-py -3.12 scripts/walkthrough_report.py    # captures screenshots (~3 min)
-py -3.12 scripts/walkthrough_to_html.py   # rebuilds HTML (~1 sec)
-start docs/walkthrough_report/WALKTHROUGH.html
+py -3.12 scripts/walkthrough_report.py    # captures screenshots in two phases (~5 min)
+py -3.12 scripts/walkthrough_to_html.py   # rebuilds HTML with embedded base64 screenshots (~1 sec)
+py -3.12 scripts/walkthrough_verify.py    # audits each card via Playwright (~1 min)
+start docs/walkthrough_report/WALKTHROUGH.html  # local preview before sending
 ```
 
-The HTML references screenshots by relative path; the entire `docs/walkthrough_report/` directory must travel together (zip before emailing).
+**To deliver to the client: attach `docs/walkthrough_report/WALKTHROUGH.html` directly to the email. No zip. No folder. The HTML is the entire deliverable.** Use `scripts/send-luda-corrected-zip.js` style send pipeline, but with the HTML file as the only attachment (`Content-Type: text/html`, not `application/zip`).
 
 ---
 
