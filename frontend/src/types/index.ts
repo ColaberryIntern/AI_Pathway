@@ -465,6 +465,7 @@ export interface LearningDashboard {
   total_lessons_completed: number
   total_lessons: number
   estimated_hours_remaining: number
+  profile_id?: string | null
 }
 
 export interface ActivatePathResponse {

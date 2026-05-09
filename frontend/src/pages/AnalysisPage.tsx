@@ -43,10 +43,31 @@ export default function AnalysisPage() {
   const [result, setResult] = useState<AnalysisResult | null>(null)
   const [currentStepIndex, setCurrentStepIndex] = useState(0)
 
-  // JD-first flow state
+  // JD-first flow state. Self-assessed skill levels persist to localStorage
+  // keyed by profileId so they survive navigation away from /analysis and
+  // back. Without this, leaving for /learn and returning resets the counter
+  // to "0/5 assessed" even though the user already rated.
+  const SELF_ASSESSED_KEY = profileId ? `selfAssessedSkills:${profileId}` : null
   const [parsedSkills, setParsedSkills] = useState<ParsedSkill[]>([])
   const [selectedSkillIds, setSelectedSkillIds] = useState<string[]>([])
-  const [selfAssessedSkills, setSelfAssessedSkills] = useState<Record<string, number>>({})
+  const [selfAssessedSkills, setSelfAssessedSkills] = useState<Record<string, number>>(() => {
+    if (typeof window === 'undefined' || !SELF_ASSESSED_KEY) return {}
+    try {
+      const raw = window.localStorage.getItem(SELF_ASSESSED_KEY)
+      return raw ? JSON.parse(raw) : {}
+    } catch {
+      return {}
+    }
+  })
+  // Persist on every change.
+  useEffect(() => {
+    if (!SELF_ASSESSED_KEY) return
+    try {
+      window.localStorage.setItem(SELF_ASSESSED_KEY, JSON.stringify(selfAssessedSkills))
+    } catch {
+      // ignore quota / privacy-mode errors
+    }
+  }, [selfAssessedSkills, SELF_ASSESSED_KEY])
   const [isParsingJDSkills, setIsParsingJDSkills] = useState(false)
   const [jdSkillsError, setJdSkillsError] = useState<string | null>(null)
   const [detectedRole, setDetectedRole] = useState('')
@@ -194,8 +215,12 @@ export default function AnalysisPage() {
           }
         }
         if (allSkills.length > 0) {
+          // Always renumber by array position so the displayed "#N" matches
+          // the rendering order. Backend may return ranks that collide or
+          // skip numbers when merging multiple skill lists; defending here
+          // guarantees the user sees clean sequential 1..N regardless.
           setParsedSkills(allSkills.map((s, i) => ({
-            rank: (s.rank as number) || i + 1,
+            rank: i + 1,
             skill_id: (s.skill_id as string) || '',
             skill_name: (s.skill_name as string) || '',
             domain: (s.domain as string) || '',

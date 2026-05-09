@@ -118,3 +118,6 @@ class LearningDashboardResponse(BaseModel):
     total_lessons_completed: int
     total_lessons: int
     estimated_hours_remaining: float
+    # Profile id is included so the dashboard can render a "back to skill
+    # review" link without a second API call.
+    profile_id: str | None = None

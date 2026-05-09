@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { GraduationCap, Loader2, AlertCircle } from 'lucide-react'
+import { GraduationCap, Loader2, AlertCircle, ArrowLeft } from 'lucide-react'
 import { getLearningDashboard, activateLearningPath } from '../services/api'
 import { useLearningStore } from '../stores/learningStore'
 import ModuleSidebar from '../components/learning/ModuleSidebar'
@@ -123,6 +123,15 @@ export default function LearningDashboardPage() {
             <h1 className="text-2xl font-bold">{dashboard.path_title}</h1>
             {dashboard.target_role && (
               <p className="text-indigo-200 mt-1">Target Role: {dashboard.target_role}</p>
+            )}
+            {dashboard.profile_id && (
+              <button
+                onClick={() => navigate(`/analysis/${dashboard.profile_id}?view=skill_selection`)}
+                className="mt-2 inline-flex items-center gap-1.5 text-sm text-indigo-100 hover:text-white underline-offset-4 hover:underline transition-colors"
+              >
+                <ArrowLeft className="h-3.5 w-3.5" />
+                Back to skill review
+              </button>
             )}
           </div>
           {/* Overall progress */}

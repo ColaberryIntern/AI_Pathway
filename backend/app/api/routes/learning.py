@@ -316,13 +316,15 @@ async def get_learning_dashboard(
     )
     masteries = result.scalars().all()
 
-    # Get target role from goal
+    # Get target role + profile id from goal
     target_role = ""
+    profile_id: str | None = None
     if path.goal_id:
         result = await db.execute(select(Goal).where(Goal.id == path.goal_id))
         goal = result.scalars().first()
         if goal:
             target_role = goal.target_role or ""
+            profile_id = goal.profile_id
 
     # Build module responses
     module_responses = [_module_response(m, all_lessons) for m in modules]
@@ -381,6 +383,7 @@ async def get_learning_dashboard(
         total_lessons_completed=completed_lessons,
         total_lessons=total_lessons,
         estimated_hours_remaining=estimated_hours,
+        profile_id=profile_id,
     )
 
 

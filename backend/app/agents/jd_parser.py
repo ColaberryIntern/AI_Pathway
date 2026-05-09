@@ -240,6 +240,14 @@ Map everything to the GenAI Skills Ontology structure."""
                         print(f"[JD_PARSER] Padded: {match['id']} - {match.get('name')} (from '{term}')")
             result["top_10_target_skills"] = top_skills
 
+        # Normalize ranks to sequential 1..N based on array order. The LLM may
+        # return non-sequential ranks (skipping numbers) and the padding loop
+        # above can collide with already-assigned ranks. Without this, the
+        # frontend renders duplicate "#2" or skips "#7", and skills appear
+        # out of rank order on the skill-selection page.
+        for i, s in enumerate(result.get("top_10_target_skills", []), 1):
+            s["rank"] = i
+
         self._log_execution("parse_jd", {"jd_length": len(jd_text)}, result)
         result["duration_ms"] = self._end_execution()
 
