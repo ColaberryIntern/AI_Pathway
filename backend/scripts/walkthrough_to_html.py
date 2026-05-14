@@ -87,6 +87,34 @@ CHANGES = [
      "what": "Set profile_analyzer LLM call to temperature=0. Verified across 20 consecutive runs - identical top 5 every time.",
      "why": "Per Luda Apr 28: she ran Jennifer C twice and got different top 5 skills.",
      "files": ["backend/app/agents/profile_analyzer.py"], "to_see": "Open URL above. Compare with another fresh run - same input gives same top 5."},
+    {"id": "18_skill_rank_sequential", "title": "Skills render in sequential rank order (no duplicate or skipped numbers)", "category": "Luda May 9 (NEW)", "page_url": "/analysis/{pid}?view=skill_selection",
+     "what": "Ranks #1..#N now sequential, in render order. Previously a single render could show duplicate #2 and skip #7, with the rank-1 skill rendering 5th. Backend normalizes ranks after JD parsing and after rerank/enrich; frontend defensively renumbers on revisit.",
+     "why": "Per Luda May 9: 'the #1 skill (draft -> critique -> revise) appears at the end of the top 5' plus two #2s and no #7.",
+     "files": ["backend/app/agents/jd_parser.py", "backend/app/api/routes/analysis.py", "frontend/src/pages/AnalysisPage.tsx"], "to_see": "Open URL above. Top of page shows skill cards labeled #1, #2, #3... in render order, no gaps or duplicates."},
+    {"id": "19_dashboard_back_to_skill_review", "title": "Back to skill review link on the Learning Dashboard", "category": "Luda May 9 (NEW)", "page_url": "/learn/{path_id}",
+     "what": "Learning Dashboard header now has a Back to skill review link that routes to /analysis/{profile_id}?view=skill_selection. Backend dashboard endpoint exposes profile_id; frontend renders the link when present.",
+     "why": "Per Luda May 9: 'After I progress from that page to the AI Learning Path Dashboard, I cannot come back to the full list.'",
+     "files": ["backend/app/schemas/learning.py", "backend/app/api/routes/learning.py", "frontend/src/types/index.ts", "frontend/src/pages/LearningDashboardPage.tsx"], "to_see": "Open URL above. Top-left of header has 'Back to skill review' link."},
+    {"id": "20_rating_persistence", "title": "Proficiency ratings persist across navigation (no more 0/5 assessed reset)", "category": "Luda May 9 (NEW)", "page_url": "/analysis/{pid}?view=skill_selection",
+     "what": "selfAssessedSkills state now reads from and writes to localStorage keyed by profileId. Navigating to /learn and back no longer resets the counter to 0/5.",
+     "why": "Per Luda May 9 PDF: rated 5 skills but the next visit showed 0/5 assessed.",
+     "files": ["frontend/src/pages/AnalysisPage.tsx"], "to_see": "Rate a few skills, navigate to the learning dashboard, come back. The counter still shows your prior ratings (not reset to 0)."},
+    {"id": "21_per_skill_hover_descriptions", "title": "Hover tooltip shows per-skill, per-level rubric (not generic 'Can explain basics')", "category": "Vivek May 9 (NEW)", "page_url": "/analysis/{pid}?view=skill_selection",
+     "what": "Ontology service now reads rubric_by_level (populated for every skill) and converts it to the proficiency_descriptions structure the frontend expects. Each level now has a skill-specific rubric instead of a generic scale line.",
+     "why": "Per Vivek May 9 (item 04) and Luda Apr 29: wanted per-skill, per-level descriptions matching the ai-fluency-assessment ontology, not a generic 'Aware: Can explain basics' that's the same for every skill.",
+     "files": ["backend/app/services/ontology.py"], "to_see": "Open URL above, hover any of the proficiency level buttons (0 Unaware, 1 Aware, 2 User, 3 Practitioner, 4 Builder) on any skill card. The tooltip shows that skill's specific rubric for that level. Example: SK.PRM.003 L1 shows 'Knows that prompts can be revised when output is unsatisfactory'."},
+    {"id": "22_item_06_status_deferred", "title": "STATUS - Item 06 (interstitial proficiency-rating step) is deferred", "category": "Status Update (May 12)", "page_url": "/analysis/{pid}?view=skill_selection", "screenshot_id": "06_skill_match_messaging",
+     "what": "The MESSAGE change you approved (\"build a learning path consisting of 5 chapters\") is shipping as-is. The separate request - inserting an interstitial page where the user rates the SWAPPED-IN skills (6, 7, 8) before chapter generation - is a new product requirement and is deferred per Luda's note that #6 can come after the demo round. Spec is captured at docs/follow_ups/06_interstitial_skill_rating.md in the repo.",
+     "why": "Per Luda May 7 walkthrough feedback (item 06) and Luda's clarifying note: this can wait until after Jennifer demo.",
+     "files": ["docs/follow_ups/06_interstitial_skill_rating.md (spec only)"], "to_see": "No code change to verify. Use this card's feedback widget if you want to revise priority (move to next round, change scope, etc.)."},
+    {"id": "23_item_14_status_queued", "title": "STATUS - Item 14 (Build Your Agent fields) - Vivek's ask understood, queued", "category": "Status Update (May 12)", "page_url": "/learn/{path_id}/lesson/{lesson_id}", "screenshot_id": "14_agent_build_section", "click_tab": "Build",
+     "what": "Vivek asked for the standard agent platform field set - description, instructions, knowledge base - mirroring what users see in ChatGPT custom GPTs, Copilot agents, and Gemini Gems. Currently the chapter generator emits 3 capability_chips + 3 personalization_fields + a system_prompt_template. Switching to description/instructions/knowledge base needs prompt + schema + renderer changes. Estimate ~1 hour. Queued for next chapter-format round.",
+     "why": "Per Vivek May 9 walkthrough feedback (item 14): align the agent build UI with industry-standard agent-builder field sets.",
+     "files": ["backend/app/agents/chapter_generator.py (planned)", "backend/app/data/chapter-generator-prompt.md (planned)", "frontend/src/components/chapter/ChapterRenderer.tsx (planned)"], "to_see": "No code change yet. Use this card's feedback widget to confirm the planned field set (description, instructions, knowledge base) is right, or flag a different structure."},
+    {"id": "24_item_17_status_needs_clarification", "title": "STATUS - Item 17 (deterministic ordering) - need clarifying note from Vivek", "category": "Status Update (May 12)", "page_url": "/analysis/{pid}?view=skill_selection", "screenshot_id": "17_deterministic_skill_ordering",
+     "what": "Vivek marked this Issue but left the comment empty. The change set profile_analyzer LLM call to temperature=0 so identical inputs produce identical top 5 across runs. Verified across 20 consecutive runs - same top 5 every time. Unable to act on the Issue without knowing the actual concern.",
+     "why": "Per Vivek May 9 walkthrough feedback (item 17): status = Issue, feedback = (empty).",
+     "files": ["backend/app/agents/profile_analyzer.py"], "to_see": "Vivek - please use this card's feedback widget to note the concern: is the determinism approach itself wrong, or is the resulting top 5 not what you expected for the JD?"},
 ]
 
 CATEGORY_COLORS = {
@@ -97,10 +125,23 @@ CATEGORY_COLORS = {
     "Vivek spec": "#f59e0b",
     "Vivek + User Apr 30": "#10b981",
     "User Apr 30 (NEW)": "#ef4444",
+    "Luda May 9 (NEW)": "#ec4899",
+    "Vivek May 9 (NEW)": "#06b6d4",
+    "Status Update (May 12)": "#6b7280",
 }
 
 
 def render_html():
+    # WALKTHROUGH_FILTER_IDS env var lets us scope a single round of review
+    # to only the items the reviewer hasn't seen yet, instead of replaying
+    # the full history. Comma-separated CHANGES ids; empty/unset = all.
+    import os as _os
+    filter_raw = _os.environ.get("WALKTHROUGH_FILTER_IDS", "").strip()
+    filter_ids = {s.strip() for s in filter_raw.split(",") if s.strip()} if filter_raw else None
+    global CHANGES
+    if filter_ids:
+        CHANGES = [c for c in CHANGES if c["id"] in filter_ids]
+        print(f"Filtered to {len(CHANGES)} items: {[c['id'] for c in CHANGES]}")
     md_path = REPORT_DIR / "WALKTHROUGH_REPORT.md"
     pid = path_id = lesson_id = ""
     if md_path.exists():
@@ -144,8 +185,10 @@ def render_html():
 
         # Embed the screenshot as a base64 data URI so the HTML is fully
         # self-contained. No external file dependencies; the reviewer just
-        # opens the HTML and everything renders.
-        png_path = REPORT_DIR / "screenshots" / f"{c['id']}.png"
+        # opens the HTML and everything renders. Status-update cards reuse
+        # an earlier round's screenshot via the screenshot_id field.
+        screenshot_basename = c.get("screenshot_id") or c["id"]
+        png_path = REPORT_DIR / "screenshots" / f"{screenshot_basename}.png"
         if png_path.exists():
             data_uri = (
                 "data:image/png;base64,"

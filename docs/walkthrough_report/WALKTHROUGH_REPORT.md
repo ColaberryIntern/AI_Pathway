@@ -1,12 +1,12 @@
 # AI Pathway - Visual Changes Walkthrough Report
 
-Generated: 508024.0
+Generated: 917707.859
 
 **Tool URL:** http://95.216.199.47:3000
 
-**Test profile created for this report:** `ee4279e2-fa46-4ad5-ac60-2e0150047869` (kept alive for review)
-**Test learning path:** `ba8387e4-d02e-4917-861c-0f032dd03f36`
-**Test lesson:** `34a3041f-00d3-4742-9add-8322bfcbd038`
+**Test profile created for this report:** `94d256ab-3836-4abe-84cc-6ad4a96b5597` (kept alive for review)
+**Test learning path:** `0ae06d22-4266-4adb-93e3-683b2f366575`
+**Test lesson:** `81909000-0404-4f4f-8edc-d3c9c6287f3a`
 
 Each section below covers one visual change. The screenshot shows the change with a red rectangle around the affected element.
 
@@ -58,7 +58,7 @@ Per Luda Apr 15: language tailored for individuals creating multiple profiles fo
 
 ## 3. Skill selection + self-assessment merged
 
-**Live URL:** http://95.216.199.47:3000/analysis/ee4279e2-fa46-4ad5-ac60-2e0150047869
+**Live URL:** http://95.216.199.47:3000/analysis/94d256ab-3836-4abe-84cc-6ad4a96b5597?view=skill_selection
 
 **To see this change:** Open the URL above.
 
@@ -81,7 +81,7 @@ Per Luda Apr 15: reduce step count and let user adjust skills + ratings in one v
 
 ## 4. Hover tooltip with ontology description on skill name
 
-**Live URL:** http://95.216.199.47:3000/analysis/ee4279e2-fa46-4ad5-ac60-2e0150047869
+**Live URL:** http://95.216.199.47:3000/analysis/94d256ab-3836-4abe-84cc-6ad4a96b5597?view=skill_selection
 
 **To see this change:** Open the URL above, then hover over a skill name.
 
@@ -104,7 +104,7 @@ Per Vivek Apr 29 (confirmed Agreed): users shouldn't have to guess what a skill 
 
 ## 5. Detected Role -> Targeted Role rename
 
-**Live URL:** http://95.216.199.47:3000/analysis/ee4279e2-fa46-4ad5-ac60-2e0150047869
+**Live URL:** http://95.216.199.47:3000/analysis/94d256ab-3836-4abe-84cc-6ad4a96b5597?view=skill_selection
 
 **To see this change:** Open the URL above.
 
@@ -126,7 +126,7 @@ Per Luda Apr 15: 'Targeted' is more accurate - the user is selecting a target, n
 
 ## 6. End-of-page messaging when skills match target
 
-**Live URL:** http://95.216.199.47:3000/analysis/ee4279e2-fa46-4ad5-ac60-2e0150047869
+**Live URL:** http://95.216.199.47:3000/analysis/94d256ab-3836-4abe-84cc-6ad4a96b5597?view=skill_selection
 
 **To see this change:** Open the URL above.
 
@@ -148,7 +148,7 @@ Per Luda Apr 28: clarify that the system backfills with new skills rather than j
 
 ## 7. Learning dashboard auto-activates (no Ready to Start gate)
 
-**Live URL:** http://95.216.199.47:3000/learn/ba8387e4-d02e-4917-861c-0f032dd03f36
+**Live URL:** http://95.216.199.47:3000/learn/0ae06d22-4266-4adb-93e3-683b2f366575
 
 **To see this change:** Open the URL above.
 
@@ -170,7 +170,7 @@ Per Luda Apr 28: the gate page was duplicative of the skill review confirmation.
 
 ## 8. Your Journey Roadmap page removed
 
-**Live URL:** http://95.216.199.47:3000/analysis/ee4279e2-fa46-4ad5-ac60-2e0150047869
+**Live URL:** http://95.216.199.47:3000/analysis/94d256ab-3836-4abe-84cc-6ad4a96b5597
 
 **To see this change:** Open the URL above.
 
@@ -192,7 +192,7 @@ Per Luda Apr 28: the roadmap page was duplicative - same info already shown on t
 
 ## 9. Chapter section navigation (6 sections, 15 min)
 
-**Live URL:** http://95.216.199.47:3000/learn/ba8387e4-d02e-4917-861c-0f032dd03f36/lesson/34a3041f-00d3-4742-9add-8322bfcbd038
+**Live URL:** http://95.216.199.47:3000/learn/0ae06d22-4266-4adb-93e3-683b2f366575/lesson/81909000-0404-4f4f-8edc-d3c9c6287f3a
 
 **To see this change:** Open the URL above.
 
@@ -216,7 +216,7 @@ Per Vivek's chapter spec (5 sections totaling 15 min) + user's request to bring 
 
 ## 10. Chapter title uses ontology canonical name
 
-**Live URL:** http://95.216.199.47:3000/learn/ba8387e4-d02e-4917-861c-0f032dd03f36/lesson/34a3041f-00d3-4742-9add-8322bfcbd038
+**Live URL:** http://95.216.199.47:3000/learn/0ae06d22-4266-4adb-93e3-683b2f366575/lesson/81909000-0404-4f4f-8edc-d3c9c6287f3a
 
 **To see this change:** Open the URL above.
 
@@ -238,7 +238,7 @@ Per Vivek Apr 29 (confirmed Agreed) on Luda's request: skills should be named co
 
 ## 11. Concepts section with mnemonic + pull_quote
 
-**Live URL:** http://95.216.199.47:3000/learn/ba8387e4-d02e-4917-861c-0f032dd03f36/lesson/34a3041f-00d3-4742-9add-8322bfcbd038
+**Live URL:** http://95.216.199.47:3000/learn/0ae06d22-4266-4adb-93e3-683b2f366575/lesson/81909000-0404-4f4f-8edc-d3c9c6287f3a
 
 **To see this change:** Open the URL above, then click the **Concepts** tab.
 
@@ -261,7 +261,7 @@ Per Vivek's depth spec: chapters lacked structural depth. Mnemonic + pull_quote 
 
 ## 12. Example 1 with 3-step structure (diagnosis_checklist / prompt_variant / log_entry)
 
-**Live URL:** http://95.216.199.47:3000/learn/ba8387e4-d02e-4917-861c-0f032dd03f36/lesson/34a3041f-00d3-4742-9add-8322bfcbd038
+**Live URL:** http://95.216.199.47:3000/learn/0ae06d22-4266-4adb-93e3-683b2f366575/lesson/81909000-0404-4f4f-8edc-d3c9c6287f3a
 
 **To see this change:** Open the URL above, then click the **Example 1** tab.
 
@@ -285,7 +285,7 @@ Per Vivek's spec: Example 1 should walk learner through the diagnostic process, 
 
 ## 13. Example 2 A/B comparison
 
-**Live URL:** http://95.216.199.47:3000/learn/ba8387e4-d02e-4917-861c-0f032dd03f36/lesson/34a3041f-00d3-4742-9add-8322bfcbd038
+**Live URL:** http://95.216.199.47:3000/learn/0ae06d22-4266-4adb-93e3-683b2f366575/lesson/81909000-0404-4f4f-8edc-d3c9c6287f3a
 
 **To see this change:** Open the URL above, then click the **Example 2** tab.
 
@@ -308,7 +308,7 @@ Per Vivek's spec: Example 2 demonstrates the target-level skill (A/B testing) by
 
 ## 14. Build Your Agent section
 
-**Live URL:** http://95.216.199.47:3000/learn/ba8387e4-d02e-4917-861c-0f032dd03f36/lesson/34a3041f-00d3-4742-9add-8322bfcbd038
+**Live URL:** http://95.216.199.47:3000/learn/0ae06d22-4266-4adb-93e3-683b2f366575/lesson/81909000-0404-4f4f-8edc-d3c9c6287f3a
 
 **To see this change:** Open the URL above, then click the **Build** tab.
 
@@ -331,7 +331,7 @@ Per Vivek's spec: each chapter ends with a takeaway artifact the learner can use
 
 ## 15. Try-in-LLM buttons (Run in ChatGPT)
 
-**Live URL:** http://95.216.199.47:3000/learn/ba8387e4-d02e-4917-861c-0f032dd03f36/lesson/34a3041f-00d3-4742-9add-8322bfcbd038
+**Live URL:** http://95.216.199.47:3000/learn/0ae06d22-4266-4adb-93e3-683b2f366575/lesson/81909000-0404-4f4f-8edc-d3c9c6287f3a
 
 **To see this change:** Open the URL above, then click the **Example 1** tab.
 
@@ -353,7 +353,7 @@ Per Vivek Apr 29: 'I also liked aspects of your previous build especially around
 
 ## 16. Implementation Task as 6th section (NEW)
 
-**Live URL:** http://95.216.199.47:3000/learn/ba8387e4-d02e-4917-861c-0f032dd03f36/lesson/34a3041f-00d3-4742-9add-8322bfcbd038
+**Live URL:** http://95.216.199.47:3000/learn/0ae06d22-4266-4adb-93e3-683b2f366575/lesson/81909000-0404-4f4f-8edc-d3c9c6287f3a
 
 **To see this change:** Open the URL above, then click the **Assignment** tab.
 
@@ -378,7 +378,7 @@ Per user's Apr 30 request: the assignment functionality from the old multi-lesso
 
 ## 17. Deterministic skill ordering between runs
 
-**Live URL:** http://95.216.199.47:3000/analysis/ee4279e2-fa46-4ad5-ac60-2e0150047869
+**Live URL:** http://95.216.199.47:3000/analysis/94d256ab-3836-4abe-84cc-6ad4a96b5597?view=skill_selection
 
 **To see this change:** Open the URL above.
 
@@ -395,5 +395,98 @@ Per Luda Apr 28: she ran Jennifer C twice and got different top 5 skills. The va
 **Files modified:**
 
 - `backend/app/agents/profile_analyzer.py`
+
+---
+
+## 18. Skills now render in sequential rank order (no duplicate or skipped numbers)
+
+**Live URL:** http://95.216.199.47:3000/analysis/94d256ab-3836-4abe-84cc-6ad4a96b5597?view=skill_selection
+
+**To see this change:** Open the URL above.
+
+![Skills now render in sequential rank order (no duplicate or skipped numbers)](screenshots/18_skill_rank_sequential.png)
+
+**What was changed:**
+
+Backend now normalizes skill ranks to sequential 1..N at the end of JD parsing AND after the rerank/enrich step. Frontend defensively renumbers on revisit. Previously a single render could show duplicate #2 and skip #7, with the rank-1 skill appearing 5th instead of 1st.
+
+**Why:**
+
+Per Luda May 9 ad-hoc feedback: she opened the JC profile and saw 'the #1 skill (draft -> critique -> revise) appears at the end of the top 5' plus two #2s and no #7.
+
+**Files modified:**
+
+- `backend/app/agents/jd_parser.py`
+- `backend/app/api/routes/analysis.py`
+- `frontend/src/pages/AnalysisPage.tsx`
+
+---
+
+## 19. Back to skill review link on the Learning Dashboard
+
+**Live URL:** http://95.216.199.47:3000/learn/
+
+**To see this change:** Open the URL above.
+
+![Back to skill review link on the Learning Dashboard](screenshots/19_dashboard_back_to_skill_review.png)
+
+**What was changed:**
+
+Learning Dashboard header now includes a Back to skill review link that routes to /analysis/{profile_id}?view=skill_selection. Backend dashboard endpoint exposes profile_id (looked up via the path's goal). Frontend renders the link when present.
+
+**Why:**
+
+Per Luda May 9 ad-hoc feedback: 'After I progress from that page to the AI Learning Path Dashboard, I cannot come back to the full list.'
+
+**Files modified:**
+
+- `backend/app/schemas/learning.py`
+- `backend/app/api/routes/learning.py`
+- `frontend/src/types/index.ts`
+- `frontend/src/pages/LearningDashboardPage.tsx`
+
+---
+
+## 20. Proficiency ratings persist across navigation
+
+**Live URL:** http://95.216.199.47:3000/analysis/94d256ab-3836-4abe-84cc-6ad4a96b5597?view=skill_selection
+
+**To see this change:** Open the URL above.
+
+![Proficiency ratings persist across navigation](screenshots/20_rating_persistence.png)
+
+**What was changed:**
+
+selfAssessedSkills state now reads from and writes to localStorage keyed by profileId. Previously the state was useState-only, so navigating to /learn and returning reset all ratings to empty (counter back to 0/5 assessed).
+
+**Why:**
+
+Per Luda May 9 ad-hoc PDF: rated 5 skills but the next visit showed 0/5 assessed. State was being thrown away on every page mount.
+
+**Files modified:**
+
+- `frontend/src/pages/AnalysisPage.tsx`
+
+---
+
+## 21. Hover tooltip shows per-skill, per-level rubric (not generic)
+
+**Live URL:** http://95.216.199.47:3000/analysis/94d256ab-3836-4abe-84cc-6ad4a96b5597?view=skill_selection
+
+**To see this change:** Open the URL above.
+
+![Hover tooltip shows per-skill, per-level rubric (not generic)](screenshots/21_per_skill_hover_descriptions.png)
+
+**What was changed:**
+
+Ontology service now reads rubric_by_level (which is populated for every skill) and converts it to the proficiency_descriptions structure the frontend expects. Previously the service looked for a different field name and fell back to a generic 5-line scale (e.g. 'Practitioner: Can adapt independently' for every skill). Now each skill shows its own rubric: e.g. SK.PRM.003 L1 = 'Knows that prompts can be revised when output is unsatisfactory'.
+
+**Why:**
+
+Per Vivek May 9 walkthrough feedback (item 04): wanted per-skill, per-level descriptions matching his ai-fluency-assessment ontology. Per Luda Apr 29: 'Pull from the ontology the description of the proficiency level for EACH skill.'
+
+**Files modified:**
+
+- `backend/app/services/ontology.py`
 
 ---

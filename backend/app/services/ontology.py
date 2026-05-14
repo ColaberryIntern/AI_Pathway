@@ -189,12 +189,33 @@ class OntologyService:
     def get_proficiency_descriptions(self, skill_id: str) -> list[dict]:
         """Get proficiency level descriptions for a skill (PL 0-4).
 
-        Returns per-skill descriptions if available in the ontology,
-        otherwise falls back to the generic proficiency scale.
+        The ontology stores per-skill, per-level rubric strings under the
+        `rubric_by_level` array (one entry per level, indexed by the level
+        number). Wraps each entry with the level number and the canonical
+        label from the proficiency scale so the frontend gets a complete
+        triple per level (level, label, description). Falls back to the
+        generic scale description if a skill has no rubric_by_level.
         """
         skill = self.get_skill(skill_id)
+        # Legacy field name still supported in case any callers populated it.
         if skill and "proficiency_descriptions" in skill:
             return skill["proficiency_descriptions"]
+
+        scale_by_level = {p["level"]: p for p in self.proficiency_scale}
+        rubric = skill.get("rubric_by_level") if skill else None
+        if rubric and isinstance(rubric, list):
+            out = []
+            for level, description in enumerate(rubric):
+                if level > 4:  # Self-assessment UI only shows L0-L4
+                    break
+                scale = scale_by_level.get(level, {})
+                out.append({
+                    "level": level,
+                    "label": scale.get("label", f"Level {level}"),
+                    "description": description,
+                })
+            return out
+
         # Fallback: generic scale (PL 0-4 only, skip PL 5 for self-assessment)
         return [
             {"level": p["level"], "label": p["label"], "description": p["description"]}
