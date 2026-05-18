@@ -541,19 +541,30 @@ implementation_task MUST include:
         else:
             logger.info("Chapter depth audit passed for %s L%s->L%s", skill_id, current_level, target_level)
 
-        # Ensure meta has correct skill info
-        if "meta" in chapter_spec:
-            meta = chapter_spec["meta"]
-            meta.setdefault("skill_id", skill_id)
-            meta.setdefault("skill_name", skill_data["name"])
-            meta.setdefault("domain_id", skill_data["domain_id"])
-            meta.setdefault("domain_name", skill_data["domain_name"])
-            meta.setdefault("current_level", current_level)
-            meta.setdefault("target_level", target_level)
-            meta.setdefault("current_level_label", LEVEL_LABELS[current_level] if current_level < len(LEVEL_LABELS) else "Unknown")
-            meta.setdefault("target_level_label", LEVEL_LABELS[target_level] if target_level < len(LEVEL_LABELS) else "Unknown")
-            meta.setdefault("current_level_rubric", rubrics[current_level] if current_level < len(rubrics) else "")
-            meta.setdefault("target_level_rubric", rubrics[target_level] if target_level < len(rubrics) else "")
+        # Force authoritative meta values. The LLM sometimes echoes the
+        # prompt example skill (SK.PRM.003) into meta.skill_id and other
+        # identity fields; setdefault would preserve the wrong value, so
+        # always overwrite identity fields with what the caller asked for.
+        meta = chapter_spec.setdefault("meta", {})
+        if isinstance(meta, dict):
+            llm_skill_id = meta.get("skill_id")
+            if llm_skill_id and llm_skill_id != skill_id:
+                logger.warning(
+                    "Chapter generator LLM emitted wrong skill_id %r for input %r; overriding.",
+                    llm_skill_id, skill_id,
+                )
+            meta["skill_id"] = skill_id
+            meta["skill_name"] = skill_data["name"]
+            meta["domain_id"] = skill_data["domain_id"]
+            meta["domain_name"] = skill_data["domain_name"]
+            meta["current_level"] = current_level
+            meta["target_level"] = target_level
+            meta["current_level_label"] = LEVEL_LABELS[current_level] if current_level < len(LEVEL_LABELS) else "Unknown"
+            meta["target_level_label"] = LEVEL_LABELS[target_level] if target_level < len(LEVEL_LABELS) else "Unknown"
+            meta["current_level_rubric"] = rubrics[current_level] if current_level < len(rubrics) else ""
+            meta["target_level_rubric"] = rubrics[target_level] if target_level < len(rubrics) else ""
+            meta.setdefault("chapter_title", "")
+            meta.setdefault("chapter_subtitle", "")
             meta.setdefault("total_minutes", 15)
 
         self._log_execution("generate_chapter", {"skill_id": skill_id, "level_gap": f"L{current_level}->L{target_level}"}, {"sections": list(chapter_spec.keys())})

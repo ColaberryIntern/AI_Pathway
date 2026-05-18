@@ -2544,6 +2544,14 @@
       "prerequisites": [
         "SK.GOV.001",
         "SK.PRM.021"
+      ],
+      "rubric_by_level": [
+        "Unaware AI can introduce clinical risk",
+        "Knows AI outputs in clinical contexts can mislead diagnosis, treatment, or triage",
+        "Identifies AI use cases that require clinician oversight versus those safe for ambient use",
+        "Independently evaluates AI clinical tools against risk thresholds and FDA or regulatory guidance",
+        "Builds clinical safety guardrails: confidence thresholds, override paths, audit trails for AI-assisted decisions",
+        "Designs clinical AI risk management frameworks aligned to ISO 14971, FDA SaMD, and hospital governance"
       ]
     },
     {
@@ -2553,6 +2561,14 @@
       "level": 3,
       "prerequisites": [
         "SK.RAG.020"
+      ],
+      "rubric_by_level": [
+        "Has not used AI to synthesize medical evidence",
+        "Knows AI can summarize papers and guidelines but may hallucinate citations",
+        "Uses AI to draft literature summaries with manual citation verification",
+        "Designs evidence-synthesis workflows pairing AI retrieval with structured human appraisal such as PICO and GRADE",
+        "Builds RAG-grounded evidence synthesis tools with provenance tracking and contradiction detection",
+        "Architects evidence-synthesis pipelines integrated with clinical guidelines, peer review, and longitudinal updates"
       ]
     },
     {
@@ -2563,6 +2579,14 @@
       "prerequisites": [
         "SK.GOV.001",
         "SK.PRD.010"
+      ],
+      "rubric_by_level": [
+        "Unaware AI can blur the line between information and legal advice",
+        "Knows AI legal outputs require disclaimers and cannot substitute for licensed counsel",
+        "Adds appropriate disclaimers and routes user requests to attorneys when scope is exceeded",
+        "Designs AI legal assistants that detect advice-versus-information boundaries and escalate appropriately",
+        "Builds policy-enforcing legal AI with jurisdiction-aware disclaimers and audit logs",
+        "Architects legal AI compliance frameworks aligned to state bar regulations and unauthorized practice statutes"
       ]
     },
     {
@@ -2573,6 +2597,14 @@
       "prerequisites": [
         "SK.EVL.001",
         "SK.RAG.020"
+      ],
+      "rubric_by_level": [
+        "Unaware that legal AI can fabricate case citations or statutes",
+        "Knows legal AI hallucinations include fake cases, misquoted holdings, and invented citations",
+        "Manually verifies case citations and statutory references in AI-generated legal text",
+        "Designs evaluation suites that test legal AI against gold-standard citation and holding accuracy",
+        "Builds automated hallucination detectors for legal text with citation verification and red-team prompts",
+        "Architects continuous evaluation pipelines for production legal AI with regression testing and certification"
       ]
     },
     {
@@ -2583,6 +2615,14 @@
       "prerequisites": [
         "SK.EVL.010",
         "SK.AGT.031"
+      ],
+      "rubric_by_level": [
+        "Unaware that AI numerical outputs need audit trails",
+        "Knows AI can miscalculate and that financial outputs require independent verification",
+        "Uses AI for financial drafting while manually verifying every number against source data",
+        "Designs auditable AI finance workflows that separate generation, calculation, and verification steps",
+        "Builds AI finance tools with deterministic numerical engines, formula tracebacks, and reconciliation logs",
+        "Architects audit-grade AI finance systems compliant with SOX, GAAP, and internal controls testing"
       ]
     },
     {
@@ -2592,6 +2632,14 @@
       "level": 2,
       "prerequisites": [
         "SK.PRM.001"
+      ],
+      "rubric_by_level": [
+        "Has not used AI in instructional design",
+        "Knows AI can help generate learning materials and personalize content",
+        "Uses AI to draft learning objectives, lesson outlines, and assessment questions with human review",
+        "Designs AI-enabled learning experiences with personalization paths, scaffolded practice, and feedback loops",
+        "Builds adaptive learning systems that adjust content difficulty, modality, and pacing based on learner signals",
+        "Designs institution-wide AI learning architectures balancing personalization, pedagogy, equity, and instructor oversight"
       ]
     },
     {
@@ -2602,6 +2650,14 @@
       "prerequisites": [
         "SK.FND.021",
         "SK.FND.022"
+      ],
+      "rubric_by_level": [
+        "Unaware of ethical concerns with AI marketing content",
+        "Knows AI marketing content raises issues of disclosure, copyright, and impersonation",
+        "Discloses AI involvement in marketing content and avoids deceptive synthetic media",
+        "Designs marketing AI workflows aligned to FTC endorsement guides, brand guidelines, and IP boundaries",
+        "Builds marketing AI guardrails: disclosure injection, brand-voice enforcement, IP source attribution",
+        "Architects enterprise marketing AI ethics frameworks balancing scale, brand safety, regulation, and trust"
       ]
     },
     {
@@ -2612,6 +2668,14 @@
       "prerequisites": [
         "SK.FND.022",
         "SK.GOV.001"
+      ],
+      "rubric_by_level": [
+        "Unaware that AI in hiring carries discrimination and compliance risk",
+        "Knows AI hiring tools must be audited for bias and disparate impact under EEOC and NYC Local Law 144",
+        "Uses AI hiring tools only with disclosed scope, candidate consent, and human review of decisions",
+        "Designs AI hiring workflows with bias audits, adverse-impact analysis, and explainability for candidates",
+        "Builds AI hiring systems with continuous bias monitoring, candidate appeal paths, and regulator-ready audits",
+        "Architects enterprise AI hiring frameworks aligned to EEOC, GDPR, NYC Local Law 144, and emerging AI hiring laws"
       ]
     },
     {

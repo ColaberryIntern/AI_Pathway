@@ -160,13 +160,33 @@ async def activate_learning_path(
 
     logger.info("Creating %d modules (1 chapter per skill level)...", len(chapters))
 
+    # Use the ontology as the single source of truth for skill names so the
+    # dashboard sidebar matches the Top 5 Skills page (which renders ontology
+    # names) and so we are not at the mercy of whatever the path-generator
+    # LLM decided to title each chapter.
+    from app.services.ontology import get_ontology_service
+    _ontology = get_ontology_service()
+
     for i, chapter in enumerate(chapters):
         chapter_num = chapter.get("chapter_number", i + 1)
         skill_id = chapter.get("skill_id", chapter.get("primary_skill_id", f"unknown_{i}"))
-        skill_name = chapter.get("skill_name", chapter.get("primary_skill_name", "Unknown"))
-        title = chapter.get("title", f"Module {chapter_num}")
         current_level = chapter.get("current_level", 0)
         target_level = chapter.get("target_level", 1)
+
+        # Resolve the canonical skill name from the ontology. Fall back to
+        # whatever the path generator emitted only if the skill is missing
+        # from the ontology (should not happen for IDs we generated against).
+        ontology_skill = _ontology.get_skill(skill_id) if skill_id else None
+        if ontology_skill and ontology_skill.get("name"):
+            skill_name = ontology_skill["name"]
+        else:
+            skill_name = chapter.get("skill_name", chapter.get("primary_skill_name", "Unknown"))
+
+        # The module title displayed in the sidebar IS the skill name. Drop
+        # any LLM-generated module title to avoid the Top-5-page mismatch
+        # Luda flagged ("Education: Learning design with AI" on Top 5 but
+        # "Enhancing Educational Content with AI" in the dashboard).
+        title = skill_name
 
         # Single lesson per module (15-minute chapter)
         lesson_outline = [

@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Brittany W test scenario - before vs after proposed changes</title>
+<style>
+  body { font-family: -apple-system, Segoe UI, Helvetica, Arial, sans-serif; color: #1a202c; max-width: 1100px; margin: 24px auto; padding: 0 18px; line-height: 1.55; }
+  h1 { font-size: 22px; margin: 0 0 6px; color: #1a365d; }
+  h2 { font-size: 18px; margin: 28px 0 10px; padding-bottom: 6px; border-bottom: 2px solid #e2e8f0; color: #1a365d; }
+  h3 { font-size: 15px; margin: 18px 0 6px; color: #2d3748; }
+  .lede { color: #4a5568; font-size: 14px; margin: 0 0 16px; }
+  .pill { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; vertical-align: middle; margin-left: 6px; }
+  .pill.before { background: #fed7d7; color: #9b2c2c; }
+  .pill.after  { background: #c6f6d5; color: #22543d; }
+  .pill.maintain { background: #c6f6d5; color: #22543d; }
+  .pill.develop  { background: #feebc8; color: #7b341e; }
+  .pill.gap      { background: #fed7d7; color: #9b2c2c; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; margin: 8px 0 18px; }
+  th { background: #edf2f7; text-align: left; padding: 8px 10px; font-weight: 600; color: #2d3748; border-bottom: 2px solid #cbd5e0; }
+  td { padding: 8px 10px; border-bottom: 1px solid #e2e8f0; vertical-align: top; }
+  td.num { text-align: center; font-variant-numeric: tabular-nums; }
+  td.score { text-align: center; font-weight: 700; }
+  tr.section-row td { background: #f7fafc; font-weight: 600; color: #4a5568; padding: 10px; font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase; }
+  .formula { background: #edf2f7; border-left: 4px solid #2b6cb0; padding: 10px 14px; margin: 8px 0 14px; font-family: SF Mono, Consolas, monospace; font-size: 13px; color: #1a365d; }
+  .change-card { border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px 14px; margin: 8px 0; background: #fff; }
+  .change-card .num { display: inline-block; width: 24px; height: 24px; background: #1a365d; color: #fff; border-radius: 50%; text-align: center; line-height: 24px; font-size: 12px; font-weight: 700; margin-right: 8px; vertical-align: middle; }
+  .change-card .title { font-weight: 600; color: #1a365d; }
+  .change-card .body { font-size: 13px; color: #4a5568; margin-top: 6px; }
+  .callout { background: #fffaf0; border: 1px solid #fbd38d; border-radius: 6px; padding: 12px 14px; margin: 14px 0; }
+  .callout .label { font-weight: 700; color: #7b341e; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 12px; }
+  .panel { border: 1px solid #e2e8f0; border-radius: 6px; padding: 14px; background: #fff; }
+  .panel h3 { margin-top: 0; }
+  ul { margin: 6px 0 6px 18px; padding: 0; }
+  li { margin: 4px 0; font-size: 13px; }
+  .sk-id { color: #4a5568; font-size: 11px; font-family: SF Mono, Consolas, monospace; }
+  .small { font-size: 12px; color: #718096; }
+  @media (max-width: 720px) { .grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<h1>Brittany W test scenario: before and after proposed changes</h1>
+<p class="lede">Test profile: Brittany White vs SAP Sr. AI Product Marketing Manager (AI Foundation). The current tool surfaced 8 skills, none of which match the manual analysis of role-essential skills. This document shows what the tool will produce after the proposed changes are implemented.</p>
+
+<h2>What will change in the tool</h2>
+
+<div class="change-card">
+  <div><span class="num">1</span><span class="title">Rewrite the JD-to-skills extraction so it surfaces role-essence skills, not tooling skills</span></div>
+  <div class="body">Current behavior pulls prompting and content-evaluation skills regardless of role. Proposed behavior anchors extraction to the role family (AI Product Marketing in this case), so the top candidates include the communication, product, and governance skills the JD actually emphasizes.</div>
+</div>
+
+<div class="change-card">
+  <div><span class="num">2</span><span class="title">Always generate 10 candidate skills, then score and rank them</span></div>
+  <div class="body">Standard candidate pool of 10 instead of the current variable 8. The top 5 by score become the recommended development set; the remainder are visible but de-emphasized.</div>
+</div>
+
+<div class="change-card">
+  <div><span class="num">3</span><span class="title">Add the 5-parameter weighted rubric scoring engine</span></div>
+  <div class="formula">Priority Score = (Importance &times; 4) + (Breadth &times; 3) + (Momentum &times; 3) + (Connectivity &times; 2) + (Career Signal &times; 2)</div>
+  <div class="body">Each of the 10 candidates is scored 1-3 on each parameter. Maximum possible score is 42. Scores and the breakdown are visible to the reviewer, so the recommendation is auditable rather than opaque.</div>
+</div>
+
+<div class="change-card">
+  <div><span class="num">4</span><span class="title">Split the result into Maintain and Develop groups based on current vs target proficiency</span></div>
+  <div class="body">Skills where the user is already at or above the required level are presented as <span class="pill maintain">Maintain</span> with no chapter generated. Skills where there is a real proficiency gap are presented as <span class="pill develop">Develop #N</span> in priority order. This is the core insight from the rerun: Brittany has only 2 actual gaps, not 5.</div>
+</div>
+
+<div class="change-card">
+  <div><span class="num">5</span><span class="title">Enforce ontology-based diversity (max 2 Develop skills per parent node)</span></div>
+  <div class="body">If the top-scoring Develop skills cluster in one parent node (for example, three from D.PRD), the third is replaced with the next-highest scorer from a different parent. Prevents skill-cluster fatigue in the learning path.</div>
+</div>
+
+<div class="change-card">
+  <div><span class="num">6</span><span class="title">New skills page UI with the score breakdown visible</span></div>
+  <div class="body">Per your May 15 mockup: a single table with columns for each rubric parameter, a total score column, and the Maintain or Develop status column. Two grouped sections within the table.</div>
+</div>
+
+<div class="callout">
+  <div class="label">Separate fix being tracked</div>
+  <div class="small" style="margin-top:6px">Profile parsing accuracy. From your March 18 note: Brittany's stored profile had her current position as SAP, which is incorrect. The PDF parser will be retested against all 5 of your prep profiles (Brittany W, Jennifer C, Dorothy F, Halyna M, Srushti M) before the next demo round.</div>
+</div>
+
+<h2>Brittany W: before vs after</h2>
+
+<h3>BEFORE: what the tool produced today (May 15) <span class="pill before">Current</span></h3>
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Skill</th>
+      <th>Category</th>
+      <th>Target</th>
+      <th>In manual top 10?</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td class="num">1</td><td>Prompt debugging &amp; iteration</td><td>Prompting &amp; HITL Workflows</td><td class="num">L3</td><td>No</td></tr>
+    <tr><td class="num">2</td><td>AI enablement &amp; training strategy <span class="sk-id">SK.PRD.020</span></td><td>Product &amp; UX</td><td class="num">L3</td><td>Yes (#6)</td></tr>
+    <tr><td class="num">3</td><td>Capabilities vs limitations <span class="sk-id">SK.FND.002</span></td><td>AI Literacy &amp; Foundations</td><td class="num">L1 (wrong)</td><td>Yes (#4) - target should be L3</td></tr>
+    <tr><td class="num">4</td><td>Recognizing AI-generated content</td><td>Critical Thinking &amp; Info Eval</td><td class="num">L2</td><td>No</td></tr>
+    <tr><td class="num">5</td><td>AI governance fundamentals <span class="sk-id">SK.GOV.001</span></td><td>Governance &amp; Compliance</td><td class="num">L1 (wrong)</td><td>Yes (#7) - target should be L2</td></tr>
+    <tr><td class="num">6</td><td>Draft, critique, revise</td><td>Prompting &amp; HITL Workflows</td><td class="num">L3</td><td>No</td></tr>
+    <tr><td class="num">7</td><td>Cross-functional AI collaboration</td><td>Communication &amp; Collaboration</td><td class="num">L3</td><td>No (deprioritized in revised analysis)</td></tr>
+    <tr><td class="num">8</td><td>Writing AI project proposals</td><td>Communication &amp; Collaboration</td><td class="num">L3</td><td>No</td></tr>
+  </tbody>
+</table>
+<p class="small"><strong>Misses:</strong> SK.COM.001 (Explaining AI to non-technical audiences, the #1 manual pick), SK.PRD.022 (ROI Measurement), SK.PRD.001 (Use Case Identification), SK.PRD.021 (Stakeholder Management), SK.LRN.001 (Keeping Up with AI). Also: no Maintain group, target levels for SK.FND.002 and SK.GOV.001 are wrong.</p>
+
+<h3>AFTER: what the tool will produce with the proposed changes <span class="pill after">Proposed</span></h3>
+<div class="formula">Priority Score = (Importance &times; 4) + (Breadth &times; 3) + (Momentum &times; 3) + (Connectivity &times; 2) + (Career Signal &times; 2) &nbsp; &nbsp; max = 42</div>
+
+<table>
+  <thead>
+    <tr>
+      <th>Skill</th>
+      <th>Imp &times;4</th>
+      <th>Bdth &times;3</th>
+      <th>Mom &times;3</th>
+      <th>Conn &times;2</th>
+      <th>Career &times;2</th>
+      <th>Score /42</th>
+      <th>Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr class="section-row"><td colspan="8">ALREADY AT REQUIRED LEVEL (MAINTAIN, NOT DEVELOP)</td></tr>
+    <tr>
+      <td><strong>SK.COM.001</strong> Explaining AI to non-technical audiences <div class="small">Current L4, Required L4</div></td>
+      <td class="num">3</td><td class="num">3</td><td class="num">1</td><td class="num">3</td><td class="num">3</td>
+      <td class="score">36</td><td><span class="pill maintain">Maintain</span></td>
+    </tr>
+    <tr>
+      <td><strong>SK.PRD.022</strong> ROI Measurement for AI <div class="small">Current L3-L4, Required L3</div></td>
+      <td class="num">3</td><td class="num">3</td><td class="num">1</td><td class="num">2</td><td class="num">3</td>
+      <td class="score">34</td><td><span class="pill maintain">Maintain</span></td>
+    </tr>
+    <tr>
+      <td><strong>SK.PRD.021</strong> Stakeholder Management <div class="small">Current L4, Required L4</div></td>
+      <td class="num">3</td><td class="num">3</td><td class="num">1</td><td class="num">2</td><td class="num">2</td>
+      <td class="score">31</td><td><span class="pill maintain">Maintain</span></td>
+    </tr>
+    <tr>
+      <td><strong>SK.PRD.001</strong> AI Use Case Identification <div class="small">Current L3, Required L3</div></td>
+      <td class="num">3</td><td class="num">3</td><td class="num">1</td><td class="num">2</td><td class="num">2</td>
+      <td class="score">31</td><td><span class="pill maintain">Maintain</span></td>
+    </tr>
+    <tr>
+      <td><strong>SK.PRD.020</strong> AI Enablement &amp; Training Strategy <div class="small">Current L3, Required L3</div></td>
+      <td class="num">2</td><td class="num">3</td><td class="num">1</td><td class="num">2</td><td class="num">2</td>
+      <td class="score">28</td><td><span class="pill maintain">Maintain</span></td>
+    </tr>
+    <tr>
+      <td><strong>SK.LRN.001</strong> Keeping Up with AI Developments <div class="small">Current L3-L4, Required L3</div></td>
+      <td class="num">2</td><td class="num">3</td><td class="num">1</td><td class="num">1</td><td class="num">2</td>
+      <td class="score">26</td><td><span class="pill maintain">Maintain</span></td>
+    </tr>
+    <tr>
+      <td><strong>SK.FND.003</strong> Model Families (open vs closed) <div class="small">Current L2-L3, Required L2</div></td>
+      <td class="num">2</td><td class="num">2</td><td class="num">1</td><td class="num">2</td><td class="num">2</td>
+      <td class="score">25</td><td><span class="pill maintain">Maintain</span></td>
+    </tr>
+    <tr>
+      <td><strong>SK.RAG.000</strong> RAG Awareness <div class="small">Current L2-L3, Required L2</div></td>
+      <td class="num">2</td><td class="num">1</td><td class="num">1</td><td class="num">1</td><td class="num">2</td>
+      <td class="score">20</td><td><span class="pill maintain">Maintain</span></td>
+    </tr>
+    <tr class="section-row"><td colspan="8">GENUINE GAPS (DEVELOP)</td></tr>
+    <tr>
+      <td><strong>SK.GOV.001</strong> AI Governance &amp; Compliance <div class="small">Current L1, Required L2</div></td>
+      <td class="num">3</td><td class="num">3</td><td class="num">3</td><td class="num">3</td><td class="num">3</td>
+      <td class="score">42</td><td><span class="pill develop">Develop #1</span></td>
+    </tr>
+    <tr>
+      <td><strong>SK.FND.002</strong> Capabilities vs Limitations <div class="small">Current L2, Required L3</div></td>
+      <td class="num">3</td><td class="num">3</td><td class="num">3</td><td class="num">3</td><td class="num">3</td>
+      <td class="score">42</td><td><span class="pill develop">Develop #2</span></td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="callout">
+  <div class="label">Result for Brittany</div>
+  <div class="small" style="margin-top:6px">8 skills shown as <span class="pill maintain">Maintain</span>, 2 as <span class="pill develop">Develop</span>. Matches your conclusion: she is close to being a good fit for this role and only needs to develop AI Governance and Capabilities vs Limitations. The learning path will generate chapters only for the 2 Develop skills, not all 5.</div>
+</div>
+
+<h2>The other four prep profiles</h2>
+<p class="small">Same engine + scoring will run on Jennifer C, Dorothy Fatunmbi, Halyna Mushak, and Srushti Madhure. The Maintain vs Develop split will be different for each based on their current proficiency vs the role requirements. Will produce a similar before-and-after for each before the next demo round so you can validate.</p>
+
+<h2>Confirm to proceed</h2>
+<p>If the after view above matches what you expect, reply with "proceed" and the changes go in. If anything in the rubric weights, the diversity rule, the Maintain vs Develop threshold, or the proposed UI is off, reply with the change and the build adjusts before starting.</p>
+
+</body>
+</html>

@@ -10,28 +10,30 @@ Your output is **two artifacts in one response**:
 
 ## INPUTS YOU WILL RECEIVE
 
-A JSON object with this shape:
+A JSON object with this shape (the values below are PLACEHOLDERS that show the schema only — the actual skill, name, domain, and rubrics come from the user message and MUST drive every section of your output):
 
 ```json
 {
   "skill": {
-    "id": "SK.PRM.003",
-    "name": "Prompt debugging & iteration",
-    "domain_id": "D.PRM",
-    "domain_name": "Prompting",
+    "id": "<SKILL_ID from user input>",
+    "name": "<SKILL_NAME from user input>",
+    "domain_id": "<DOMAIN_ID from user input>",
+    "domain_name": "<DOMAIN_NAME from user input>",
     "rubric_by_level": [
-      "Does not iterate on prompts",
-      "Knows that prompts can be revised when output is unsatisfactory",
-      "Systematically debugs prompts: isolates variables, tests variations, logs results",
-      "Uses A/B prompt testing; tracks prompt versions with change notes",
-      "Builds prompt debugging and regression testing tools",
-      "Designs prompt lifecycle management systems with automated quality gates"
+      "<level 0 rubric from user input>",
+      "<level 1 rubric from user input>",
+      "<level 2 rubric from user input>",
+      "<level 3 rubric from user input>",
+      "<level 4 rubric from user input>",
+      "<level 5 rubric from user input>"
     ]
   },
-  "current_level": 2,
-  "target_level": 3
+  "current_level": "<int from user input>",
+  "target_level": "<int from user input>"
 }
 ```
+
+CRITICAL: Do not invent a skill. Do not echo placeholder text. Every concept, example, narrative, and the `meta.skill_id` field MUST reflect the actual skill the user provides. If the user asks for `SK.DOM.EDU.001` (Education: Learning design with AI), your output must be about learning design — not prompt debugging, not any other skill.
 
 ---
 
