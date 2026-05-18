@@ -672,6 +672,75 @@ start docs/walkthrough_report/WALKTHROUGH.html  # local preview before sending
 
 ---
 
+# Pre-Demo Verification (HARD GATE before any customer-facing share)
+
+The May 16 Dorothy F walkthrough surfaced four related production bugs that all shipped silently:
+
+1. Chapter generator was emitting `SK.PRM.003` "Prompt debugging" content for every skill, because the prompt's INPUTS example used that skill and Gemini latched onto it. `meta.setdefault(...)` preserved the hallucinated identifier instead of overwriting it.
+2. Eight `D.DOM` skills had empty `rubric_by_level` data so per-skill hover tooltips fell back to the generic proficiency-scale text.
+3. The path generator emitted LLM-fabricated module titles ("Enhancing Educational Content with AI") that did not match the skill the module was actually about ("Draft -> critique -> revise"). Dashboard sidebar didn't match the Top 5 Skills page.
+4. The frontend re-hydration path dropped `proficiency_descriptions` on revisited analyses, so even after the ontology was repaired, tooltips kept showing the fallback.
+
+None of these would have been caught by unit tests or the visual walkthrough alone. They are user-flow bugs that only surface when you click through the live build the way a real reviewer will. **From now on, every customer-facing demo or share is gated on two passing checks.**
+
+## Gate 1: production DB integrity sweep
+
+```
+docker exec ai-pathway-backend-1 python /app/sweep_integrity.py
+```
+
+(or locally: `py -3.12 backend/scripts/sweep_integrity.py` against the dev DB)
+
+Verifies, with zero tolerance:
+- Every skill in the ontology has a 6-level `rubric_by_level`.
+- Every learning path's chapter `skill_id` resolves in the ontology (legacy paths with placeholder IDs are filtered).
+- Every Module's `title` and `skill_name` equal the ontology canonical name.
+- Every cached `Lesson.content.meta.skill_id` matches its parent module's `skill_id` (the SK.PRM.003 hallucination guard).
+- Every Lesson title matches `<canonical_name>: L<cl> to L<tl>`.
+
+Exits non-zero on any violation. **A non-zero exit blocks the demo.** Cached lesson mismatches mean wrong content is sitting in the DB waiting to be shown to a customer.
+
+## Gate 2: end-to-end browser walkthrough of the demo profile
+
+```
+py -3.12 backend/scripts/verify_profile_e2e.py <profile_id>
+```
+
+Loads the Top 5 Skills page, the Learning Dashboard, and every module's first lesson in headless Chromium against the live production deployment. Asserts:
+
+- The Top 5 page renders and per-skill hover tooltips show the per-skill rubric (not the generic fallback).
+- The Learning Dashboard sidebar shows every module's title as the canonical ontology skill name.
+- Every lesson generation returns `meta.skill_id == module.skill_id` (catches LLM identity drift in real time, not just at cache-read).
+
+Screenshots are written to `docs/preflight/<profile_id>/`. Exits non-zero on any failure with a clear diff. **Run this script for every profile that will be demoed, the morning of the demo, against the production URL the customer will use.**
+
+## When Gate 2 must be re-run
+
+Re-run Gate 2 on a given profile whenever any of the following change:
+- The chapter generator agent (`backend/app/agents/chapter_generator.py`), its prompt (`backend/app/data/chapter-generator-prompt.md`), or the chapter-spec schema.
+- The path generator agent or the activation flow (`backend/app/api/routes/learning.py`).
+- The ontology data (`backend/app/data/ontology.json`).
+- The `SelfAssessment` / `AnalysisPage` / `LearningDashboardPage` / `LessonPage` frontend components.
+
+If a Gate fails, do NOT manually patch around it ("I'll just clear that one lesson"). Find the root cause in the chapter generator, path generator, ontology, or hydration path, fix it there, and re-run both Gates until both pass.
+
+## When the cache must be invalidated
+
+After ANY change to chapter generation, prompt, or schema, also clear cached lesson content so users do not see stale wrong output. Pattern:
+
+```python
+async with AsyncSessionLocal() as db:
+    r = await db.execute(select(Lesson).where(Lesson.content.isnot(None)))
+    for ls in r.scalars().all():
+        ls.content = None
+        ls.status = 'not_started'
+    await db.commit()
+```
+
+Or, for targeted invalidation, only clear lessons whose `content.meta.skill_id` mismatches the parent module's `skill_id` (see `sweep_integrity.py` for the query).
+
+---
+
 # Tooling Assumptions
 
 Claude may assume:

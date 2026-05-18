@@ -1,8 +1,11 @@
 """Ontology service for skill queries."""
 import json
+import logging
 from pathlib import Path
 from functools import lru_cache
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 
 class OntologyService:
@@ -13,6 +16,7 @@ class OntologyService:
             ontology_path = Path(__file__).parent.parent / "data" / "ontology.json"
         self.ontology_path = Path(ontology_path)
         self._data = None
+        self._integrity_checked = False
 
     @property
     def data(self) -> dict:
@@ -20,7 +24,47 @@ class OntologyService:
         if self._data is None:
             with open(self.ontology_path, "r") as f:
                 self._data = json.load(f)
+            self._check_integrity()
         return self._data
+
+    def _check_integrity(self) -> None:
+        """Log loud warnings if the ontology is missing critical data.
+
+        Catches the May 18 bug class where 8 D.DOM skills shipped with
+        empty rubric_by_level, which caused tooltips and chapter
+        rubrics to fall back to generic 'Level N proficiency' text and
+        made Luda's Dorothy F walkthrough fail.
+
+        Called once per service instance, on first data access.
+        """
+        if self._integrity_checked:
+            return
+        self._integrity_checked = True
+        skills = self._data.get("skills", []) if self._data else []
+        missing_rubric: list[str] = []
+        wrong_length: list[str] = []
+        for sk in skills:
+            sid = sk.get("id", "?")
+            rubric = sk.get("rubric_by_level") or []
+            if not rubric:
+                missing_rubric.append(sid)
+            elif len(rubric) != 6:
+                wrong_length.append(f"{sid} (has {len(rubric)})")
+        if missing_rubric:
+            logger.warning(
+                "ONTOLOGY INTEGRITY: %d skills missing rubric_by_level: %s",
+                len(missing_rubric), missing_rubric,
+            )
+        if wrong_length:
+            logger.warning(
+                "ONTOLOGY INTEGRITY: %d skills have non-6 rubric length: %s",
+                len(wrong_length), wrong_length,
+            )
+        if not missing_rubric and not wrong_length:
+            logger.info(
+                "ONTOLOGY INTEGRITY: ok - %d skills all have full 6-level rubrics",
+                len(skills),
+            )
 
     @property
     def skills(self) -> list[dict]:
