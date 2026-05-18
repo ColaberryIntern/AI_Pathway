@@ -490,14 +490,46 @@ async def get_analysis_results(
     )
     profile = result.scalars().first()
 
-    # If full_result was saved, return it directly (complete fidelity)
+    # If full_result was saved, return it directly (complete fidelity).
+    # Enrich skills with current ontology proficiency_descriptions on the
+    # way out so revisited analyses pick up newly-populated rubrics (e.g.
+    # the May 18 backfill for D.DOM skills like SK.DOM.EDU.001) without
+    # forcing a re-parse of the JD.
     if goal.full_result:
+        from app.services.ontology import get_ontology_service
+        _ontology = get_ontology_service()
+
+        def _enrich(skill_list):
+            if not isinstance(skill_list, list):
+                return skill_list
+            out = []
+            for s in skill_list:
+                if not isinstance(s, dict):
+                    out.append(s)
+                    continue
+                sid = s.get("skill_id") or ""
+                descs = _ontology.get_proficiency_descriptions(sid)
+                obj = _ontology.get_skill(sid)
+                merged = dict(s)
+                if descs:
+                    merged["proficiency_descriptions"] = descs
+                if obj and not merged.get("skill_description"):
+                    merged["skill_description"] = obj.get("description", "") or ""
+                out.append(merged)
+            return out
+
+        result_obj = dict(goal.full_result) if isinstance(goal.full_result, dict) else goal.full_result
+        if isinstance(result_obj, dict):
+            for key in ("top_10_target_skills", "top_10_skill_gaps", "all_skill_gaps"):
+                if key in result_obj:
+                    result_obj[key] = _enrich(result_obj[key])
+
         return {
             "user_id": goal.user_id,
             "goal_id": goal.id,
             "skill_gap_id": skill_gap.id if skill_gap else None,
             "learning_path_id": learning_path.id if learning_path else None,
-            "result": goal.full_result,
+            "result": result_obj,
         }
 
     # Fallback: reconstruct from DB fields (older analyses without full_result)

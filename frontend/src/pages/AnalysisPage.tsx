@@ -228,8 +228,8 @@ export default function AnalysisPage() {
             required_level: (s.required_level as number) || (s.target_level as number) || 3,
             importance: (s.importance as string) || 'medium',
             rationale: (s.rationale as string) || '',
-            skill_description: '',
-            proficiency_descriptions: [],
+            skill_description: (s.skill_description as string) || '',
+            proficiency_descriptions: (s.proficiency_descriptions as Array<{ level: number; label: string; description: string }>) || [],
           })))
           // First 5 are default selected
           setSelectedSkillIds(allSkills.slice(0, 5).map(s => (s.skill_id as string) || ''))
