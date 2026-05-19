@@ -92,9 +92,33 @@ parse job descriptions, identify skill gaps, and generate personalized learning 
             top_10_target = jd_result.get("top_10_target_skills", [])
             results["top_10_current_skills"] = top_10_current
 
-            # Pass JD parser rank as explicit priority to the gap engine
-            # The JD parser ranks skills by importance to the role.
-            # We encode this as a numeric priority so the gap engine preserves the order.
+            # Deterministic 5-parameter rubric rerank (Luda's May 15 spec).
+            # Applies role-essence floor + domain mandate so the path
+            # generator sees the right top 5 regardless of how the LLM
+            # ranked them. Same scorer the Top 5 page uses, so the user
+            # sees consistent rank across the analysis -> path flow.
+            try:
+                from app.services.rubric_scorer import rerank as rubric_rerank
+                from app.services.ontology import get_ontology_service as _get_ont
+                _ont = _get_ont()
+                _role_text = jd_result.get("role_analysis", {}).get("primary_function") \
+                             or task.get("target_role") \
+                             or task.get("profile", {}).get("target_role", "") \
+                             or ""
+                top_10_target = rubric_rerank(
+                    top_10_target,
+                    role_text=_role_text,
+                    learner_profile=task.get("profile"),
+                    ontology=_ont,
+                )
+                jd_result["top_10_target_skills"] = top_10_target
+                logger.info(
+                    "Rubric rerank applied to top-10: order is now %s",
+                    [s.get("skill_id") for s in top_10_target],
+                )
+            except Exception as exc:
+                logger.warning("Rubric rerank failed (continuing with LLM order): %s", exc)
+
             results["top_10_target_skills"] = top_10_target
 
             # Extract state_a_skills early — needed for gap computation below
@@ -132,6 +156,29 @@ parse job descriptions, identify skill gaps, and generate personalized learning 
                     "rationale": skill.get("rationale", ""),
                 })
             results["top_10_skill_gaps"] = top_10_gaps
+
+            # Maintain vs Develop partition (Luda's May 15 spec).
+            # Each candidate is bucketed by whether the learner already
+            # meets the required level. The Develop bucket is what we
+            # actually build chapters for; the Maintain bucket is shown
+            # to the learner so they see what they have already mastered.
+            # This is what powers Brittany's "she has only 2 real gaps"
+            # finding - the path will have 2 chapters, not 5.
+            try:
+                from app.services.rubric_scorer import (
+                    maintain_develop_partition as _md_partition,
+                )
+                _split = _md_partition(top_10_target, state_a_skills)
+                results["maintain_skills"] = _split["maintain"]
+                results["develop_skills"] = _split["develop"]
+                logger.info(
+                    "Maintain vs Develop: %d maintain, %d develop",
+                    len(_split["maintain"]), len(_split["develop"]),
+                )
+            except Exception as exc:
+                logger.warning("Maintain/Develop partition failed: %s", exc)
+                results["maintain_skills"] = []
+                results["develop_skills"] = []
 
             # Step 3: Optional Assessment
             if not task.get("skip_assessment", True):

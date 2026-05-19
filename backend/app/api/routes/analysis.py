@@ -333,19 +333,27 @@ async def parse_jd_skills(request: JDSkillsRequest):
             "proficiency_descriptions": ontology.get_proficiency_descriptions(skill.get("skill_id", "")),
         })
 
-    # Normalize ranks to sequential 1..N based on final array order. The
-    # rerank path writes ranks 1..5 to the top 5 but leaves the remaining
-    # skills with their original (possibly duplicate or gappy) ranks. Without
-    # this, the skill-selection page can show two "#2" cards, skip "#7", or
-    # render the rank-1 skill last.
-    for i, s in enumerate(enriched, 1):
-        s["rank"] = i
+    # Deterministic 5-parameter rubric rerank (Luda's May 15 spec).
+    # The LLM-emitted importance is unreliable for cross-functional senior
+    # roles and vertical roles; the scorer applies a role-essence floor
+    # (Sr AI PMM / Sr AI PM / AI Strategy) and a domain-skill mandate
+    # (marketing / L&D / healthcare / legal / finance / HR) so the right
+    # skills land in the top 5 regardless of how the LLM ranked them.
+    from app.services.rubric_scorer import rerank as rubric_rerank
+    role_text = result.get("role_analysis", {}).get("primary_function") or request.target_role or ""
+    enriched = rubric_rerank(
+        enriched,
+        role_text=role_text,
+        learner_profile=request.learner_profile,
+        ontology=ontology,
+    )
 
     return {
-        "target_role": result.get("role_analysis", {}).get("primary_function", request.target_role or ""),
+        "target_role": role_text,
         "top_10_skills": enriched,
         "role_analysis": result.get("role_analysis", {}),
         "reranked": reranked_top5 is not None,
+        "rubric_reranked": True,
     }
 
 
