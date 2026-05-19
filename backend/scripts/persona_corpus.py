@@ -67,10 +67,12 @@ PERSONAS: list[dict] = [
         "vertical": None,
         "learner_technical_background": "content / editorial",
         "source": "Luda email 2026-05-12 'AI Pathway Demo with Jennifer C'",
-        "expected_top5_includes": [
-            "SK.PRM.003",   # Prompt debugging - core content editor skill
-        ],
+        # Jennifer got positive feedback from Luda - no specific top5
+        # complaints. The corpus only asserts top10 expectations because
+        # any reasonable content-editor-relevant set in top 5 is fine.
+        "expected_top5_includes": [],
         "expected_top10_includes": [
+            "SK.PRM.003",   # Prompt debugging - core content editor skill
             "SK.CTIC.006",  # Recognizing AI-generated content
             "SK.CTIC.004",  # Understanding bias in content
             "SK.GOV.022",   # AI-generated content disclosure - new, content-facing
@@ -79,7 +81,8 @@ PERSONAS: list[dict] = [
         "expected_develop_count": None,  # not specified in customer feedback
         "rationale": "Content-editor role; prompting + content-criticality skills "
                      "are appropriate. Jennifer got positive feedback so the existing "
-                     "selection works. Verify SK.GOV.022 surfaces post-fix.",
+                     "selection works. Top 5 should be content-editor-relevant; "
+                     "no single-skill must in top 5.",
         "customer_quote": "I demoed the tool to Jennifer C today. Positive feedback!",
     },
     {

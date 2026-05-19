@@ -386,6 +386,103 @@ def rerank(candidates: list[dict], role_text: str,
 # ---------------------------------------------------------------------
 # Maintain vs Develop partition (computed after self-assessment)
 # ---------------------------------------------------------------------
+# Foundational prompting skills appropriate for non-technical L1-L2
+# learners. These are the four PRM skills Luda's Claude analysis picked
+# for Halyna ("non-technical but experienced marketing professional") -
+# they are the right starting depth when the learner is not technical.
+FOUNDATIONAL_PRM_SKILLS = [
+    "SK.PRM.000",  # Writing clear requests to AI
+    "SK.PRM.001",  # Instructions + constraints + format
+    "SK.PRM.004",  # Role & persona prompting
+    "SK.PRM.006",  # Breaking complex tasks into steps
+]
+
+
+def inject_foundational_prm_if_missing(
+    skills_list: list[dict],
+    role_text: str,
+    learner_profile: dict | None,
+    ontology,
+    max_inject: int = 2,
+) -> list[dict]:
+    """If this is a vertical role with a non-technical learner and the
+    LLM's candidate list contains zero foundational PRM skills, inject
+    up to `max_inject` of them so the rubric scorer can rank them.
+
+    Without this, the rubric cannot rank skills the LLM never surfaced
+    as candidates - and the LLM has a consistent bias toward advanced
+    PRM (SK.PRM.020 draft-critique-revise, SK.PRM.003 prompt debugging)
+    over foundational PRM (SK.PRM.000-006) regardless of learner level.
+
+    Closes Luda's May 19 Halyna depth complaint structurally: she ran the
+    same JD through Claude with our ontology and Claude picked
+    SK.PRM.000/001/004/006 specifically because "they are the four
+    sub-skills within D.PRM that are achievable without technical
+    prerequisites". This function reproduces that judgment deterministically.
+
+    Returns a new list (does not mutate input).
+    """
+    # Only act on vertical roles - we trust the LLM more when the role
+    # is broad enough that the candidate set is naturally diverse.
+    if not mandated_domain_skills_for_role(role_text):
+        return list(skills_list)
+    # Skip cross-functional senior roles (Sr AI PMM, Sr AI PM, AI Strategy).
+    # Their top 5 is already locked by the role-essence floor, so injecting
+    # foundational PRM would only displace expected top-10 skills (Brittany's
+    # SK.GOV.001 + SK.PRD.020 case). The role-essence skills + domain skill
+    # already cover what these roles need.
+    if is_cross_functional_senior(role_text):
+        return list(skills_list)
+    # Only act for non-technical learners
+    if not is_non_technical_learner(learner_profile):
+        return list(skills_list)
+
+    existing_ids = {s.get("skill_id") for s in skills_list}
+    already_present = sum(1 for sid in FOUNDATIONAL_PRM_SKILLS if sid in existing_ids)
+    if already_present >= 1:
+        # The LLM surfaced at least one foundational PRM - good enough
+        return list(skills_list)
+
+    candidates_to_add: list[dict] = []
+    for sid in FOUNDATIONAL_PRM_SKILLS:
+        if len(candidates_to_add) >= max_inject:
+            break
+        if sid in existing_ids:
+            continue
+        sk = ontology.get_skill(sid) if hasattr(ontology, "get_skill") else None
+        if not sk:
+            continue
+        # Include proficiency_descriptions and skill_description so the
+        # Top 5 page tooltip renders correctly for injected skills.
+        prof_descs = []
+        if hasattr(ontology, "get_proficiency_descriptions"):
+            try:
+                prof_descs = ontology.get_proficiency_descriptions(sid) or []
+            except Exception:
+                prof_descs = []
+        candidates_to_add.append({
+            "skill_id": sid,
+            "skill_name": sk.get("name") or "",
+            "domain": sk.get("domain") or "",
+            "domain_label": "Prompting & HITL Workflows",
+            "required_level": 2,
+            "importance": "high",
+            "rationale": (
+                f"Foundational prompting skill injected for non-technical learner. "
+                f"Luda's reference analysis explicitly identified the foundational "
+                f"PRM sub-skills (SK.PRM.000-006) as the appropriate starting "
+                f"depth for non-technical learners in vertical roles, ahead of "
+                f"advanced PRM skills like SK.PRM.020 (draft-critique-revise) "
+                f"or SK.PRM.003 (prompt debugging)."
+            ),
+            "skill_description": sk.get("description") or "",
+            "proficiency_descriptions": prof_descs,
+            "_injected_by": "foundational_prm_injection",
+        })
+
+    return list(skills_list) + candidates_to_add
+
+
 def build_ontology_narrative(role_text: str, candidate_count: int,
                               ontology) -> dict:
     """Build the 'how do I know these are the right skills?' panel data.

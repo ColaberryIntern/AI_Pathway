@@ -339,8 +339,25 @@ async def parse_jd_skills(request: JDSkillsRequest):
     # (Sr AI PMM / Sr AI PM / AI Strategy) and a domain-skill mandate
     # (marketing / L&D / healthcare / legal / finance / HR) so the right
     # skills land in the top 5 regardless of how the LLM ranked them.
-    from app.services.rubric_scorer import rerank as rubric_rerank
+    from app.services.rubric_scorer import (
+        rerank as rubric_rerank,
+        inject_foundational_prm_if_missing,
+    )
     role_text = result.get("role_analysis", {}).get("primary_function") or request.target_role or ""
+
+    # Closes Luda's May 19 Halyna depth complaint structurally: if the
+    # role is a vertical and the learner is non-technical and the LLM
+    # forgot to include any foundational PRM in the candidate list,
+    # inject up to 2 of them before the rerank so the rubric can rank
+    # them. Without this, the rubric cannot promote skills the LLM never
+    # surfaced as candidates.
+    enriched = inject_foundational_prm_if_missing(
+        enriched,
+        role_text=role_text,
+        learner_profile=request.learner_profile,
+        ontology=ontology,
+    )
+
     enriched = rubric_rerank(
         enriched,
         role_text=role_text,

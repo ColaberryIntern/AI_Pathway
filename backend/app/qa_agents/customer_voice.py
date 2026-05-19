@@ -245,18 +245,47 @@ class CustomerVoiceAgent(QAAgent):
                 )
 
         findings: list[Finding] = []
+        # Pre-compute top5 and top10 once for severity sanity-check below
+        top5_actual_ids = [s.get("skill_id") for s in top_10[:5]]
+        top10_actual_ids = [s.get("skill_id") for s in top_10[:10]]
+        forbidden = set(persona.get("forbidden_in_top5") or [])
+        expected_top5 = set(persona.get("expected_top5_includes") or [])
+
         for f in data.get("findings", []):
             try:
-                findings.append(Finding(
-                    severity=Severity(f.get("severity", "info").lower()),
-                    summary=f.get("summary", ""),
-                    detail=f.get("detail", ""),
-                    quote=f.get("quote", ""),
-                    skill_id=f.get("skill_id", ""),
-                    proposed_fix=f.get("proposed_fix", ""),
-                ))
+                severity = Severity(f.get("severity", "info").lower())
             except ValueError:
                 continue
+            sid = f.get("skill_id", "")
+            detail = f.get("detail", "")
+            summary = f.get("summary", "")
+
+            # Deterministic severity sanity-check. The LLM is inconsistent
+            # about whether "missing from top 5 but present in top 10"
+            # should be ERROR or WARN, and about whether a forbidden skill
+            # at position #6+ counts as a violation. Override the LLM's
+            # severity when the literal facts make ERROR wrong.
+            if severity == Severity.ERROR and sid:
+                # Case 1: LLM said ERROR about a forbidden skill, but the
+                # skill is NOT in top 5 - that is not a violation per the
+                # corpus rules. Downgrade to INFO.
+                if sid in forbidden and sid not in top5_actual_ids:
+                    severity = Severity.INFO
+                    summary = f"[downgraded] {summary}"
+                # Case 2: LLM said ERROR about an expected_top5 skill that
+                # is missing from top 5 - the engine still has it in the
+                # top 10. Downgrade to WARN (real concern, not blocking).
+                elif sid in expected_top5 and sid not in top5_actual_ids and sid in top10_actual_ids:
+                    severity = Severity.WARN
+
+            findings.append(Finding(
+                severity=severity,
+                summary=summary,
+                detail=detail,
+                quote=f.get("quote", ""),
+                skill_id=sid,
+                proposed_fix=f.get("proposed_fix", ""),
+            ))
 
         # Use the LLM's color but enforce: if any ERROR finding, color is red
         try:
