@@ -1,0 +1,68 @@
+Skills gap analysis for job application
+Shared by Luda
+
+This is a copy of a chat between Claude and Luda. Content may include unverified or unsafe content that do not represent the views of Anthropic. Shared snapshot may contain attachments and data not displayed here.
+
+Report
+You said: This person is applying for the position described in JD, Her current LinkedIn profile is attached.
+Files hidden in shared chats
+
+This person is applying for the position described in JD, Her current LinkedIn profile is attached. She is an intermediate user of AI but non-tech not afraid of tech. Please provide 8 top skills that she needs to learn/advance to 'fit' this position and tell me why. Then provide according to the rubric attached.
+
+10:35 AM
+Claude responded: Now let me analyze everything and build the skill gap assessment.
+Reading the skill prioritization rubric
+Reading the skill prioritization rubric
+
+Now let me analyze everything and build the skill gap assessment.
+
+Now I have everything I need. Let me build the full analysis.
+
+Log in to see interactive visuals
+
+Here's the full breakdown of the logic behind these 8 skills.
+
+Why these 8, and why in this order
+
+Halyna is a genuinely strong candidate — 13 years, global campaigns, pipeline accountability, ABM fluency. The gap isn't marketing knowledge. It's that this JD was written with an implicit expectation that the Director will lead AI-augmented campaigns, not just approve them. These 8 skills close that gap.
+
+The top 4 scored highest because they hit the three high-weight criteria simultaneously — role importance, breadth, and momentum. All four can be advanced one full proficiency level in a single learning chapter, and all four would be immediately visible in an interview conversation or take-home case.
+
+Skills 5–6 (use-case prioritization and deep research agents) are more differentiating than foundational — a Director who can explain "here's where I chose AI vs kept humans in the loop, and here's why" stands out at the senior level. The JD mentions "test, learn, iterate" four different ways, which is exactly this skill.
+
+Skills 7–8 scored lower on career signal and breadth, but they're included because the role is explicitly global (EU AI Act applies to her campaigns) and because AI literacy is the connective tissue that makes every other skill stickier — it prevents her from hitting a ceiling when the tools change.
+
+On her current levels: She's estimated at L1–L2 across most of these based on her Coursera AI certificates and the "AI for Marketing" certification visible on her profile. She's not starting from zero — she's starting from Aware, which means the jump to Practitioner (L3) is realistic in a structured 5-chapter path rather than a long slog.
+
+You said: Could you please use this ontology for pulling out needed skills and do the same task?
+Files hidden in shared chats
+
+Could you please use this ontology for pulling out needed skills and do the same task?
+
+10:39 AM
+Claude responded: Let me read the ontology file carefully first.
+
+Let me read the ontology file carefully first.
+
+Viewed 2 files
+Viewed 2 files
+
+Good — I have the full ontology. Now I'll do the analysis properly, mapping every skill to its exact ontology ID and applying the rubric precisely.
+
+Log in to see interactive visuals
+
+Every skill is now pinned to an exact ID from your v2.0 ontology. Here's what changed vs the previous version and why it matters.
+
+What's different this time
+
+The previous run used descriptive skill names I constructed ("AI-powered campaign workflow design," "AI content & personalization tools"). This version uses only skills that actually exist in your ontology by ID. That forced a few meaningful changes:
+
+Skills 1 and 5 got more precise. "Prompting for marketing" is now specifically SK.PRM.000/001/004/006 — the four sub-skills within D.PRM that are achievable without technical prerequisites, which is important for a non-tech learner. The communication skills are now SK.COM.004 and SK.COM.005 specifically, rather than a generic "cross-functional collaboration" label.
+
+Two new v2.0 skills were deliberately included. SK.RSN.003 (deep research agents) and SK.GOV.022 (AI-generated content disclosure) are both marked NEW in your March 2026 update — which means they reflect the current moment, not 2024 assumptions. Both are non-technical entry points and both map directly to this JD.
+
+SK.DOM.MKT.001 replaced the generic "foundations" skill at #8. Your ontology has exactly one marketing-domain skill, and it's a direct fit — so it earns its place over a generic literacy skill, even with a lower score.
+
+The diversity rule now references your actual ontology tree structure (parent nodes D.PRM, D.EVL, D.TOOL, D.PRD, D.COM, D.DOM, D.GOV, D.RSN) with no parent node contributing more than 2 skills, exactly as your rubric document specifies.
+
+Ask Claude your own question
