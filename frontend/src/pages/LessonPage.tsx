@@ -18,6 +18,99 @@ import ReflectionPrompts from '../components/learning/ReflectionPrompts'
 import LessonReactions from '../components/learning/LessonReactions'
 import ConfusionRecoveryDrawer from '../components/learning/ConfusionRecoveryDrawer'
 
+// AI disclosure + ontology-grounding panel (P3 #2 - Jennifer C's
+// "how do we know AI isn't hallucinating?" ask). One-line banner is
+// always visible at the top of every chapter; a collapsible "Sources"
+// section underneath lets the curious reader see exactly which ontology
+// skill, domain, and rubric strings the chapter was grounded in.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function ChapterDisclosure({ meta }: { meta: any }) {
+  const [open, setOpen] = useState(false)
+  if (!meta || typeof meta !== 'object') return null
+  const {
+    skill_id, skill_name, domain_id, domain_name,
+    current_level, target_level,
+    current_level_label, target_level_label,
+    current_level_rubric, target_level_rubric,
+  } = meta as Record<string, unknown>
+  return (
+    <div className="rounded-lg border border-amber-200 bg-amber-50/70 px-4 py-3 text-sm">
+      <div className="flex items-start gap-2">
+        <span className="text-amber-700 mt-0.5">&#9888;</span>
+        <div className="flex-1">
+          <div className="font-semibold text-amber-900">
+            AI-generated lesson, grounded in the GenAI Skills Ontology v2.0
+          </div>
+          <div className="text-amber-800 text-xs mt-1">
+            This 15-minute chapter was written by an AI model from the
+            ontology entry for this specific skill and level. The scenario,
+            examples, and rubric language below come from your selection -
+            not external claims. Verify any third-party tools, statistics,
+            or named services before acting on them.
+          </div>
+          <button
+            type="button"
+            onClick={() => setOpen((v) => !v)}
+            className="mt-2 text-amber-900 hover:underline text-xs font-semibold flex items-center gap-1"
+            aria-expanded={open}
+          >
+            <span>{open ? '▼' : '▶'}</span>
+            <span>{open ? 'Hide sources' : 'Show sources this chapter was grounded in'}</span>
+          </button>
+        </div>
+      </div>
+      {open && (
+        <div className="mt-3 border-t border-amber-200 pt-3 space-y-2 text-amber-900">
+          <div>
+            <div className="font-semibold text-xs uppercase tracking-wide opacity-70">Skill</div>
+            <div>
+              <span className="font-mono text-xs text-amber-700">{String(skill_id || '')}</span>{' '}
+              <strong>{String(skill_name || '')}</strong>
+            </div>
+          </div>
+          {(Boolean(domain_id) || Boolean(domain_name)) && (
+            <div>
+              <div className="font-semibold text-xs uppercase tracking-wide opacity-70">Domain</div>
+              <div>
+                <span className="font-mono text-xs text-amber-700">{String(domain_id || '')}</span>{' '}
+                {String(domain_name || '')}
+              </div>
+            </div>
+          )}
+          <div>
+            <div className="font-semibold text-xs uppercase tracking-wide opacity-70">Level progression</div>
+            <div>
+              L{String(current_level ?? '?')} {current_level_label ? `(${String(current_level_label)})` : ''}
+              {' → '}
+              L{String(target_level ?? '?')} {target_level_label ? `(${String(target_level_label)})` : ''}
+            </div>
+          </div>
+          {current_level_rubric ? (
+            <div>
+              <div className="font-semibold text-xs uppercase tracking-wide opacity-70">
+                Where you are now ({current_level_label ? String(current_level_label) : `L${String(current_level ?? '?')}`}) - exact ontology text
+              </div>
+              <div className="italic">&ldquo;{String(current_level_rubric)}&rdquo;</div>
+            </div>
+          ) : null}
+          {target_level_rubric ? (
+            <div>
+              <div className="font-semibold text-xs uppercase tracking-wide opacity-70">
+                Where you are headed ({target_level_label ? String(target_level_label) : `L${String(target_level ?? '?')}`}) - exact ontology text
+              </div>
+              <div className="italic">&ldquo;{String(target_level_rubric)}&rdquo;</div>
+            </div>
+          ) : null}
+          <div className="text-xs text-amber-700 italic pt-1 border-t border-amber-100">
+            If the chapter narrative below contradicts the level-rubric text quoted here, that is a defect - please flag it via the Confusion Recovery button.
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function ChapterFormatView({ content, pathId, lessonId, navigate, completeMutation }: { content: any; pathId: string; lessonId: string; navigate: (path: string) => void; completeMutation: any }) {
   const handleComplete = () => {
@@ -38,6 +131,7 @@ function ChapterFormatView({ content, pathId, lessonId, navigate, completeMutati
           &larr; Back to Dashboard
         </button>
       </div>
+      <ChapterDisclosure meta={content?.meta} />
       <ChapterRenderer chapter={content} pathId={pathId} lessonId={lessonId} />
       <div className="flex justify-center gap-4 pt-4">
         <button
