@@ -149,6 +149,25 @@ export const parseJDSkills = async (params: {
   }>
   role_analysis: Record<string, unknown>
   reranked?: boolean
+  // Ontology narrative panel (Jennifer C's May 12 ask: "how do I know
+  // these are the right skills?"). Shipped from the backend so the UI
+  // can render a transparent provenance surface on the Top 5 page.
+  ontology_narrative?: {
+    ontology_name: string
+    headline: string
+    role_family: string
+    key_domains: Array<{ id: string; label: string; description: string }>
+    rubric: {
+      name: string
+      formula: string
+      max_score: number
+      parameters: Array<{ name: string; weight: number; description: string }>
+    }
+    applied_floors: Array<{ name: string; rationale: string }>
+    diversity_rule: string
+    candidate_count: number
+    rationale_summary: string
+  }
 }> => {
   const { data } = await api.post('/analysis/parse-jd-skills', params)
   return data

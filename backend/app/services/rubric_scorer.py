@@ -386,6 +386,97 @@ def rerank(candidates: list[dict], role_text: str,
 # ---------------------------------------------------------------------
 # Maintain vs Develop partition (computed after self-assessment)
 # ---------------------------------------------------------------------
+def build_ontology_narrative(role_text: str, candidate_count: int,
+                              ontology) -> dict:
+    """Build the 'how do I know these are the right skills?' panel data.
+
+    Shared by parseJDSkills and analysis/results so the surface looks
+    the same on a fresh parse and on a revisited analysis. Pulls
+    role-essence + domain-mandate detection from the rubric_scorer so
+    the rationale matches what was actually applied to the rerank.
+    """
+    role_text = role_text or ""
+
+    # Resolve domains the JD parser flagged - the caller passes them as
+    # IDs and we expand to label + description.
+    # (The caller is expected to pre-populate key_domains; if not, the
+    # narrative falls back to an empty list and the UI hides that section.)
+
+    try:
+        domain_mandate_ids = mandated_domain_skills_for_role(role_text)
+    except Exception:
+        domain_mandate_ids = []
+
+    applied_floors: list[dict] = []
+    if is_cross_functional_senior(role_text):
+        applied_floors.append({
+            "name": "Role-essence floor",
+            "rationale": (
+                "This role is a senior cross-functional AI role. We guarantee "
+                "that the five role-essence skills appear in the top 5: "
+                + ", ".join(ROLE_ESSENCE_SKILLS) + "."
+            ),
+        })
+    if domain_mandate_ids:
+        applied_floors.append({
+            "name": "Domain-skill mandate",
+            "rationale": (
+                "This role belongs to a specific vertical, so the vertical's "
+                "applied skill is guaranteed in the top 5: "
+                + ", ".join(domain_mandate_ids) + "."
+            ),
+        })
+
+    total_skills = 0
+    try:
+        total_skills = len(ontology.skills)
+    except Exception:
+        pass
+
+    return {
+        "ontology_name": "GenAI Skills Ontology v2.0",
+        "headline": (
+            f"We matched the job description against {total_skills} "
+            f"skills in the GenAI Skills Ontology v2.0 and produced your top "
+            f"{candidate_count} candidates."
+        ),
+        "role_family": role_text,
+        "key_domains": [],   # caller fills these in
+        "rubric": {
+            "name": "5-parameter priority score",
+            "formula": (
+                "Priority = (Importance x 4) + (Breadth x 3) + (Momentum x 3) "
+                "+ (Connectivity x 2) + (Career Signal x 2)"
+            ),
+            "max_score": 42,
+            "parameters": [
+                {"name": "Importance", "weight": 4,
+                 "description": "How central this skill is to the job description."},
+                {"name": "Breadth", "weight": 3,
+                 "description": "How broadly the skill applies across tasks in this role."},
+                {"name": "Momentum", "weight": 3,
+                 "description": "Whether you can realistically improve one level in one chapter."},
+                {"name": "Connectivity", "weight": 2,
+                 "description": "Whether mastering this skill unlocks other skills in the ontology."},
+                {"name": "Career Signal", "weight": 2,
+                 "description": "How recognizable this skill is to recruiters and hiring managers."},
+            ],
+        },
+        "applied_floors": applied_floors,
+        "diversity_rule": (
+            "No more than 2 skills from the same parent domain in the top 5, "
+            "except for role-essence and domain-mandated skills."
+        ),
+        "candidate_count": candidate_count,
+        "rationale_summary": (
+            "Each skill in the list below shows its rubric score breakdown so "
+            "you can see WHY it scored where it did. Hover the skill name for "
+            "the ontology definition; hover each proficiency level for the "
+            "skill-specific rubric."
+        ),
+    }
+
+
 def maintain_develop_partition(skills: list[dict],
                                 self_assessed_levels: dict[str, int]) -> dict:
     """Partition a skill list into 'maintain' (already at level) and
