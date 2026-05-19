@@ -18,6 +18,99 @@ import ReflectionPrompts from '../components/learning/ReflectionPrompts'
 import LessonReactions from '../components/learning/LessonReactions'
 import ConfusionRecoveryDrawer from '../components/learning/ConfusionRecoveryDrawer'
 
+// Coach-voice outro (P3 #3 - second half of the coach pass). Appears
+// below the chapter content, above the "Mark Complete" button. Frames
+// what the learner just did and what comes next, in coach voice.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function CoachOutro({ meta }: { meta: any }) {
+  if (!meta || typeof meta !== 'object') return null
+  const targetLabel = String((meta as Record<string, unknown>).target_level_label || '')
+  const targetRubric = String((meta as Record<string, unknown>).target_level_rubric || '')
+  return (
+    <div className="rounded-lg border border-emerald-200 bg-emerald-50/60 px-5 py-4 flex items-start gap-3">
+      <div className="flex-shrink-0 w-9 h-9 rounded-full bg-emerald-500 text-white flex items-center justify-center text-lg font-semibold">
+        AI
+      </div>
+      <div className="flex-1">
+        <div className="text-xs font-semibold uppercase tracking-wide text-emerald-700 mb-1">
+          Your coach
+        </div>
+        <div className="text-gray-900">
+          Nice work getting through this chapter. The implementation task above is
+          where this skill becomes real - take a shot at it before you mark
+          complete. Even a rough first version counts.
+        </div>
+        {(targetLabel || targetRubric) && (
+          <div className="text-sm text-gray-700 mt-2">
+            Once you submit your task, you&rsquo;ll be at{' '}
+            <strong>{targetLabel || 'the next level'}</strong>
+            {targetRubric ? (
+              <>
+                {' '}for this skill - able to <em>{targetRubric.toLowerCase()}</em>.
+              </>
+            ) : (
+              '.'
+            )}
+          </div>
+        )}
+        <div className="text-xs text-gray-600 mt-2">
+          Stuck on the task? Use the &ldquo;I&rsquo;m confused&rdquo; button on the right - I&rsquo;ll suggest a smaller first step.
+        </div>
+      </div>
+    </div>
+  )
+}
+
+
+// Coach-voice intro (P3 #3 - Jennifer C's "make it feel like a coach"
+// ask from her May 12 demo). Always sits between the disclosure and
+// the chapter content. Reads the chapter meta to greet the learner and
+// frame the skill + level progression in plain language. No new data
+// fetching - everything is in content.meta already.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function CoachIntro({ meta }: { meta: any }) {
+  if (!meta || typeof meta !== 'object') return null
+  const skillName = String((meta as Record<string, unknown>).skill_name || '')
+  const currentLabel = String((meta as Record<string, unknown>).current_level_label || '')
+  const targetLabel = String((meta as Record<string, unknown>).target_level_label || '')
+  const targetRubric = String((meta as Record<string, unknown>).target_level_rubric || '')
+  const chapterTitle = String((meta as Record<string, unknown>).chapter_title || '')
+  if (!skillName && !chapterTitle) return null
+  return (
+    <div className="rounded-lg border border-indigo-200 bg-gradient-to-br from-indigo-50 to-white px-5 py-4 flex items-start gap-3">
+      <div className="flex-shrink-0 w-9 h-9 rounded-full bg-indigo-500 text-white flex items-center justify-center text-lg font-semibold">
+        AI
+      </div>
+      <div className="flex-1">
+        <div className="text-xs font-semibold uppercase tracking-wide text-indigo-700 mb-1">
+          Your coach
+        </div>
+        <div className="text-gray-900">
+          Let&rsquo;s work on{' '}
+          <strong>{skillName || chapterTitle}</strong>
+          {currentLabel && targetLabel ? (
+            <>
+              {' '}together. We&rsquo;re moving you from <strong>{currentLabel}</strong>{' '}
+              to <strong>{targetLabel}</strong>.
+            </>
+          ) : (
+            '.'
+          )}
+        </div>
+        {targetRubric && (
+          <div className="text-sm text-gray-700 mt-1">
+            By the end you should be able to: <em>{targetRubric.toLowerCase()}</em>.
+          </div>
+        )}
+        <div className="text-xs text-gray-600 mt-2">
+          Take about 15 minutes. Work at your own pace. If something feels off, use the &ldquo;I&rsquo;m confused&rdquo; button on the right and I&rsquo;ll help you unstick.
+        </div>
+      </div>
+    </div>
+  )
+}
+
+
 // AI disclosure + ontology-grounding panel (P3 #2 - Jennifer C's
 // "how do we know AI isn't hallucinating?" ask). One-line banner is
 // always visible at the top of every chapter; a collapsible "Sources"
@@ -132,7 +225,9 @@ function ChapterFormatView({ content, pathId, lessonId, navigate, completeMutati
         </button>
       </div>
       <ChapterDisclosure meta={content?.meta} />
+      <CoachIntro meta={content?.meta} />
       <ChapterRenderer chapter={content} pathId={pathId} lessonId={lessonId} />
+      <CoachOutro meta={content?.meta} />
       <div className="flex justify-center gap-4 pt-4">
         <button
           onClick={() => navigate(`/learn/${pathId}`)}
