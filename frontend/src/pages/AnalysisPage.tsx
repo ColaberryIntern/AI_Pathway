@@ -417,6 +417,14 @@ export default function AnalysisPage() {
       ? JSON.parse(sessionStorage.getItem('customProfile') || '{}')
       : null
 
+    // Preserve the user's selection order so the dashboard sidebar
+    // matches what they saw on the Top 5 page. parsedSkills is in
+    // page-display order; we filter to only the IDs they checked, which
+    // keeps the display order intact.
+    const orderedSelectedIds = parsedSkills
+      .filter(s => selectedSkillIds.includes(s.skill_id))
+      .map(s => s.skill_id)
+
     analysisMutation.mutate({
       profile_id: isCustom ? undefined : profileId,
       custom_profile: isCustom ? customProfile : undefined,
@@ -424,6 +432,7 @@ export default function AnalysisPage() {
       target_role: detectedRole || targetRole,
       skip_assessment: true,
       self_assessed_skills: Object.keys(selfAssessedSkills).length > 0 ? selfAssessedSkills : undefined,
+      selected_skill_ids: orderedSelectedIds.length > 0 ? orderedSelectedIds : undefined,
     })
   }
 
@@ -860,7 +869,9 @@ export default function AnalysisPage() {
           <p className="text-gray-600">
             We identified {parsedSkills.length} key skills from the job description.
             {detectedRole && <> Targeted role: <strong>{detectedRole}</strong>.</>}
-            {' '}Please rate your current proficiency for each skill.
+          </p>
+          <p className="text-gray-600 mt-2">
+            Check the 5 you want to focus on, then rate your current level. If a skill is already at your target, uncheck it and pick another from below - we will build the 5-chapter path around the skills you actually need to develop.
           </p>
         </div>
 
@@ -929,14 +940,8 @@ export default function AnalysisPage() {
         {skillsAtTarget.length > 0 && allAssessed && (
           <div className="card bg-emerald-50 border-emerald-200">
             <p className="text-emerald-800">
-              Since {skillsAtTarget.length} skill{skillsAtTarget.length > 1 ? 's' : ''} match{skillsAtTarget.length === 1 ? 'es' : ''} your targeted level,
-              we will add other relevant skills to build a learning path consisting of 5 chapters.
-              {' '}<button
-                onClick={() => {/* Keep all - no action needed, they stay selected */}}
-                className="text-emerald-700 underline font-medium"
-              >
-                Click here to keep all originally selected skills in your path.
-              </button>
+              {skillsAtTarget.length} of your selected skill{skillsAtTarget.length > 1 ? 's are' : ' is'} already at the targeted level.
+              {' '}Uncheck {skillsAtTarget.length > 1 ? 'them' : 'it'} and pick replacements from the list above so all 5 chapters focus on skills you still need to develop, or keep your original selection if you want to reinforce existing strengths.
             </p>
           </div>
         )}

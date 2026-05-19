@@ -115,6 +115,10 @@ export const runFullAnalysis = async (params: {
   target_role?: string
   skip_assessment?: boolean
   self_assessed_skills?: Record<string, number>
+  // Skill IDs the user selected on the Top 5 page, in display order.
+  // The backend uses this to scope path generation and to fix chapter
+  // ordering so the dashboard sidebar matches what the user saw.
+  selected_skill_ids?: string[]
 }): Promise<AnalysisResult> => {
   const { data } = await api.post('/analysis/full', params)
   return data

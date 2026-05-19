@@ -345,6 +345,52 @@ parse job descriptions, identify skill gaps, and generate personalized learning 
                     skill_rank[sid] = rank
                     skill_importance[sid] = skill.get("importance", "medium")
 
+            # When the user explicitly selected skills on the Top 5 page,
+            # those are the authoritative inputs to path generation. Scope
+            # state_b to just those skills and replace skill_rank with the
+            # display order from the page. This is what Luda flagged on
+            # May 19 with Halyna: the dashboard contained a skill she had
+            # never seen on the Top 5 page (SK.LRN.002) because the
+            # orchestrator re-ran the JD parser internally and used its
+            # output instead of her selection.
+            selected_skill_ids = task.get("selected_skill_ids") or []
+            if selected_skill_ids:
+                logger.info(
+                    "Scoping path generation to %d user-selected skills (was %d candidates)",
+                    len(selected_skill_ids), len(valid_state_b),
+                )
+                # Re-derive valid_state_b with the user's required levels
+                # (from the original parser response so the levels match
+                # what the user saw on the Top 5 page).
+                target_level_lookup = {
+                    skill.get("skill_id"): skill.get("required_level")
+                    for skill in jd_result.get("top_10_target_skills", [])
+                    if skill.get("skill_id") and skill.get("required_level") is not None
+                }
+                # Also accept the original valid_state_b values as fallback
+                scoped_state_b: dict[str, int] = {}
+                for sid in selected_skill_ids:
+                    if not ontology.get_skill(sid):
+                        logger.warning("Selected skill %s not in ontology - skipping", sid)
+                        continue
+                    lvl = target_level_lookup.get(sid)
+                    if lvl is None:
+                        lvl = valid_state_b.get(sid)
+                    if lvl is None:
+                        # Default to L3 if no information; should be rare
+                        lvl = 3
+                    scoped_state_b[sid] = lvl
+                if scoped_state_b:
+                    valid_state_b = scoped_state_b
+                    # Rebuild skill_rank from the user's display order so
+                    # the gap engine respects it as the primary sort key.
+                    skill_rank = {sid: i + 1 for i, sid in enumerate(scoped_state_b.keys())}
+                    # Keep skill_importance entries for the selected skills only
+                    skill_importance = {
+                        sid: skill_importance.get(sid, "medium")
+                        for sid in scoped_state_b.keys()
+                    }
+
             deterministic = LearningPathGenerator(ontology_service=ontology)
             scaffold_result = deterministic.generate_path(
                 valid_state_a, valid_state_b, role_context=role_context,
@@ -352,6 +398,45 @@ parse job descriptions, identify skill gaps, and generate personalized learning 
                 skill_rank=skill_rank,
                 learner_profile=profile_data,
             )
+
+            # Hard guarantee: when the user explicitly selected skills,
+            # the chapter list must be exactly those skills in exactly that
+            # order. The gap engine may reorder by its own criteria; we
+            # override that here so the dashboard sidebar matches what the
+            # user clicked on the Top 5 page.
+            if selected_skill_ids:
+                scaffold_chapters_raw = scaffold_result.get("chapters") or []
+                chapter_by_sid = {
+                    (ch.get("primary_skill_id") or ch.get("skill_id")): ch
+                    for ch in scaffold_chapters_raw
+                }
+                ordered_chapters = []
+                pos = 1
+                for sid in selected_skill_ids:
+                    ch = chapter_by_sid.get(sid)
+                    if not ch:
+                        continue
+                    ch["chapter_number"] = pos
+                    ordered_chapters.append(ch)
+                    pos += 1
+                # Append any scaffold chapter not in the selection at the
+                # end (shouldn't happen since we scoped state_b, but be
+                # defensive against future changes).
+                appended = set(selected_skill_ids)
+                for ch in scaffold_chapters_raw:
+                    sid = ch.get("primary_skill_id") or ch.get("skill_id")
+                    if sid and sid not in appended:
+                        ch["chapter_number"] = pos
+                        ordered_chapters.append(ch)
+                        pos += 1
+                if ordered_chapters:
+                    scaffold_result["chapters"] = ordered_chapters
+                    scaffold_result["total_chapters"] = len(ordered_chapters)
+                    logger.info(
+                        "Re-ordered chapters to match user selection: %s",
+                        [c.get("primary_skill_id") or c.get("skill_id") for c in ordered_chapters],
+                    )
+
             results["steps"].append({
                 "step": "deterministic_scaffold", "status": "completed",
             })

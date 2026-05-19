@@ -46,6 +46,13 @@ class FullAnalysisRequest(BaseModel):
     target_role: str | None = None
     skip_assessment: bool = False  # Skip quiz and use profile-based assessment
     self_assessed_skills: dict | None = None  # {skill_id: level} from self-assessment UI
+    # The user's final skill selection from the Top 5 page, in the order
+    # they appeared on screen. When present, the path generator scopes
+    # to these IDs and preserves this exact order as the chapter order.
+    # Without it, the orchestrator re-runs JD parsing and the dashboard
+    # ends up showing different skills in a different order than the
+    # user saw - the May 19 Halyna bug.
+    selected_skill_ids: list[str] | None = None
 
 
 class FullAnalysisResponse(BaseModel):

@@ -86,6 +86,7 @@ async def run_full_analysis(
             "target_role": request.target_role,
             "skip_assessment": request.skip_assessment,
             "self_assessed_skills": request.self_assessed_skills,
+            "selected_skill_ids": request.selected_skill_ids,
             "include_resources": True,
         })
     except Exception as e:
