@@ -737,3 +737,135 @@ async def get_skill_masteries(
     )
     masteries = result.scalars().all()
     return [_mastery_response(m) for m in masteries]
+
+
+@router.get("/{path_id}/summary")
+async def get_path_summary(
+    path_id: str,
+    db: AsyncSession = Depends(get_database),
+):
+    """End-of-path completion summary (P3 #4 - Jennifer C stickiness ask).
+
+    Returns:
+      - skills completed: list of (skill_id, name, current_level, target_level)
+      - completion stats: lessons completed / total, percent
+      - next_step_recommendations: ontology-grounded suggestions
+        (same skill at next level, or adjacent skill in the same domain)
+      - retake_date: ISO date 60 days from now to come back and re-test
+      - all_chapters_complete: bool - tells the UI whether to flip the
+        lesson page navigation to the summary screen
+
+    This endpoint is purely read-only; it never mutates state. The frontend
+    calls it after the last chapter is completed and renders the summary.
+    """
+    from datetime import date, timedelta
+
+    result = await db.execute(
+        select(LearningPath).where(LearningPath.id == path_id)
+    )
+    path = result.scalars().first()
+    if not path:
+        raise HTTPException(status_code=404, detail="Learning path not found")
+
+    result = await db.execute(select(Module).where(Module.path_id == path_id))
+    modules = sorted(result.scalars().all(), key=lambda m: m.chapter_number)
+
+    result = await db.execute(select(Lesson).where(Lesson.path_id == path_id))
+    lessons = result.scalars().all()
+    total_lessons = len(lessons)
+    completed_lessons = sum(1 for ls in lessons if ls.status == "completed")
+    percent = round((completed_lessons / total_lessons) * 100) if total_lessons else 0
+    all_complete = total_lessons > 0 and completed_lessons == total_lessons
+
+    from app.services.ontology import get_ontology_service
+    ont = get_ontology_service()
+
+    skills_completed: list[dict] = []
+    next_steps: list[dict] = []
+    seen_next: set[str] = set()
+
+    for m in modules:
+        sk = ont.get_skill(m.skill_id) if m.skill_id else None
+        skills_completed.append({
+            "skill_id": m.skill_id,
+            "skill_name": m.skill_name or (sk.get("name") if sk else ""),
+            "domain_id": sk.get("domain") if sk else "",
+            "current_level": m.current_level,
+            "target_level": m.target_level,
+            "level_label_target": (
+                ["Unaware", "Aware", "User", "Practitioner", "Builder", "Architect"][m.target_level]
+                if m.target_level is not None and m.target_level < 6 else ""
+            ),
+        })
+        # Suggest the same skill at the next level if the target was not yet
+        # the highest level
+        if sk and m.target_level is not None and m.target_level < 5:
+            sid_next = m.skill_id
+            if sid_next not in seen_next:
+                next_steps.append({
+                    "kind": "same_skill_next_level",
+                    "skill_id": sid_next,
+                    "skill_name": sk.get("name") or "",
+                    "from_level": m.target_level,
+                    "to_level": m.target_level + 1,
+                    "rationale": (
+                        f"You just finished {sk.get('name')!r} at level "
+                        f"{m.target_level}. The next level is where this skill "
+                        f"becomes a real differentiator."
+                    ),
+                })
+                seen_next.add(sid_next)
+
+        # Suggest one adjacent skill from the same domain (different skill,
+        # same parent), if available
+        if sk:
+            domain_id = sk.get("domain")
+            if domain_id:
+                domain_skills = ont.get_skills_by_domain(domain_id) if hasattr(ont, "get_skills_by_domain") else []
+                for cand in domain_skills:
+                    cand_id = cand.get("id")
+                    if not cand_id or cand_id == m.skill_id or cand_id in seen_next:
+                        continue
+                    # Skip if it's already in the completed list
+                    if any(s["skill_id"] == cand_id for s in skills_completed):
+                        continue
+                    next_steps.append({
+                        "kind": "adjacent_skill",
+                        "skill_id": cand_id,
+                        "skill_name": cand.get("name") or "",
+                        "from_level": 0,
+                        "to_level": 2,
+                        "rationale": (
+                            f"You strengthened your {sk.get('domain_name') or domain_id} "
+                            f"foundation. {cand.get('name')!r} sits in the same domain "
+                            f"and complements what you just learned."
+                        ),
+                    })
+                    seen_next.add(cand_id)
+                    break  # one adjacent per completed skill is plenty
+
+    next_steps = next_steps[:5]  # cap to a digestible list
+
+    retake_date = (date.today() + timedelta(days=60)).isoformat()
+
+    return {
+        "path_id": path_id,
+        "path_title": path.title,
+        "all_chapters_complete": all_complete,
+        "stats": {
+            "lessons_completed": completed_lessons,
+            "lessons_total": total_lessons,
+            "percent_complete": percent,
+            "chapter_count": len(modules),
+        },
+        "skills_completed": skills_completed,
+        "next_step_recommendations": next_steps,
+        "retake": {
+            "recommended_date": retake_date,
+            "message": (
+                "Skills fade if you do not use them. Come back on or around "
+                f"{retake_date} to retake the assessment - we will show you "
+                "what still sticks and where to focus next."
+            ),
+        },
+    }

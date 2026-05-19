@@ -108,6 +108,34 @@ export const parseJDProfile = async (params: {
 }
 
 // Analysis
+// Path completion summary (P3 #4 - Jennifer C stickiness ask).
+export const getPathSummary = async (pathId: string): Promise<{
+  path_id: string
+  path_title: string
+  all_chapters_complete: boolean
+  stats: { lessons_completed: number; lessons_total: number; percent_complete: number; chapter_count: number }
+  skills_completed: Array<{
+    skill_id: string
+    skill_name: string
+    domain_id: string
+    current_level: number
+    target_level: number
+    level_label_target: string
+  }>
+  next_step_recommendations: Array<{
+    kind: string
+    skill_id: string
+    skill_name: string
+    from_level: number
+    to_level: number
+    rationale: string
+  }>
+  retake: { recommended_date: string; message: string }
+}> => {
+  const { data } = await api.get(`/learning/${pathId}/summary`)
+  return data
+}
+
 export const runFullAnalysis = async (params: {
   profile_id?: string
   custom_profile?: Record<string, unknown>

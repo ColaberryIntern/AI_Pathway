@@ -205,11 +205,17 @@ function ChapterDisclosure({ meta }: { meta: any }) {
 
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function ChapterFormatView({ content, pathId, lessonId, navigate, completeMutation }: { content: any; pathId: string; lessonId: string; navigate: (path: string) => void; completeMutation: any }) {
+function ChapterFormatView({ content, pathId, lessonId, navigate, completeMutation, isLastLesson }: { content: any; pathId: string; lessonId: string; navigate: (path: string) => void; completeMutation: any; isLastLesson: boolean }) {
   const handleComplete = () => {
     completeMutation.mutate(undefined, {
       onSuccess: () => {
-        navigate(`/learn/${pathId}`)
+        // P3 #4 stickiness: when this completes the final chapter,
+        // route to the path summary instead of back to the dashboard.
+        if (isLastLesson) {
+          navigate(`/learn/${pathId}/complete`)
+        } else {
+          navigate(`/learn/${pathId}`)
+        }
       },
     })
   }
@@ -393,9 +399,26 @@ export default function LessonPage() {
 
   // Free completion — no gating on knowledge checks or implementation tasks
 
+  // Detect whether completing this lesson finishes the entire path.
+  // The dashboard query has per-module lesson outlines + completed counts;
+  // every other lesson must already be complete AND this one is not yet
+  // (we are about to complete it). The frontend's completeMutation.onSuccess
+  // uses this to navigate to the summary page instead of the dashboard.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const modulesArr = (dashboard?.modules as any[] | undefined) || []
+  const totalAcrossPath = modulesArr.reduce(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (acc: number, m: any) => acc + (m.total_lessons ?? 1), 0,
+  )
+  const completedAcrossPath = modulesArr.reduce(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (acc: number, m: any) => acc + (m.completed_lessons ?? 0), 0,
+  )
+  const isLastLesson = totalAcrossPath > 0 && completedAcrossPath + 1 >= totalAcrossPath
+
   // Render Vivek's chapter format
   if (isChapterFormat && contentAny) {
-    return <ChapterFormatView content={contentAny} pathId={pathId!} lessonId={lessonId!} navigate={navigate} completeMutation={completeMutation} />
+    return <ChapterFormatView content={contentAny} pathId={pathId!} lessonId={lessonId!} navigate={navigate} completeMutation={completeMutation} isLastLesson={isLastLesson} />
   }
 
   return (
