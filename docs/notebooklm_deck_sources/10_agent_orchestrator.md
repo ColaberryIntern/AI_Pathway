@@ -1,3 +1,10 @@
+# QA team orchestrator
+
+_Runs the five agents in order, passes prior verdicts to later agents, and returns the assembled verdict list plus the Demo Gate's final._
+
+Source file in the repo: `10/agent_orchestrator.py` (numeric prefix added for NotebookLM upload order).
+
+```python
 """QA team orchestrator. Runs the 5 agents in dependency order and
 returns the assembled verdict list + the Demo Gate's final verdict.
 
@@ -63,3 +70,5 @@ async def run_qa_team(context: dict[str, Any],
     gate_v = await gate.run({**context, "prior_verdicts": list(verdicts)})
     verdicts.append(gate_v)
     return verdicts
+
+```

@@ -1,3 +1,10 @@
+# Agent: Path Coherence Auditor
+
+_Pure Python. Verifies database invariants: chapter skill_ids resolve in the ontology, module titles match the Top 5 page, cached lesson content matches its parent module, chapter numbering contiguous._
+
+Source file in the repo: `07/agent_path_coherence.py` (numeric prefix added for NotebookLM upload order).
+
+```python
 """Agent C - Path Coherence Auditor.
 
 Deterministic invariant checks across the user journey for one persona.
@@ -184,3 +191,5 @@ class PathCoherenceAgent(QAAgent):
                       "content meta.skill_id matches parent Module.skill_id; "
                       "chapter_number contiguous.",
         )
+
+```

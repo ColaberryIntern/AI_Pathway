@@ -1,3 +1,10 @@
+# Agent: Demo Readiness Gate (aggregator)
+
+_Pure aggregation. Synthesizes the four upstream verdicts into a single GREEN / YELLOW / RED signal. Renders the readable Markdown dossier._
+
+Source file in the repo: `09/agent_demo_gate.py` (numeric prefix added for NotebookLM upload order).
+
+```python
 """Agent E - Demo Readiness Gate.
 
 Aggregates verdicts from agents A through D into a single
@@ -105,3 +112,5 @@ def render_dossier(persona_id: str, verdicts: list[AgentVerdict]) -> str:
                     lines.append(f"    > proposed fix: {f.proposed_fix}")
             lines.append("")
     return "\n".join(lines)
+
+```

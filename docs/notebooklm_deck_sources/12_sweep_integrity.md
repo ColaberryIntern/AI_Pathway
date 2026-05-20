@@ -1,3 +1,10 @@
+# DB-wide integrity sweep
+
+_Production-level invariant check that runs alongside the Path Coherence agent. Walks every learning path, every module, every cached lesson, and every skill in the ontology; reports any violation._
+
+Source file in the repo: `12/sweep_integrity.py` (numeric prefix added for NotebookLM upload order).
+
+```python
 """Production integrity sweep. Walks every learning path in the DB and
 verifies, with zero tolerance:
 
@@ -167,3 +174,5 @@ async def main() -> int:
 
 if __name__ == "__main__":
     sys.exit(asyncio.run(main()))
+
+```

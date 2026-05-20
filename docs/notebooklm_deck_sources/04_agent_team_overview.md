@@ -1,3 +1,10 @@
+# QA agent package overview
+
+_Package docstring describing all five QA agents and how they collaborate._
+
+Source file in the repo: `04/agent_team_overview.py` (numeric prefix added for NotebookLM upload order).
+
+```python
 """Multi-agent QA team for pre-demo verification.
 
 Five agents collaborate on every persona pass:
@@ -23,3 +30,5 @@ Usage:
 This runs against the live production deployment via the existing
 sweep + preflight infrastructure plus new LLM-based checks.
 """
+
+```

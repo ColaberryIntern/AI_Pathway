@@ -1,3 +1,10 @@
+# Rubric scorer (Luda's 5-parameter formula)
+
+_Priority = (Importance x4) + (Breadth x3) + (Momentum x3) + (Connectivity x2) + (Career Signal x2). Includes role-essence floor, domain-skill mandate, diversity rule, and foundational PRM injection. Also exposes the ontology narrative builder used by the Top 5 page._
+
+Source file in the repo: `11/rubric_scorer.py` (numeric prefix added for NotebookLM upload order).
+
+```python
 """5-parameter weighted rubric scoring per Luda Kopeikina's May 15 spec.
 
 Deterministic post-processing of the JD parser's candidate skill list:
@@ -598,3 +605,5 @@ def maintain_develop_partition(skills: list[dict],
         else:
             develop.append(entry)
     return {"maintain": maintain, "develop": develop}
+
+```

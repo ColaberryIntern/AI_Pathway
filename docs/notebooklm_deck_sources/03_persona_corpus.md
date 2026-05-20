@@ -1,3 +1,10 @@
+# Persona corpus (regression contract)
+
+_Every persona Luda has shared, with verbatim customer_quote, expected_top5_includes, forbidden_in_top5, and rationale. The Customer Voice agent grounds every finding against the customer_quote field._
+
+Source file in the repo: `03/persona_corpus.py` (numeric prefix added for NotebookLM upload order).
+
+```python
 """Test corpus of every persona Luda has shared.
 
 Each entry codifies the expected behaviour of the skill-selection engine
@@ -200,3 +207,5 @@ if __name__ == "__main__":
         print(f"  forbidden in top5: {p.get('forbidden_in_top5') or '[]'}")
         print(f"  source: {p['source']}")
         print()
+
+```

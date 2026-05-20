@@ -1,3 +1,10 @@
+# Agent: Skill Curator
+
+_Deterministic + corpus comparison. Re-runs the 5-parameter rubric and blocks if forbidden skills appear in the top 5 or expected skills are missing. Pushes back on engine drift._
+
+Source file in the repo: `06/agent_skill_curator.py` (numeric prefix added for NotebookLM upload order).
+
+```python
 """Agent B - Skill Curator.
 
 Independently scores the engine's top 10 against Luda's 5-parameter
@@ -164,3 +171,5 @@ class SkillCuratorAgent(QAAgent):
             metadata=metadata,
             reasoning=" ".join(reasoning_parts),
         )
+
+```

@@ -1,3 +1,10 @@
+# Agent: Customer Voice Reasoner
+
+_LLM agent. Reads the persona's verbatim customer quote + the current engine output. Decides whether the engine satisfies what the customer actually wants. Includes deterministic severity sanity-checks._
+
+Source file in the repo: `05/agent_customer_voice.py` (numeric prefix added for NotebookLM upload order).
+
+```python
 """Agent A - Customer Voice Reasoner.
 
 Reads every customer-facing finding in the persona corpus + memory
@@ -301,3 +308,5 @@ class CustomerVoiceAgent(QAAgent):
             metadata={"persona_id": persona.get("id")},
             reasoning=data.get("reasoning", ""),
         )
+
+```

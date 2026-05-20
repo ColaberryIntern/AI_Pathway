@@ -1,3 +1,10 @@
+# Agent: Chapter Reviewer
+
+_Mix of deterministic identity checks and LLM prose-fit audit. Per cached chapter, verifies meta.skill_id matches the module and the chapter prose actually fits the persona's role._
+
+Source file in the repo: `08/agent_chapter_reviewer.py` (numeric prefix added for NotebookLM upload order).
+
+```python
 """Agent D - Chapter Reviewer.
 
 Mix of deterministic checks and LLM judgment over the actual generated
@@ -264,3 +271,5 @@ class ChapterReviewerAgent(QAAgent):
                 ("LLM prose-fit check also ran." if checked else "")
             ),
         )
+
+```
