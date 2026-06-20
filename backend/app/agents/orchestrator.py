@@ -92,9 +92,33 @@ parse job descriptions, identify skill gaps, and generate personalized learning 
             top_10_target = jd_result.get("top_10_target_skills", [])
             results["top_10_current_skills"] = top_10_current
 
-            # Pass JD parser rank as explicit priority to the gap engine
-            # The JD parser ranks skills by importance to the role.
-            # We encode this as a numeric priority so the gap engine preserves the order.
+            # Deterministic 5-parameter rubric rerank (Luda's May 15 spec).
+            # Applies role-essence floor + domain mandate so the path
+            # generator sees the right top 5 regardless of how the LLM
+            # ranked them. Same scorer the Top 5 page uses, so the user
+            # sees consistent rank across the analysis -> path flow.
+            try:
+                from app.services.rubric_scorer import rerank as rubric_rerank
+                from app.services.ontology import get_ontology_service as _get_ont
+                _ont = _get_ont()
+                _role_text = jd_result.get("role_analysis", {}).get("primary_function") \
+                             or task.get("target_role") \
+                             or task.get("profile", {}).get("target_role", "") \
+                             or ""
+                top_10_target = rubric_rerank(
+                    top_10_target,
+                    role_text=_role_text,
+                    learner_profile=task.get("profile"),
+                    ontology=_ont,
+                )
+                jd_result["top_10_target_skills"] = top_10_target
+                logger.info(
+                    "Rubric rerank applied to top-10: order is now %s",
+                    [s.get("skill_id") for s in top_10_target],
+                )
+            except Exception as exc:
+                logger.warning("Rubric rerank failed (continuing with LLM order): %s", exc)
+
             results["top_10_target_skills"] = top_10_target
 
             # Extract state_a_skills early — needed for gap computation below
@@ -132,6 +156,29 @@ parse job descriptions, identify skill gaps, and generate personalized learning 
                     "rationale": skill.get("rationale", ""),
                 })
             results["top_10_skill_gaps"] = top_10_gaps
+
+            # Maintain vs Develop partition (Luda's May 15 spec).
+            # Each candidate is bucketed by whether the learner already
+            # meets the required level. The Develop bucket is what we
+            # actually build chapters for; the Maintain bucket is shown
+            # to the learner so they see what they have already mastered.
+            # This is what powers Brittany's "she has only 2 real gaps"
+            # finding - the path will have 2 chapters, not 5.
+            try:
+                from app.services.rubric_scorer import (
+                    maintain_develop_partition as _md_partition,
+                )
+                _split = _md_partition(top_10_target, state_a_skills)
+                results["maintain_skills"] = _split["maintain"]
+                results["develop_skills"] = _split["develop"]
+                logger.info(
+                    "Maintain vs Develop: %d maintain, %d develop",
+                    len(_split["maintain"]), len(_split["develop"]),
+                )
+            except Exception as exc:
+                logger.warning("Maintain/Develop partition failed: %s", exc)
+                results["maintain_skills"] = []
+                results["develop_skills"] = []
 
             # Step 3: Optional Assessment
             if not task.get("skip_assessment", True):
@@ -345,6 +392,52 @@ parse job descriptions, identify skill gaps, and generate personalized learning 
                     skill_rank[sid] = rank
                     skill_importance[sid] = skill.get("importance", "medium")
 
+            # When the user explicitly selected skills on the Top 5 page,
+            # those are the authoritative inputs to path generation. Scope
+            # state_b to just those skills and replace skill_rank with the
+            # display order from the page. This is what Luda flagged on
+            # May 19 with Halyna: the dashboard contained a skill she had
+            # never seen on the Top 5 page (SK.LRN.002) because the
+            # orchestrator re-ran the JD parser internally and used its
+            # output instead of her selection.
+            selected_skill_ids = task.get("selected_skill_ids") or []
+            if selected_skill_ids:
+                logger.info(
+                    "Scoping path generation to %d user-selected skills (was %d candidates)",
+                    len(selected_skill_ids), len(valid_state_b),
+                )
+                # Re-derive valid_state_b with the user's required levels
+                # (from the original parser response so the levels match
+                # what the user saw on the Top 5 page).
+                target_level_lookup = {
+                    skill.get("skill_id"): skill.get("required_level")
+                    for skill in jd_result.get("top_10_target_skills", [])
+                    if skill.get("skill_id") and skill.get("required_level") is not None
+                }
+                # Also accept the original valid_state_b values as fallback
+                scoped_state_b: dict[str, int] = {}
+                for sid in selected_skill_ids:
+                    if not ontology.get_skill(sid):
+                        logger.warning("Selected skill %s not in ontology - skipping", sid)
+                        continue
+                    lvl = target_level_lookup.get(sid)
+                    if lvl is None:
+                        lvl = valid_state_b.get(sid)
+                    if lvl is None:
+                        # Default to L3 if no information; should be rare
+                        lvl = 3
+                    scoped_state_b[sid] = lvl
+                if scoped_state_b:
+                    valid_state_b = scoped_state_b
+                    # Rebuild skill_rank from the user's display order so
+                    # the gap engine respects it as the primary sort key.
+                    skill_rank = {sid: i + 1 for i, sid in enumerate(scoped_state_b.keys())}
+                    # Keep skill_importance entries for the selected skills only
+                    skill_importance = {
+                        sid: skill_importance.get(sid, "medium")
+                        for sid in scoped_state_b.keys()
+                    }
+
             deterministic = LearningPathGenerator(ontology_service=ontology)
             scaffold_result = deterministic.generate_path(
                 valid_state_a, valid_state_b, role_context=role_context,
@@ -352,6 +445,45 @@ parse job descriptions, identify skill gaps, and generate personalized learning 
                 skill_rank=skill_rank,
                 learner_profile=profile_data,
             )
+
+            # Hard guarantee: when the user explicitly selected skills,
+            # the chapter list must be exactly those skills in exactly that
+            # order. The gap engine may reorder by its own criteria; we
+            # override that here so the dashboard sidebar matches what the
+            # user clicked on the Top 5 page.
+            if selected_skill_ids:
+                scaffold_chapters_raw = scaffold_result.get("chapters") or []
+                chapter_by_sid = {
+                    (ch.get("primary_skill_id") or ch.get("skill_id")): ch
+                    for ch in scaffold_chapters_raw
+                }
+                ordered_chapters = []
+                pos = 1
+                for sid in selected_skill_ids:
+                    ch = chapter_by_sid.get(sid)
+                    if not ch:
+                        continue
+                    ch["chapter_number"] = pos
+                    ordered_chapters.append(ch)
+                    pos += 1
+                # Append any scaffold chapter not in the selection at the
+                # end (shouldn't happen since we scoped state_b, but be
+                # defensive against future changes).
+                appended = set(selected_skill_ids)
+                for ch in scaffold_chapters_raw:
+                    sid = ch.get("primary_skill_id") or ch.get("skill_id")
+                    if sid and sid not in appended:
+                        ch["chapter_number"] = pos
+                        ordered_chapters.append(ch)
+                        pos += 1
+                if ordered_chapters:
+                    scaffold_result["chapters"] = ordered_chapters
+                    scaffold_result["total_chapters"] = len(ordered_chapters)
+                    logger.info(
+                        "Re-ordered chapters to match user selection: %s",
+                        [c.get("primary_skill_id") or c.get("skill_id") for c in ordered_chapters],
+                    )
+
             results["steps"].append({
                 "step": "deterministic_scaffold", "status": "completed",
             })

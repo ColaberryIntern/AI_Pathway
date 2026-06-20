@@ -36,19 +36,57 @@ export default function AnalysisPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const viewProfile = searchParams.get('view') === 'profile'
+  const forceSkillSelection = searchParams.get('view') === 'skill_selection'
   const [step, setStep] = useState<AnalysisStep>('jd_input')
   const [targetJD, setTargetJD] = useState('')
   const [targetRole, setTargetRole] = useState('')
   const [result, setResult] = useState<AnalysisResult | null>(null)
   const [currentStepIndex, setCurrentStepIndex] = useState(0)
 
-  // JD-first flow state
+  // JD-first flow state. Self-assessed skill levels persist to localStorage
+  // keyed by profileId so they survive navigation away from /analysis and
+  // back. Without this, leaving for /learn and returning resets the counter
+  // to "0/5 assessed" even though the user already rated.
+  const SELF_ASSESSED_KEY = profileId ? `selfAssessedSkills:${profileId}` : null
   const [parsedSkills, setParsedSkills] = useState<ParsedSkill[]>([])
   const [selectedSkillIds, setSelectedSkillIds] = useState<string[]>([])
-  const [selfAssessedSkills, setSelfAssessedSkills] = useState<Record<string, number>>({})
+  const [selfAssessedSkills, setSelfAssessedSkills] = useState<Record<string, number>>(() => {
+    if (typeof window === 'undefined' || !SELF_ASSESSED_KEY) return {}
+    try {
+      const raw = window.localStorage.getItem(SELF_ASSESSED_KEY)
+      return raw ? JSON.parse(raw) : {}
+    } catch {
+      return {}
+    }
+  })
+  // Persist on every change.
+  useEffect(() => {
+    if (!SELF_ASSESSED_KEY) return
+    try {
+      window.localStorage.setItem(SELF_ASSESSED_KEY, JSON.stringify(selfAssessedSkills))
+    } catch {
+      // ignore quota / privacy-mode errors
+    }
+  }, [selfAssessedSkills, SELF_ASSESSED_KEY])
   const [isParsingJDSkills, setIsParsingJDSkills] = useState(false)
   const [jdSkillsError, setJdSkillsError] = useState<string | null>(null)
   const [detectedRole, setDetectedRole] = useState('')
+  // Ontology narrative panel (P3 #1 - Jennifer C's "how do I know these
+  // are the right skills?" ask). Shipped collapsed by default so it does
+  // not crowd the Top 5 page; the curious user expands it to see the
+  // provenance of every skill in the list.
+  const [ontologyNarrative, setOntologyNarrative] = useState<{
+    ontology_name: string
+    headline: string
+    role_family: string
+    key_domains: Array<{ id: string; label: string; description: string }>
+    rubric: { name: string; formula: string; max_score: number; parameters: Array<{ name: string; weight: number; description: string }> }
+    applied_floors: Array<{ name: string; rationale: string }>
+    diversity_rule: string
+    candidate_count: number
+    rationale_summary: string
+  } | null>(null)
+  const [showOntologyNarrative, setShowOntologyNarrative] = useState(false)
 
   const [jdProfile, setJdProfile] = useState<{
     technical_skills: string[]
@@ -176,6 +214,11 @@ export default function AnalysisPage() {
     getAnalysisResults(profileId!)
       .then((data) => {
         setResult(data as AnalysisResult)
+        // Capture the ontology narrative if the backend included it on revisit.
+        const resultObj = (data as { result?: { ontology_narrative?: unknown } } | undefined)?.result
+        if (resultObj && (resultObj as { ontology_narrative?: unknown }).ontology_narrative) {
+          setOntologyNarrative((resultObj as { ontology_narrative: typeof ontologyNarrative }).ontology_narrative)
+        }
         // Populate parsedSkills from ALL available skills (target + gaps + all_gaps)
         const targetSkills = data.result?.top_10_target_skills || []
         const gapSkills = data.result?.top_10_skill_gaps || []
@@ -193,8 +236,12 @@ export default function AnalysisPage() {
           }
         }
         if (allSkills.length > 0) {
+          // Always renumber by array position so the displayed "#N" matches
+          // the rendering order. Backend may return ranks that collide or
+          // skip numbers when merging multiple skill lists; defending here
+          // guarantees the user sees clean sequential 1..N regardless.
           setParsedSkills(allSkills.map((s, i) => ({
-            rank: (s.rank as number) || i + 1,
+            rank: i + 1,
             skill_id: (s.skill_id as string) || '',
             skill_name: (s.skill_name as string) || '',
             domain: (s.domain as string) || '',
@@ -202,13 +249,19 @@ export default function AnalysisPage() {
             required_level: (s.required_level as number) || (s.target_level as number) || 3,
             importance: (s.importance as string) || 'medium',
             rationale: (s.rationale as string) || '',
-            skill_description: '',
-            proficiency_descriptions: [],
+            skill_description: (s.skill_description as string) || '',
+            proficiency_descriptions: (s.proficiency_descriptions as Array<{ level: number; label: string; description: string }>) || [],
           })))
           // First 5 are default selected
           setSelectedSkillIds(allSkills.slice(0, 5).map(s => (s.skill_id as string) || ''))
         }
-        setStep('complete')
+        // Revisit case: show the results review page directly.
+        // (Fresh analysis goes through analysisMutation.onSuccess which sets
+        // 'complete' and triggers the auto-redirect to the learning dashboard.)
+        // ?view=skill_selection on the URL forces the merged skill review
+        // layout instead, so direct links from the walkthrough land on the
+        // right page state.
+        setStep(forceSkillSelection ? 'skill_selection' : 'results_review')
       })
       .catch(async () => {
         // No saved results — parse JD skills and show skill selection + self-assessment
@@ -237,6 +290,7 @@ export default function AnalysisPage() {
             })
             setParsedSkills(result.top_10_skills)
             if (result.target_role) setDetectedRole(result.target_role)
+            if (result.ontology_narrative) setOntologyNarrative(result.ontology_narrative)
             const top5 = result.top_10_skills.slice(0, 5).map((s: ParsedSkill) => s.skill_id)
             setSelectedSkillIds(top5)
             setStep('skill_selection')
@@ -353,6 +407,7 @@ export default function AnalysisPage() {
       })
       setParsedSkills(result.top_10_skills)
       setDetectedRole(result.target_role || targetRole)
+      if (result.ontology_narrative) setOntologyNarrative(result.ontology_narrative)
       if (result.target_role && !targetRole) {
         setTargetRole(result.target_role)
       }
@@ -385,6 +440,14 @@ export default function AnalysisPage() {
       ? JSON.parse(sessionStorage.getItem('customProfile') || '{}')
       : null
 
+    // Preserve the user's selection order so the dashboard sidebar
+    // matches what they saw on the Top 5 page. parsedSkills is in
+    // page-display order; we filter to only the IDs they checked, which
+    // keeps the display order intact.
+    const orderedSelectedIds = parsedSkills
+      .filter(s => selectedSkillIds.includes(s.skill_id))
+      .map(s => s.skill_id)
+
     analysisMutation.mutate({
       profile_id: isCustom ? undefined : profileId,
       custom_profile: isCustom ? customProfile : undefined,
@@ -392,6 +455,7 @@ export default function AnalysisPage() {
       target_role: detectedRole || targetRole,
       skip_assessment: true,
       self_assessed_skills: Object.keys(selfAssessedSkills).length > 0 ? selfAssessedSkills : undefined,
+      selected_skill_ids: orderedSelectedIds.length > 0 ? orderedSelectedIds : undefined,
     })
   }
 
@@ -828,9 +892,105 @@ export default function AnalysisPage() {
           <p className="text-gray-600">
             We identified {parsedSkills.length} key skills from the job description.
             {detectedRole && <> Targeted role: <strong>{detectedRole}</strong>.</>}
-            {' '}Please rate your current proficiency for each skill.
+          </p>
+          <p className="text-gray-600 mt-2">
+            Check the 5 you want to focus on, then rate your current level. If a skill is already at your target, uncheck it and pick another from below - we will build the 5-chapter path around the skills you actually need to develop.
           </p>
         </div>
+
+        {/* Ontology narrative panel (P3 #1: Jennifer C's "how do I know these are the right skills?" ask).
+            Collapsed by default. The summary line is always visible so the
+            reviewer knows we can answer the question; the details expand on
+            click. */}
+        {ontologyNarrative && (
+          <div className="rounded-lg border border-indigo-200 bg-indigo-50/60 px-4 py-3">
+            <button
+              type="button"
+              onClick={() => setShowOntologyNarrative((v) => !v)}
+              className="flex items-start gap-2 text-left w-full"
+              aria-expanded={showOntologyNarrative}
+            >
+              <span className="mt-0.5 text-indigo-600">{showOntologyNarrative ? '▼' : '▶'}</span>
+              <span className="flex-1">
+                <span className="block font-semibold text-indigo-900 text-sm">
+                  How do I know these are the right skills?
+                </span>
+                <span className="block text-xs text-indigo-700 mt-0.5">
+                  {ontologyNarrative.headline}
+                </span>
+              </span>
+            </button>
+            {showOntologyNarrative && (
+              <div className="mt-3 space-y-3 text-sm text-gray-800 border-t border-indigo-200 pt-3">
+                <div>
+                  <div className="font-semibold text-indigo-900 mb-1">Detected role family</div>
+                  <div>{ontologyNarrative.role_family || 'unspecified'}</div>
+                </div>
+
+                {ontologyNarrative.key_domains.length > 0 && (
+                  <div>
+                    <div className="font-semibold text-indigo-900 mb-1">
+                      Domains the JD maps to ({ontologyNarrative.key_domains.length})
+                    </div>
+                    <ul className="list-disc pl-5 space-y-1">
+                      {ontologyNarrative.key_domains.map((d) => (
+                        <li key={d.id}>
+                          <span className="font-mono text-xs text-indigo-700">{d.id}</span>{' '}
+                          <strong>{d.label}</strong>
+                          {d.description && <span className="text-gray-600"> &mdash; {d.description}</span>}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                <div>
+                  <div className="font-semibold text-indigo-900 mb-1">
+                    Scoring rubric
+                  </div>
+                  <div className="text-xs font-mono bg-white border border-indigo-200 rounded px-2 py-1 mb-2">
+                    {ontologyNarrative.rubric.formula}
+                  </div>
+                  <ul className="list-disc pl-5 space-y-1">
+                    {ontologyNarrative.rubric.parameters.map((p) => (
+                      <li key={p.name}>
+                        <strong>{p.name}</strong> (weight &times;{p.weight}) &mdash; {p.description}
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="text-xs text-gray-600 mt-2">
+                    Maximum possible score: {ontologyNarrative.rubric.max_score}. Each skill's
+                    individual score breakdown is visible in the skill card below.
+                  </div>
+                </div>
+
+                {ontologyNarrative.applied_floors.length > 0 && (
+                  <div>
+                    <div className="font-semibold text-indigo-900 mb-1">
+                      Guarantees we applied for this role
+                    </div>
+                    <ul className="list-disc pl-5 space-y-1">
+                      {ontologyNarrative.applied_floors.map((f, i) => (
+                        <li key={i}>
+                          <strong>{f.name}</strong> &mdash; {f.rationale}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                <div>
+                  <div className="font-semibold text-indigo-900 mb-1">Diversity rule</div>
+                  <div>{ontologyNarrative.diversity_rule}</div>
+                </div>
+
+                <div className="text-xs text-gray-600 italic">
+                  {ontologyNarrative.rationale_summary}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Skill cards with inline self-assessment */}
         <div className="space-y-3">
@@ -897,14 +1057,8 @@ export default function AnalysisPage() {
         {skillsAtTarget.length > 0 && allAssessed && (
           <div className="card bg-emerald-50 border-emerald-200">
             <p className="text-emerald-800">
-              Since {skillsAtTarget.length} skill{skillsAtTarget.length > 1 ? 's' : ''} match{skillsAtTarget.length === 1 ? 'es' : ''} your targeted level,
-              we will add other relevant skills to build a learning path consisting of 5 chapters.
-              {' '}<button
-                onClick={() => {/* Keep all - no action needed, they stay selected */}}
-                className="text-emerald-700 underline font-medium"
-              >
-                Click here to keep all originally selected skills in your path.
-              </button>
+              {skillsAtTarget.length} of your selected skill{skillsAtTarget.length > 1 ? 's are' : ' is'} already at the targeted level.
+              {' '}Uncheck {skillsAtTarget.length > 1 ? 'them' : 'it'} and pick replacements from the list above so all 5 chapters focus on skills you still need to develop, or keep your original selection if you want to reinforce existing strengths.
             </p>
           </div>
         )}

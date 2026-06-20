@@ -541,19 +541,81 @@ implementation_task MUST include:
         else:
             logger.info("Chapter depth audit passed for %s L%s->L%s", skill_id, current_level, target_level)
 
-        # Ensure meta has correct skill info
-        if "meta" in chapter_spec:
-            meta = chapter_spec["meta"]
-            meta.setdefault("skill_id", skill_id)
-            meta.setdefault("skill_name", skill_data["name"])
-            meta.setdefault("domain_id", skill_data["domain_id"])
-            meta.setdefault("domain_name", skill_data["domain_name"])
-            meta.setdefault("current_level", current_level)
-            meta.setdefault("target_level", target_level)
-            meta.setdefault("current_level_label", LEVEL_LABELS[current_level] if current_level < len(LEVEL_LABELS) else "Unknown")
-            meta.setdefault("target_level_label", LEVEL_LABELS[target_level] if target_level < len(LEVEL_LABELS) else "Unknown")
-            meta.setdefault("current_level_rubric", rubrics[current_level] if current_level < len(rubrics) else "")
-            meta.setdefault("target_level_rubric", rubrics[target_level] if target_level < len(rubrics) else "")
+        # Identity guard: if the LLM emitted a meta.skill_id that does not
+        # match the input, the chapter narrative is almost certainly about
+        # the wrong skill too (the May 18 SK.PRM.003 bug). Regenerate once;
+        # if the second attempt also drifts, fail loudly rather than ship a
+        # chapter whose body contradicts its identity. We still override the
+        # meta fields below so the stored record has authoritative values,
+        # but the regen path catches the case where the narrative itself is
+        # wrong (which override cannot fix).
+        meta_check = chapter_spec.get("meta") or {}
+        llm_skill_id = meta_check.get("skill_id") if isinstance(meta_check, dict) else None
+        if llm_skill_id and llm_skill_id != skill_id:
+            logger.warning(
+                "Chapter generator identity drift: LLM emitted skill_id=%r for input %r. Regenerating once with explicit instruction.",
+                llm_skill_id, skill_id,
+            )
+            retry_prompt = (
+                f"You returned a chapter for skill_id={llm_skill_id!r}, but the "
+                f"requested skill is {skill_id!r} ({skill_data['name']!r}). "
+                f"Regenerate the FULL chapter for the correct skill. The skill "
+                f"data is:\n{json.dumps(input_payload, indent=2)}\n\n"
+                f"Every section (scenario, concepts, examples, agent_build, "
+                f"implementation_task) MUST be about {skill_id} ({skill_data['name']}). "
+                f"Set meta.skill_id={skill_id!r}. Do NOT mention {llm_skill_id} "
+                f"anywhere in the output."
+            )
+            try:
+                retry_spec = await self._call_llm_structured(
+                    retry_prompt, output_schema, temperature=0.5, max_tokens=16384
+                )
+                # Normalize the same way as the first response
+                if "examples" in retry_spec and "example_1" not in retry_spec:
+                    examples = retry_spec.pop("examples", [])
+                    if isinstance(examples, list):
+                        if len(examples) >= 1:
+                            retry_spec["example_1"] = examples[0]
+                        if len(examples) >= 2:
+                            retry_spec["example_2"] = examples[1]
+                retry_meta = retry_spec.get("meta") or {}
+                retry_sid = retry_meta.get("skill_id") if isinstance(retry_meta, dict) else None
+                if retry_sid and retry_sid != skill_id:
+                    logger.error(
+                        "Chapter generator identity drift PERSISTED on retry: requested %r, got %r both times. Refusing to ship wrong content.",
+                        skill_id, retry_sid,
+                    )
+                    raise ValueError(
+                        f"Chapter generator returned wrong skill twice "
+                        f"(requested {skill_id!r}, got {retry_sid!r}). "
+                        f"Refusing to cache mismatched content."
+                    )
+                logger.info("Chapter generator identity drift resolved on retry for %s", skill_id)
+                chapter_spec = retry_spec
+            except ValueError:
+                raise
+            except Exception as exc:
+                logger.error("Chapter generator retry failed for %s: %s", skill_id, exc)
+                raise
+
+        # Force authoritative meta values. The LLM sometimes still emits a
+        # blank or partial meta block even when the body is correct, so we
+        # always overwrite the identity fields with what the caller asked
+        # for. This protects against a quieter version of the same bug.
+        meta = chapter_spec.setdefault("meta", {})
+        if isinstance(meta, dict):
+            meta["skill_id"] = skill_id
+            meta["skill_name"] = skill_data["name"]
+            meta["domain_id"] = skill_data["domain_id"]
+            meta["domain_name"] = skill_data["domain_name"]
+            meta["current_level"] = current_level
+            meta["target_level"] = target_level
+            meta["current_level_label"] = LEVEL_LABELS[current_level] if current_level < len(LEVEL_LABELS) else "Unknown"
+            meta["target_level_label"] = LEVEL_LABELS[target_level] if target_level < len(LEVEL_LABELS) else "Unknown"
+            meta["current_level_rubric"] = rubrics[current_level] if current_level < len(rubrics) else ""
+            meta["target_level_rubric"] = rubrics[target_level] if target_level < len(rubrics) else ""
+            meta.setdefault("chapter_title", "")
+            meta.setdefault("chapter_subtitle", "")
             meta.setdefault("total_minutes", 15)
 
         self._log_execution("generate_chapter", {"skill_id": skill_id, "level_gap": f"L{current_level}->L{target_level}"}, {"sections": list(chapter_spec.keys())})

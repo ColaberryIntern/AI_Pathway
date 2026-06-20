@@ -240,6 +240,14 @@ Map everything to the GenAI Skills Ontology structure."""
                         print(f"[JD_PARSER] Padded: {match['id']} - {match.get('name')} (from '{term}')")
             result["top_10_target_skills"] = top_skills
 
+        # Normalize ranks to sequential 1..N based on array order. The LLM may
+        # return non-sequential ranks (skipping numbers) and the padding loop
+        # above can collide with already-assigned ranks. Without this, the
+        # frontend renders duplicate "#2" or skips "#7", and skills appear
+        # out of rank order on the skill-selection page.
+        for i, s in enumerate(result.get("top_10_target_skills", []), 1):
+            s["rank"] = i
+
         self._log_execution("parse_jd", {"jd_length": len(jd_text)}, result)
         result["duration_ms"] = self._end_execution()
 
@@ -361,8 +369,60 @@ at Practitioner level (L3), as the role needs independent evaluation capability.
 Include both explicit requirements and implied skills from the responsibilities.
 Focus on AI/GenAI related skills but also include relevant prerequisites and soft skills.
 
+DOMAIN-SPECIFIC SKILL (mandatory when role matches a vertical):
+The ontology has exactly one applied skill per vertical domain. When the role title
+or JD clearly belongs to one of these verticals, you MUST include the corresponding
+SK.DOM.* skill in your top 10 (typically ranked #1 or #2):
+- Marketing / campaigns / brand / content / growth -> SK.DOM.MKT.001 (Marketing: Content generation ethics)
+- L&D / training / instructional design / curriculum -> SK.DOM.EDU.001 (Education: Learning design with AI)
+- Healthcare / clinical / patient / medical -> SK.DOM.HC.001 (Healthcare: Clinical risk awareness) or SK.DOM.HC.002 (Healthcare: Evidence synthesis)
+- Legal / counsel / compliance attorney / paralegal -> SK.DOM.LGL.001 (Legal: Disclaimer & advice boundaries) or SK.DOM.LGL.002 (Legal: Hallucination eval frameworks)
+- Finance / accounting / audit / FP&A / treasury -> SK.DOM.FIN.001 (Finance: Numerical auditability)
+- HR / recruiting / talent acquisition / people ops -> SK.DOM.HR.001 (HR: AI in hiring considerations)
+The domain skill is non-negotiable for vertical roles. It earns its place even with a
+lower rubric score because it is the only role-specific skill in the catalog and
+because the customer (a marketing director, an L&D specialist) recognizes themselves
+in it. A marketing director who never sees SK.DOM.MKT.001 in their top 5 will lose
+trust in the tool.
+
+ROLE-ESSENCE SKILLS for cross-functional senior roles (Product Marketing, PM, BizOps, Strategy):
+When the JD is for a senior cross-functional role - especially anything containing
+"Product Marketing", "AI Product Manager", "Strategy", or "Solutions" - the FIVE role-
+essence skills below MUST occupy the top 5 ranks of your output. They are the JOB.
+Tactical prompting skills (SK.PRM.003 prompt debugging, SK.PRM.020 draft-critique-revise)
+must rank BELOW all five of these for cross-functional senior roles, even if the JD
+mentions prompts or iteration - a Sr AI PMM does not spend their day debugging prompts,
+they spend it explaining AI to executives and quantifying business value.
+
+The 5 mandatory top-ranked role-essence skills (for Sr. AI PMM, Sr. AI Product Manager,
+AI Strategy lead, AI Solutions lead):
+1. SK.COM.001 (Explaining AI to non-technical audiences) - core deliverable; do not
+   omit just because the JD doesn't use those literal words. Every AI marketing /
+   product / strategy role's #1 job is translating capability into business language.
+2. SK.PRD.001 (Use-case selection & prioritization / AI Use Case Identification) -
+   turning capability into market value; the raw material for messaging and roadmaps
+3. SK.PRD.021 (Stakeholder management) - aligning product, sales, legal, engineering
+   on a single AI narrative; non-negotiable for Sr level
+4. SK.PRD.022 (ROI Measurement for AI) - quantifying business value; required for
+   any enterprise AI sales motion or executive buy-in
+5. SK.FND.002 (Capabilities vs Limitations / hallucinations) - credibility skill;
+   one overclaim destroys an enterprise sales cycle. PMMs MUST know AI limits.
+
+Skills 6-10 for this role family then include: SK.DOM.MKT.001 (if marketing-specific),
+SK.GOV.001 (AI risk framing for regulated industries), SK.PRD.020 (AI enablement &
+training strategy), SK.LRN.001 (Keeping Up with AI Developments), SK.COM.005
+(Cross-functional AI collaboration), and at most ONE tactical PRM skill.
+
+Why this matters: Brittany White (a real customer test case) is an AI PMM candidate
+for SAP. Her manual Claude analysis using this same ontology picked exactly these 5
+skills. When our tool returned prompt-debugging and hallucination-recognition skills
+instead, the customer (Luda) rejected the tool as "not ready to share" - because a
+senior marketing leader sees tactical-prompter skills in their top 5 and concludes
+the tool does not understand their role.
+
 TECHNICAL DEPTH MATCHING:
-- Match the technical depth of recommended skills to the role's actual needs.
+- Match the technical depth of recommended skills to the role's actual needs AND the
+  learner's current proficiency.
 - For non-technical roles (L&D, marketing, HR, management, strategy): Do NOT recommend
   ML-engineering skills like "Hugging Face ecosystem", "Prompt vs fine-tune decision",
   "LLM-as-judge patterns", model training, or infrastructure skills unless the JD explicitly
@@ -370,6 +430,34 @@ TECHNICAL DEPTH MATCHING:
 - For technical roles (engineering, data science, ML): include deeper technical skills.
 - When in doubt, check: does the JD say "build/implement/deploy" (technical) or
   "use/leverage/apply" (user-level)?
+
+PROMPTING SKILL DEPTH (within-domain depth match, separate from technical/non-technical):
+The D.PRM domain has skills at multiple depths. Pick the depth that matches the learner:
+- Foundational PRM (for non-technical users currently at L0-L2, or learners new to AI):
+  - SK.PRM.000 (Writing clear requests to AI)
+  - SK.PRM.001 (Instructions + constraints + format)
+  - SK.PRM.004 (Role & persona prompting)
+  - SK.PRM.006 (Breaking complex tasks into steps)
+- Advanced PRM (for learners already at L2+ who need rapid iteration of production prompts):
+  - SK.PRM.003 (Prompt debugging & iteration)
+  - SK.PRM.020 (Draft -> critique -> revise)
+  - SK.PRM.021 (Grounding & citations)
+For a non-technical marketing director starting at L1-L2, prefer 2 foundational PRM
+skills over 1 advanced one. SK.PRM.020 is wasted on someone who has not yet written
+clear requests with constraints.
+
+NEW v2.0 SKILLS (the March 2026 ontology update added skills that reflect current
+practice; prefer these over older generic equivalents when the role demands them):
+- SK.RSN.003 (Deep research agents) - prefer this when the JD mentions "research",
+  "competitive analysis", "market research", "literature review", "deep dive", or
+  "trend analysis"
+- SK.GOV.022 (AI-generated content disclosure) - prefer this over the older generic
+  SK.GOV.000 (AI governance fundamentals) when the role produces AI-assisted content
+  publicly (marketing, comms, publishing, customer-facing content)
+- SK.GOV.010 (AI regulations landscape / EU AI Act) - prefer this when the JD mentions
+  "global", "EU", "regulated industries", or "international"
+- SK.COM.004 (Managing AI expectations) - prefer this for senior cross-functional roles
+  where the person sets AI expectations with stakeholders, customers, or executives
 
 DOMAIN COVERAGE - LOOK FOR THESE IMPLIED SKILLS:
 Do NOT only match explicit keywords. Also surface skills implied by the role's responsibilities:

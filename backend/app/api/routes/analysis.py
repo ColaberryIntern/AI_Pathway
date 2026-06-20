@@ -86,6 +86,7 @@ async def run_full_analysis(
             "target_role": request.target_role,
             "skip_assessment": request.skip_assessment,
             "self_assessed_skills": request.self_assessed_skills,
+            "selected_skill_ids": request.selected_skill_ids,
             "include_resources": True,
         })
     except Exception as e:
@@ -332,11 +333,64 @@ async def parse_jd_skills(request: JDSkillsRequest):
             "proficiency_descriptions": ontology.get_proficiency_descriptions(skill.get("skill_id", "")),
         })
 
+    # Deterministic 5-parameter rubric rerank (Luda's May 15 spec).
+    # The LLM-emitted importance is unreliable for cross-functional senior
+    # roles and vertical roles; the scorer applies a role-essence floor
+    # (Sr AI PMM / Sr AI PM / AI Strategy) and a domain-skill mandate
+    # (marketing / L&D / healthcare / legal / finance / HR) so the right
+    # skills land in the top 5 regardless of how the LLM ranked them.
+    from app.services.rubric_scorer import (
+        rerank as rubric_rerank,
+        inject_foundational_prm_if_missing,
+    )
+    role_text = result.get("role_analysis", {}).get("primary_function") or request.target_role or ""
+
+    # Closes Luda's May 19 Halyna depth complaint structurally: if the
+    # role is a vertical and the learner is non-technical and the LLM
+    # forgot to include any foundational PRM in the candidate list,
+    # inject up to 2 of them before the rerank so the rubric can rank
+    # them. Without this, the rubric cannot promote skills the LLM never
+    # surfaced as candidates.
+    enriched = inject_foundational_prm_if_missing(
+        enriched,
+        role_text=role_text,
+        learner_profile=request.learner_profile,
+        ontology=ontology,
+    )
+
+    enriched = rubric_rerank(
+        enriched,
+        role_text=role_text,
+        learner_profile=request.learner_profile,
+        ontology=ontology,
+    )
+
+    # Build the ontology narrative - this is what answers Jennifer C's
+    # May 12 question "how do I know these are the right skills?" The
+    # surface is collapsible on the Top 5 page; the data shipped here
+    # lets the UI explain the provenance of each skill in plain language.
+    role_analysis = result.get("role_analysis", {}) or {}
+    key_domains_ids = role_analysis.get("key_domains") or []
+    key_domains: list[dict] = []
+    for did in key_domains_ids:
+        dom = ontology.get_domain(did) if hasattr(ontology, "get_domain") else None
+        if dom:
+            key_domains.append({
+                "id": did,
+                "label": dom.get("label") or did,
+                "description": dom.get("description") or "",
+            })
+    from app.services.rubric_scorer import build_ontology_narrative
+    ontology_narrative = build_ontology_narrative(role_text, len(enriched), ontology)
+    ontology_narrative["key_domains"] = key_domains
+
     return {
-        "target_role": result.get("role_analysis", {}).get("primary_function", request.target_role or ""),
+        "target_role": role_text,
         "top_10_skills": enriched,
-        "role_analysis": result.get("role_analysis", {}),
+        "role_analysis": role_analysis,
+        "ontology_narrative": ontology_narrative,
         "reranked": reranked_top5 is not None,
+        "rubric_reranked": True,
     }
 
 
@@ -482,14 +536,76 @@ async def get_analysis_results(
     )
     profile = result.scalars().first()
 
-    # If full_result was saved, return it directly (complete fidelity)
+    # If full_result was saved, return it directly (complete fidelity).
+    # Enrich skills with current ontology proficiency_descriptions on the
+    # way out so revisited analyses pick up newly-populated rubrics (e.g.
+    # the May 18 backfill for D.DOM skills like SK.DOM.EDU.001) without
+    # forcing a re-parse of the JD.
     if goal.full_result:
+        from app.services.ontology import get_ontology_service
+        _ontology = get_ontology_service()
+
+        def _enrich(skill_list):
+            if not isinstance(skill_list, list):
+                return skill_list
+            out = []
+            for s in skill_list:
+                if not isinstance(s, dict):
+                    out.append(s)
+                    continue
+                sid = s.get("skill_id") or ""
+                descs = _ontology.get_proficiency_descriptions(sid)
+                obj = _ontology.get_skill(sid)
+                merged = dict(s)
+                if descs:
+                    merged["proficiency_descriptions"] = descs
+                if obj and not merged.get("skill_description"):
+                    merged["skill_description"] = obj.get("description", "") or ""
+                out.append(merged)
+            return out
+
+        result_obj = dict(goal.full_result) if isinstance(goal.full_result, dict) else goal.full_result
+        if isinstance(result_obj, dict):
+            for key in ("top_10_target_skills", "top_10_skill_gaps", "all_skill_gaps"):
+                if key in result_obj:
+                    result_obj[key] = _enrich(result_obj[key])
+
+            # Add the ontology narrative panel data so revisits show
+            # the same "how do I know these are the right skills?"
+            # surface as a fresh parse. Pull role_text from the saved
+            # role_analysis; pull candidate_count from the actual top10.
+            try:
+                from app.services.rubric_scorer import build_ontology_narrative
+                role_text = (
+                    (result_obj.get("role_analysis") or {}).get("primary_function")
+                    or goal.target_role
+                    or ""
+                )
+                candidate_count = len(result_obj.get("top_10_target_skills") or [])
+                narrative = build_ontology_narrative(role_text, candidate_count, _ontology)
+                # Resolve the domain IDs the parser flagged
+                key_domains_ids = (result_obj.get("role_analysis") or {}).get("key_domains") or []
+                kd_list = []
+                for did in key_domains_ids:
+                    if hasattr(_ontology, "get_domain"):
+                        dom = _ontology.get_domain(did)
+                        if dom:
+                            kd_list.append({
+                                "id": did,
+                                "label": dom.get("label") or did,
+                                "description": dom.get("description") or "",
+                            })
+                narrative["key_domains"] = kd_list
+                result_obj["ontology_narrative"] = narrative
+            except Exception:
+                pass
+
         return {
             "user_id": goal.user_id,
             "goal_id": goal.id,
             "skill_gap_id": skill_gap.id if skill_gap else None,
             "learning_path_id": learning_path.id if learning_path else None,
-            "result": goal.full_result,
+            "result": result_obj,
         }
 
     # Fallback: reconstruct from DB fields (older analyses without full_result)

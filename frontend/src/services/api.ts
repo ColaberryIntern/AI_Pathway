@@ -108,6 +108,34 @@ export const parseJDProfile = async (params: {
 }
 
 // Analysis
+// Path completion summary (P3 #4 - Jennifer C stickiness ask).
+export const getPathSummary = async (pathId: string): Promise<{
+  path_id: string
+  path_title: string
+  all_chapters_complete: boolean
+  stats: { lessons_completed: number; lessons_total: number; percent_complete: number; chapter_count: number }
+  skills_completed: Array<{
+    skill_id: string
+    skill_name: string
+    domain_id: string
+    current_level: number
+    target_level: number
+    level_label_target: string
+  }>
+  next_step_recommendations: Array<{
+    kind: string
+    skill_id: string
+    skill_name: string
+    from_level: number
+    to_level: number
+    rationale: string
+  }>
+  retake: { recommended_date: string; message: string }
+}> => {
+  const { data } = await api.get(`/learning/${pathId}/summary`)
+  return data
+}
+
 export const runFullAnalysis = async (params: {
   profile_id?: string
   custom_profile?: Record<string, unknown>
@@ -115,6 +143,10 @@ export const runFullAnalysis = async (params: {
   target_role?: string
   skip_assessment?: boolean
   self_assessed_skills?: Record<string, number>
+  // Skill IDs the user selected on the Top 5 page, in display order.
+  // The backend uses this to scope path generation and to fix chapter
+  // ordering so the dashboard sidebar matches what the user saw.
+  selected_skill_ids?: string[]
 }): Promise<AnalysisResult> => {
   const { data } = await api.post('/analysis/full', params)
   return data
@@ -145,6 +177,25 @@ export const parseJDSkills = async (params: {
   }>
   role_analysis: Record<string, unknown>
   reranked?: boolean
+  // Ontology narrative panel (Jennifer C's May 12 ask: "how do I know
+  // these are the right skills?"). Shipped from the backend so the UI
+  // can render a transparent provenance surface on the Top 5 page.
+  ontology_narrative?: {
+    ontology_name: string
+    headline: string
+    role_family: string
+    key_domains: Array<{ id: string; label: string; description: string }>
+    rubric: {
+      name: string
+      formula: string
+      max_score: number
+      parameters: Array<{ name: string; weight: number; description: string }>
+    }
+    applied_floors: Array<{ name: string; rationale: string }>
+    diversity_rule: string
+    candidate_count: number
+    rationale_summary: string
+  }
 }> => {
   const { data } = await api.post('/analysis/parse-jd-skills', params)
   return data
