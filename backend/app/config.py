@@ -29,6 +29,13 @@ class Settings(BaseSettings):
     # Governance gate: when true, the recommendation judge runs on the analysis
     # endpoint and records a verdict (shadow mode). Default off; flip on to test.
     judge_gate_enabled: bool = False
+    # The judge LLM layer has run-to-run variance even at temperature 0.0 (a
+    # borderline recommendation can flip ACCEPT<->REJECT between identical calls).
+    # Per Trust Before Intelligence, the probabilistic judge is wrapped in an
+    # ensemble: sample K times, aggregate each parameter by median, and refuse to
+    # hard-act (accept/reject) when the K-run panel disagrees - route to human
+    # review instead. K=1 reproduces the legacy single-shot behavior.
+    judge_ensemble_k: int = 5
 
     # Database
     database_url: str = "sqlite+aiosqlite:///./ai_pathway.db"

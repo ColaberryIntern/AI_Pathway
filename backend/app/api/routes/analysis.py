@@ -425,8 +425,13 @@ async def parse_jd_skills(request: JDSkillsRequest):
 
             async def _shadow_judge():
                 try:
-                    from app.services.recommendation_judge import evaluate_recommendation, gate_decision
-                    _res = await evaluate_recommendation(jd_text=_jd, li_text=_li, skills=_top5)
+                    from app.services.recommendation_judge import (
+                        evaluate_recommendation_stable, gate_decision,
+                    )
+                    # Ensembled judge (K samples, median-aggregated, disagreement
+                    # routed to review): the LLM judge has run-to-run variance even
+                    # at temperature 0.0, so a single sample can flip the verdict.
+                    _res = await evaluate_recommendation_stable(jd_text=_jd, li_text=_li, skills=_top5)
                     logger.info("Judge gate verdict (shadow): %s", gate_decision(_res))
                 except Exception as _e:
                     logger.warning("Shadow judge failed (non-blocking): %s", _e)

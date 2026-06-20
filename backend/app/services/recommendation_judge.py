@@ -11,11 +11,18 @@ gate_decision() turns the verdict into a pass/action the pipeline can act on.
 This is the Governance gate the framework requires before a recommendation reaches
 the learner. Wire it into the recommendation path (analysis route / orchestrator).
 """
+import asyncio
 import json
 from pathlib import Path
+from statistics import median
 
+from app.config import get_settings
 from app.services.llm.factory import get_judge_provider
-from app.services.judge_scoring import deterministic_score, JudgeResult
+from app.services.judge_scoring import (
+    deterministic_score,
+    verdict_from_scores,
+    JudgeResult,
+)
 from app.services.ontology import get_ontology_service
 
 # Lexicon (GOALS) - the shared grading definitions, derived from the expert
@@ -68,12 +75,9 @@ def _build_prompt(jd_text: str, li_text: str, skills: list[dict], ontology_md: s
 Evaluate the recommended skill list using the four-parameter framework. Return the structured JSON response per the schema."""
 
 
-async def evaluate_recommendation(jd_text: str, li_text: str, skills: list[dict],
-                                  ontology_md: str | None = None) -> JudgeResult:
-    """Judge a final recommendation set and return the deterministic verdict."""
-    onto = get_ontology_service()
-    if ontology_md is None:
-        ontology_md = onto.format_skills_for_prompt()
+async def _judge_once(jd_text: str, li_text: str, skills: list[dict],
+                      ontology_md: str, valid_ids) -> JudgeResult:
+    """One judge sample -> one deterministic JudgeResult."""
     judge = get_judge_provider()  # pinned, calibrated model (gpt-4.1)
     raw = await judge.generate_structured(
         prompt=_build_prompt(jd_text, li_text, skills, ontology_md),
@@ -86,20 +90,101 @@ async def evaluate_recommendation(jd_text: str, li_text: str, skills: list[dict]
         raw.get("parameters", {}),
         total_skills=len(rec_ids),
         recommended_ids=rec_ids,
-        valid_skill_ids=onto.get_all_skill_ids(),
+        valid_skill_ids=valid_ids,
     )
+
+
+async def evaluate_recommendation(jd_text: str, li_text: str, skills: list[dict],
+                                  ontology_md: str | None = None) -> JudgeResult:
+    """Judge a final recommendation set with a single sample (legacy/back-compat).
+    Prefer evaluate_recommendation_stable for governance decisions."""
+    onto = get_ontology_service()
+    if ontology_md is None:
+        ontology_md = onto.format_skills_for_prompt()
+    return await _judge_once(jd_text, li_text, skills, ontology_md, onto.get_all_skill_ids())
+
+
+def aggregate_results(results: list[JudgeResult], k: int) -> dict:
+    """Aggregate K judge samples deterministically (Trust Before Intelligence).
+
+    Each sub-score is collapsed to its median across the K runs (robust to the
+    LLM's per-call variance), then the canonical gate logic produces the verdict.
+    A disagreement guard refuses to hard-act (ACCEPT/REJECT) when the K-run panel
+    is not unanimous: a non-unanimous panel is routed to ACCEPT_WITH_REVIEW so a
+    coin-flip never auto-accepts or auto-regenerates a recommendation.
+    """
+    if not results:
+        raise ValueError("aggregate_results requires at least one JudgeResult")
+    keys = ("jd_coverage", "role_fit_strength", "ontology_precision", "gap_validity")
+    med = {key: round(median(r["scores"][key] for r in results), 4) for key in keys}
+    composite, gate_failures, base_verdict = verdict_from_scores(med)
+
+    run_verdicts = [r["overall_verdict"] for r in results]
+    unanimous = len(set(run_verdicts)) == 1
+    verdict = base_verdict
+    routed = False
+    if not unanimous and base_verdict in ("ACCEPT", "REJECT"):
+        verdict = "ACCEPT_WITH_REVIEW"  # low judge confidence -> human review
+        routed = True
+
+    composites = [r["composite"] for r in results]
+    verdict_counts: dict[str, int] = {}
+    for v in run_verdicts:
+        verdict_counts[v] = verdict_counts.get(v, 0) + 1
+    return {
+        "composite": composite,
+        "overall_verdict": verdict,
+        "gate_failures": gate_failures,
+        "scores": med,
+        "regeneration_recommended": verdict == "REJECT",
+        # stability / observability
+        "n_runs": len(results),
+        "k_requested": k,
+        "unanimous": unanimous,
+        "routed_to_review_on_disagreement": routed,
+        "verdict_counts": verdict_counts,
+        "composite_median": round(median(composites), 4),
+        "composite_spread": round(max(composites) - min(composites), 4),
+    }
+
+
+async def evaluate_recommendation_stable(jd_text: str, li_text: str, skills: list[dict],
+                                         k: int | None = None,
+                                         ontology_md: str | None = None) -> dict:
+    """Ensembled judge: K concurrent samples aggregated to a stable verdict.
+
+    This is the governance entry point. K defaults to settings.judge_ensemble_k.
+    Returns the JudgeResult fields plus stability metadata (see aggregate_results).
+    """
+    if k is None:
+        k = get_settings().judge_ensemble_k
+    k = max(1, int(k))
+    onto = get_ontology_service()
+    if ontology_md is None:
+        ontology_md = onto.format_skills_for_prompt()
+    valid_ids = onto.get_all_skill_ids()
+    results = await asyncio.gather(
+        *[_judge_once(jd_text, li_text, skills, ontology_md, valid_ids) for _ in range(k)]
+    )
+    return aggregate_results(list(results), k)
 
 
 _ACTION = {"ACCEPT": "accept", "ACCEPT_WITH_REVIEW": "review", "REJECT": "regenerate"}
 
 
-def gate_decision(result: JudgeResult) -> dict:
-    """Deterministic gate decision from a JudgeResult."""
+def gate_decision(result: JudgeResult | dict) -> dict:
+    """Deterministic gate decision from a JudgeResult or an ensemble result.
+    Passes through stability metadata when the result came from the ensemble."""
     verdict = result["overall_verdict"]
-    return {
+    decision = {
         "pass": verdict != "REJECT",
         "verdict": verdict,
         "action": _ACTION.get(verdict, "regenerate"),
         "composite": result["composite"],
         "gate_failures": result["gate_failures"],
     }
+    for key in ("unanimous", "composite_spread", "verdict_counts",
+                "routed_to_review_on_disagreement", "n_runs"):
+        if key in result:
+            decision[key] = result[key]
+    return decision
