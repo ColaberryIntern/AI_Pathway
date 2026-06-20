@@ -11,10 +11,10 @@ logger = logging.getLogger(__name__)
 class OpenAIProvider(BaseLLMProvider):
     """OpenAI LLM provider."""
 
-    def __init__(self):
+    def __init__(self, model: str | None = None):
         settings = get_settings()
         self.client = AsyncOpenAI(api_key=settings.openai_api_key)
-        self.model = settings.openai_model
+        self.model = model or settings.openai_model  # model override -> pinnable judge
 
     async def generate(
         self,

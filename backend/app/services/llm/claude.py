@@ -8,10 +8,10 @@ from app.config import get_settings
 class ClaudeProvider(BaseLLMProvider):
     """Claude/Anthropic LLM provider."""
 
-    def __init__(self):
+    def __init__(self, model: str | None = None):
         settings = get_settings()
         self.client = AsyncAnthropic(api_key=settings.anthropic_api_key)
-        self.model = settings.claude_model
+        self.model = model or settings.claude_model  # model override -> pinnable judge
 
     async def generate(
         self,

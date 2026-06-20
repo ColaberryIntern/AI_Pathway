@@ -21,6 +21,15 @@ class Settings(BaseSettings):
     gcp_region: str = "us-central1"
     vertex_model: str = "gemini-2.0-flash-exp"
 
+    # Judge model (Trust Before Intelligence). The judge/evaluator runs on a
+    # pinned, calibrated model independent of the generation provider. gpt-4.1 per
+    # the Jun 2026 calibration (reproduces the expert reference; gpt-4o under-reads).
+    judge_provider: Literal["claude", "openai", "vertex"] = "openai"
+    judge_model: str = "gpt-4.1"
+    # Governance gate: when true, the recommendation judge runs on the analysis
+    # endpoint and records a verdict (shadow mode). Default off; flip on to test.
+    judge_gate_enabled: bool = False
+
     # Database
     database_url: str = "sqlite+aiosqlite:///./ai_pathway.db"
 
@@ -54,6 +63,12 @@ class Settings(BaseSettings):
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"
+        # 2026-06-03: allow extraneous env vars to be present without
+        # rejection. Lets backend code run from contexts (e.g. the
+        # rubric_compare_v3.py harness in the project root) that load
+        # both backend/.env and project-root /.env which has unrelated
+        # MSSQL_* / GMAIL_* keys for the Basecamp + send-* scripts.
+        extra = "ignore"
 
 
 @lru_cache

@@ -9,14 +9,14 @@ from app.config import get_settings
 class VertexAIProvider(BaseLLMProvider):
     """Vertex AI (Gemini) LLM provider."""
 
-    def __init__(self):
+    def __init__(self, model: str | None = None):
         settings = get_settings()
         # Initialize Vertex AI
         vertexai.init(
             project=settings.gcp_project_id,
             location=settings.gcp_region,
         )
-        self.model_name = settings.vertex_model
+        self.model_name = model or settings.vertex_model  # model override -> pinnable judge
         self.model = GenerativeModel(self.model_name)
 
     async def generate(
