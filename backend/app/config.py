@@ -36,6 +36,15 @@ class Settings(BaseSettings):
     # hard-act (accept/reject) when the K-run panel disagrees - route to human
     # review instead. K=1 reproduces the legacy single-shot behavior.
     judge_ensemble_k: int = 5
+    # Gate mode (only relevant when judge_gate_enabled):
+    #   "shadow"  - run the gate in a detached task, only LOG the outcome; the
+    #               response is never altered and no latency is added (default).
+    #   "enforce" - run the gate synchronously; on REJECT, regenerate from the
+    #               candidate pool with bounded retries, replace the top-5 with the
+    #               gated set, and flag needs_human_review. Adds judge latency.
+    judge_gate_mode: Literal["shadow", "enforce"] = "shadow"
+    # Bounded regeneration budget for enforce mode (total judge passes per request).
+    judge_gate_max_attempts: int = 3
 
     # Database
     database_url: str = "sqlite+aiosqlite:///./ai_pathway.db"

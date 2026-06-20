@@ -76,8 +76,9 @@ Evaluate the recommended skill list using the four-parameter framework. Return t
 
 
 async def _judge_once(jd_text: str, li_text: str, skills: list[dict],
-                      ontology_md: str, valid_ids) -> JudgeResult:
-    """One judge sample -> one deterministic JudgeResult."""
+                      ontology_md: str, valid_ids) -> tuple[JudgeResult, dict]:
+    """One judge sample -> (deterministic JudgeResult, raw LLM parameters).
+    The raw params carry the per-skill fit detail the regeneration step needs."""
     judge = get_judge_provider()  # pinned, calibrated model (gpt-4.1)
     raw = await judge.generate_structured(
         prompt=_build_prompt(jd_text, li_text, skills, ontology_md),
@@ -85,13 +86,15 @@ async def _judge_once(jd_text: str, li_text: str, skills: list[dict],
         system_prompt=_SYSTEM_PROMPT + LEXICON,
         temperature=0.0,
     )
+    params = raw.get("parameters", {})
     rec_ids = [s.get("skill_id") for s in skills if s.get("skill_id")]
-    return deterministic_score(
-        raw.get("parameters", {}),
+    result = deterministic_score(
+        params,
         total_skills=len(rec_ids),
         recommended_ids=rec_ids,
         valid_skill_ids=valid_ids,
     )
+    return result, params
 
 
 async def evaluate_recommendation(jd_text: str, li_text: str, skills: list[dict],
@@ -101,10 +104,30 @@ async def evaluate_recommendation(jd_text: str, li_text: str, skills: list[dict]
     onto = get_ontology_service()
     if ontology_md is None:
         ontology_md = onto.format_skills_for_prompt()
-    return await _judge_once(jd_text, li_text, skills, ontology_md, onto.get_all_skill_ids())
+    result, _params = await _judge_once(
+        jd_text, li_text, skills, ontology_md, onto.get_all_skill_ids())
+    return result
 
 
-def aggregate_results(results: list[JudgeResult], k: int) -> dict:
+def _aggregate_skill_fit(raws: list[dict]) -> tuple[dict, list[str]]:
+    """Majority fit_level per recommended skill id across K runs (robust to the
+    judge's per-call variance). Returns (skill_fit, weak_skill_ids) where weak =
+    skills whose majority verdict is not role_specific (the regeneration targets)."""
+    from collections import Counter
+    by_id: dict[str, Counter] = {}
+    for raw in raws or []:
+        for s in ((raw.get("role_fit_strength") or {}).get("skills") or []):
+            sid = s.get("id") or s.get("skill_id")
+            if not sid:
+                continue
+            by_id.setdefault(sid, Counter())[s.get("fit_level", "generic")] += 1
+    fit = {sid: c.most_common(1)[0][0] for sid, c in by_id.items()}
+    weak = [sid for sid, lvl in fit.items() if lvl != "role_specific"]
+    return fit, weak
+
+
+def aggregate_results(results: list[JudgeResult], k: int,
+                      raws: list[dict] | None = None) -> dict:
     """Aggregate K judge samples deterministically (Trust Before Intelligence).
 
     Each sub-score is collapsed to its median across the K runs (robust to the
@@ -112,6 +135,10 @@ def aggregate_results(results: list[JudgeResult], k: int) -> dict:
     A disagreement guard refuses to hard-act (ACCEPT/REJECT) when the K-run panel
     is not unanimous: a non-unanimous panel is routed to ACCEPT_WITH_REVIEW so a
     coin-flip never auto-accepts or auto-regenerates a recommendation.
+
+    When raws (the per-run LLM parameters) are supplied, the result also carries
+    skill_fit (majority fit_level per skill) and weak_skill_ids (the regeneration
+    targets).
     """
     if not results:
         raise ValueError("aggregate_results requires at least one JudgeResult")
@@ -131,7 +158,7 @@ def aggregate_results(results: list[JudgeResult], k: int) -> dict:
     verdict_counts: dict[str, int] = {}
     for v in run_verdicts:
         verdict_counts[v] = verdict_counts.get(v, 0) + 1
-    return {
+    out = {
         "composite": composite,
         "overall_verdict": verdict,
         "gate_failures": gate_failures,
@@ -146,6 +173,11 @@ def aggregate_results(results: list[JudgeResult], k: int) -> dict:
         "composite_median": round(median(composites), 4),
         "composite_spread": round(max(composites) - min(composites), 4),
     }
+    if raws is not None:
+        skill_fit, weak = _aggregate_skill_fit(raws)
+        out["skill_fit"] = skill_fit
+        out["weak_skill_ids"] = weak
+    return out
 
 
 async def evaluate_recommendation_stable(jd_text: str, li_text: str, skills: list[dict],
@@ -163,10 +195,12 @@ async def evaluate_recommendation_stable(jd_text: str, li_text: str, skills: lis
     if ontology_md is None:
         ontology_md = onto.format_skills_for_prompt()
     valid_ids = onto.get_all_skill_ids()
-    results = await asyncio.gather(
+    pairs = await asyncio.gather(
         *[_judge_once(jd_text, li_text, skills, ontology_md, valid_ids) for _ in range(k)]
     )
-    return aggregate_results(list(results), k)
+    results = [p[0] for p in pairs]
+    raws = [p[1] for p in pairs]
+    return aggregate_results(results, k, raws)
 
 
 _ACTION = {"ACCEPT": "accept", "ACCEPT_WITH_REVIEW": "review", "REJECT": "regenerate"}
