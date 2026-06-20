@@ -53,3 +53,40 @@ no validated improvement path. Required before promotion:
    with a single failed gate should be REVIEW rather than REJECT.
 4. Re-run this sweep after any calibration change; promote only when the REJECT set is all
    true-positive and the fallback is proven.
+
+---
+
+## ADDENDUM (same day): the real root cause was judge run-to-run variance
+
+Classifying the 4 REJECTs above showed the verdicts were **not reproducible**. Re-running the
+judge on identical input (pinned gpt-4.1, temperature 0.0) produced different verdicts. Measured
+5 runs per role:
+
+| Role | Composites (5 runs) | Verdicts | Spread |
+|---|---|---|---|
+| Senior Frontend Engineer | 0.80 0.78 0.78 0.78 0.78 | REJECT ×5 | 0.02 |
+| AI Security Engineer | 0.63 0.67 0.74 0.63 0.68 | REJECT ×5 | 0.11 |
+| AI Content Editor | 0.76 0.77 0.69 0.76 0.80 | REJECT×4 REVIEW×1 | 0.12 |
+| Learning & Development | 0.79 0.59 0.56 0.57 0.86 | ACCEPT / REVIEW / REJECT | **0.29** |
+
+The LLM judge layer has material variance even at temperature 0.0 (OpenAI models are not bitwise
+deterministic). The deterministic scorer was faithful; it was scoring a single noisy sample. This
+is the months-long "Halyna flicker" root cause and a Trust-Before-Intelligence **determinism**
+violation at the Intelligence layer.
+
+**Fix (PR #3):** `evaluate_recommendation_stable()` ensembles the judge — K samples (default 5),
+median-aggregate each parameter, then the canonical gate; a disagreement guard routes any
+non-unanimous panel to ACCEPT_WITH_REVIEW. Validated on prod: the 4 flaky rejects resolve to **3
+unanimous REJECTs + 1 routed-to-review**, no flipping.
+
+### Reclassification of the original 4 REJECTs (now stable)
+- **Senior Frontend Engineer — TRUE reject.** AI skills (eval types, prompt debugging,
+  explainability UX) don't fit a frontend IC role; role_fit 0.4 (2/5 skills relevant).
+- **AI Security Engineer — TRUE reject.** Genuine coverage gap: threat modeling and model access
+  controls (in the JD) are not in the recommended set.
+- **Learning & Development — TRUE reject.** Low gap_validity (0.4) + partial JD coverage.
+- **AI Content Editor — borderline → human review.**
+
+These are **recommender-quality** issues to fix upstream, not judge noise. Updated path to
+hard-gating: the gate is now trustworthy, so (1) is done. Remaining: wire the regeneration
+fallback, optionally cache verdicts by input hash for full determinism, then promote.
