@@ -3,6 +3,37 @@ import json
 from app.agents.base import BaseAgent
 
 
+def normalize_skill_scores(raw: dict, valid_skill_ids: set | None = None) -> dict:
+    """Trust Before Intelligence deterministic guard on LLM-reported assessment.
+
+    Never trust the model's self-reported proficiency numbers. Clamp assessed_level
+    to an int in 0..5 and confidence to 0..1, drop skills whose ID is not in the
+    ontology, and DERIVE state_a_skills from the validated scores rather than
+    accepting a separately hallucinated mapping (which is how a learner's expert
+    self-assessment got recorded as level 2).
+    """
+    cleaned = []
+    for s in (raw or {}).get("skill_scores") or []:
+        sid = s.get("skill_id")
+        if not sid:
+            continue
+        if valid_skill_ids is not None and sid not in valid_skill_ids:
+            continue
+        try:
+            lvl = int(round(float(s.get("assessed_level", 0))))
+        except (TypeError, ValueError):
+            lvl = 0
+        lvl = max(0, min(5, lvl))
+        try:
+            conf = float(s.get("confidence", 0))
+        except (TypeError, ValueError):
+            conf = 0.0
+        conf = max(0.0, min(1.0, conf))
+        cleaned.append({**s, "skill_id": sid, "assessed_level": lvl, "confidence": round(conf, 3)})
+    state_a = {s["skill_id"]: s["assessed_level"] for s in cleaned}  # derived deterministically
+    return {**(raw or {}), "skill_scores": cleaned, "state_a_skills": state_a}
+
+
 class AssessmentAgent(BaseAgent):
     """Agent for generating and scoring skill assessment quizzes."""
 
@@ -154,4 +185,12 @@ Return the assessed skill levels."""
             }
         }
 
-        return await self._call_llm_structured(prompt, output_schema)
+        result = await self._call_llm_structured(prompt, output_schema)
+        # Trust Before Intelligence: deterministically bound/validate the scores
+        # and derive the skill->level map; do not trust the LLM's raw numbers.
+        try:
+            from app.services.ontology import get_ontology_service
+            valid_ids = get_ontology_service().get_all_skill_ids()
+        except Exception:
+            valid_ids = None
+        return normalize_skill_scores(result, valid_ids)

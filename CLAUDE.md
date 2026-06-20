@@ -15,6 +15,29 @@ Claude's role: reason, plan, orchestrate, validate, and modify instructions/code
 
 ---
 
+# Trust Before Intelligence (MANDATORY for all AI work)
+
+All AI work in this repository MUST apply the **Trust Before Intelligence** framework (the Architecture of Trust) by Ram Katamaraja, Colaberry. Canonical reference: https://github.com/colaberry/trust-before-intelligence-book. This is the governing design philosophy for every agent, judge, pipeline, prompt, model integration, and evaluation we build. It is not optional.
+
+**Core tenet:** earn trust before relying on intelligence. The model's probabilistic output is never trusted on its own; it is wrapped in deterministic verification, governance, and observability. Anything the model would self-report that can be computed deterministically (scores, gates, arithmetic, ID/lookup validation) MUST be computed in code, never asked of the model.
+
+Apply the three pillars:
+
+1. **INPACT (what the AI must provide):** Instant, Natural, Permitted, Adaptive, Contextual, Transparent. The requirements checklist for any AI capability.
+2. **7-Layer Architecture (how to build it):** Storage -> Real-Time -> Semantic -> Intelligence -> Governance -> Observability -> Orchestration. Diagnose failures by layer and fix the binding layer, not a random knob.
+3. **GOALS (how to measure):** Governance, Observability, Availability, Lexicon, Solid.
+
+**Hard rules:**
+- Every new or changed AI feature names which INPACT dimensions it serves and which of the 7 layers it touches, recorded in `PROGRESS.md`.
+- Judges and evaluators: the LLM produces only per-item judgments; a deterministic Python step computes composites, gates, and verdicts. Pin the judge model and calibrate it against a golden reference (the Lexicon dimension). Do not let an LLM grade its own arithmetic.
+- Diagnose AI failures with the layer model BEFORE changing code: identify the binding layer (often Intelligence, e.g. the model choice) instead of tuning one parameter at a time.
+- When assessing or escalating an AI system's production-readiness, score it with INPACT (1-6 per dimension, total / 36 x 100). Below 80/100 is not production-ready.
+- A model-class or judge-model change remains a Strategic Decision (escalate) per the Autonomy Model.
+
+This complements the Core Principle above and the Contract, Security, Failure-First, Observability, and Test layers below. Where requirements overlap, apply the stricter one. The AI Pathway judge fix (2026-06-20) is the worked example: `docs/jun19_trust_arch/`.
+
+---
+
 # Architecture & System Layers
 
 **Model:** Agent-First, Deterministic-Execution with Test-First Validation.
@@ -740,6 +763,14 @@ async with AsyncSessionLocal() as db:
 Or, for targeted invalidation, only clear lessons whose `content.meta.skill_id` mismatches the parent module's `skill_id` (see `sweep_integrity.py` for the query).
 
 ---
+
+# Operational Credentials (retrieval, never commit values)
+
+Two outbound credentials are not stored in this repo. Retrieve them at run time; never write the values to `.env` or commit them.
+
+- **Mandrill API key (outbound email transport).** Pull from the prod `accelerator-backend` container env at send time:
+  `ssh root@95.216.199.47 'docker exec accelerator-backend printenv MANDRILL_API_KEY'`. The stale `backend/scripts/.secrets/mandrill.txt` is NOT valid. SMTP: host `smtp.mandrillapp.com:587`, user `ali@colaberry.com`, pass = that key.
+- **Basecamp OAuth token.** Lives in `CCPP.Basecamp_AuthInfo` (MSSQL on the prod server, reachable only from a prod container, e.g. `accelerator-backend`, which has `mssql` in `/app/node_modules`). Query: `SELECT TOP 1 AccessToken FROM Basecamp_AuthInfo WHERE IsActive = 1 ORDER BY BasecampAuthInfoID DESC`; strip a leading `Bearer `. Run the DB read AND the Basecamp API call **in one process on prod** (`docker cp` the script into `accelerator-backend:/app/` so `require('mssql')` resolves, then `docker exec -w /app`) - fetching the ~400-char token across SSH/`docker exec` into the local shell mangles it. Account id `3945211`, AI Pathway bucket `46697389`. Caveat: the token rotates ~every 2 weeks via an external re-auth process; if Basecamp returns `401 OAuth token expired (rekeyed_identity)`, the stored token has been superseded server-side and the re-auth at `launchpad.37signals.com/authorization/new` must be re-run before BC writes will work. Not fixable by re-querying the DB.
 
 # Tooling Assumptions
 

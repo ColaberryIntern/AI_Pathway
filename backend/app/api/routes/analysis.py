@@ -303,7 +303,39 @@ async def parse_jd_skills(request: JDSkillsRequest):
     if len(high_medium) >= 3:
         top_skills = high_medium
 
-    # ── Step 2: Re-rank with learner profile (3-step chain) ─────────
+    # ── Step 2 of Luda's gap-aware pipeline (added 2026-06-02): ─────
+    # Adjust the JD parser's candidate list based on the learner's
+    # actual profile. Drop skills the learner already has at-target,
+    # downgrade partial-experience skills, optionally add depth skills
+    # the JD parser missed. The rubric is intentionally untouched per
+    # Luda's "rubric non-negotiable applies across the board" stance;
+    # this step shapes the data that enters the rubric.
+    role_text_for_adjuster = (
+        result.get("role_analysis", {}).get("primary_function")
+        or request.target_role or ""
+    )
+    learner_adjustment_meta: dict = {}
+    if request.learner_profile and top_skills:
+        try:
+            from app.agents.learner_adjuster import LearnerAdjusterAgent
+            adjuster = LearnerAdjusterAgent()
+            adj_result = await adjuster.execute({
+                "candidates": top_skills,
+                "learner_profile": request.learner_profile,
+                "target_role": role_text_for_adjuster,
+                "jd_text": request.jd_text,
+            })
+            top_skills = adj_result.get("adjusted_candidates", top_skills)
+            learner_adjustment_meta = {
+                "adjustments": adj_result.get("adjustments", []),
+                "additions": adj_result.get("additions", []),
+                "summary": adj_result.get("summary", ""),
+                "duration_ms": adj_result.get("duration_ms"),
+            }
+        except Exception as e:
+            logger.warning("Learner-adjustment step failed, continuing with raw candidates: %s", e)
+
+    # ── Step 2b: existing learner-aware reorder (no drops, just order) ─
     reranked_top5 = None
     if request.learner_profile and top_skills:
         try:
@@ -339,24 +371,17 @@ async def parse_jd_skills(request: JDSkillsRequest):
     # (Sr AI PMM / Sr AI PM / AI Strategy) and a domain-skill mandate
     # (marketing / L&D / healthcare / legal / finance / HR) so the right
     # skills land in the top 5 regardless of how the LLM ranked them.
-    from app.services.rubric_scorer import (
-        rerank as rubric_rerank,
-        inject_foundational_prm_if_missing,
-    )
+    from app.services.rubric_scorer import rerank as rubric_rerank
     role_text = result.get("role_analysis", {}).get("primary_function") or request.target_role or ""
 
-    # Closes Luda's May 19 Halyna depth complaint structurally: if the
-    # role is a vertical and the learner is non-technical and the LLM
-    # forgot to include any foundational PRM in the candidate list,
-    # inject up to 2 of them before the rerank so the rubric can rank
-    # them. Without this, the rubric cannot promote skills the LLM never
-    # surfaced as candidates.
-    enriched = inject_foundational_prm_if_missing(
-        enriched,
-        role_text=role_text,
-        learner_profile=request.learner_profile,
-        ontology=ontology,
-    )
+    # NOTE 2026-06-02: inject_foundational_prm_if_missing() was REMOVED
+    # from this pipeline per Luda's "rubric non-negotiable applies across
+    # the board" stance in the 2026-06-02 meeting. The injector was a
+    # persona-specific pre-rubric tweak added 2026-05-20 to fix Halyna's
+    # May 19 depth complaint, which Luda has since reversed (May 27 +
+    # June 1). The new gap-aware Step 2 above (LearnerAdjusterAgent)
+    # handles depth-vs-foundation through learner-state awareness, which
+    # is the architectural answer rather than a persona-specific patch.
 
     enriched = rubric_rerank(
         enriched,
@@ -384,6 +409,32 @@ async def parse_jd_skills(request: JDSkillsRequest):
     ontology_narrative = build_ontology_narrative(role_text, len(enriched), ontology)
     ontology_narrative["key_domains"] = key_domains
 
+    # Trust Before Intelligence - Governance gate (SHADOW, NON-BLOCKING). When
+    # settings.judge_gate_enabled is on, schedule the calibrated deterministic
+    # judge on the final top 5 as a detached background task that only LOGS the
+    # verdict - it never blocks or alters this response (no added latency).
+    # Flag-gated + fully exception-safe. Hard-gating (act on REJECT with a
+    # fallback set) is a deliberate later step once shadow verdicts look right.
+    try:
+        from app.config import get_settings as _gs
+        if getattr(_gs(), "judge_gate_enabled", False):
+            import asyncio as _asyncio
+            _top5 = list(enriched[:5])
+            _jd = request.jd_text or ""
+            _li = json.dumps(request.learner_profile or {})
+
+            async def _shadow_judge():
+                try:
+                    from app.services.recommendation_judge import evaluate_recommendation, gate_decision
+                    _res = await evaluate_recommendation(jd_text=_jd, li_text=_li, skills=_top5)
+                    logger.info("Judge gate verdict (shadow): %s", gate_decision(_res))
+                except Exception as _e:
+                    logger.warning("Shadow judge failed (non-blocking): %s", _e)
+
+            _asyncio.create_task(_shadow_judge())
+    except Exception as e:
+        logger.warning("Judge gate scheduling failed (non-blocking): %s", e)
+
     return {
         "target_role": role_text,
         "top_10_skills": enriched,
@@ -391,6 +442,7 @@ async def parse_jd_skills(request: JDSkillsRequest):
         "ontology_narrative": ontology_narrative,
         "reranked": reranked_top5 is not None,
         "rubric_reranked": True,
+        "learner_adjustment": learner_adjustment_meta or None,
     }
 
 
