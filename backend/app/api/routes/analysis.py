@@ -409,29 +409,67 @@ async def parse_jd_skills(request: JDSkillsRequest):
     ontology_narrative = build_ontology_narrative(role_text, len(enriched), ontology)
     ontology_narrative["key_domains"] = key_domains
 
-    # Trust Before Intelligence - Governance gate (SHADOW, NON-BLOCKING). When
-    # settings.judge_gate_enabled is on, schedule the calibrated deterministic
-    # judge on the final top 5 as a detached background task that only LOGS the
-    # verdict - it never blocks or alters this response (no added latency).
-    # Flag-gated + fully exception-safe. Hard-gating (act on REJECT with a
-    # fallback set) is a deliberate later step once shadow verdicts look right.
+    # Trust Before Intelligence - Governance gate. Flag-gated + fully
+    # exception-safe (a judge failure never breaks the recommendation).
+    #   shadow  (default): a detached task runs the ensembled gate + regeneration
+    #     and only LOGS the outcome - the response is untouched, no added latency.
+    #   enforce: the gate runs synchronously; on REJECT it regenerates from the
+    #     candidate pool (enriched) with bounded retries, the top-5 is replaced
+    #     with the gated set, and governance metadata (incl. needs_human_review)
+    #     is attached to the response. Degrades gracefully - always returns skills.
+    governance_meta: dict | None = None
     try:
         from app.config import get_settings as _gs
-        if getattr(_gs(), "judge_gate_enabled", False):
-            import asyncio as _asyncio
-            _top5 = list(enriched[:5])
+        _settings = _gs()
+        if getattr(_settings, "judge_gate_enabled", False):
             _jd = request.jd_text or ""
             _li = json.dumps(request.learner_profile or {})
+            _pool = list(enriched)
+            _mode = getattr(_settings, "judge_gate_mode", "shadow")
+            _max_attempts = getattr(_settings, "judge_gate_max_attempts", 3)
 
-            async def _shadow_judge():
+            if _mode == "enforce":
                 try:
-                    from app.services.recommendation_judge import evaluate_recommendation, gate_decision
-                    _res = await evaluate_recommendation(jd_text=_jd, li_text=_li, skills=_top5)
-                    logger.info("Judge gate verdict (shadow): %s", gate_decision(_res))
+                    from app.services.recommendation_gate import gated_recommendation
+                    _o = await gated_recommendation(
+                        _jd, _li, _pool, max_attempts=_max_attempts, top_n=5)
+                    logger.info(
+                        "Judge gate (enforce): verdict=%s regenerated=%s needs_review=%s exhausted=%s",
+                        _o["decision"].get("verdict"), _o["regenerated"],
+                        _o["needs_human_review"], _o["exhausted"])
+                    if _o["skills"]:
+                        _final_ids = {s.get("skill_id") for s in _o["skills"]}
+                        _rest = [s for s in enriched if s.get("skill_id") not in _final_ids]
+                        enriched = list(_o["skills"]) + _rest
+                    governance_meta = {
+                        "gated": True,
+                        "verdict": _o["decision"].get("verdict"),
+                        "needs_human_review": _o["needs_human_review"],
+                        "regenerated": _o["regenerated"],
+                        "exhausted": _o["exhausted"],
+                        "composite": _o["decision"].get("composite"),
+                        "attempts": _o["attempts"],
+                    }
                 except Exception as _e:
-                    logger.warning("Shadow judge failed (non-blocking): %s", _e)
+                    logger.warning("Judge gate enforce failed (non-blocking, serving ungated): %s", _e)
+            else:  # shadow
+                import asyncio as _asyncio
 
-            _asyncio.create_task(_shadow_judge())
+                async def _shadow_judge():
+                    try:
+                        from app.services.recommendation_gate import gated_recommendation
+                        _o = await gated_recommendation(
+                            _jd, _li, _pool, max_attempts=_max_attempts, top_n=5)
+                        logger.info(
+                            "Judge gate verdict (shadow): verdict=%s regenerated=%s "
+                            "needs_review=%s exhausted=%s attempts=%s",
+                            _o["decision"].get("verdict"), _o["regenerated"],
+                            _o["needs_human_review"], _o["exhausted"],
+                            [a["skill_ids"] for a in _o["attempts"]])
+                    except Exception as _e:
+                        logger.warning("Shadow judge failed (non-blocking): %s", _e)
+
+                _asyncio.create_task(_shadow_judge())
     except Exception as e:
         logger.warning("Judge gate scheduling failed (non-blocking): %s", e)
 
@@ -443,6 +481,7 @@ async def parse_jd_skills(request: JDSkillsRequest):
         "reranked": reranked_top5 is not None,
         "rubric_reranked": True,
         "learner_adjustment": learner_adjustment_meta or None,
+        "governance": governance_meta,
     }
 
 

@@ -78,6 +78,20 @@ def gap_from_skills(gap: dict | None) -> float:
     return (sum(vals) / len(vals)) if vals else 0.0
 
 
+def verdict_from_scores(scores: dict[str, float]) -> tuple[float, list[str], str]:
+    """Pure: turn the four sub-scores into (composite, gate_failures, verdict).
+    Single source of truth for the gate thresholds, reused by the ensemble path."""
+    composite = round(sum(scores[k] * w for k, w in WEIGHTS.items()), 4)
+    gate_failures = [k for k, g in GATES.items() if scores[k] < g]
+    if gate_failures or composite < 0.70:
+        verdict = "REJECT"
+    elif composite >= 0.85:
+        verdict = "ACCEPT"
+    else:
+        verdict = "ACCEPT_WITH_REVIEW"
+    return composite, gate_failures, verdict
+
+
 def deterministic_score(parameters: dict, total_skills: int | None = None,
                         recommended_ids=None, valid_skill_ids=None) -> JudgeResult:
     p = parameters or {}
@@ -94,14 +108,7 @@ def deterministic_score(parameters: dict, total_skills: int | None = None,
         "ontology_precision": round(ont, 4),
         "gap_validity": round(gap_from_skills(p.get("gap_validity")), 4),
     }
-    composite = round(sum(scores[k] * w for k, w in WEIGHTS.items()), 4)
-    gate_failures = [k for k, g in GATES.items() if scores[k] < g]
-    if gate_failures or composite < 0.70:
-        verdict = "REJECT"
-    elif composite >= 0.85:
-        verdict = "ACCEPT"
-    else:
-        verdict = "ACCEPT_WITH_REVIEW"
+    composite, gate_failures, verdict = verdict_from_scores(scores)
     return JudgeResult(
         composite=composite, overall_verdict=verdict, gate_failures=gate_failures,
         scores=scores, regeneration_recommended=verdict == "REJECT",
