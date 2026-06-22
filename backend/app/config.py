@@ -52,6 +52,12 @@ class Settings(BaseSettings):
     # ChromaDB
     chroma_persist_directory: str = "./chroma_db"
 
+    # RAG (Vertex embeddings). When false, the retriever is an explicit no-op
+    # ("remove" cleanly) instead of accidentally degrading when GCP credentials
+    # are absent. When true, RAG is attempted and get_rag_status() reports whether
+    # it actually initialized (see docs/compliance/rag_diagnosis.md).
+    rag_enabled: bool = True
+
     # Embedding Model (unused - using Vertex AI embeddings)
     embedding_model: str = "text-embedding-004"
 

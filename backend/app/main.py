@@ -88,8 +88,14 @@ async def root():
 
 @app.get("/health")
 async def health_check():
-    """Health check endpoint."""
-    return {"status": "healthy"}
+    """Health check endpoint. Includes RAG availability so a degraded
+    Semantic layer (no-op retriever) is visible, not silent."""
+    try:
+        from app.services.rag.retriever import get_rag_status
+        rag = get_rag_status()
+    except Exception as e:  # never let health-reporting break health
+        rag = {"available": False, "retriever": "unknown", "reason": str(e)}
+    return {"status": "healthy", "rag": rag}
 
 
 if __name__ == "__main__":
