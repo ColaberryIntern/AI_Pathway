@@ -30,6 +30,7 @@ import time
 from typing import Awaitable, Callable, TypeVar
 
 from app.config import get_settings
+from app.correlation import get_correlation_id
 
 logger = logging.getLogger(__name__)
 
@@ -80,6 +81,8 @@ async def call_with_resilience(
     timeout = settings.llm_timeout_seconds if timeout is None else timeout
     max_retries = settings.llm_max_retries if max_retries is None else max_retries
     base_delay = settings.llm_retry_base_delay if base_delay is None else base_delay
+    if correlation_id is None:
+        correlation_id = get_correlation_id()  # trace LLM calls back to the request
 
     attempts = max(1, max_retries + 1)
     last_exc: BaseException | None = None
