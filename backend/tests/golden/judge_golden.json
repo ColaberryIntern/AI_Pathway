@@ -1,0 +1,528 @@
+{
+  "meta": {
+    "source": "docs/luda_jun19/judge_detail_v4_jun19.json (frozen raw judge parameters)",
+    "note": "expected = current deterministic_score recomputation (the trustworthy value). The stored deterministic block in the source was the LLM self-report and is NOT used.",
+    "judge_spec": "v4",
+    "cases": 3
+  },
+  "cases": [
+    {
+      "label": "halyna_set_a",
+      "skill_ids": [
+        "SK.EVL.001",
+        "SK.PRD.001",
+        "SK.RSN.003",
+        "SK.PRD.002",
+        "SK.CTIC.006",
+        "SK.PRM.020",
+        "SK.PRM.003"
+      ],
+      "parameters": {
+        "jd_coverage": {
+          "score": 0.5,
+          "gate_pass": false,
+          "requirement_analysis": [
+            {
+              "jd_requirement": "Lead and mentor a multinational team of campaign managers and specialists",
+              "category": "Leadership",
+              "ai_type": "none",
+              "ai_skill": null,
+              "tier": null,
+              "coverage": null,
+              "covered_by": null
+            },
+            {
+              "jd_requirement": "Develop and own the annual and quarterly global integrated campaign strategy",
+              "category": "Strategy",
+              "ai_type": "none",
+              "ai_skill": null,
+              "tier": null,
+              "coverage": null,
+              "covered_by": null
+            },
+            {
+              "jd_requirement": "Define campaign objectives, KPIs, and performance frameworks",
+              "category": "Operations",
+              "ai_type": "implied",
+              "ai_skill": "SK.PRD.002 - Workflow mapping",
+              "tier": "T1",
+              "coverage": "full",
+              "covered_by": "SK.PRD.002"
+            },
+            {
+              "jd_requirement": "Use data and insights to continually enhance targeting, messaging, and conversion paths",
+              "category": "Data Analysis",
+              "ai_type": "implied",
+              "ai_skill": "SK.PRM.020 - Draft -> critique -> revise",
+              "tier": "T2",
+              "coverage": "partial",
+              "covered_by": "SK.PRM.020"
+            },
+            {
+              "jd_requirement": "Test, learn, and iterate based on data-driven insights",
+              "category": "AI",
+              "ai_type": "explicit",
+              "ai_skill": "SK.PRM.003 - Prompt debugging & iteration",
+              "tier": "T2",
+              "coverage": "full",
+              "covered_by": "SK.PRM.003"
+            },
+            {
+              "jd_requirement": "Oversee campaign budgets and ensure effective resource allocation",
+              "category": "Finance",
+              "ai_type": "none",
+              "ai_skill": null,
+              "tier": null,
+              "coverage": null,
+              "covered_by": null
+            }
+          ],
+          "reasoning": "The recommended skills partially cover the AI-relevant requirements. Full coverage is achieved for workflow mapping and prompt debugging, but only partial coverage for data-driven insights."
+        },
+        "role_fit_strength": {
+          "score": 0.5,
+          "gate_pass": false,
+          "skills": [
+            {
+              "id": "SK.EVL.001",
+              "fit_level": "generic",
+              "reasoning": "Evaluation types are foundational and not specific to the role."
+            },
+            {
+              "id": "SK.PRD.001",
+              "fit_level": "contextually_relevant",
+              "reasoning": "Use-case selection is relevant to strategy but not directly tied to JD requirements."
+            },
+            {
+              "id": "SK.RSN.003",
+              "fit_level": "generic",
+              "reasoning": "Deep research agents are not directly relevant to the role."
+            },
+            {
+              "id": "SK.PRD.002",
+              "fit_level": "role_specific",
+              "reasoning": "Workflow mapping directly supports campaign strategy and planning."
+            },
+            {
+              "id": "SK.CTIC.006",
+              "fit_level": "generic",
+              "reasoning": "Recognizing AI-generated content is a general skill."
+            },
+            {
+              "id": "SK.PRM.020",
+              "fit_level": "contextually_relevant",
+              "reasoning": "Drafting and revising is relevant but not directly tied to JD requirements."
+            },
+            {
+              "id": "SK.PRM.003",
+              "fit_level": "role_specific",
+              "reasoning": "Prompt debugging and iteration directly supports data-driven insights."
+            }
+          ]
+        },
+        "ontology_precision": {
+          "score": 1.0,
+          "gate_pass": true,
+          "invalid_skills": []
+        },
+        "gap_validity": {
+          "score": 0.71,
+          "gate_pass": true,
+          "skills": [
+            {
+              "id": "SK.EVL.001",
+              "gap_level": "partial_gap",
+              "evidence": "Candidate has basic exposure to AI tools."
+            },
+            {
+              "id": "SK.PRD.001",
+              "gap_level": "genuine_gap",
+              "evidence": "No evidence of use-case selection experience."
+            },
+            {
+              "id": "SK.RSN.003",
+              "gap_level": "genuine_gap",
+              "evidence": "No evidence of deep research agent experience."
+            },
+            {
+              "id": "SK.PRD.002",
+              "gap_level": "already_acquired",
+              "evidence": "Candidate has experience in orchestrating multi-channel campaigns."
+            },
+            {
+              "id": "SK.CTIC.006",
+              "gap_level": "partial_gap",
+              "evidence": "Candidate has basic exposure to AI tools."
+            },
+            {
+              "id": "SK.PRM.020",
+              "gap_level": "partial_gap",
+              "evidence": "Candidate has experience in digital marketing strategies."
+            },
+            {
+              "id": "SK.PRM.003",
+              "gap_level": "already_acquired",
+              "evidence": "Candidate has experience in data-driven marketing strategies."
+            }
+          ]
+        }
+      },
+      "expected": {
+        "composite": 0.7143,
+        "overall_verdict": "REJECT",
+        "gate_failures": [
+          "role_fit_strength"
+        ],
+        "scores": {
+          "jd_coverage": 0.8571,
+          "role_fit_strength": 0.4286,
+          "ontology_precision": 1.0,
+          "gap_validity": 0.5
+        }
+      }
+    },
+    {
+      "label": "halyna_set_b",
+      "skill_ids": [
+        "SK.PRM.000",
+        "SK.PRM.001",
+        "SK.PRM.004",
+        "SK.PRM.006",
+        "SK.PRD.001",
+        "SK.PRD.002",
+        "SK.EVL.001",
+        "SK.EVL.022"
+      ],
+      "parameters": {
+        "jd_coverage": {
+          "score": 0.5,
+          "gate_pass": false,
+          "requirement_analysis": [
+            {
+              "jd_requirement": "Lead the strategy, development, and execution of integrated, multichannel marketing campaigns",
+              "category": "Strategy",
+              "ai_type": "implied",
+              "ai_skill": "SK.PRD.001 - Use-case selection & prioritization",
+              "tier": "T1",
+              "coverage": "full",
+              "covered_by": "SK.PRD.001"
+            },
+            {
+              "jd_requirement": "Use data and insights to continually enhance targeting, messaging, and conversion paths",
+              "category": "Technical",
+              "ai_type": "implied",
+              "ai_skill": "SK.EVL.022 - A/B testing for AI",
+              "tier": "T2",
+              "coverage": "full",
+              "covered_by": "SK.EVL.022"
+            },
+            {
+              "jd_requirement": "Define campaign objectives, KPIs, and performance frameworks",
+              "category": "Operations",
+              "ai_type": "none",
+              "ai_skill": null,
+              "tier": null,
+              "coverage": null,
+              "covered_by": null
+            },
+            {
+              "jd_requirement": "Partner with Product Marketing to translate messaging and positioning into market-ready campaigns",
+              "category": "Collaboration",
+              "ai_type": "none",
+              "ai_skill": null,
+              "tier": null,
+              "coverage": null,
+              "covered_by": null
+            },
+            {
+              "jd_requirement": "Test, learn, and iterate based on data-driven insights to increase efficiency and impact",
+              "category": "Technical",
+              "ai_type": "implied",
+              "ai_skill": "SK.EVL.001 - Eval types (offline/online/red team)",
+              "tier": "T3",
+              "coverage": "partial",
+              "covered_by": "SK.EVL.001"
+            }
+          ],
+          "reasoning": "The recommended skills partially cover the AI-relevant requirements. While some skills like use-case selection and A/B testing are well-matched, others like evaluation types only partially cover the implied needs."
+        },
+        "role_fit_strength": {
+          "score": 0.375,
+          "gate_pass": false,
+          "skills": [
+            {
+              "id": "SK.PRM.000",
+              "fit_level": "generic",
+              "reasoning": "Writing clear requests to AI is a foundational skill not directly tied to the JD requirements."
+            },
+            {
+              "id": "SK.PRM.001",
+              "fit_level": "generic",
+              "reasoning": "Instructions + constraints + format is a general prompting skill without direct relevance to the JD."
+            },
+            {
+              "id": "SK.PRM.004",
+              "fit_level": "generic",
+              "reasoning": "Role & persona prompting is a general skill not specifically required by the JD."
+            },
+            {
+              "id": "SK.PRM.006",
+              "fit_level": "generic",
+              "reasoning": "Breaking complex tasks into steps is a general prompting skill not directly relevant to the JD."
+            },
+            {
+              "id": "SK.PRD.001",
+              "fit_level": "role_specific",
+              "reasoning": "Use-case selection & prioritization directly maps to the strategy and execution of campaigns."
+            },
+            {
+              "id": "SK.PRD.002",
+              "fit_level": "contextually_relevant",
+              "reasoning": "Workflow mapping is relevant to campaign management but not explicitly required."
+            },
+            {
+              "id": "SK.EVL.001",
+              "fit_level": "role_specific",
+              "reasoning": "Eval types are directly relevant to testing and iterating based on data-driven insights."
+            },
+            {
+              "id": "SK.EVL.022",
+              "fit_level": "role_specific",
+              "reasoning": "A/B testing for AI is directly relevant to enhancing targeting and conversion paths."
+            }
+          ]
+        },
+        "ontology_precision": {
+          "score": 1.0,
+          "gate_pass": true,
+          "invalid_skills": []
+        },
+        "gap_validity": {
+          "score": 0.625,
+          "gate_pass": true,
+          "skills": [
+            {
+              "id": "SK.PRM.000",
+              "gap_level": "partial_gap",
+              "evidence": "Candidate has basic exposure to AI tools for marketing enhancement."
+            },
+            {
+              "id": "SK.PRM.001",
+              "gap_level": "partial_gap",
+              "evidence": "Candidate has basic exposure to AI tools for marketing enhancement."
+            },
+            {
+              "id": "SK.PRM.004",
+              "gap_level": "partial_gap",
+              "evidence": "Candidate has basic exposure to AI tools for marketing enhancement."
+            },
+            {
+              "id": "SK.PRM.006",
+              "gap_level": "partial_gap",
+              "evidence": "Candidate has basic exposure to AI tools for marketing enhancement."
+            },
+            {
+              "id": "SK.PRD.001",
+              "gap_level": "genuine_gap",
+              "evidence": "No specific evidence of use-case selection & prioritization."
+            },
+            {
+              "id": "SK.PRD.002",
+              "gap_level": "genuine_gap",
+              "evidence": "No specific evidence of workflow mapping."
+            },
+            {
+              "id": "SK.EVL.001",
+              "gap_level": "already_acquired",
+              "evidence": "Candidate is certified in marketing tools leveraging AI."
+            },
+            {
+              "id": "SK.EVL.022",
+              "gap_level": "already_acquired",
+              "evidence": "Candidate is certified in marketing tools leveraging AI."
+            }
+          ]
+        }
+      },
+      "expected": {
+        "composite": 0.7438,
+        "overall_verdict": "REJECT",
+        "gate_failures": [
+          "role_fit_strength"
+        ],
+        "scores": {
+          "jd_coverage": 0.9167,
+          "role_fit_strength": 0.4375,
+          "ontology_precision": 1.0,
+          "gap_validity": 0.5
+        }
+      }
+    },
+    {
+      "label": "brittany_set_a",
+      "skill_ids": [
+        "SK.FND.002",
+        "SK.COM.001",
+        "SK.PRD.001",
+        "SK.PRD.021",
+        "SK.PRD.022",
+        "SK.EVL.001",
+        "SK.RSN.003"
+      ],
+      "parameters": {
+        "jd_coverage": {
+          "score": 0.5,
+          "gate_pass": false,
+          "requirement_analysis": [
+            {
+              "jd_requirement": "Define and execute the marketing strategy for AI Foundation, ensuring clear positioning and differentiation in the enterprise AI landscape.",
+              "category": "Strategy",
+              "ai_type": "explicit",
+              "ai_skill": "SK.PRD.001 - Use-case selection & prioritization",
+              "tier": "T1",
+              "coverage": "full",
+              "covered_by": "SK.PRD.001"
+            },
+            {
+              "jd_requirement": "Craft compelling messaging and storytelling to communicate AI Foundation\u2019s value to enterprise customers, technical buyers, developers, and business leaders.",
+              "category": "Communication",
+              "ai_type": "explicit",
+              "ai_skill": "SK.COM.001 - Explaining AI to non-technical audiences",
+              "tier": "T1",
+              "coverage": "full",
+              "covered_by": "SK.COM.001"
+            },
+            {
+              "jd_requirement": "Develop high-quality demonstrations that showcase AI Foundation\u2019s capabilities across SAP solutions.",
+              "category": "Technical",
+              "ai_type": "implied",
+              "ai_skill": "SK.PRD.021 - Stakeholder management",
+              "tier": "T2",
+              "coverage": "partial",
+              "covered_by": "SK.PRD.021"
+            },
+            {
+              "jd_requirement": "Track AI market trends, competitive positioning, and customer feedback to influence product roadmaps and marketing strategy for AI Foundation.",
+              "category": "Strategy",
+              "ai_type": "implied",
+              "ai_skill": "SK.PRD.022 - ROI measurement for AI",
+              "tier": "T2",
+              "coverage": "partial",
+              "covered_by": "SK.PRD.022"
+            },
+            {
+              "jd_requirement": "Engage with customers, analysts, and industry influencers to establish SAP\u2019s thought leadership in AI-powered enterprise productivity.",
+              "category": "Leadership",
+              "ai_type": "none",
+              "ai_skill": null,
+              "tier": null,
+              "coverage": null,
+              "covered_by": null
+            }
+          ],
+          "reasoning": "The recommended skills partially cover the key AI-related requirements in the JD. While some skills like use-case selection and explaining AI are fully covered, others like stakeholder management and ROI measurement are only partially covered."
+        },
+        "role_fit_strength": {
+          "score": 0.57,
+          "gate_pass": false,
+          "skills": [
+            {
+              "id": "SK.FND.002",
+              "fit_level": "generic",
+              "reasoning": "Capabilities vs limitations is a foundational skill and does not map directly to any specific JD requirement."
+            },
+            {
+              "id": "SK.COM.001",
+              "fit_level": "role_specific",
+              "reasoning": "Explaining AI to non-technical audiences directly maps to the JD requirement for crafting compelling messaging."
+            },
+            {
+              "id": "SK.PRD.001",
+              "fit_level": "role_specific",
+              "reasoning": "Use-case selection & prioritization is directly relevant to defining and executing marketing strategies."
+            },
+            {
+              "id": "SK.PRD.021",
+              "fit_level": "contextually_relevant",
+              "reasoning": "Stakeholder management is relevant but not directly tied to a specific JD requirement."
+            },
+            {
+              "id": "SK.PRD.022",
+              "fit_level": "contextually_relevant",
+              "reasoning": "ROI measurement for AI is relevant to tracking market trends but not explicitly required."
+            },
+            {
+              "id": "SK.EVL.001",
+              "fit_level": "generic",
+              "reasoning": "Evaluation types is a general skill not specifically required by the JD."
+            },
+            {
+              "id": "SK.RSN.003",
+              "fit_level": "generic",
+              "reasoning": "Deep research agents is an emerging skill not directly relevant to the JD."
+            }
+          ]
+        },
+        "ontology_precision": {
+          "score": 1.0,
+          "gate_pass": true,
+          "invalid_skills": []
+        },
+        "gap_validity": {
+          "score": 0.71,
+          "gate_pass": true,
+          "skills": [
+            {
+              "id": "SK.FND.002",
+              "gap_level": "partial_gap",
+              "evidence": "Intermediate AI fluency suggests some understanding of AI capabilities and limitations."
+            },
+            {
+              "id": "SK.COM.001",
+              "gap_level": "genuine_gap",
+              "evidence": "No specific evidence of explaining AI to non-technical audiences."
+            },
+            {
+              "id": "SK.PRD.001",
+              "gap_level": "genuine_gap",
+              "evidence": "No specific evidence of use-case selection & prioritization."
+            },
+            {
+              "id": "SK.PRD.021",
+              "gap_level": "partial_gap",
+              "evidence": "Experience in cross-functional leadership suggests some stakeholder management skills."
+            },
+            {
+              "id": "SK.PRD.022",
+              "gap_level": "genuine_gap",
+              "evidence": "No specific evidence of ROI measurement for AI."
+            },
+            {
+              "id": "SK.EVL.001",
+              "gap_level": "already_acquired",
+              "evidence": "Experience with AI tools suggests familiarity with evaluation types."
+            },
+            {
+              "id": "SK.RSN.003",
+              "gap_level": "genuine_gap",
+              "evidence": "No specific evidence of deep research agents."
+            }
+          ]
+        }
+      },
+      "expected": {
+        "composite": 0.71,
+        "overall_verdict": "REJECT",
+        "gate_failures": [
+          "role_fit_strength"
+        ],
+        "scores": {
+          "jd_coverage": 0.8,
+          "role_fit_strength": 0.4286,
+          "ontology_precision": 1.0,
+          "gap_validity": 0.7143
+        }
+      }
+    }
+  ]
+}
