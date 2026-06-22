@@ -20,14 +20,15 @@ async def lifespan(app: FastAPI):
     await init_db()
     logger.info("database_initialized")
 
-    # Initialize RAG vector store with ontology — skip if GCP credentials
-    # are not available (avoids blocking startup with network timeouts)
-    import os
-    gcp_creds = (
-        os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")
-        or os.environ.get("GOOGLE_CLOUD_PROJECT")
-    )
-    if gcp_creds:
+    # Load the ontology into the vector store IFF RAG actually initialized. Keying
+    # off real availability (get_rag_status) instead of an env-var heuristic makes
+    # this turnkey: the moment GCP credentials are provided - by ANY ADC method
+    # (service-account key OR workload identity, env var present or not) - RAG comes
+    # up and the ontology auto-loads with zero further code change. When RAG is
+    # unavailable we log the precise reason instead of a guessed one.
+    from app.services.rag.retriever import get_rag_status
+    rag_status = get_rag_status()
+    if rag_status["available"]:
         try:
             from app.services.rag.vector_store import get_vector_store
             from pathlib import Path
@@ -38,9 +39,9 @@ async def lifespan(app: FastAPI):
                 vector_store.load_ontology(str(ontology_path))
                 logger.info("ontology_loaded_into_vector_store")
         except Exception as e:
-            logger.warning("vector_store_init_failed", extra={"error": str(e)})
+            logger.warning("ontology_load_failed", extra={"error": str(e)})
     else:
-        logger.info("vector_store_init_skipped", extra={"reason": "no GCP credentials"})
+        logger.info("vector_store_init_skipped", extra={"reason": rag_status["reason"]})
 
     yield
 
