@@ -86,20 +86,51 @@ class _NoOpRetriever(RAGRetriever):
         return []
 
 
-_retriever_instance = None
+_retriever_instance: RAGRetriever | None = None
+_rag_unavailable_reason: str | None = None
 
 
 def get_retriever() -> RAGRetriever:
-    """Get singleton retriever instance."""
-    global _retriever_instance
-    if _retriever_instance is None:
-        try:
-            _retriever_instance = RAGRetriever()
-        except Exception as exc:
-            logger.warning(
-                "RAG retriever unavailable (%s) — using no-op fallback. "
-                "Agents will work without RAG context.",
-                exc,
-            )
-            _retriever_instance = _NoOpRetriever()
+    """Get the singleton retriever.
+
+    Returns the real retriever when RAG is enabled and initializes successfully;
+    otherwise an explicit no-op. The reason for any degradation is captured (not
+    discarded) so get_rag_status() can report it (Observability)."""
+    global _retriever_instance, _rag_unavailable_reason
+    if _retriever_instance is not None:
+        return _retriever_instance
+
+    from app.config import get_settings
+    if not get_settings().rag_enabled:
+        _rag_unavailable_reason = "disabled by config (rag_enabled=false)"
+        logger.info("rag_disabled", extra={"reason": _rag_unavailable_reason})
+        _retriever_instance = _NoOpRetriever()
+        return _retriever_instance
+
+    try:
+        _retriever_instance = RAGRetriever()
+        _rag_unavailable_reason = None
+    except Exception as exc:
+        _rag_unavailable_reason = f"{type(exc).__name__}: {exc}"
+        logger.warning(
+            "rag_unavailable",
+            extra={"error_class": type(exc).__name__, "reason": str(exc),
+                   "status": "degraded",
+                   "detail": "RAG retriever init failed; using no-op fallback. "
+                             "Agents work without RAG context. See "
+                             "docs/compliance/rag_diagnosis.md."},
+        )
+        _retriever_instance = _NoOpRetriever()
     return _retriever_instance
+
+
+def get_rag_status() -> dict:
+    """Report whether RAG retrieval is actually available, and why not if degraded.
+    Used by /health so the no-op fallback is visible, not silent."""
+    retriever = get_retriever()
+    available = not isinstance(retriever, _NoOpRetriever)
+    return {
+        "available": available,
+        "retriever": type(retriever).__name__,
+        "reason": None if available else _rag_unavailable_reason,
+    }
