@@ -2,6 +2,7 @@
 import asyncio
 import json
 from app.agents.base import BaseAgent
+from app.agents.contracts import ContentCuratorInput, ContentCuratorOutput
 
 
 class ContentCuratorAgent(BaseAgent):
@@ -41,10 +42,12 @@ Include a mix of:
                 "chapter_resources": list - Resources for each chapter
             }
         """
-        self._start_execution()
+        # Contract Enforcement: validate the input at the boundary.
+        parsed = ContentCuratorInput.model_validate(task)
+        chapters = parsed.chapters
+        industry = parsed.industry
 
-        chapters = task.get("chapters", [])
-        industry = task.get("industry", "")
+        self._start_execution()
 
         # Process all chapters in parallel for better performance
         resource_results = await asyncio.gather(
@@ -64,7 +67,9 @@ Include a mix of:
         self._log_execution("curate_content", task, result)
         result["duration_ms"] = self._end_execution()
 
-        return result
+        # Contract Enforcement: validate the output against the typed contract
+        # before returning it to the caller (normalizes + guarantees shape).
+        return ContentCuratorOutput.model_validate(result).model_dump()
 
     async def _curate_for_chapter(self, chapter: dict, industry: str) -> list:
         """Curate resources for a single chapter."""

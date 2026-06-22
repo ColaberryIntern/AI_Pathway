@@ -55,6 +55,11 @@ parse job descriptions, identify skill gaps, and generate personalized learning 
             Complete analysis including profile analysis, JD parsing,
             gap analysis, and generated learning path
         """
+        # Contract Enforcement: validate + normalize the input at the boundary.
+        # extra="allow" keeps unknown keys; bad declared fields fail fast here.
+        from app.agents.contracts import OrchestratorInput
+        task = OrchestratorInput.model_validate(task).model_dump()
+
         self._start_execution()
         workflow_id = str(uuid.uuid4())
 
@@ -92,6 +97,42 @@ parse job descriptions, identify skill gaps, and generate personalized learning 
             top_10_target = jd_result.get("top_10_target_skills", [])
             results["top_10_current_skills"] = top_10_current
 
+            # Step 2 of the gap-aware pipeline (per Luda 2026-06-02):
+            # adjust the JD parser's candidate list based on the learner's
+            # actual profile BEFORE the deterministic rubric ranks it.
+            # Drops skills the learner already has, downgrades partial-
+            # experience skills, can add depth skills the JD parser missed.
+            # Rubric formula stays untouched per Luda's "non-negotiable
+            # applies across the board" stance.
+            _role_text = jd_result.get("role_analysis", {}).get("primary_function") \
+                         or task.get("target_role") \
+                         or task.get("profile", {}).get("target_role", "") \
+                         or ""
+            try:
+                from app.agents.learner_adjuster import LearnerAdjusterAgent
+                _adjuster = LearnerAdjusterAgent()
+                _adj = await _adjuster.execute({
+                    "candidates": top_10_target,
+                    "learner_profile": task.get("profile"),
+                    "target_role": _role_text,
+                    "jd_text": task.get("jd_text", ""),
+                })
+                top_10_target = _adj.get("adjusted_candidates", top_10_target)
+                results["learner_adjustment"] = {
+                    "adjustments": _adj.get("adjustments", []),
+                    "additions": _adj.get("additions", []),
+                    "summary": _adj.get("summary", ""),
+                    "duration_ms": _adj.get("duration_ms"),
+                }
+                logger.info(
+                    "Learner-adjustment applied: %d candidates after adjustment, "
+                    "%d additions",
+                    len(top_10_target),
+                    len(_adj.get("additions", []) or []),
+                )
+            except Exception as adj_exc:
+                logger.warning("Learner-adjustment failed; passing candidates through: %s", adj_exc)
+
             # Deterministic 5-parameter rubric rerank (Luda's May 15 spec).
             # Applies role-essence floor + domain mandate so the path
             # generator sees the right top 5 regardless of how the LLM
@@ -101,10 +142,6 @@ parse job descriptions, identify skill gaps, and generate personalized learning 
                 from app.services.rubric_scorer import rerank as rubric_rerank
                 from app.services.ontology import get_ontology_service as _get_ont
                 _ont = _get_ont()
-                _role_text = jd_result.get("role_analysis", {}).get("primary_function") \
-                             or task.get("target_role") \
-                             or task.get("profile", {}).get("target_role", "") \
-                             or ""
                 top_10_target = rubric_rerank(
                     top_10_target,
                     role_text=_role_text,
