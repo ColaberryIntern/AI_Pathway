@@ -3,6 +3,7 @@ import json
 import logging
 from openai import AsyncOpenAI
 from app.services.llm.base import BaseLLMProvider, LLMResponse
+from app.services.llm._resilience import call_with_resilience
 from app.config import get_settings
 
 logger = logging.getLogger(__name__)
@@ -13,7 +14,13 @@ class OpenAIProvider(BaseLLMProvider):
 
     def __init__(self, model: str | None = None):
         settings = get_settings()
-        self.client = AsyncOpenAI(api_key=settings.openai_api_key)
+        # Explicit timeout; SDK retries disabled so call_with_resilience is the
+        # single, observable retry layer (no double-retry).
+        self.client = AsyncOpenAI(
+            api_key=settings.openai_api_key,
+            timeout=settings.llm_timeout_seconds,
+            max_retries=0,
+        )
         self.model = model or settings.openai_model  # model override -> pinnable judge
 
     async def generate(
@@ -55,7 +62,10 @@ class OpenAIProvider(BaseLLMProvider):
         if json_mode:
             kwargs["response_format"] = {"type": "json_object"}
 
-        response = await self.client.chat.completions.create(**kwargs)
+        response = await call_with_resilience(
+            lambda: self.client.chat.completions.create(**kwargs),
+            provider="openai", op="chat.completions.create",
+        )
 
         content = response.choices[0].message.content if response.choices else ""
 

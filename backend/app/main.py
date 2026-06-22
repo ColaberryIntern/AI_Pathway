@@ -1,12 +1,16 @@
 """FastAPI main application."""
+import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import get_settings
 from app.database import init_db, close_db
 from app.api.routes import api_router
+from app.observability import CorrelationIdMiddleware, configure_logging
 
 settings = get_settings()
+configure_logging(logging.DEBUG if settings.debug else logging.INFO)
+logger = logging.getLogger("app.main")
 
 
 @asynccontextmanager
@@ -14,7 +18,7 @@ async def lifespan(app: FastAPI):
     """Application lifespan events."""
     # Startup
     await init_db()
-    print("Database initialized")
+    logger.info("database_initialized")
 
     # Initialize RAG vector store with ontology — skip if GCP credentials
     # are not available (avoids blocking startup with network timeouts)
@@ -32,17 +36,17 @@ async def lifespan(app: FastAPI):
             ontology_path = Path(__file__).parent / "data" / "ontology.json"
             if ontology_path.exists():
                 vector_store.load_ontology(str(ontology_path))
-                print("Ontology loaded into vector store")
+                logger.info("ontology_loaded_into_vector_store")
         except Exception as e:
-            print(f"Warning: Could not initialize vector store: {e}")
+            logger.warning("vector_store_init_failed", extra={"error": str(e)})
     else:
-        print("Skipping vector store init (no GCP credentials configured)")
+        logger.info("vector_store_init_skipped", extra={"reason": "no GCP credentials"})
 
     yield
 
     # Shutdown
     await close_db()
-    print("Database connections closed")
+    logger.info("database_connections_closed")
 
 
 app = FastAPI(
@@ -52,6 +56,10 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# Correlation id + request telemetry (added before CORS so it wraps every request
+# and the correlation id is bound for the whole request lifecycle).
+app.add_middleware(CorrelationIdMiddleware)
+
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
@@ -59,6 +67,7 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["X-Correlation-ID"],
 )
 
 # Include API routes

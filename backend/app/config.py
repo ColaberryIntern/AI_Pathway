@@ -72,6 +72,14 @@ class Settings(BaseSettings):
     gmail_credentials_path: str = "credentials/gmail_credentials.json"
     gmail_token_path: str = "credentials/gmail_token.json"
 
+    # LLM resilience (Trust Before Intelligence - Failure-First / Security layer).
+    # Every external LLM call gets an explicit timeout and a capped exponential
+    # backoff retry on transient errors (timeout, connection, rate limit, 5xx).
+    # An unbounded LLM call is a production defect.
+    llm_timeout_seconds: float = 90.0
+    llm_max_retries: int = 2          # total attempts = 1 + llm_max_retries
+    llm_retry_base_delay: float = 1.0  # seconds; doubled each retry, plus jitter
+
     def get_cors_origins_list(self) -> list[str]:
         """Get CORS origins as a list."""
         return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
