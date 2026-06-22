@@ -25,7 +25,7 @@ in code? (Y / N / n/a = no LLM). **Tests**: dedicated test file present.
 | `agents/orchestrator.py` | coordinates the workflow | Adaptive, Contextual | Orchestration | n/a (delegates) | Typed contract (`test_agent_contracts`) |
 | `agents/profile_analyzer.py` | learner state (state A) | Natural, Contextual | Intelligence, Semantic | partial (normalize) | via integration tests |
 | `agents/jd_parser.py` | JD -> target skills (state B) | Natural, Contextual | Intelligence, Semantic | partial | Y (`test_state_b_fallback` et al.) |
-| `agents/linkedin_parser.py` | LinkedIn -> profile | Natural, Contextual | Intelligence | partial | **N (gap)** |
+| `agents/linkedin_parser.py` | LinkedIn -> profile | Natural, Contextual | Intelligence | partial (ontology-validated) | Y (`test_linkedin_parser`) |
 | `agents/assessment_agent.py` | self-assessment scoring | Permitted, Adaptive | Intelligence, Governance | **Y** (`normalize_skill_scores`) | Y (`test_assessment_normalize`) |
 | `agents/gap_analyzer.py` | state A vs B gaps | Natural, Adaptive | Intelligence | partial (deterministic gap math) | via integration tests |
 | `agents/learner_adjuster.py` | adjust candidates to learner | Adaptive, Natural | Intelligence | partial (guard is deterministic) | Y (`test_learner_adjuster`) |
@@ -37,7 +37,7 @@ in code? (Y / N / n/a = no LLM). **Tests**: dedicated test file present.
 | `agents/path_generator.py` / `services/path_generator.py` | learning path/chapters | Natural, Instant | Intelligence | partial | Y (`test_journey_roadmap`, `test_gap_chapter_consistency`) |
 | `agents/module_outline.py` / `agents/lesson_generator.py` / `agents/chapter_generator.py` | module/lesson/chapter content | Natural | Intelligence | partial | Y (`test_chapter_generator_v3_objectives`, `test_lesson_*`) |
 | `agents/content_curator.py` | learning resources (uses RAG) | Contextual | Intelligence, Semantic | n/a | Typed contract (`test_agent_contracts`) |
-| `agents/mentor_agent.py` | learner Q&A | Natural, Instant | Intelligence | n/a | **N (gap)** |
+| `agents/mentor_agent.py` | learner Q&A | Natural, Instant | Intelligence | n/a | Y (`test_mentor_agent`) |
 
 ## Cross-cutting infrastructure
 
@@ -50,8 +50,9 @@ in code? (Y / N / n/a = no LLM). **Tests**: dedicated test file present.
 | `services/ontology.py` | canonical skill ontology | Lexicon, Contextual | Semantic, Storage | Y (lookup/validation) | Y (`test_ontology_grounding`) |
 
 ## Known gaps (tracked)
-- `linkedin_parser`, `mentor_agent`: no dedicated tests (next test-coverage targets, same mocked-LLM pattern as `test_learner_adjuster`).
-- RAG: no-op until GCP credentials are provisioned (see `rag_diagnosis.md`); status visible at `/health`.
+- RAG: no-op until GCP credentials are provisioned (see `rag_diagnosis.md`); status visible at `/health`. Owner action.
+- Deeper content-gen agents (`path_generator`, `lesson_generator`, `module_outline`, `chapter_generator`) have integration/consistency tests but not the full four-type mocked-LLM unit suite - lower priority (covered indirectly + by Gate 1/2).
+- (Closed 2026-06-22) `linkedin_parser` + `mentor_agent` now have dedicated mocked-LLM tests.
 
 ## PR checklist (enforce on every AI change)
 Per CLAUDE.md "name which INPACT dimensions it serves and which of the 7 layers it
