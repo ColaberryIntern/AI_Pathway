@@ -3,6 +3,7 @@ import json
 import vertexai
 from vertexai.generative_models import GenerativeModel, GenerationConfig
 from app.services.llm.base import BaseLLMProvider, LLMResponse
+from app.services.llm._resilience import call_with_resilience
 from app.config import get_settings
 
 
@@ -66,9 +67,12 @@ class VertexAIProvider(BaseLLMProvider):
         )
 
         # Generate response
-        response = await self.model.generate_content_async(
-            contents=contents,
-            generation_config=generation_config,
+        response = await call_with_resilience(
+            lambda: self.model.generate_content_async(
+                contents=contents,
+                generation_config=generation_config,
+            ),
+            provider="vertex", op="generate_content_async",
         )
 
         content = response.text if response.text else ""

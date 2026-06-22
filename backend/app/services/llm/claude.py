@@ -2,6 +2,7 @@
 import json
 from anthropic import AsyncAnthropic
 from app.services.llm.base import BaseLLMProvider, LLMResponse
+from app.services.llm._resilience import call_with_resilience
 from app.config import get_settings
 
 
@@ -10,7 +11,13 @@ class ClaudeProvider(BaseLLMProvider):
 
     def __init__(self, model: str | None = None):
         settings = get_settings()
-        self.client = AsyncAnthropic(api_key=settings.anthropic_api_key)
+        # Explicit timeout; SDK retries disabled so call_with_resilience is the
+        # single, observable retry layer (no double-retry).
+        self.client = AsyncAnthropic(
+            api_key=settings.anthropic_api_key,
+            timeout=settings.llm_timeout_seconds,
+            max_retries=0,
+        )
         self.model = model or settings.claude_model  # model override -> pinnable judge
 
     async def generate(
@@ -41,12 +48,15 @@ class ClaudeProvider(BaseLLMProvider):
         if json_mode:
             final_system += "\n\nYou must respond with valid JSON only. No other text."
 
-        response = await self.client.messages.create(
-            model=self.model,
-            max_tokens=max_tokens,
-            temperature=temperature,
-            system=final_system if final_system else None,
-            messages=messages,
+        response = await call_with_resilience(
+            lambda: self.client.messages.create(
+                model=self.model,
+                max_tokens=max_tokens,
+                temperature=temperature,
+                system=final_system if final_system else None,
+                messages=messages,
+            ),
+            provider="claude", op="messages.create",
         )
 
         content = response.content[0].text if response.content else ""
