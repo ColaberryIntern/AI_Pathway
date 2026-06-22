@@ -22,6 +22,7 @@ from __future__ import annotations
 import time
 from collections import defaultdict, deque
 from threading import Lock
+from typing import Callable, Optional
 
 _MAXLEN = 5000          # bounded samples per category
 _WINDOW_S = 24 * 3600   # default rolling window (24h)
@@ -30,15 +31,36 @@ _WINDOW_S = 24 * 3600   # default rolling window (24h)
 _series: dict[str, deque] = defaultdict(lambda: deque(maxlen=_MAXLEN))
 _lock = Lock()
 
+# Optional persistence sink (drop-in seam for Prometheus / a DB exporter - see
+# docs/compliance/metrics_persistence_design.md). None by default = in-process only.
+# Signature: (category, status, duration_ms, error_class, ts) -> None.
+MetricsSink = Callable[[str, str, Optional[float], Optional[str], float], None]
+_sink: Optional[MetricsSink] = None
+
+
+def register_sink(fn: Optional[MetricsSink]) -> None:
+    """Register (or clear, with None) the persistence sink. record() forwards every
+    event to it best-effort, so a persistence layer plugs in without touching any
+    call site."""
+    global _sink
+    _sink = fn
+
 
 def record(category: str, status: str, duration_ms: float | None = None,
            error_class: str | None = None) -> None:
     """Record one telemetry event. Cheap + non-blocking; never raises."""
+    ts = time.time()
     try:
         with _lock:
-            _series[category].append((time.time(), status, duration_ms, error_class))
+            _series[category].append((ts, status, duration_ms, error_class))
     except Exception:
         pass  # metrics must never break the caller
+    sink = _sink
+    if sink is not None:
+        try:
+            sink(category, status, duration_ms, error_class, ts)
+        except Exception:
+            pass  # a failing sink must never break the caller
 
 
 def _percentiles(values: list[float]) -> dict:

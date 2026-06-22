@@ -14,8 +14,10 @@ from app import metrics  # noqa: E402
 @pytest.fixture(autouse=True)
 def _clean():
     metrics.reset()
+    metrics.register_sink(None)
     yield
     metrics.reset()
+    metrics.register_sink(None)
 
 
 # --- happy path ---
@@ -78,6 +80,31 @@ def test_record_never_raises_on_bad_input():
     metrics.record("x", "success", None)  # missing duration is fine
     assert metrics.snapshot()["x"]["count"] == 1
     assert metrics.snapshot()["x"]["latency_ms"] == {}  # no durations -> empty
+
+
+# --- persistence sink hook (drop-in seam) ---
+
+def test_sink_receives_events():
+    seen = []
+    metrics.register_sink(lambda cat, status, dur, err, ts: seen.append((cat, status, dur, err)))
+    metrics.record("llm_call", "failure", 12.0, "RateLimitError")
+    assert seen == [("llm_call", "failure", 12.0, "RateLimitError")]
+
+
+def test_failing_sink_never_breaks_record():
+    def boom(*a):
+        raise RuntimeError("sink down")
+    metrics.register_sink(boom)
+    metrics.record("x", "success", 1.0)          # must not raise
+    assert metrics.snapshot()["x"]["count"] == 1  # event still recorded in-process
+
+
+def test_sink_can_be_cleared():
+    seen = []
+    metrics.register_sink(lambda *a: seen.append(a))
+    metrics.register_sink(None)
+    metrics.record("x", "success", 1.0)
+    assert seen == []
 
 
 # --- idempotency ---
