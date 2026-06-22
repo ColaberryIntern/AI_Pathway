@@ -29,6 +29,7 @@ import random
 import time
 from typing import Awaitable, Callable, TypeVar
 
+from app import metrics
 from app.config import get_settings
 from app.correlation import get_correlation_id
 
@@ -91,12 +92,14 @@ async def call_with_resilience(
         started = time.monotonic()
         try:
             result = await asyncio.wait_for(make_awaitable(), timeout=timeout)
+            dur = round((time.monotonic() - started) * 1000, 1)
             logger.info(
                 "llm_call",
                 extra={"provider": provider, "op": op, "attempt": attempt,
-                       "duration_ms": round((time.monotonic() - started) * 1000, 1),
-                       "status": "success", "correlation_id": correlation_id},
+                       "duration_ms": dur, "status": "success",
+                       "correlation_id": correlation_id},
             )
+            metrics.record("llm_call", "success", dur)
             return result
         except BaseException as exc:  # noqa: BLE001 - categorize, then retry or raise
             last_exc = exc
@@ -112,15 +115,17 @@ async def call_with_resilience(
                            "error_class": error_class, "retry_in_s": round(delay, 2),
                            "correlation_id": correlation_id},
                 )
+                metrics.record("llm_call", "retry", duration_ms, error_class)
                 await asyncio.sleep(delay)
                 continue
+            terminal_status = "failure" if retryable else "fatal"
             logger.error(
                 "llm_call failed",
                 extra={"provider": provider, "op": op, "attempt": attempt,
-                       "duration_ms": duration_ms,
-                       "status": "failure" if retryable else "fatal",
+                       "duration_ms": duration_ms, "status": terminal_status,
                        "error_class": error_class, "correlation_id": correlation_id},
             )
+            metrics.record("llm_call", terminal_status, duration_ms, error_class)
             raise
 
     # Unreachable (loop either returns or raises), but keeps type-checkers happy.

@@ -98,6 +98,14 @@ async def health_check():
     return {"status": "healthy", "rag": rag}
 
 
+@app.get("/metrics")
+async def metrics_endpoint():
+    """Rolling observability metrics (success/failure rates, error_class breakdown,
+    retry counts, latency p50/p95/p99) aggregated from per-call/per-request telemetry."""
+    from app.metrics import snapshot
+    return {"window_hours": 24, "metrics": snapshot()}
+
+
 if __name__ == "__main__":
     import uvicorn
 

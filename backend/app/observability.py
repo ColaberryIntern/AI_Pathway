@@ -20,6 +20,7 @@ from datetime import datetime, timezone
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 
+from app import metrics
 from app.correlation import (
     get_correlation_id,
     new_correlation_id,
@@ -77,23 +78,27 @@ class CorrelationIdMiddleware(BaseHTTPMiddleware):
         try:
             try:
                 response = await call_next(request)
-            except Exception:
+            except Exception as exc:
                 # Log with the correlation id still bound (finally resets it last).
+                dur = round((time.monotonic() - started) * 1000, 1)
                 logger.exception(
                     "http_request",
                     extra={"method": request.method, "path": request.url.path,
-                           "status_code": 500, "status": "error",
-                           "duration_ms": round((time.monotonic() - started) * 1000, 1)},
+                           "status_code": 500, "status": "error", "duration_ms": dur},
                 )
+                metrics.record("http_request", "failure", dur, type(exc).__name__)
                 raise
             response.headers[CORRELATION_HEADER] = cid
+            dur = round((time.monotonic() - started) * 1000, 1)
+            status = "success" if response.status_code < 500 else "failure"
             logger.info(
                 "http_request",
                 extra={"method": request.method, "path": request.url.path,
-                       "status_code": response.status_code,
-                       "status": "success" if response.status_code < 500 else "failure",
-                       "duration_ms": round((time.monotonic() - started) * 1000, 1)},
+                       "status_code": response.status_code, "status": status,
+                       "duration_ms": dur},
             )
+            metrics.record("http_request", status, dur,
+                           None if status == "success" else f"HTTP_{response.status_code}")
             return response
         finally:
             reset_correlation_id(token)
