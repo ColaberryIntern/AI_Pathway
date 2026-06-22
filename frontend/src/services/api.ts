@@ -196,6 +196,19 @@ export const parseJDSkills = async (params: {
     candidate_count: number
     rationale_summary: string
   }
+  // Governance gate outcome. Present (non-null) only when the judge gate runs in
+  // enforce mode; null in shadow mode. When needs_human_review is true the top 5
+  // was either regenerated or could not clear the bar and should be flagged for a
+  // human before it reaches the learner.
+  governance?: {
+    gated: boolean
+    verdict?: string
+    needs_human_review: boolean
+    regenerated?: boolean
+    exhausted?: boolean
+    composite?: number
+    attempts?: Array<{ attempt: number; skill_ids: string[]; verdict: string; composite: number }>
+  } | null
 }> => {
   const { data } = await api.post('/analysis/parse-jd-skills', params)
   return data
