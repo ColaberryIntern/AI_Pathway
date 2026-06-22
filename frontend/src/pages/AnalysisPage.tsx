@@ -88,6 +88,15 @@ export default function AnalysisPage() {
   } | null>(null)
   const [showOntologyNarrative, setShowOntologyNarrative] = useState(false)
 
+  // Governance gate outcome (present only when the judge gate runs in enforce
+  // mode; null in shadow). Drives the "flagged for review" banner.
+  const [governance, setGovernance] = useState<{
+    needs_human_review: boolean
+    verdict?: string
+    regenerated?: boolean
+    exhausted?: boolean
+  } | null>(null)
+
   const [jdProfile, setJdProfile] = useState<{
     technical_skills: string[]
     soft_skills: string[]
@@ -291,6 +300,7 @@ export default function AnalysisPage() {
             setParsedSkills(result.top_10_skills)
             if (result.target_role) setDetectedRole(result.target_role)
             if (result.ontology_narrative) setOntologyNarrative(result.ontology_narrative)
+            setGovernance(result.governance ?? null)
             const top5 = result.top_10_skills.slice(0, 5).map((s: ParsedSkill) => s.skill_id)
             setSelectedSkillIds(top5)
             setStep('skill_selection')
@@ -408,6 +418,7 @@ export default function AnalysisPage() {
       setParsedSkills(result.top_10_skills)
       setDetectedRole(result.target_role || targetRole)
       if (result.ontology_narrative) setOntologyNarrative(result.ontology_narrative)
+      setGovernance(result.governance ?? null)
       if (result.target_role && !targetRole) {
         setTargetRole(result.target_role)
       }
@@ -897,6 +908,24 @@ export default function AnalysisPage() {
             Check the 5 you want to focus on, then rate your current level. If a skill is already at your target, uncheck it and pick another from below - we will build the 5-chapter path around the skills you actually need to develop.
           </p>
         </div>
+
+        {/* Governance review banner. Shown only when the judge gate ran in enforce
+            mode and flagged this recommendation for a human (regenerated, or could
+            not clear the bar). Null/absent in shadow mode, so this is invisible
+            today and lights up the moment enforce is enabled. */}
+        {governance?.needs_human_review && (
+          <div
+            role="status"
+            className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900"
+          >
+            <span className="font-semibold">Flagged for review.</span>{' '}
+            {governance.exhausted
+              ? 'The automated quality gate could not fully confirm this skill set; a reviewer should check it before it is used.'
+              : governance.regenerated
+                ? 'The skill set was automatically adjusted to better fit the role and is awaiting a quick human confirmation.'
+                : 'This recommendation is borderline and is awaiting a quick human confirmation.'}
+          </div>
+        )}
 
         {/* Ontology narrative panel (P3 #1: Jennifer C's "how do I know these are the right skills?" ask).
             Collapsed by default. The summary line is always visible so the
