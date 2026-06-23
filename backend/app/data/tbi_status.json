@@ -1,0 +1,31 @@
+{
+  "as_of": "2026-06-22",
+  "inpact": {
+    "max_per": 6,
+    "total": 25,
+    "max": 36,
+    "pct": 69,
+    "production_line": 80,
+    "dimensions": [
+      {"name": "Instant", "score": 3, "basis": "Batch analysis in seconds; real-time is not the use case. LLM timeouts make latency bounded."},
+      {"name": "Natural", "score": 4, "basis": "Judge pinned to gpt-4.1 (reads JDs correctly) + typed input contracts. Capped by missing per-skill ontology descriptions."},
+      {"name": "Permitted", "score": 4, "basis": "Calibrated deterministic judge gate in the prod path (shadow) + regeneration fallback. -> 5 on the enforce flip."},
+      {"name": "Adaptive", "score": 5, "basis": "Pinned + calibrated, drift guard + recalibration trigger, ensemble fixes the temp-0 variance, self-correcting regeneration. -> 6 with an outcome-feedback loop."},
+      {"name": "Contextual", "score": 4, "basis": "Verdict variance fixed; RAG no-op now observable (not silent). -> 5 when GCP credentials make retrieval real."},
+      {"name": "Transparent", "score": 5, "basis": "Structured JSON logs + correlation IDs + per-call telemetry + /metrics + /health. -> 6 with persisted metrics + dashboards."}
+    ]
+  },
+  "goals_recorded": {
+    "lexicon": {"last_drift_check": "2026-06-22", "result": "within tolerance", "verdict_match": true, "role_fit_drift": 0.143, "note": "run scripts/judge_drift_check.py to refresh"},
+    "solid": {"tests_passing": 111, "golden_cases": 3, "note": "run pytest to refresh"}
+  },
+  "layers": [
+    {"layer": "1. Storage", "status": "ok", "note": "Ontology + DB. RAG vector store pending GCP credentials."},
+    {"layer": "2. Real-Time", "status": "ok", "note": "LLM timeout + retry/backoff wrapper on every external call."},
+    {"layer": "3. Semantic", "status": "degraded", "note": "RAG retrieval is a no-op until GCP ADC; visible at /health."},
+    {"layer": "4. Intelligence", "status": "ok", "note": "Judge pinned to gpt-4.1; specialized agents."},
+    {"layer": "5. Governance", "status": "ok", "note": "Deterministic gate (shadow) + ensemble + regeneration + golden/drift guard."},
+    {"layer": "6. Observability", "status": "ok", "note": "Structured logs + correlation IDs + /metrics."},
+    {"layer": "7. Orchestration", "status": "ok", "note": "Orchestrator + typed boundary contracts."}
+  ]
+}
