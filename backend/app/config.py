@@ -86,6 +86,12 @@ class Settings(BaseSettings):
     llm_max_retries: int = 2          # total attempts = 1 + llm_max_retries
     llm_retry_base_delay: float = 1.0  # seconds; doubled each retry, plus jitter
 
+    # Metrics persistence (Observability / Transparent). A background task snapshots
+    # the in-process /metrics window to the DB every interval so the TBI dashboard
+    # shows trends that survive restarts.
+    metrics_persist_enabled: bool = True
+    metrics_persist_interval_s: int = 300
+
     def get_cors_origins_list(self) -> list[str]:
         """Get CORS origins as a list."""
         return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]

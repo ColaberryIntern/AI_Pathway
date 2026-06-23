@@ -1,10 +1,10 @@
 {
-  "as_of": "2026-06-22",
+  "as_of": "2026-06-23",
   "inpact": {
     "max_per": 6,
-    "total": 25,
+    "total": 26,
     "max": 36,
-    "pct": 69,
+    "pct": 72,
     "production_line": 80,
     "dimensions": [
       {"name": "Instant", "score": 3, "basis": "Batch analysis in seconds; real-time is not the use case. LLM timeouts make latency bounded."},
@@ -12,7 +12,7 @@
       {"name": "Permitted", "score": 4, "basis": "Calibrated deterministic judge gate in the prod path (shadow) + regeneration fallback. -> 5 on the enforce flip."},
       {"name": "Adaptive", "score": 5, "basis": "Pinned + calibrated, drift guard + recalibration trigger, ensemble fixes the temp-0 variance, self-correcting regeneration. -> 6 with an outcome-feedback loop."},
       {"name": "Contextual", "score": 4, "basis": "Verdict variance fixed; RAG no-op now observable (not silent). -> 5 when GCP credentials make retrieval real."},
-      {"name": "Transparent", "score": 5, "basis": "Structured JSON logs + correlation IDs + per-call telemetry + /metrics + /health. -> 6 with persisted metrics + dashboards."}
+      {"name": "Transparent", "score": 6, "basis": "Structured JSON logs + correlation IDs + per-call telemetry + /metrics + /health + the TBI dashboard, now with metrics PERSISTED to the DB and rendered as trends (survive restarts)."}
     ]
   },
   "goals_recorded": {
