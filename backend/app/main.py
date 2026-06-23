@@ -3,6 +3,7 @@ import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse
 from app.config import get_settings
 from app.database import init_db, close_db
 from app.api.routes import api_router
@@ -105,6 +106,21 @@ async def metrics_endpoint():
     retry counts, latency p50/p95/p99) aggregated from per-call/per-request telemetry."""
     from app.metrics import snapshot
     return {"window_hours": 24, "metrics": snapshot()}
+
+
+@app.get("/tbi")
+async def tbi_status_endpoint():
+    """Trust Before Intelligence status: INPACT scorecard, 7-layer health, and GOALS
+    (governance/observability/availability/lexicon/solid), recorded + live signals."""
+    from app.services.tbi import build_tbi_status
+    return build_tbi_status()
+
+
+@app.get("/tbi/dashboard", response_class=HTMLResponse)
+async def tbi_dashboard_endpoint():
+    """Self-contained TBI dashboard page (no external assets)."""
+    from app.services.tbi import build_tbi_status, render_dashboard_html
+    return HTMLResponse(render_dashboard_html(build_tbi_status()))
 
 
 if __name__ == "__main__":
