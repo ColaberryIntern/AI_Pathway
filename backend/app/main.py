@@ -44,9 +44,21 @@ async def lifespan(app: FastAPI):
     else:
         logger.info("vector_store_init_skipped", extra={"reason": rag_status["reason"]})
 
+    # Metrics persistence background task (Transparent: trends survive restarts).
+    persist_task = None
+    if settings.metrics_persist_enabled:
+        import asyncio
+        from app.services.metrics_persistence import run_persistence_loop
+        persist_task = asyncio.create_task(
+            run_persistence_loop(settings.metrics_persist_interval_s))
+        logger.info("metrics_persistence_started",
+                    extra={"interval_s": settings.metrics_persist_interval_s})
+
     yield
 
     # Shutdown
+    if persist_task is not None:
+        persist_task.cancel()
     await close_db()
     logger.info("database_connections_closed")
 
@@ -112,13 +124,24 @@ async def metrics_endpoint():
 # the prod frontend nginx only proxies /api/, so the /api/tbi/* aliases are what
 # make the dashboard reachable externally (http://HOST/api/tbi/dashboard) with no
 # nginx change.
+async def _tbi_trends() -> dict:
+    """Fetch persisted metric trends; never let a DB hiccup break the dashboard."""
+    try:
+        from app.database import AsyncSessionLocal
+        from app.services.metrics_persistence import recent_trends
+        async with AsyncSessionLocal() as db:
+            return await recent_trends(db)
+    except Exception:
+        return {}
+
+
 @app.get("/tbi")
 @app.get("/api/tbi")
 async def tbi_status_endpoint():
     """Trust Before Intelligence status: INPACT scorecard, 7-layer health, and GOALS
     (governance/observability/availability/lexicon/solid), recorded + live signals."""
     from app.services.tbi import build_tbi_status
-    return build_tbi_status()
+    return build_tbi_status(trends=await _tbi_trends())
 
 
 @app.get("/tbi/dashboard", response_class=HTMLResponse)
@@ -126,7 +149,7 @@ async def tbi_status_endpoint():
 async def tbi_dashboard_endpoint():
     """Self-contained TBI dashboard page (no external assets)."""
     from app.services.tbi import build_tbi_status, render_dashboard_html
-    return HTMLResponse(render_dashboard_html(build_tbi_status()))
+    return HTMLResponse(render_dashboard_html(build_tbi_status(trends=await _tbi_trends())))
 
 
 if __name__ == "__main__":

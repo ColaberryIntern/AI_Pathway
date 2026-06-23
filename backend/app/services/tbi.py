@@ -17,7 +17,7 @@ from pathlib import Path
 _DATA = Path(__file__).resolve().parents[1] / "data" / "tbi_status.json"
 
 
-def build_tbi_status() -> dict:
+def build_tbi_status(trends: dict | None = None) -> dict:
     recorded = json.loads(_DATA.read_text(encoding="utf-8"))
 
     from app.config import get_settings
@@ -51,6 +51,7 @@ def build_tbi_status() -> dict:
             "lexicon": recorded.get("goals_recorded", {}).get("lexicon", {}),
             "solid": recorded.get("goals_recorded", {}).get("solid", {}),
         },
+        "trends": trends or {},
     }
 
 
@@ -101,6 +102,21 @@ def _color(score: int) -> str:
 def _status_pill(status: str) -> str:
     cls = {"ok": "ok", "degraded": "degraded"}.get(status, "bad")
     return f'<span class="pill {cls}">{status}</span>'
+
+
+_SPARK = "▁▂▃▄▅▆▇█"
+
+
+def _sparkline(values: list[float], lo: float = 0.0, hi: float = 1.0) -> str:
+    """Render a list of 0..1 values as unicode block sparkline chars."""
+    if not values:
+        return ""
+    span = (hi - lo) or 1.0
+    out = []
+    for v in values:
+        idx = int(round((max(lo, min(hi, v)) - lo) / span * (len(_SPARK) - 1)))
+        out.append(_SPARK[idx])
+    return "".join(out)
 
 
 def render_dashboard_html(status: dict) -> str:
@@ -156,6 +172,26 @@ def render_dashboard_html(status: dict) -> str:
     else:
         obs_html = '<div class="foot">metrics unavailable</div>'
 
+    trends = status.get("trends", {}) or {}
+    if trends:
+        trows = ""
+        for cat, series in trends.items():
+            srates = [p.get("success_rate", 0.0) for p in series]
+            spark = _sparkline(srates)
+            latest = series[-1] if series else {}
+            trows += (
+                f'<tr><td>{cat}</td><td style="font-family:monospace;font-size:15px">{spark}</td>'
+                f'<td>{round((latest.get("success_rate") or 0) * 100)}%</td>'
+                f'<td>{latest.get("p95","-")}</td><td>{len(series)}</td></tr>'
+            )
+        trends_html = (
+            '<table><tr><th>category</th><th>success-rate trend</th><th>latest</th>'
+            '<th>latest p95 (ms)</th><th>samples</th></tr>' + trows + '</table>'
+        )
+    else:
+        trends_html = ('<div class="foot">No persisted history yet - the background '
+                       'task records a sample every few minutes once there is traffic.</div>')
+
     layers_html = ""
     for ly in status.get("layers", []):
         layers_html += (
@@ -178,6 +214,7 @@ def render_dashboard_html(status: dict) -> str:
         + dim_html + "</div>"
         "<div class='card'><h2>GOALS</h2><div class='grid'>" + tiles + "</div></div>"
         "<div class='card'><h2>Observability (rolling 24h)</h2>" + obs_html + "</div>"
+        "<div class='card'><h2>Trends (persisted history)</h2>" + trends_html + "</div>"
         "<div class='card'><h2>7-layer architecture</h2><table>"
         "<tr><th>layer</th><th>status</th><th>note</th></tr>" + layers_html + "</table></div>"
         "<div class='foot'>INPACT scores + layer status are recorded (app/data/tbi_status.json); "
