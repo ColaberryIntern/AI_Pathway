@@ -1,6 +1,6 @@
 {
-  "version": "2.0.0",
-  "export_date": "2026-03-06",
+  "version": "2.1",
+  "export_date": "2026-05-27",
   "proficiency_scale": [
     {
       "level": 0,
@@ -109,7 +109,10 @@
         "D.RSN",
         "D.ACODE",
         "D.COMP",
-        "D.PROTO"
+        "D.PROTO",
+        "D.VOICE",
+        "D.SYNTH",
+        "D.HRNS"
       ]
     }
   ],
@@ -245,6 +248,24 @@
       "label": "Agent Protocols",
       "description": "A2A, context engineering, security",
       "layer": "L.EMERGING"
+    },
+    {
+      "id": "D.VOICE",
+      "label": "Voice AI",
+      "description": "Real-time voice models & streaming pipelines",
+      "layer": "L.EMERGING"
+    },
+    {
+      "id": "D.SYNTH",
+      "label": "Synthetic Data & Flywheel",
+      "description": "Training data generation & distillation",
+      "layer": "L.EMERGING"
+    },
+    {
+      "id": "D.HRNS",
+      "label": "Agent Harness Engineering",
+      "description": "State, memory, scaffold & context systems",
+      "layer": "L.EMERGING"
     }
   ],
   "skills": [
@@ -261,7 +282,8 @@
         "Teaches others effective search techniques; uses advanced search features",
         "Builds curated research workflows combining multiple search tools",
         "Designs information retrieval strategies and search training programs"
-      ]
+      ],
+      "description": "Understands how to use web browsers and search engines to find information online, which is essential for efficiently accessing resources and conducting research in a digital work environment."
     },
     {
       "id": "SK.DIG.002",
@@ -276,7 +298,8 @@
         "Sets up folder structures for teams; handles version conflicts",
         "Builds automated file workflows (backup scripts, sync pipelines)",
         "Designs org-wide file management and governance policies"
-      ]
+      ],
+      "description": "Knows how to organize, store, and retrieve files both locally and in cloud storage, enabling secure and efficient management of digital documents and collaboration with others."
     },
     {
       "id": "SK.DIG.003",
@@ -291,7 +314,8 @@
         "Builds complex models with pivot tables and conditional formatting",
         "Creates automated reporting dashboards with macros or scripts",
         "Designs spreadsheet-based systems and trains teams on data modeling"
-      ]
+      ],
+      "description": "Can create, edit, and perform basic calculations in spreadsheets, which supports data organization, analysis, and reporting tasks common in many workplaces."
     },
     {
       "id": "SK.DIG.004",
@@ -306,7 +330,8 @@
         "Coordinates team communication; sets up shared channels and norms",
         "Integrates email/chat with automation tools (Zapier, Power Automate)",
         "Designs communication architectures and policies for organizations"
-      ]
+      ],
+      "description": "Uses email and digital messaging tools to communicate professionally, which is crucial for effective collaboration and information sharing in modern organizations."
     },
     {
       "id": "SK.DIG.005",
@@ -321,7 +346,8 @@
         "Advises others on account security; reviews team security practices",
         "Implements SSO and enterprise authentication solutions",
         "Designs security-first identity and access management systems"
-      ]
+      ],
+      "description": "Understands the importance of strong passwords and basic account security practices, helping to protect sensitive information and prevent unauthorized access."
     },
     {
       "id": "SK.DIG.006",
@@ -336,7 +362,8 @@
         "Troubleshoots installation issues; manages dependencies",
         "Packages and deploys applications for teams or clients",
         "Designs application distribution and lifecycle management systems"
-      ]
+      ],
+      "description": "Can install, update, and use software applications, ensuring access to necessary digital tools and maintaining productivity in a technology-driven workplace."
     },
     {
       "id": "SK.DIG.007",
@@ -351,7 +378,8 @@
         "Customizes shortcuts; uses clipboard managers and text expansion",
         "Builds keyboard-driven workflows and automates repetitive tasks",
         "Designs accessibility-first interaction patterns and shortcut systems"
-      ]
+      ],
+      "description": "Uses copy/paste functions and keyboard shortcuts to work more efficiently, saving time and reducing repetitive manual tasks."
     },
     {
       "id": "SK.DIG.008",
@@ -366,7 +394,8 @@
         "Facilitates remote workshops; troubleshoots A/V issues for others",
         "Integrates conferencing tools with other workflows (recording to summary)",
         "Designs hybrid collaboration architectures for organizations"
-      ]
+      ],
+      "description": "Participates in video calls and shares screens to collaborate remotely, which is vital for teamwork and communication in hybrid or distributed work settings."
     },
     {
       "id": "SK.CTIC.001",
@@ -381,7 +410,8 @@
         "Teaches source evaluation frameworks (CRAAP test, lateral reading)",
         "Builds source credibility scoring into information workflows",
         "Designs institutional media literacy and source evaluation programs"
-      ]
+      ],
+      "description": "Assesses whether information sources are trustworthy and reliable, helping to avoid misinformation and make informed decisions."
     },
     {
       "id": "SK.CTIC.002",
@@ -398,7 +428,8 @@
         "Systematically debunks misinformation; uses fact-checking tools",
         "Builds misinformation detection tools or automated flagging systems",
         "Designs counter-misinformation strategies and platform-level safeguards"
-      ]
+      ],
+      "description": "Recognizes common patterns and tactics used in spreading misinformation, which is important for identifying false or misleading content online."
     },
     {
       "id": "SK.CTIC.003",
@@ -415,7 +446,8 @@
         "Uses structured verification methods; triangulates across source types",
         "Builds automated cross-referencing pipelines for content validation",
         "Designs verification frameworks for newsrooms or research teams"
-      ]
+      ],
+      "description": "Checks information against multiple sources to verify its accuracy, reducing the risk of relying on incorrect or biased data."
     },
     {
       "id": "SK.CTIC.004",
@@ -432,7 +464,8 @@
         "Analyzes bias across multiple viewpoints; adjusts own consumption habits",
         "Builds bias detection tools or scoring rubrics for content review",
         "Designs bias-aware editorial and content governance systems"
-      ]
+      ],
+      "description": "Identifies potential bias in content, allowing for more objective analysis and fair interpretation of information."
     },
     {
       "id": "SK.CTIC.005",
@@ -447,7 +480,8 @@
         "Teaches the distinction; applies it in professional writing and reviews",
         "Builds content classification systems that separate fact from opinion",
         "Designs fact/opinion labeling standards for publishing platforms"
-      ]
+      ],
+      "description": "Differentiates between factual statements and personal opinions, which is key for critical analysis and clear communication."
     },
     {
       "id": "SK.CTIC.006",
@@ -464,7 +498,8 @@
         "Applies detection tools (GPTZero, metadata analysis) and teaches others",
         "Builds AI content detection pipelines for content moderation",
         "Designs provenance and watermarking systems for AI content authenticity"
-      ]
+      ],
+      "description": "Recognizes when content such as text, images, or videos has been generated by AI, which helps in assessing authenticity and potential risks."
     },
     {
       "id": "SK.FND.000",
@@ -479,7 +514,8 @@
         "Explains AI vs traditional software to non-technical stakeholders with examples",
         "Builds demonstrations or training materials comparing AI and traditional approaches",
         "Designs curricula or frameworks for teaching AI literacy at scale"
-      ]
+      ],
+      "description": "Understands the fundamental differences between AI systems and traditional software, providing a foundation for working with or adopting AI technologies in the workplace."
     },
     {
       "id": "SK.FND.001",
@@ -496,7 +532,8 @@
         "Optimizes prompts based on tokenization; explains context window trade-offs",
         "Builds token-aware applications with context window management",
         "Designs architectures that account for tokenization and context constraints"
-      ]
+      ],
+      "description": "Understands how large language models process input as tokens, manage context windows, and generate predictions, which is essential for crafting effective prompts and troubleshooting model behavior."
     },
     {
       "id": "SK.FND.002",
@@ -513,7 +550,8 @@
         "Designs workflows with verification steps to catch hallucinations",
         "Builds guardrails and automated checks for hallucination detection",
         "Designs system-level reliability architectures accounting for all failure modes"
-      ]
+      ],
+      "description": "Recognizes both the strengths and inherent limitations of AI models, including the risk of generating inaccurate or fabricated information (hallucinations), which is critical for ensuring reliable use of AI outputs."
     },
     {
       "id": "SK.FND.003",
@@ -530,7 +568,8 @@
         "Selects models for specific tasks based on benchmarks and constraints",
         "Builds model evaluation frameworks and switching infrastructure",
         "Designs multi-model architectures with routing, fallback, and governance"
-      ]
+      ],
+      "description": "Distinguishes between different types of AI models, such as open-source and proprietary (closed) systems, enabling informed decisions about model selection, integration, and governance."
     },
     {
       "id": "SK.FND.004",
@@ -547,7 +586,8 @@
         "Designs workflows that combine reasoning, retrieval, and tools effectively",
         "Builds systems that dynamically choose between reasoning, retrieval, and tools",
         "Designs decision frameworks for hybrid AI architectures at scale"
-      ]
+      ],
+      "description": "Understands the difference between AI generating answers through reasoning, retrieving information from external sources, or using specialized tools, which helps in choosing the right approach for specific tasks."
     },
     {
       "id": "SK.FND.005",
@@ -564,7 +604,8 @@
         "Designs prompts and workflows that account for knowledge staleness",
         "Builds systems with automatic staleness detection and live data augmentation",
         "Designs data freshness architectures combining models with live retrieval"
-      ]
+      ],
+      "description": "Knows that AI models are trained on specific datasets up to a certain date, which affects their knowledge and accuracy, and is able to account for data freshness when using AI for current information."
     },
     {
       "id": "SK.FND.006",
@@ -581,7 +622,8 @@
         "Optimizes sampling settings per use case (creative vs factual)",
         "Builds adaptive sampling systems that tune parameters based on context",
         "Designs sampling strategies for production systems balancing quality and diversity"
-      ]
+      ],
+      "description": "Understands how parameters like temperature and sampling affect the creativity, diversity, and reliability of AI-generated outputs, allowing for better control over model responses."
     },
     {
       "id": "SK.FND.010",
@@ -598,7 +640,8 @@
         "Discusses architectural trade-offs (encoder-only, decoder-only, encoder-decoder)",
         "Implements or fine-tunes transformer-based models for specific tasks",
         "Designs novel transformer architectures or significant architectural modifications"
-      ]
+      ],
+      "description": "Has a basic grasp of transformer architectures, including the attention mechanism, which underpins most modern language models and is key to understanding their capabilities and limitations."
     },
     {
       "id": "SK.FND.011",
@@ -615,7 +658,8 @@
         "Compares diffusion model variants and their strengths/weaknesses",
         "Fine-tunes or trains diffusion models for specific visual domains",
         "Designs diffusion-based generation systems with custom pipelines"
-      ]
+      ],
+      "description": "Understands the core principles of diffusion models, which are used for generating images and other media, enabling informed use and evaluation of generative AI tools."
     },
     {
       "id": "SK.FND.012",
@@ -632,7 +676,8 @@
         "Selects embedding models for specific tasks; evaluates embedding quality",
         "Builds embedding pipelines for production (chunking, indexing, querying)",
         "Designs embedding architectures with custom models and multi-modal indexing"
-      ]
+      ],
+      "description": "Knows how embeddings represent data as vectors to capture semantic similarity, which is foundational for tasks like search, recommendation, and clustering in AI applications."
     },
     {
       "id": "SK.FND.013",
@@ -649,7 +694,8 @@
         "Evaluates multimodal model capabilities for specific use cases",
         "Builds applications that leverage multimodal inputs and outputs",
         "Designs multimodal AI architectures combining multiple models and modalities"
-      ]
+      ],
+      "description": "Recognizes that AI models can process and combine multiple types of data, such as text, images, and audio, which expands the range of possible applications and solutions."
     },
     {
       "id": "SK.FND.020",
@@ -664,7 +710,8 @@
         "Designs privacy guidelines for AI usage within teams or departments",
         "Builds privacy-preserving AI workflows (data masking, on-prem models)",
         "Designs enterprise-wide AI privacy architectures and compliance frameworks"
-      ]
+      ],
+      "description": "Understands basic privacy considerations when using generative AI, including risks of sharing sensitive information and the importance of compliance with data protection regulations."
     },
     {
       "id": "SK.FND.021",
@@ -679,7 +726,8 @@
         "Advises teams on IP policies for AI-generated content",
         "Implements IP compliance checks in AI content generation workflows",
         "Designs organizational IP and copyright policy frameworks for AI"
-      ]
+      ],
+      "description": "Is aware of intellectual property and copyright issues related to AI-generated content, which is necessary for responsible and legal use of AI in the workplace."
     },
     {
       "id": "SK.FND.022",
@@ -696,7 +744,8 @@
         "Evaluates model outputs for bias and recommends mitigations",
         "Builds bias detection and mitigation pipelines into AI workflows",
         "Designs fairness frameworks and bias audit programs for AI systems"
-      ]
+      ],
+      "description": "Recognizes that AI systems can reflect or amplify biases present in their training data, and understands the importance of fairness and bias mitigation in AI outputs."
     },
     {
       "id": "SK.FND.023",
@@ -713,7 +762,8 @@
         "Recommends smaller models or efficient approaches to reduce environmental impact",
         "Builds carbon-aware model selection and deployment pipelines",
         "Designs sustainability strategies for large-scale AI infrastructure"
-      ]
+      ],
+      "description": "Understands that developing and running AI models has environmental impacts, such as energy consumption and carbon footprint, which is important for making sustainable technology choices."
     },
     {
       "id": "SK.PRM.000",
@@ -730,7 +780,8 @@
         "Coaches others on writing effective prompts; identifies common pitfalls",
         "Builds prompt templates and libraries for team or product use",
         "Designs prompt engineering curricula and organizational prompt standards"
-      ]
+      ],
+      "description": "Knows how to write clear, specific, and effective requests or prompts for AI systems, which is essential for obtaining accurate and useful responses in professional settings."
     },
     {
       "id": "SK.PRM.001",
@@ -747,7 +798,8 @@
         "Designs complex multi-section prompts with clear formatting directives",
         "Builds prompt systems with composable instruction/constraint/format blocks",
         "Designs prompt architectures that separate concerns and enable reuse at scale"
-      ]
+      ],
+      "description": "Crafting clear instructions, specifying constraints, and defining output formats helps AI systems generate responses that meet user needs and business requirements. Mastery of this skill enables scalable and reusable prompt designs for consistent, high-quality results."
     },
     {
       "id": "SK.PRM.002",
@@ -764,7 +816,8 @@
         "Curates example sets strategically; tests which examples improve quality most",
         "Builds automated few-shot selection systems from example databases",
         "Designs dynamic few-shot retrieval architectures for production prompts"
-      ]
+      ],
+      "description": "Providing a few relevant examples in prompts helps AI models understand the desired pattern or style, improving output accuracy. Advanced use involves dynamically selecting examples to optimize performance in production environments."
     },
     {
       "id": "SK.PRM.003",
@@ -781,7 +834,8 @@
         "Uses A/B prompt testing; tracks prompt versions with change notes",
         "Builds prompt debugging and regression testing tools",
         "Designs prompt lifecycle management systems with automated quality gates"
-      ]
+      ],
+      "description": "Systematically testing and refining prompts allows users to identify issues and improve AI output quality over time. This skill is essential for maintaining reliable AI systems and ensuring prompts adapt to changing needs."
     },
     {
       "id": "SK.PRM.004",
@@ -798,7 +852,8 @@
         "Designs multi-persona systems; benchmarks persona effectiveness",
         "Builds persona management systems with version control and A/B testing",
         "Designs persona architecture patterns for complex multi-agent products"
-      ]
+      ],
+      "description": "Assigning roles or personas to AI prompts guides the model’s behavior and tone, making interactions more contextually appropriate. This technique is important for building multi-agent systems and tailoring AI responses to specific user scenarios."
     },
     {
       "id": "SK.PRM.005",
@@ -815,7 +870,8 @@
         "Designs CoT strategies for domain-specific reasoning problems",
         "Builds systems that automatically inject CoT for complex queries",
         "Designs reasoning architecture patterns combining CoT with other techniques"
-      ]
+      ],
+      "description": "Encouraging the AI to explain its reasoning step-by-step leads to more transparent and accurate outputs, especially for complex tasks. Combining this approach with other prompting techniques enhances the model’s problem-solving abilities."
     },
     {
       "id": "SK.PRM.006",
@@ -832,7 +888,8 @@
         "Designs multi-step prompt chains with error handling between steps",
         "Builds automated task decomposition and chaining pipelines",
         "Designs task orchestration architectures with dynamic step planning"
-      ]
+      ],
+      "description": "Dividing complex tasks into smaller, manageable steps helps AI systems process and solve problems more effectively. This approach supports the design of workflows where AI can handle multi-step processes with greater reliability."
     },
     {
       "id": "SK.PRM.010",
@@ -850,7 +907,8 @@
         "Designs robust schema prompts with error recovery for malformed output",
         "Builds structured output pipelines with schema validation and retry logic",
         "Designs schema evolution strategies and structured output standards for platforms"
-      ]
+      ],
+      "description": "Requesting structured outputs such as JSON or adhering to specific schemas ensures that AI responses can be easily parsed and integrated into downstream systems. This skill is crucial for building robust, automated workflows that rely on consistent data formats."
     },
     {
       "id": "SK.PRM.011",
@@ -867,7 +925,8 @@
         "Designs calibrated rubrics validated against human expert ratings",
         "Builds rubric-based evaluation systems with automated scoring pipelines",
         "Designs rubric frameworks and evaluation architectures for quality assurance"
-      ]
+      ],
+      "description": "Using rubrics as part of prompts provides clear criteria for evaluating AI-generated content, leading to more objective and consistent outputs. This technique supports quality assurance and helps align AI responses with organizational standards."
     },
     {
       "id": "SK.PRM.020",
@@ -884,7 +943,8 @@
         "Designs multi-pass refinement workflows for specific content types",
         "Builds automated refinement pipelines with quality convergence checks",
         "Designs self-improving content generation architectures with feedback loops"
-      ]
+      ],
+      "description": "Implementing iterative workflows where AI drafts, critiques, and revises content leads to higher quality and more refined outputs. This process enables continuous improvement and self-correction in content generation tasks."
     },
     {
       "id": "SK.PRM.021",
@@ -901,7 +961,8 @@
         "Designs grounding strategies: inline citations, confidence markers, caveats",
         "Builds citation verification and grounding pipelines",
         "Designs citation and grounding architectures for trustworthy AI systems"
-      ]
+      ],
+      "description": "Ensuring that AI outputs are grounded in reliable sources and include citations increases trust and accountability. This skill is vital for applications where accuracy and transparency are critical, such as research or regulated industries."
     },
     {
       "id": "SK.PRM.022",
@@ -919,7 +980,8 @@
         "Designs custom reasoning-action patterns for domain-specific workflows",
         "Builds ReAct orchestration frameworks with tool registries and error recovery",
         "Designs advanced reasoning-action architectures for autonomous AI systems"
-      ]
+      ],
+      "description": "Applying reasoning-action (ReAct) patterns enables AI to alternate between thinking and taking actions, improving its ability to solve complex, multi-step problems autonomously. Mastery of this approach is key for building advanced, agentic AI systems."
     },
     {
       "id": "SK.RAG.000",
@@ -936,7 +998,8 @@
         "Evaluates when RAG is preferable to fine-tuning or large context",
         "Builds end-to-end RAG systems with chunking, retrieval, and generation",
         "Designs RAG architectures for enterprise scale with quality guarantees"
-      ]
+      ],
+      "description": "Retrieval-augmented generation (RAG) combines information retrieval with generative AI to produce more accurate and up-to-date responses. Understanding RAG is essential for building systems that leverage external knowledge sources effectively."
     },
     {
       "id": "SK.RAG.001",
@@ -953,7 +1016,8 @@
         "Designs multi-query strategies (HyDE, step-back, sub-question decomposition)",
         "Builds adaptive query rewriting pipelines with relevance feedback",
         "Designs query understanding architectures that optimize retrieval across domains"
-      ]
+      ],
+      "description": "Rewriting user queries improves the relevance and accuracy of retrieved information by clarifying intent and optimizing for retrieval systems. This skill is important for ensuring users get the most useful results from AI-powered search and question-answering tools."
     },
     {
       "id": "SK.RAG.002",
@@ -970,7 +1034,8 @@
         "Designs semantic chunking strategies optimized for specific document types",
         "Builds adaptive chunking pipelines that tune size based on content structure",
         "Designs document processing architectures with hierarchical and semantic chunking"
-      ]
+      ],
+      "description": "Splitting documents into appropriately sized and meaningful chunks enables efficient and accurate retrieval of relevant information. Advanced chunking strategies enhance retrieval performance and support scalable document processing."
     },
     {
       "id": "SK.RAG.003",
@@ -987,7 +1052,8 @@
         "Tunes hybrid weights per domain; evaluates retrieval precision/recall",
         "Builds hybrid retrieval systems with learned fusion and query routing",
         "Designs multi-strategy retrieval architectures with adaptive routing"
-      ]
+      ],
+      "description": "Combining vector-based and keyword-based retrieval methods allows AI systems to find information using both semantic meaning and exact matches. This hybrid approach improves coverage and relevance in search and retrieval applications."
     },
     {
       "id": "SK.RAG.010",
@@ -1004,7 +1070,8 @@
         "Designs reranking pipelines with multiple scoring signals",
         "Builds production reranking systems with latency and quality trade-offs",
         "Designs multi-stage retrieval architectures with learned ranking models"
-      ]
+      ],
+      "description": "Reranking and scoring involves ordering retrieved documents or passages based on their relevance to a query, often using learned models. This skill helps ensure that the most useful and accurate information is presented first in AI-driven search or retrieval systems."
     },
     {
       "id": "SK.RAG.011",
@@ -1022,7 +1089,8 @@
         "Designs dynamic context allocation strategies based on query complexity",
         "Builds context budgeting systems with automatic truncation and prioritization",
         "Designs context-aware architectures that optimize information density per token"
-      ]
+      ],
+      "description": "Context budgeting is the practice of managing the limited context window available to language models by selecting and prioritizing information to maximize relevance and utility. This skill is important for fitting the most valuable content into model prompts without exceeding token limits."
     },
     {
       "id": "SK.RAG.012",
@@ -1039,7 +1107,8 @@
         "Designs context ordering strategies validated with position-sensitivity tests",
         "Builds context arrangement systems that optimize information positioning",
         "Designs attention-aware context architectures for maximum information utilization"
-      ]
+      ],
+      "description": "Lost in the middle mitigation addresses the issue where information placed in the middle of a context window is less likely to be used by language models. Mastering this skill helps ensure that all critical information is accessible and utilized effectively in retrieval-augmented generation."
     },
     {
       "id": "SK.RAG.020",
@@ -1057,7 +1126,8 @@
         "Designs automated faithfulness scoring with citation validation",
         "Builds faithfulness evaluation pipelines with LLM-as-judge and human review",
         "Designs end-to-end faithfulness assurance architectures for production RAG"
-      ]
+      ],
+      "description": "Faithfulness evaluation is the process of assessing whether AI-generated outputs accurately reflect the retrieved source material. This skill is essential for maintaining trust and reliability in systems that combine retrieval with generation."
     },
     {
       "id": "SK.RAG.021",
@@ -1074,7 +1144,8 @@
         "Designs regression testing suites that catch quality degradation",
         "Builds automated RAG regression testing pipelines integrated into CI/CD",
         "Designs comprehensive RAG quality assurance frameworks with multi-metric evaluation"
-      ]
+      ],
+      "description": "Golden sets and regression testing involve using curated datasets and repeatable tests to measure and maintain the quality of retrieval-augmented generation systems over time. This ensures that updates or changes do not degrade system performance or accuracy."
     },
     {
       "id": "SK.RAG.022",
@@ -1092,7 +1163,8 @@
         "Designs agentic RAG loops with planning, retrieval, verification, and re-retrieval",
         "Builds agentic RAG systems with reflection and adaptive retrieval depth",
         "Designs autonomous RAG architectures with dynamic knowledge graph traversal"
-      ]
+      ],
+      "description": "Agentic RAG patterns refer to retrieval-augmented generation workflows where autonomous agents perform multi-step retrieval and reasoning tasks. This skill enables the design of systems that can dynamically gather and synthesize information without constant human intervention."
     },
     {
       "id": "SK.RAG.023",
@@ -1109,7 +1181,8 @@
         "Designs temporal relevance scoring balancing recency with authority signals",
         "Builds time-aware RAG systems with automatic freshness scoring and decay functions",
         "Designs temporal knowledge architectures combining static bases with live data feeds"
-      ]
+      ],
+      "description": "Temporal and time-aware RAG focuses on incorporating document timestamps and recency into retrieval strategies. This skill ensures that AI systems provide up-to-date and contextually relevant information, especially when combining static and live data sources."
     },
     {
       "id": "SK.AGT.000",
@@ -1126,7 +1199,8 @@
         "Compares agent frameworks (LangGraph, AutoGen, CrewAI) and their trade-offs",
         "Builds functional AI agents with tool use and error handling",
         "Designs multi-agent architectures for complex enterprise workflows"
-      ]
+      ],
+      "description": "AI agents are autonomous software entities that can perceive their environment, make decisions, and take actions to achieve specific goals. Understanding this concept is foundational for building systems that automate complex tasks or workflows."
     },
     {
       "id": "SK.AGT.001",
@@ -1144,7 +1218,8 @@
         "Designs comprehensive tool APIs with error handling and input constraints",
         "Builds tool registries with dynamic discovery and version management",
         "Designs tool ecosystem architectures with governance and access control"
-      ]
+      ],
+      "description": "Tool definitions and validation involve specifying which external tools an AI agent can use and ensuring those tools are safe and effective. This skill is crucial for extending agent capabilities while maintaining control and security."
     },
     {
       "id": "SK.AGT.002",
@@ -1162,7 +1237,8 @@
         "Designs error classification and recovery strategies for agent workflows",
         "Builds resilient agent systems with circuit breakers and graceful degradation",
         "Designs fault-tolerant agent architectures with self-healing capabilities"
-      ]
+      ],
+      "description": "Error handling and retries refer to strategies for managing failures or unexpected outcomes when agents interact with tools or services. This skill is important for building robust AI systems that can recover gracefully from errors."
     },
     {
       "id": "SK.AGT.003",
@@ -1179,7 +1255,8 @@
         "Designs memory systems with short-term, long-term, and episodic components",
         "Builds scalable state persistence with checkpointing and session recovery",
         "Designs memory architectures for multi-agent systems with shared state"
-      ]
+      ],
+      "description": "State and memory management is about tracking and storing information over time so that agents can remember past actions, context, or conversations. This skill enables agents to operate effectively in multi-step or long-running tasks."
     },
     {
       "id": "SK.AGT.010",
@@ -1197,7 +1274,8 @@
         "Designs agent loops with stopping conditions, token limits, and timeout handling",
         "Builds production-grade single-agent systems with monitoring and guardrails",
         "Designs extensible agent loop frameworks with pluggable components"
-      ]
+      ],
+      "description": "Single-agent loops are iterative processes where an agent repeatedly observes, decides, and acts to accomplish a task. Mastering this skill is key for building agents that can autonomously pursue goals through repeated cycles."
     },
     {
       "id": "SK.AGT.011",
@@ -1214,7 +1292,8 @@
         "Designs multi-agent topologies for specific problem domains",
         "Builds multi-agent platforms with inter-agent communication protocols",
         "Designs scalable multi-agent architectures with dynamic team formation"
-      ]
+      ],
+      "description": "Multi-agent patterns involve designing systems where multiple agents collaborate or coordinate to solve complex problems. This skill allows for scalable solutions that leverage teamwork among autonomous agents."
     },
     {
       "id": "SK.AGT.012",
@@ -1232,7 +1311,8 @@
         "Designs complex DAG workflows with conditional branching and cycles",
         "Builds graph orchestration engines with dynamic graph modification",
         "Designs graph-based orchestration architectures supporting arbitrary workflow patterns"
-      ]
+      ],
+      "description": "Graph-based orchestration uses graph structures to model and manage workflows, enabling flexible and dynamic execution paths for agents. This skill supports the creation of sophisticated automation pipelines with complex dependencies."
     },
     {
       "id": "SK.AGT.020",
@@ -1249,7 +1329,8 @@
         "Evaluates MCP servers and integrates them into agent workflows",
         "Builds MCP-compatible agent systems with multiple server connections",
         "Designs MCP-first agent architectures with protocol-level extensions"
-      ]
+      ],
+      "description": "MCP protocol concepts cover the principles behind the Model Context Protocol, which standardizes how agents and models exchange context and instructions. Understanding this protocol is important for building interoperable and extensible agent systems."
     },
     {
       "id": "SK.AGT.021",
@@ -1267,7 +1348,8 @@
         "Designs least-privilege permission models for agent tool access",
         "Builds dynamic permission systems with runtime capability negotiation",
         "Designs enterprise agent permission architectures with audit and compliance"
-      ]
+      ],
+      "description": "Defines and enforces the minimum permissions AI agents need to perform their tasks, reducing security risks and ensuring compliance with organizational policies."
     },
     {
       "id": "SK.AGT.030",
@@ -1285,7 +1367,8 @@
         "Designs guardrail frameworks with risk classification and escalation paths",
         "Builds runtime guardrail engines with policy enforcement and kill switches",
         "Designs comprehensive agent safety architectures with defense-in-depth"
-      ]
+      ],
+      "description": "Implements controls and approval processes that limit what AI agents can do, helping prevent unintended actions and ensuring agent behavior aligns with safety and organizational standards."
     },
     {
       "id": "SK.AGT.031",
@@ -1302,7 +1385,8 @@
         "Designs audit trail systems with searchable decision histories",
         "Builds agent observability platforms with replay and root cause analysis",
         "Designs compliance-grade audit architectures for regulated agent deployments"
-      ]
+      ],
+      "description": "Ensures that all actions taken by AI agents are recorded and traceable, supporting accountability, troubleshooting, and regulatory compliance."
     },
     {
       "id": "SK.MOD.000",
@@ -1319,7 +1403,8 @@
         "Advises teams on when to customize using a decision framework",
         "Builds evaluation harnesses to compare custom vs off-the-shelf approaches",
         "Designs model customization strategy frameworks for organizations"
-      ]
+      ],
+      "description": "Evaluates when it is appropriate to use pre-built AI models versus customizing them, balancing cost, performance, and business needs."
     },
     {
       "id": "SK.MOD.001",
@@ -1337,7 +1422,8 @@
         "Makes informed prompt-vs-fine-tune decisions based on data and metrics",
         "Builds decision pipelines that evaluate both approaches on the same data",
         "Designs organizational decision frameworks for model adaptation strategies"
-      ]
+      ],
+      "description": "Assesses whether to adapt AI models through prompting or by fine-tuning, considering factors like task complexity, data availability, and required performance."
     },
     {
       "id": "SK.MOD.002",
@@ -1355,7 +1441,8 @@
         "Designs data collection strategies with quality criteria and sampling plans",
         "Builds data pipelines for continuous fine-tuning data collection and validation",
         "Designs enterprise data strategies for model adaptation at scale"
-      ]
+      ],
+      "description": "Identifies the type, quantity, and quality of data needed for effective model fine-tuning, ensuring that adaptation efforts lead to reliable outcomes."
     },
     {
       "id": "SK.MOD.010",
@@ -1372,7 +1459,8 @@
         "Designs instruction datasets and training recipes for specific tasks",
         "Runs instruction tuning jobs; evaluates and iterates on model quality",
         "Designs instruction tuning pipelines with automated quality evaluation"
-      ]
+      ],
+      "description": "Understands how to adjust AI models to follow specific instructions more accurately, improving their usefulness for targeted tasks."
     },
     {
       "id": "SK.MOD.011",
@@ -1389,7 +1477,8 @@
         "Selects PEFT strategies and hyperparameters for specific tasks",
         "Trains and deploys LoRA adapters in production with adapter switching",
         "Designs PEFT infrastructure with adapter registries and serving optimization"
-      ]
+      ],
+      "description": "Applies parameter-efficient fine-tuning techniques such as LoRA to adapt large models with minimal computational resources, enabling scalable and cost-effective customization."
     },
     {
       "id": "SK.MOD.012",
@@ -1407,7 +1496,8 @@
         "Designs synthetic data pipelines with diversity and quality controls",
         "Builds automated synthetic data generation systems with evaluation loops",
         "Designs synthetic data strategies balancing quality, diversity, and bias mitigation"
-      ]
+      ],
+      "description": "Creates or sources artificial data to supplement real-world datasets, enhancing model training while managing issues like bias and data diversity."
     },
     {
       "id": "SK.MUL.000",
@@ -1424,7 +1514,8 @@
         "Advises on which multimodal models to use for specific tasks",
         "Builds applications combining multiple modality inputs and outputs",
         "Designs multimodal AI strategies and architectures for organizations"
-      ]
+      ],
+      "description": "Recognizes and differentiates between AI systems that process text, images, audio, or video, enabling selection of the right approach for complex, real-world tasks."
     },
     {
       "id": "SK.MUL.001",
@@ -1441,7 +1532,8 @@
         "Designs image-to-text workflows for document processing and data extraction",
         "Builds image analysis pipelines with OCR, layout detection, and structured output",
         "Designs enterprise document intelligence architectures with multimodal models"
-      ]
+      ],
+      "description": "Uses AI tools to extract text from images, supporting workflows like document digitization, data entry automation, and information retrieval."
     },
     {
       "id": "SK.MUL.002",
@@ -1458,7 +1550,8 @@
         "Crafts advanced prompts with negative prompts, style references, and parameters",
         "Builds image generation workflows for content pipelines and creative tools",
         "Designs image generation architectures with style control and brand consistency"
-      ]
+      ],
+      "description": "Crafts effective prompts to generate images with AI, ensuring outputs match desired styles, content, and brand guidelines."
     },
     {
       "id": "SK.MUL.003",
@@ -1475,7 +1568,8 @@
         "Designs QA rubrics and workflows for generated image review",
         "Builds automated image QA pipelines with defect detection",
         "Designs image quality assurance architectures for production content systems"
-      ]
+      ],
+      "description": "Evaluates the quality, accuracy, and appropriateness of AI-generated images, ensuring they meet organizational standards before deployment."
     },
     {
       "id": "SK.MUL.010",
@@ -1492,7 +1586,8 @@
         "Designs transcription workflows for meetings, interviews, or media",
         "Builds speech processing pipelines with diarization, summarization, and search",
         "Designs enterprise audio intelligence architectures"
-      ]
+      ],
+      "description": "Uses AI to transcribe and summarize spoken content, streamlining tasks like meeting documentation, accessibility, and information retrieval from audio sources."
     },
     {
       "id": "SK.MUL.011",
@@ -1509,7 +1604,8 @@
         "Designs video analysis workflows with temporal segmentation and key frame extraction",
         "Builds video intelligence pipelines combining visual and audio analysis",
         "Designs video understanding architectures for media, security, or education"
-      ]
+      ],
+      "description": "Applies AI to interpret and analyze video content, enabling applications such as automated content tagging, security monitoring, and educational resource creation."
     },
     {
       "id": "SK.MUL.012",
@@ -1526,7 +1622,8 @@
         "Designs TTS workflows for specific use cases (accessibility, content, IVR)",
         "Builds TTS pipelines with voice selection, SSML, and prosody control",
         "Designs voice synthesis architectures with brand voice and multi-language support"
-      ]
+      ],
+      "description": "Text-to-speech applications use AI to convert written text into natural-sounding spoken audio, enabling accessibility, voice interfaces, and content localization. This skill is important for creating inclusive digital experiences and automating voice content generation."
     },
     {
       "id": "SK.MUL.013",
@@ -1543,7 +1640,8 @@
         "Designs document processing workflows for specific document types",
         "Builds document understanding pipelines with layout analysis and entity extraction",
         "Designs enterprise document intelligence architectures with multi-format support"
-      ]
+      ],
+      "description": "Document/PDF understanding involves using AI to extract, interpret, and analyze information from documents in various formats, such as PDFs. Mastery of this skill allows efficient automation of data entry, compliance checks, and knowledge extraction from unstructured files."
     },
     {
       "id": "SK.MUL.014",
@@ -1560,7 +1658,8 @@
         "Designs video generation workflows with scene consistency and audio sync",
         "Builds video production pipelines using generative tools for content at scale",
         "Designs video generation architectures with style control, brand safety, and quality assurance"
-      ]
+      ],
+      "description": "Native audio/video generation refers to using AI tools to create synchronized audio and video content from prompts or scripts, often with control over style and branding. This capability is essential for producing scalable multimedia content and automating creative workflows."
     },
     {
       "id": "SK.MUL.015",
@@ -1578,7 +1677,8 @@
         "Designs multimodal retrieval pipelines indexing text, images, and diagrams together",
         "Builds multimodal RAG systems with cross-modal reranking and unified context assembly",
         "Designs enterprise multimodal knowledge architectures with heterogeneous data sources"
-      ]
+      ],
+      "description": "Multimodal RAG (Retrieval-Augmented Generation) integrates information from multiple data types—such as text, images, and audio—into AI-generated outputs. This skill is crucial for building systems that can answer questions or generate content using diverse, real-world data sources."
     },
     {
       "id": "SK.EVL.000",
@@ -1595,7 +1695,8 @@
         "Advocates for evaluation culture and defines key metrics for AI projects",
         "Builds evaluation frameworks that catch quality issues before deployment",
         "Designs comprehensive evaluation strategies for AI-driven organizations"
-      ]
+      ],
+      "description": "Understanding why AI evaluation matters ensures that AI outputs are reliable, accurate, and aligned with user needs. This skill is foundational for maintaining trust and effectiveness in AI-powered solutions."
     },
     {
       "id": "SK.EVL.001",
@@ -1612,7 +1713,8 @@
         "Designs evaluation plans combining offline, online, and adversarial testing",
         "Builds multi-layer evaluation systems covering all evaluation types",
         "Designs evaluation architectures that provide continuous quality assurance"
-      ]
+      ],
+      "description": "Knowledge of evaluation types—such as offline, online, and red team testing—enables practitioners to assess AI systems from different perspectives and in various environments. This skill is vital for ensuring comprehensive quality assurance and risk mitigation."
     },
     {
       "id": "SK.EVL.002",
@@ -1630,7 +1732,8 @@
         "Designs calibrated judge prompts validated against human ratings",
         "Builds automated LLM-as-judge pipelines with inter-rater reliability checks",
         "Designs scalable automated evaluation architectures with multi-judge ensembles"
-      ]
+      ],
+      "description": "LLM-as-judge patterns involve using large language models to automatically evaluate the outputs of other AI models, often at scale. This approach streamlines quality assessment and supports rapid iteration in AI development."
     },
     {
       "id": "SK.EVL.010",
@@ -1647,7 +1750,8 @@
         "Designs observability dashboards for AI systems (LangSmith, Arize, custom)",
         "Builds comprehensive tracing infrastructure with distributed trace correlation",
         "Designs observability architectures for complex multi-model AI systems"
-      ]
+      ],
+      "description": "Tracing and observability for AI systems involve monitoring, logging, and analyzing the behavior of models in production. This skill is important for diagnosing issues, ensuring reliability, and maintaining transparency in complex AI workflows."
     },
     {
       "id": "SK.EVL.011",
@@ -1665,7 +1769,8 @@
         "Designs quality dashboards with meaningful metrics and alerting thresholds",
         "Builds real-time quality monitoring systems with automated alerts and escalation",
         "Designs quality management architectures with SLO-driven alerting and auto-remediation"
-      ]
+      ],
+      "description": "Quality dashboards and alerts provide real-time visibility into the performance and health of AI systems, enabling proactive management. This skill helps organizations detect problems early and maintain high standards for AI outputs."
     },
     {
       "id": "SK.EVL.020",
@@ -1682,7 +1787,8 @@
         "Designs comprehensive prompt test suites covering edge cases and regressions",
         "Builds prompt testing frameworks integrated into CI/CD pipelines",
         "Designs prompt quality assurance architectures with automated regression detection"
-      ]
+      ],
+      "description": "Prompt unit tests are automated checks that validate the behavior and reliability of prompts used with AI models. This skill is essential for preventing regressions and ensuring consistent performance as prompts evolve."
     },
     {
       "id": "SK.EVL.021",
@@ -1700,7 +1806,8 @@
         "Designs multi-stage release gates with canary deployments and rollback criteria",
         "Builds automated release gate systems with progressive rollout and auto-rollback",
         "Designs release engineering architectures for safe, continuous AI deployment"
-      ]
+      ],
+      "description": "Release gates and rollback mechanisms control when and how AI updates are deployed, allowing for safe rollouts and quick reversions if issues arise. This skill is critical for minimizing risk and maintaining system stability during continuous deployment."
     },
     {
       "id": "SK.EVL.022",
@@ -1717,7 +1824,8 @@
         "Designs statistically rigorous A/B testing frameworks for AI experiments",
         "Builds A/B testing platforms with automated analysis and winner selection",
         "Designs experimentation architectures supporting rapid AI iteration at scale"
-      ]
+      ],
+      "description": "A/B testing for AI involves comparing different model versions or configurations to determine which performs better in real-world scenarios. This skill supports data-driven decision-making and continuous improvement of AI systems."
     },
     {
       "id": "SK.SEC.000",
@@ -1734,7 +1842,8 @@
         "Conducts basic threat assessments for AI applications",
         "Builds threat models specific to AI/LLM systems in production",
         "Designs comprehensive AI security programs and threat modeling frameworks"
-      ]
+      ],
+      "description": "Understanding the AI security threat landscape means recognizing the unique risks and attack vectors that target AI systems. This skill is necessary for protecting sensitive data and maintaining trust in AI applications."
     },
     {
       "id": "SK.SEC.001",
@@ -1752,7 +1861,8 @@
         "Designs layered prompt injection defenses tested against known attack patterns",
         "Builds prompt injection detection and prevention systems for production",
         "Designs defense-in-depth prompt security architectures"
-      ]
+      ],
+      "description": "Prompt injection mitigation focuses on defending AI systems against attacks where malicious inputs manipulate model behavior. This skill is important for safeguarding AI-driven interfaces and preventing unintended actions or data leaks."
     },
     {
       "id": "SK.SEC.002",
@@ -1769,7 +1879,8 @@
         "Designs data classification and DLP strategies for AI pipelines",
         "Builds automated data leakage detection and prevention systems",
         "Designs enterprise DLP architectures for AI systems"
-      ]
+      ],
+      "description": "Data leakage prevention in AI systems involves implementing controls to stop sensitive or confidential information from being exposed through model outputs or logs. This skill is crucial for compliance, privacy, and protecting organizational data assets."
     },
     {
       "id": "SK.SEC.003",
@@ -1786,7 +1897,8 @@
         "Designs output security pipelines with format-specific sanitization",
         "Builds automated output security scanning integrated into AI pipelines",
         "Designs output security architectures with defense-in-depth and CSP integration"
-      ]
+      ],
+      "description": "Involves understanding and mitigating security risks such as cross-site scripting (XSS) and injection attacks that can be present in AI-generated outputs. This skill is important to prevent exploitation of vulnerabilities that could compromise user data or system integrity."
     },
     {
       "id": "SK.SEC.010",
@@ -1803,7 +1915,8 @@
         "Creates permission models with role-based access and capability negotiation",
         "Builds dynamic permission systems with runtime policy enforcement",
         "Designs zero-trust agent permission architectures for enterprise environments"
-      ]
+      ],
+      "description": "Focuses on defining and enforcing permission boundaries for AI agents to control what actions they can perform and what data they can access. Proper agent permission design helps prevent unauthorized access and limits the potential impact of compromised agents."
     },
     {
       "id": "SK.SEC.011",
@@ -1821,7 +1934,8 @@
         "Designs sandbox environments with resource limits and network isolation",
         "Builds sandboxing infrastructure with monitoring and automatic containment",
         "Designs comprehensive tool isolation architectures for untrusted code execution"
-      ]
+      ],
+      "description": "Entails isolating tools and code execution environments to prevent untrusted or potentially harmful code from affecting other systems or data. Tool sandboxing is crucial for safely integrating third-party tools or running code generated by AI."
     },
     {
       "id": "SK.SEC.012",
@@ -1838,7 +1952,8 @@
         "Designs structured red teaming exercises with attack taxonomies and scoring",
         "Builds automated red teaming pipelines with diverse attack generation",
         "Designs continuous red teaming programs with evolving threat simulation"
-      ]
+      ],
+      "description": "Covers the basics of red teaming, which involves simulating attacks on AI systems to identify vulnerabilities and improve defenses. This proactive approach helps organizations anticipate and address security threats before they can be exploited."
     },
     {
       "id": "SK.OPS.000",
@@ -1855,7 +1970,8 @@
         "Advises teams on LLMOps practices and tooling selection",
         "Builds LLMOps pipelines covering deployment, monitoring, and iteration",
         "Designs LLMOps platforms and strategies for AI-native organizations"
-      ]
+      ],
+      "description": "Refers to the set of practices and tools for managing, deploying, and maintaining large language models (LLMs) in production environments. Understanding LLMOps is essential for ensuring reliable, scalable, and efficient AI operations."
     },
     {
       "id": "SK.OPS.001",
@@ -1873,7 +1989,8 @@
         "Designs latency budgets and optimization strategies per pipeline stage",
         "Builds latency optimization systems with parallel execution and streaming",
         "Designs low-latency AI serving architectures for real-time applications"
-      ]
+      ],
+      "description": "Involves identifying the factors that contribute to latency in AI systems and applying techniques to reduce response times. Optimizing latency is critical for delivering fast and responsive AI-powered applications."
     },
     {
       "id": "SK.OPS.002",
@@ -1890,7 +2007,8 @@
         "Designs cost modeling frameworks with budget alerts and forecasting",
         "Builds cost optimization systems with model routing and token budgeting",
         "Designs cost-efficient AI infrastructure with multi-model and caching strategies"
-      ]
+      ],
+      "description": "Entails modeling the costs associated with AI inference and managing token usage to stay within budget. Effective cost modeling and token budgeting help organizations control expenses while maintaining AI performance."
     },
     {
       "id": "SK.OPS.010",
@@ -1908,7 +2026,8 @@
         "Designs caching strategies with invalidation policies and hit rate targets",
         "Builds production caching/batching/streaming infrastructure",
         "Designs high-throughput AI serving architectures with adaptive optimization"
-      ]
+      ],
+      "description": "Covers techniques like caching, batching, and streaming to improve the efficiency and throughput of AI systems. Mastery of these methods enables scalable and cost-effective AI deployments."
     },
     {
       "id": "SK.OPS.011",
@@ -1925,7 +2044,8 @@
         "Designs routing strategies with cost/quality trade-offs and fallback chains",
         "Builds dynamic model routing systems with quality-aware routing algorithms",
         "Designs intelligent model routing architectures with learned routing policies"
-      ]
+      ],
+      "description": "Involves strategies for directing requests to the most appropriate AI model based on criteria like cost, latency, or accuracy. Model routing ensures optimal use of resources and consistent user experiences."
     },
     {
       "id": "SK.OPS.020",
@@ -1942,7 +2062,8 @@
         "Designs SLO frameworks specific to AI systems with error budgets",
         "Builds SLO monitoring and incident response systems for AI",
         "Designs comprehensive reliability engineering programs for AI infrastructure"
-      ]
+      ],
+      "description": "Focuses on defining service level objectives (SLOs) and agreements (SLAs) for AI systems, as well as planning for incident response. This skill is vital for maintaining reliability and quickly addressing issues in production AI environments."
     },
     {
       "id": "SK.OPS.021",
@@ -1960,7 +2081,8 @@
         "Designs security review processes specific to AI systems",
         "Builds automated security gates integrated into AI deployment pipelines",
         "Designs comprehensive AI deployment security architectures and review programs"
-      ]
+      ],
+      "description": "Entails conducting security reviews and implementing deployment gates to ensure AI systems meet security standards before going live. These practices help prevent vulnerabilities from reaching production."
     },
     {
       "id": "SK.OPS.022",
@@ -1977,7 +2099,8 @@
         "Designs prompt and model versioning strategies with rollback capabilities",
         "Builds prompt/model registries with version management and deployment tracking",
         "Designs lifecycle management architectures for prompts and models at scale"
-      ]
+      ],
+      "description": "Involves tracking and managing different versions of prompts and models to ensure reproducibility and control over AI system behavior. Versioning is essential for auditing, rollback, and continuous improvement."
     },
     {
       "id": "SK.TOOL.000",
@@ -1994,7 +2117,8 @@
         "Evaluates and recommends AI tools based on team needs and constraints",
         "Builds comparison frameworks and evaluation criteria for AI tool selection",
         "Designs AI tool strategies and procurement processes for organizations"
-      ]
+      ],
+      "description": "Provides an overview of the current landscape of AI tools and frameworks available for different tasks and industries. Familiarity with the tool landscape helps users select the best solutions for their needs."
     },
     {
       "id": "SK.TOOL.001",
@@ -2011,7 +2135,8 @@
         "Power-uses AI assistants: custom instructions, conversation management, plugins",
         "Builds workflows that integrate multiple AI assistants via APIs",
         "Designs multi-assistant architectures with routing and specialization"
-      ]
+      ],
+      "description": "Covers the use of popular chatbot-style AI assistants like ChatGPT, Claude, and Gemini for tasks such as drafting text, answering questions, or automating workflows. Proficiency in these tools can boost productivity and streamline communication."
     },
     {
       "id": "SK.TOOL.002",
@@ -2028,7 +2153,8 @@
         "Optimizes AI coding workflows: context management, prompt patterns for code",
         "Builds team-level AI coding workflows with custom configurations",
         "Designs AI-augmented development environments and coding standards"
-      ]
+      ],
+      "description": "Involves using AI-powered coding assistants, such as GitHub Copilot, to generate code, suggest improvements, and automate repetitive programming tasks. This skill helps developers write code more efficiently and reduce errors."
     },
     {
       "id": "SK.TOOL.003",
@@ -2045,7 +2171,8 @@
         "Compares image generation tools; selects the best for specific creative needs",
         "Builds image generation into content production workflows",
         "Designs creative AI toolchains for visual content production at scale"
-      ]
+      ],
+      "description": "Uses AI-powered tools to generate images from text prompts, enabling rapid creation of visual content for presentations, marketing, or design projects."
     },
     {
       "id": "SK.TOOL.010",
@@ -2063,7 +2190,8 @@
         "Designs application architectures using framework-specific patterns and best practices",
         "Builds production systems with these frameworks; contributes plugins or extensions",
         "Designs framework-agnostic architectures; evaluates and migrates between frameworks"
-      ]
+      ],
+      "description": "Understands frameworks like LangChain and LlamaIndex that help build applications connecting language models to external data and tools, which is essential for developing advanced AI workflows."
     },
     {
       "id": "SK.TOOL.011",
@@ -2080,7 +2208,8 @@
         "Evaluates models on Hugging Face for specific tasks; uses advanced pipeline features",
         "Deploys Hugging Face models in production; fine-tunes using the ecosystem",
         "Designs model serving architectures leveraging the Hugging Face ecosystem"
-      ]
+      ],
+      "description": "Navigates the Hugging Face ecosystem to access, fine-tune, and deploy state-of-the-art AI models, making it easier to integrate cutting-edge machine learning into projects."
     },
     {
       "id": "SK.TOOL.020",
@@ -2097,7 +2226,8 @@
         "Manages API keys with rotation policies and access scoping",
         "Builds API key management systems with vaults and automated rotation",
         "Designs enterprise API key and secrets management architectures"
-      ]
+      ],
+      "description": "Manages API keys securely to control access to AI services and protect sensitive credentials, which is critical for maintaining security and compliance in AI-powered applications."
     },
     {
       "id": "SK.TOOL.021",
@@ -2115,7 +2245,8 @@
         "Evaluates providers against specific requirements using structured criteria",
         "Builds provider evaluation and switching frameworks for multi-provider setups",
         "Designs provider strategy with vendor risk management and exit planning"
-      ]
+      ],
+      "description": "Evaluates and compares AI service providers based on factors like cost, performance, reliability, and compliance, ensuring the best fit for organizational needs and risk management."
     },
     {
       "id": "SK.TOOL.030",
@@ -2132,7 +2263,8 @@
         "Designs Dockerfiles optimized for AI workloads (GPU, large models, caching)",
         "Builds Docker-based CI/CD pipelines for AI application deployment",
         "Designs container orchestration strategies for AI workloads at scale"
-      ]
+      ],
+      "description": "Uses Docker to package and run AI applications in isolated containers, enabling consistent deployment and easier scaling across different environments."
     },
     {
       "id": "SK.TOOL.031",
@@ -2149,7 +2281,8 @@
         "Designs Kubernetes deployments for AI workloads with GPU scheduling",
         "Builds Kubernetes-based AI serving infrastructure with autoscaling",
         "Designs Kubernetes-native AI platforms with custom operators and scheduling"
-      ]
+      ],
+      "description": "Understands the basics of Kubernetes for orchestrating containerized AI workloads, which is important for deploying and managing scalable AI systems in production."
     },
     {
       "id": "SK.TOOL.032",
@@ -2167,7 +2300,8 @@
         "Designs CLI agent workflows with task decomposition, context files, and custom hooks",
         "Builds team coding workflows using CLI agents with MCP servers and permission controls",
         "Designs CLI-agent-first engineering practices with team governance and quality standards"
-      ]
+      ],
+      "description": "Leverages command-line AI coding agents like Claude Code to automate coding tasks and streamline software development directly from the terminal."
     },
     {
       "id": "SK.TOOL.033",
@@ -2184,7 +2318,8 @@
         "Configures agentic IDEs with custom rules files, model selection, and context management",
         "Sets up team-wide AI IDE configurations with shared rules and MCP tool integrations",
         "Designs agentic development environments and workflow standards for engineering teams"
-      ]
+      ],
+      "description": "Works with AI-native integrated development environments (IDEs) that use agentic features to automate coding, debugging, and workflow management for developers."
     },
     {
       "id": "SK.TOOL.034",
@@ -2201,7 +2336,8 @@
         "Designs research workflows combining deep research tools with human verification steps",
         "Integrates deep research outputs into organizational knowledge management and reporting systems",
         "Designs AI research intelligence architectures that augment expert knowledge work at scale"
-      ]
+      ],
+      "description": "Uses AI-powered research tools to synthesize information from multiple sources, accelerating the process of gathering and analyzing complex information for decision-making."
     },
     {
       "id": "SK.PRQ.000",
@@ -2216,7 +2352,8 @@
         "Writes shell scripts; uses CLI tools proficiently for daily work",
         "Builds CLI tools and automation scripts for team workflows",
         "Designs CLI-first development environments and tooling standards"
-      ]
+      ],
+      "description": "Operates a command line terminal to navigate files, run programs, and automate tasks, which is foundational for technical work and interacting with many AI tools."
     },
     {
       "id": "SK.PRQ.001",
@@ -2233,7 +2370,8 @@
         "Manages merge conflicts, rebases, and uses branching strategies",
         "Builds Git workflows for teams (PR reviews, CI hooks, release branches)",
         "Designs version control strategies and Git governance for organizations"
-      ]
+      ],
+      "description": "Uses version control systems like Git to track code changes, collaborate with others, and manage software development projects efficiently."
     },
     {
       "id": "SK.PRQ.010",
@@ -2250,7 +2388,8 @@
         "Builds Python applications with proper structure, testing, and packaging",
         "Builds Python libraries and frameworks used by others",
         "Designs Python application architectures and coding standards for teams"
-      ]
+      ],
+      "description": "Writes basic Python code to automate tasks, analyze data, or build simple applications, which is a core skill for many AI and data science workflows."
     },
     {
       "id": "SK.PRQ.011",
@@ -2267,7 +2406,8 @@
         "Builds complex data pipelines with groupby, merge, and vectorized operations",
         "Builds reusable data processing libraries and analysis frameworks",
         "Designs data engineering architectures using Python data tools at scale"
-      ]
+      ],
+      "description": "Manipulates and analyzes data using Python libraries such as Pandas and NumPy, enabling efficient data cleaning, transformation, and exploration."
     },
     {
       "id": "SK.PRQ.012",
@@ -2282,7 +2422,8 @@
         "Designs TypeScript applications with proper typing, testing, and architecture",
         "Builds TypeScript libraries, frameworks, or full-stack applications",
         "Designs enterprise TypeScript architectures and coding standards"
-      ]
+      ],
+      "description": "Writes JavaScript or TypeScript code to build interactive web applications or scripts, which is essential for integrating AI features into web-based products."
     },
     {
       "id": "SK.PRQ.013",
@@ -2297,7 +2438,8 @@
         "Designs database schemas and writes complex queries with CTEs and subqueries",
         "Builds data access layers and optimizes query performance",
         "Designs database architectures with indexing, partitioning, and scaling strategies"
-      ]
+      ],
+      "description": "Involves understanding how to write and execute SQL queries to retrieve, update, and manage data in relational databases, which is essential for working with structured data and integrating AI solutions with existing data systems."
     },
     {
       "id": "SK.PRQ.020",
@@ -2312,7 +2454,8 @@
         "Designs RESTful APIs with proper resource modeling and error handling",
         "Builds API services with authentication, rate limiting, and documentation",
         "Designs API platform architectures with versioning, gateway, and governance"
-      ]
+      ],
+      "description": "Covers the principles of how REST APIs enable communication between software applications over the web, which is crucial for connecting AI models and services to other systems and workflows."
     },
     {
       "id": "SK.PRQ.021",
@@ -2329,7 +2472,8 @@
         "Designs authentication strategies choosing between OAuth, JWT, API keys",
         "Builds authentication systems with SSO, MFA, and token refresh flows",
         "Designs enterprise identity and access management architectures"
-      ]
+      ],
+      "description": "Focuses on methods for verifying user identity and granting access using protocols like OAuth and token-based authentication, which is vital for securing AI applications and protecting sensitive data."
     },
     {
       "id": "SK.PRQ.022",
@@ -2346,7 +2490,8 @@
         "Designs backend services with proper layering, error handling, and testing",
         "Builds scalable backend systems with queues, caching, and microservices",
         "Designs backend platform architectures for high-scale, distributed systems"
-      ]
+      ],
+      "description": "Entails understanding how backend services operate, including handling requests, processing data, and serving responses, which is necessary for deploying and scaling AI-powered applications."
     },
     {
       "id": "SK.PRQ.030",
@@ -2361,7 +2506,8 @@
         "Designs cloud deployments with networking, IAM, and cost management",
         "Builds cloud-native applications with IaC (Terraform, CDK)",
         "Designs multi-cloud or hybrid cloud architectures for enterprise workloads"
-      ]
+      ],
+      "description": "Involves knowledge of basic cloud computing resources such as virtual machines (compute) and object storage, which is important for deploying, scaling, and managing AI workloads efficiently."
     },
     {
       "id": "SK.PRQ.031",
@@ -2379,7 +2525,8 @@
         "Designs secrets management with vaults (AWS Secrets Manager, HashiCorp Vault)",
         "Builds automated secrets rotation and access auditing systems",
         "Designs enterprise secrets management architectures with zero-trust principles"
-      ]
+      ],
+      "description": "Covers techniques for securely storing and managing sensitive information like API keys and passwords, which is critical for protecting AI systems from unauthorized access and data breaches."
     },
     {
       "id": "SK.PRQ.032",
@@ -2396,7 +2543,8 @@
         "Designs CI/CD pipelines with testing stages, quality gates, and notifications",
         "Builds advanced CI/CD systems with parallel jobs, caching, and deployment strategies",
         "Designs CI/CD platform architectures for large-scale software organizations"
-      ]
+      ],
+      "description": "Involves understanding continuous integration and continuous deployment (CI/CD) practices, which automate software testing and delivery, ensuring reliable and rapid updates to AI applications."
     },
     {
       "id": "SK.GOV.000",
@@ -2413,7 +2561,8 @@
         "Designs governance policies for AI projects within teams",
         "Builds governance tooling: compliance dashboards, policy enforcement",
         "Designs enterprise AI governance frameworks and organizational structures"
-      ]
+      ],
+      "description": "Covers the foundational concepts of governing AI systems, including setting policies, roles, and processes to ensure responsible and compliant AI use within organizations."
     },
     {
       "id": "SK.GOV.001",
@@ -2431,7 +2580,8 @@
         "Designs risk assessment processes specific to AI applications",
         "Builds risk management systems with automated risk scoring and escalation",
         "Designs enterprise AI risk management frameworks aligned to standards"
-      ]
+      ],
+      "description": "Involves identifying, assessing, and managing the risks associated with AI systems, which is essential for preventing unintended consequences and ensuring trustworthy AI deployment."
     },
     {
       "id": "SK.GOV.002",
@@ -2449,7 +2599,8 @@
         "Designs policy-to-controls mapping frameworks for AI systems",
         "Builds automated policy enforcement engines with control verification",
         "Designs policy management architectures with continuous compliance assurance"
-      ]
+      ],
+      "description": "Focuses on translating organizational policies into actionable technical controls, which is necessary for ensuring that AI systems operate in compliance with internal and external requirements."
     },
     {
       "id": "SK.GOV.010",
@@ -2466,7 +2617,8 @@
         "Assesses organizational compliance against current AI regulations",
         "Builds regulatory compliance tooling and reporting systems",
         "Designs regulatory compliance architectures adaptable to evolving laws"
-      ]
+      ],
+      "description": "Involves understanding the current landscape of AI regulations, such as the EU AI Act, to ensure that AI systems are designed and operated in compliance with legal requirements."
     },
     {
       "id": "SK.GOV.020",
@@ -2483,7 +2635,8 @@
         "Designs PII/PHI handling procedures for AI data pipelines",
         "Builds automated PII detection and data lifecycle management systems",
         "Designs enterprise data privacy architectures for AI with compliance guarantees"
-      ]
+      ],
+      "description": "Covers best practices for handling and retaining personally identifiable information (PII) and protected health information (PHI), which is crucial for maintaining privacy and meeting regulatory obligations in AI projects."
     },
     {
       "id": "SK.GOV.021",
@@ -2500,7 +2653,8 @@
         "Designs anonymization strategies (k-anonymity, differential privacy concepts)",
         "Builds automated data minimization and anonymization pipelines",
         "Designs privacy-preserving data architectures for AI model training and inference"
-      ]
+      ],
+      "description": "Involves applying techniques to minimize the amount of personal data collected and to anonymize data, which helps protect privacy and reduce compliance risks when training and deploying AI models."
     },
     {
       "id": "SK.GOV.022",
@@ -2517,7 +2671,8 @@
         "Designs content disclosure policies covering all media types for the organization",
         "Builds automated AI content labeling and provenance tracking systems",
         "Designs enterprise AI content authenticity architectures aligned to C2PA and regulatory standards"
-      ]
+      ],
+      "description": "Covers the requirements and methods for disclosing when content is generated by AI, which is important for transparency, trust, and meeting regulatory or industry standards."
     },
     {
       "id": "SK.GOV.023",
@@ -2534,7 +2689,8 @@
         "Designs compliance roadmaps for high-risk AI systems meeting EU AI Act technical requirements",
         "Builds EU AI Act compliance tooling with conformity assessments and documentation pipelines",
         "Designs enterprise AI regulatory compliance architectures adaptable to ongoing EU enforcement"
-      ]
+      ],
+      "description": "Involves preparing organizations to comply with the enforcement of the EU AI Act, including understanding timelines, obligations, and adapting systems to ongoing regulatory changes."
     },
     {
       "id": "SK.DOM.HC.001",
@@ -2552,7 +2708,8 @@
         "Independently evaluates AI clinical tools against risk thresholds and FDA or regulatory guidance",
         "Builds clinical safety guardrails: confidence thresholds, override paths, audit trails for AI-assisted decisions",
         "Designs clinical AI risk management frameworks aligned to ISO 14971, FDA SaMD, and hospital governance"
-      ]
+      ],
+      "description": "Understands how AI can introduce new types of clinical risk and why it is important to identify, assess, and mitigate these risks to protect patient safety and comply with healthcare regulations."
     },
     {
       "id": "SK.DOM.HC.002",
@@ -2569,7 +2726,8 @@
         "Designs evidence-synthesis workflows pairing AI retrieval with structured human appraisal such as PICO and GRADE",
         "Builds RAG-grounded evidence synthesis tools with provenance tracking and contradiction detection",
         "Architects evidence-synthesis pipelines integrated with clinical guidelines, peer review, and longitudinal updates"
-      ]
+      ],
+      "description": "Knows how to use AI tools to gather, analyze, and summarize medical evidence, supporting clinical decision-making and ensuring recommendations are based on up-to-date, high-quality information."
     },
     {
       "id": "SK.DOM.LGL.001",
@@ -2587,7 +2745,8 @@
         "Designs AI legal assistants that detect advice-versus-information boundaries and escalate appropriately",
         "Builds policy-enforcing legal AI with jurisdiction-aware disclaimers and audit logs",
         "Architects legal AI compliance frameworks aligned to state bar regulations and unauthorized practice statutes"
-      ]
+      ],
+      "description": "Recognizes the boundaries between providing general information and legal advice when using AI, ensuring compliance with legal practice rules and protecting organizations from unauthorized practice risks."
     },
     {
       "id": "SK.DOM.LGL.002",
@@ -2605,7 +2764,8 @@
         "Designs evaluation suites that test legal AI against gold-standard citation and holding accuracy",
         "Builds automated hallucination detectors for legal text with citation verification and red-team prompts",
         "Architects continuous evaluation pipelines for production legal AI with regression testing and certification"
-      ]
+      ],
+      "description": "Understands that AI can generate inaccurate or fabricated legal information and knows how to implement evaluation processes to detect, prevent, and monitor such errors in legal workflows."
     },
     {
       "id": "SK.DOM.FIN.001",
@@ -2623,7 +2783,8 @@
         "Designs auditable AI finance workflows that separate generation, calculation, and verification steps",
         "Builds AI finance tools with deterministic numerical engines, formula tracebacks, and reconciliation logs",
         "Architects audit-grade AI finance systems compliant with SOX, GAAP, and internal controls testing"
-      ]
+      ],
+      "description": "Appreciates the need for transparent and traceable AI-generated financial outputs, enabling auditability and compliance with financial reporting standards and internal controls."
     },
     {
       "id": "SK.DOM.EDU.001",
@@ -2640,7 +2801,8 @@
         "Designs AI-enabled learning experiences with personalization paths, scaffolded practice, and feedback loops",
         "Builds adaptive learning systems that adjust content difficulty, modality, and pacing based on learner signals",
         "Designs institution-wide AI learning architectures balancing personalization, pedagogy, equity, and instructor oversight"
-      ]
+      ],
+      "description": "Understands how to incorporate AI into instructional design to enhance learning experiences, while balancing personalization, educational quality, and fairness for all learners."
     },
     {
       "id": "SK.DOM.MKT.001",
@@ -2658,7 +2820,8 @@
         "Designs marketing AI workflows aligned to FTC endorsement guides, brand guidelines, and IP boundaries",
         "Builds marketing AI guardrails: disclosure injection, brand-voice enforcement, IP source attribution",
         "Architects enterprise marketing AI ethics frameworks balancing scale, brand safety, regulation, and trust"
-      ]
+      ],
+      "description": "Recognizes ethical challenges in using AI for marketing content, such as misinformation, bias, and brand safety, and knows how to address these issues to maintain trust and compliance."
     },
     {
       "id": "SK.DOM.HR.001",
@@ -2676,7 +2839,8 @@
         "Designs AI hiring workflows with bias audits, adverse-impact analysis, and explainability for candidates",
         "Builds AI hiring systems with continuous bias monitoring, candidate appeal paths, and regulator-ready audits",
         "Architects enterprise AI hiring frameworks aligned to EEOC, GDPR, NYC Local Law 144, and emerging AI hiring laws"
-      ]
+      ],
+      "description": "Understands the risks of bias, discrimination, and legal non-compliance when using AI in hiring, and knows how to implement safeguards to ensure fair and lawful recruitment practices."
     },
     {
       "id": "SK.PRD.000",
@@ -2693,7 +2857,8 @@
         "Identifies high-value AI use cases and frames them as product opportunities",
         "Builds AI product strategies with metrics-driven prioritization",
         "Designs AI product vision and roadmaps for organizations"
-      ]
+      ],
+      "description": "Knows how to approach AI from a product perspective, considering user needs, business goals, and the unique opportunities and challenges AI brings to product development."
     },
     {
       "id": "SK.PRD.001",
@@ -2710,7 +2875,8 @@
         "Prioritizes AI use cases with scoring frameworks and ROI estimates",
         "Builds use-case evaluation tools and portfolio management dashboards",
         "Designs AI opportunity assessment frameworks for enterprise strategy"
-      ]
+      ],
+      "description": "Can evaluate and prioritize potential AI use cases based on feasibility, impact, and alignment with organizational strategy, ensuring resources are focused on the most valuable opportunities."
     },
     {
       "id": "SK.PRD.002",
@@ -2727,7 +2893,8 @@
         "Designs workflow redesigns that incorporate AI with human oversight",
         "Builds workflow modeling tools that simulate AI integration impacts",
         "Designs workflow transformation architectures for AI-native processes"
-      ]
+      ],
+      "description": "Understands how to map and analyze workflows to identify where AI can be integrated for maximum efficiency and value, supporting effective process transformation."
     },
     {
       "id": "SK.PRD.010",
@@ -2744,7 +2911,8 @@
         "Creates explainability patterns tailored to user expertise levels",
         "Builds explainability components with interactive reasoning exploration",
         "Designs explainability architectures supporting regulatory and user trust requirements"
-      ]
+      ],
+      "description": "Knows how to design user experiences that make AI decisions understandable and transparent, supporting user trust and meeting regulatory requirements for explainability."
     },
     {
       "id": "SK.PRD.011",
@@ -2761,7 +2929,8 @@
         "Creates feedback systems that route user signals to evaluation and retraining",
         "Builds end-to-end feedback loop infrastructure with analytics and model updates",
         "Designs feedback-driven AI improvement architectures with closed-loop optimization"
-      ]
+      ],
+      "description": "Understands the importance of collecting and using user feedback to continuously improve AI systems, designing processes that enable iterative learning and optimization."
     },
     {
       "id": "SK.PRD.020",
@@ -2778,7 +2947,8 @@
         "Designs enablement programs with role-based learning paths",
         "Builds AI training platforms with interactive exercises and progress tracking",
         "Designs organizational AI enablement strategies with change management"
-      ]
+      ],
+      "description": "Knows how to develop strategies for training and enabling users to effectively adopt and benefit from AI tools, including planning for organizational change and support."
     },
     {
       "id": "SK.PRD.021",
@@ -2796,7 +2966,8 @@
         "Manages conflicting stakeholder expectations around AI capabilities",
         "Builds stakeholder management frameworks for AI program governance",
         "Designs organizational AI stakeholder engagement strategies"
-      ]
+      ],
+      "description": "Understands how to identify, engage, and manage stakeholders in AI projects, ensuring alignment, buy-in, and successful implementation across the organization."
     },
     {
       "id": "SK.PRD.022",
@@ -2813,7 +2984,8 @@
         "Designs comprehensive ROI measurement frameworks for AI initiatives",
         "Builds ROI tracking dashboards with causal attribution for AI impact",
         "Designs AI portfolio value measurement architectures for executive reporting"
-      ]
+      ],
+      "description": "Measures the financial and strategic impact of AI initiatives by tracking costs, benefits, and value delivered, enabling organizations to make informed investment decisions and justify AI spending."
     },
     {
       "id": "SK.COM.001",
@@ -2830,7 +3002,8 @@
         "Tailors AI explanations to specific audiences (executives, clients, regulators)",
         "Builds communication frameworks and templates for AI education",
         "Designs AI communication strategies for organizations and public engagement"
-      ]
+      ],
+      "description": "Communicates complex AI concepts in clear, accessible language so that non-technical stakeholders can understand, make decisions, and engage with AI projects effectively."
     },
     {
       "id": "SK.COM.002",
@@ -2847,7 +3020,8 @@
         "Crafts persuasive AI proposals tailored to different decision-makers",
         "Builds proposal templates and evaluation frameworks for AI initiatives",
         "Designs AI project governance processes from proposal to completion"
-      ]
+      ],
+      "description": "Prepares structured documents that outline the objectives, scope, benefits, and requirements of AI projects, ensuring stakeholders understand the proposal and can assess its feasibility."
     },
     {
       "id": "SK.COM.003",
@@ -2864,7 +3038,8 @@
         "Designs custom AI workshops with learning objectives and measurable outcomes",
         "Builds workshop curricula and facilitator guides for scalable AI education",
         "Designs AI learning programs combining workshops, mentoring, and practice"
-      ]
+      ],
+      "description": "Leads interactive sessions focused on AI topics, guiding participants through learning activities and discussions to build shared understanding and practical skills."
     },
     {
       "id": "SK.COM.004",
@@ -2881,7 +3056,8 @@
         "Manages expectations across stakeholder groups with tailored messaging",
         "Builds expectation management frameworks and communication playbooks",
         "Designs organizational AI literacy programs that calibrate expectations at scale"
-      ]
+      ],
+      "description": "Sets realistic expectations about AI capabilities and limitations, helping teams and stakeholders avoid misunderstandings and plan projects based on what AI can actually deliver."
     },
     {
       "id": "SK.COM.005",
@@ -2898,7 +3074,8 @@
         "Facilitates cross-functional alignment on AI priorities and approaches",
         "Builds cross-functional AI collaboration models and team structures",
         "Designs organizational structures and processes for AI-native collaboration"
-      ]
+      ],
+      "description": "Works effectively with colleagues from different departments or specialties on AI projects, ensuring diverse expertise is integrated and project goals are aligned."
     },
     {
       "id": "SK.COM.006",
@@ -2915,7 +3092,8 @@
         "Designs documentation standards for AI systems (model cards, data sheets)",
         "Builds automated documentation systems for AI pipelines and models",
         "Designs documentation architectures for AI systems with compliance and discoverability"
-      ]
+      ],
+      "description": "Creates and maintains clear, comprehensive documentation for AI systems, supporting transparency, compliance, and ease of future maintenance or audits."
     },
     {
       "id": "SK.LRN.001",
@@ -2932,7 +3110,8 @@
         "Curates learning feeds; synthesizes trends for team or organization",
         "Builds trend monitoring systems and internal knowledge-sharing platforms",
         "Designs organizational AI intelligence programs with systematic horizon scanning"
-      ]
+      ],
+      "description": "Regularly tracks advances in AI technology, research, and best practices to stay current and identify opportunities or risks relevant to one's work."
     },
     {
       "id": "SK.LRN.002",
@@ -2949,7 +3128,8 @@
         "Designs tool evaluation frameworks with scoring criteria and pilot programs",
         "Builds tool evaluation pipelines with automated benchmarking and comparison",
         "Designs organizational AI tool governance with evaluation and sunset processes"
-      ]
+      ],
+      "description": "Assesses new AI tools for suitability, effectiveness, and alignment with organizational needs, ensuring only valuable and reliable tools are adopted."
     },
     {
       "id": "SK.LRN.003",
@@ -2966,7 +3146,8 @@
         "Designs personal AI workflows that chain multiple tools for complex tasks",
         "Builds custom AI automation for personal or team productivity",
         "Designs AI-augmented workflow patterns that others can adopt and adapt"
-      ]
+      ],
+      "description": "Integrates AI tools into daily work routines to increase productivity, automate tasks, or enhance decision-making, adapting workflows as new capabilities emerge."
     },
     {
       "id": "SK.LRN.004",
@@ -2983,7 +3164,8 @@
         "Designs structured AI learning paths for different skill levels",
         "Builds AI training programs with curriculum, exercises, and assessment",
         "Designs AI education strategies and instructor development programs"
-      ]
+      ],
+      "description": "Shares AI knowledge and skills with others through instruction, mentoring, or training, helping colleagues or teams build their own AI capabilities."
     },
     {
       "id": "SK.LRN.005",
@@ -3001,7 +3183,8 @@
         "Designs safe experimentation frameworks with data and access controls",
         "Builds secure AI experimentation platforms with guardrails and monitoring",
         "Designs enterprise AI experimentation architectures with governance and compliance"
-      ]
+      ],
+      "description": "Experiments with AI tools and systems while considering safety, ethical, and compliance factors, minimizing risks to data, users, and the organization."
     },
     {
       "id": "SK.RSN.000",
@@ -3018,7 +3201,8 @@
         "Selects between reasoning and standard models based on task complexity and cost",
         "Builds applications that leverage reasoning models for autonomous decision-making",
         "Designs architectures that route tasks to reasoning vs fast models based on complexity"
-      ]
+      ],
+      "description": "Understands the differences between reasoning models and standard chat models, recognizing when advanced reasoning is needed for complex tasks."
     },
     {
       "id": "SK.RSN.001",
@@ -3035,7 +3219,8 @@
         "Designs prompts and workflows with appropriate thinking budgets per problem type",
         "Builds cost-aware systems that dynamically allocate thinking tokens by query difficulty",
         "Designs quality-cost optimization architectures balancing extended thinking and inference spend"
-      ]
+      ],
+      "description": "Applies knowledge of extended thinking and test-time compute scaling to balance the quality of AI outputs with resource and cost constraints."
     },
     {
       "id": "SK.RSN.002",
@@ -3053,7 +3238,8 @@
         "Designs task routing frameworks with decision criteria for reasoning model selection",
         "Builds reasoning-aware routing systems with quality verification and cost-based fallback",
         "Designs intelligent model orchestration architectures with adaptive reasoning model allocation"
-      ]
+      ],
+      "description": "Chooses and routes tasks to the appropriate AI model—reasoning or standard—based on task complexity, optimizing for accuracy, speed, and resource use."
     },
     {
       "id": "SK.RSN.003",
@@ -3071,7 +3257,8 @@
         "Designs deep research workflows with scope constraints, source priorities, and quality gates",
         "Builds custom deep research agents with domain-specific tools and verification steps",
         "Designs autonomous research intelligence architectures for knowledge-intensive workflows"
-      ]
+      ],
+      "description": "This skill involves using AI agents that can autonomously gather, synthesize, and summarize information from multiple sources in a single session, streamlining research tasks and supporting knowledge-intensive work."
     },
     {
       "id": "SK.RSN.004",
@@ -3089,7 +3276,8 @@
         "Designs verification workflows that systematically validate key reasoning steps against facts",
         "Builds automated CoT verification pipelines with step-level quality scoring",
         "Designs reasoning verification architectures with human-AI collaborative review for high-stakes decisions"
-      ]
+      ],
+      "description": "This skill is about evaluating and verifying the logical steps an AI takes to reach conclusions, helping ensure that automated reasoning is accurate and reliable, especially in situations where mistakes could have serious consequences."
     },
     {
       "id": "SK.RSN.005",
@@ -3107,7 +3295,8 @@
         "Designs cost budgeting strategies balancing reasoning token allocation against output quality",
         "Builds cost monitoring and budget enforcement systems for reasoning model deployments",
         "Designs cost-efficient reasoning architectures with dynamic budget allocation and quality guarantees"
-      ]
+      ],
+      "description": "This skill focuses on managing and optimizing the computational and financial costs associated with running advanced reasoning models, balancing resource use with the need for high-quality outputs."
     },
     {
       "id": "SK.ACODE.000",
@@ -3124,7 +3313,8 @@
         "Iterates vibe-coded prototypes toward production quality with AI-assisted refactoring",
         "Builds complex applications using agentic coding workflows with minimal manual code writing",
         "Designs AI-coding-first development processes and quality standards for teams"
-      ]
+      ],
+      "description": "This skill covers rapidly prototyping software and solutions by describing requirements in natural language, allowing AI to generate code and iterate quickly, which accelerates development and bridges communication gaps between technical and non-technical team members."
     },
     {
       "id": "SK.ACODE.001",
@@ -3142,7 +3332,8 @@
         "Designs effective CLI agent workflows with context files, task decomposition, and constraints",
         "Builds agentic coding pipelines with hooks, MCP tools, and custom permission configurations",
         "Designs CLI-agent-first engineering workflows with team governance and quality gates"
-      ]
+      ],
+      "description": "This skill involves using command-line interface (CLI) AI coding agents to write, modify, and manage code directly from the terminal, enabling efficient, AI-assisted development workflows for engineers."
     },
     {
       "id": "SK.ACODE.002",
@@ -3160,7 +3351,8 @@
         "Configures AI IDEs with project rules, custom instructions, and context optimization",
         "Sets up team-wide agentic IDE configurations with shared rules and MCP tool integrations",
         "Designs AI-augmented development environments and agentic IDE standards for teams"
-      ]
+      ],
+      "description": "This skill is about mastering AI-native integrated development environments (IDEs) that go beyond autocomplete, leveraging agentic features to boost productivity, automate repetitive tasks, and support advanced coding workflows."
     },
     {
       "id": "SK.ACODE.003",
@@ -3177,7 +3369,8 @@
         "Designs AI code review workflows with custom rules and team-specific style standards",
         "Builds automated AI code review systems integrated into CI/CD with structured feedback",
         "Designs AI-augmented code quality programs with rubrics, metrics, and improvement tracking"
-      ]
+      ],
+      "description": "This skill involves using AI tools to review code for errors, style issues, and potential improvements, helping teams maintain higher code quality and reduce manual review effort."
     },
     {
       "id": "SK.ACODE.004",
@@ -3194,7 +3387,8 @@
         "Designs AI-assisted testing strategies with coverage targets and systematic edge case generation",
         "Builds automated AI test generation pipelines triggered on new code commits",
         "Designs AI-driven quality engineering architectures with continuous test generation"
-      ]
+      ],
+      "description": "This skill covers generating comprehensive test suites with AI, allowing for faster and more thorough testing of software, which improves reliability and reduces manual test creation."
     },
     {
       "id": "SK.ACODE.005",
@@ -3211,7 +3405,8 @@
         "Designs agentic debugging loops where AI reproduces errors, traces causes, and proposes fixes",
         "Builds AI-driven debugging pipelines with automated error triage and cross-file root cause analysis",
         "Designs self-healing software systems with AI-driven fault detection and autonomous remediation"
-      ]
+      ],
+      "description": "This skill is about leveraging AI to autonomously detect, diagnose, and fix bugs in code, reducing downtime and manual debugging effort while improving software resilience."
     },
     {
       "id": "SK.ACODE.006",
@@ -3229,7 +3424,8 @@
         "Designs AI-assisted architecture review processes combining AI analysis with expert decisions",
         "Builds AI-augmented architecture decision records with generated analysis and pattern comparisons",
         "Designs AI-powered architecture governance frameworks for engineering organizations"
-      ]
+      ],
+      "description": "This skill involves using AI to assist in making high-level software architecture decisions, supporting teams in designing scalable, maintainable, and robust systems."
     },
     {
       "id": "SK.ACODE.007",
@@ -3246,7 +3442,8 @@
         "Defines quality standards and review checklists for AI-generated code within teams",
         "Builds automated quality gates that scan and flag poor or insecure AI-generated code",
         "Designs AI code quality frameworks with security scanning, maintainability metrics, and governance"
-      ]
+      ],
+      "description": "This skill focuses on ensuring that AI-generated code meets quality, security, and maintainability standards, preventing issues like insecure or poorly structured code from entering production."
     },
     {
       "id": "SK.COMP.000",
@@ -3263,7 +3460,8 @@
         "Evaluates use cases and limitations of computer use agents vs API-based automation",
         "Builds applications using computer use APIs for task automation on desktop environments",
         "Designs computer use agent architectures with safety constraints and audit trails"
-      ]
+      ],
+      "description": "This skill is about understanding how AI agents can interact with computer interfaces by visually interpreting screens, enabling automation of tasks that previously required human input."
     },
     {
       "id": "SK.COMP.001",
@@ -3281,7 +3479,8 @@
         "Designs browser automation workflows for web scraping, form submission, and UI testing",
         "Builds robust browser automation systems with error handling and session management",
         "Designs enterprise web automation architectures with scale, reliability, and compliance"
-      ]
+      ],
+      "description": "This skill involves using AI to autonomously control web browsers, automating tasks such as data entry, scraping, and web testing at scale."
     },
     {
       "id": "SK.COMP.002",
@@ -3299,7 +3498,8 @@
         "Designs desktop automation workflows for legacy systems that lack API access",
         "Builds desktop automation pipelines with error recovery, human escalation, and logging",
         "Designs enterprise desktop automation platforms replacing legacy RPA with AI-powered solutions"
-      ]
+      ],
+      "description": "This skill covers automating desktop applications using AI, even when no APIs are available, allowing organizations to modernize and streamline legacy workflows."
     },
     {
       "id": "SK.COMP.003",
@@ -3316,7 +3516,8 @@
         "Designs operator task delegation frameworks with approval gates and checkpoint strategies",
         "Builds operator agent orchestration systems for automated enterprise process execution",
         "Designs enterprise AI operator architectures with governance, compliance, and human oversight"
-      ]
+      ],
+      "description": "This skill is about delegating complex, multi-step tasks to AI agents in an operator-style fashion, enabling automation of entire workflows while maintaining oversight and compliance."
     },
     {
       "id": "SK.COMP.004",
@@ -3334,7 +3535,8 @@
         "Designs safety frameworks for computer use with action risk classification and staged permissions",
         "Builds computer use safety systems with action monitoring, kill switches, and audit trails",
         "Designs comprehensive computer use governance architectures with zero-trust principles"
-      ]
+      ],
+      "description": "Understands the risks and governance requirements unique to agents that use computers, including how to design and enforce safety controls to prevent misuse or unauthorized access. This skill is essential for ensuring secure and compliant deployment of computer use agents in enterprise environments."
     },
     {
       "id": "SK.PROTO.000",
@@ -3351,7 +3553,8 @@
         "Implements A2A-compatible agents that interoperate with external agent systems",
         "Builds A2A-first agent platforms enabling cross-vendor, cross-platform agent collaboration",
         "Designs multi-protocol architectures integrating A2A with MCP and REST for enterprise agents"
-      ]
+      ],
+      "description": "Knows how agents communicate directly with each other using specialized protocols, and can design systems that integrate multiple communication standards for seamless agent collaboration. This is important for building scalable, interoperable AI agent ecosystems in organizations."
     },
     {
       "id": "SK.PROTO.001",
@@ -3368,7 +3571,8 @@
         "Designs agent cards that accurately represent capabilities for marketplace discovery",
         "Builds agent registries with health checks, versioning, and capability matching",
         "Designs enterprise agent discovery architectures for large-scale, multi-provider ecosystems"
-      ]
+      ],
+      "description": "Understands how agents advertise their capabilities to other agents and can design mechanisms for automated discovery and coordination in large, multi-provider environments. This skill enables efficient agent collaboration and dynamic task allocation in complex systems."
     },
     {
       "id": "SK.PROTO.002",
@@ -3386,7 +3590,8 @@
         "Designs context engineering strategies for different agent types with measurable improvements",
         "Builds context management systems that dynamically assemble optimized context for agents",
         "Designs context architecture standards for multi-agent systems with shared memory and state"
-      ]
+      ],
+      "description": "Distinguishes context engineering from prompt engineering and can design systems where agents share and manage context, memory, and state across interactions. Mastery of this skill ensures agents operate with relevant information, improving accuracy and coordination."
     },
     {
       "id": "SK.PROTO.003",
@@ -3404,7 +3609,8 @@
         "Designs multi-protocol integration layers that abstract transport details from agent logic",
         "Builds protocol abstraction frameworks unifying discovery and messaging across agent standards",
         "Designs enterprise multi-protocol agent architectures with unified governance and security"
-      ]
+      ],
+      "description": "Understands the need for agents to operate across multiple communication protocols and can design unified architectures that support interoperability, governance, and security. This skill is crucial for integrating diverse agent systems within an enterprise."
     },
     {
       "id": "SK.PROTO.004",
@@ -3422,7 +3628,552 @@
         "Designs security frameworks for agent protocol communication with threat modeling",
         "Builds secure agent communication infrastructure with encryption and audit logging",
         "Designs comprehensive protocol security architectures with zero-trust for multi-agent systems"
-      ]
+      ],
+      "description": "Recognizes and addresses security challenges in agent communication protocols, including designing architectures that enforce zero-trust principles. This ensures that agent interactions remain secure and resilient against threats."
+    },
+    {
+      "id": "SK.FND.024",
+      "name": "Long-context model capabilities & tradeoffs (1M+ tokens)",
+      "domain": "D.FND",
+      "level": 2,
+      "prerequisites": [],
+      "rubric_by_level": [
+        "Has not engaged with this skill",
+        "Explain what a long-context model means: models like Gemini 1.5 and Claude 3.5 that accept 1M+ tokens, enabling entire codebases or books as input",
+        "Estimate the cost and latency of a 1M-token request vs. a 10K-token RAG-based approach for the same task",
+        "Build a long-context workflow for document analysis: structure the input (metadata first, documents after) to maximize retrieval accuracy",
+        "Design a system that dynamically chooses between long-context and RAG based on corpus size, query type, and token budget",
+        "Define organizational guidelines for when long context is appropriate: use-case criteria, cost thresholds, and quality requirements"
+      ],
+      "description": "Understands the capabilities and tradeoffs of AI models that handle very long contexts (over 1 million tokens), including when and how to use them based on cost, quality, and business needs. This skill helps organizations make informed decisions about deploying advanced language models."
+    },
+    {
+      "id": "SK.FND.025",
+      "name": "Mixture of Experts (MoE) architecture basics",
+      "domain": "D.FND",
+      "level": 2,
+      "prerequisites": [],
+      "rubric_by_level": [
+        "Has not engaged with this skill",
+        "Explain Mixture of Experts (MoE): a model architecture where only a subset of \"expert\" sub-networks are activated for each token, reducing compute per token",
+        "Explain sparse activation: the router selects which experts handle each token, so most parameters are dormant on any given input",
+        "Compare a dense 7B model against a MoE model with similar active parameters on quality benchmarks and explain the difference",
+        "Design a deployment strategy for a MoE model: how to partition experts across GPUs, manage memory for all experts, and route tokens efficiently",
+        "Lead the architectural decision between dense and MoE models for an organization's AI platform, with documented trade-off analysis"
+      ],
+      "description": "Knows the basics of Mixture of Experts (MoE) architectures and can evaluate when to use MoE versus dense models, considering trade-offs in performance, scalability, and resource usage. This is important for selecting the right AI model architecture for organizational needs."
+    },
+    {
+      "id": "SK.AGT.032",
+      "name": "Agent memory architectures (episodic, semantic, procedural)",
+      "domain": "D.AGT",
+      "level": 4,
+      "prerequisites": [],
+      "rubric_by_level": [
+        "Has not engaged with this skill",
+        "Define the four agent memory types: working memory (active context), episodic (past experiences), semantic (facts and knowledge), procedural (how-to patterns)",
+        "Compare using in-context storage vs. a vector store for a simple agent task and identify when each is appropriate",
+        "Implement a two-tier memory system: in-context for recent turns, external vector store for long-term episodic recall",
+        "Build a production multi-tier memory architecture with automatic promotion, TTL-based expiry, and privacy-compliant deletion",
+        "Architect an enterprise agent memory platform with namespace isolation, cross-agent memory sharing, and compliance audit trails"
+      ],
+      "description": "Understands different types of agent memory (episodic, semantic, procedural) and can design systems that manage memory sharing, isolation, and compliance across agents. This skill is key for building agents that learn and operate effectively in complex environments."
+    },
+    {
+      "id": "SK.AGT.033",
+      "name": "Human-agent handoff & escalation design",
+      "domain": "D.AGT",
+      "level": 4,
+      "prerequisites": [],
+      "rubric_by_level": [
+        "Has not engaged with this skill",
+        "Explain when an agent should stop and escalate to a human: not just on failure but by design for specific decision types",
+        "Identify two handoff triggers in a sample agent workflow and describe what context the human needs at each point",
+        "Design a handoff protocol with typed escalation reasons, required context payload fields, and SLA for human response time",
+        "Build a human-in-the-loop system with queued escalations, agent pause/resume, async human review, and handoff audit logging",
+        "Architect org human-agent handoff standards: escalation taxonomies, SLA tiers, tooling requirements, and accountability policies"
+      ],
+      "description": "Designs processes and standards for handing off tasks between humans and agents, including escalation paths, service level agreements, and accountability measures. This ensures smooth collaboration and reliable outcomes in human-agent workflows."
+    },
+    {
+      "id": "SK.MUL.016",
+      "name": "Real-time voice AI & streaming conversation pipelines",
+      "domain": "D.MUL",
+      "level": 3,
+      "prerequisites": [],
+      "rubric_by_level": [
+        "Has not engaged with this skill",
+        "Explain the architecture of a real-time voice AI pipeline including voice activity detection, speech-to-text, LLM inference, and text-to-speech components",
+        "Apply a real-time voice API or SDK to build a simple voice conversation loop with turn detection and audio playback",
+        "Implement a streaming voice conversation pipeline that integrates VAD, Whisper-based STT, an LLM with streaming output, and a TTS service with audio chunking",
+        "Build a production real-time voice AI service with sub-500ms latency targets, WebSocket audio streaming, fallback handling, and per-session telemetry",
+        "Architect an enterprise real-time voice AI strategy covering pipeline design, latency SLAs, telephony integration, compliance, and vendor governance"
+      ],
+      "description": "Understands how to build and manage real-time voice AI systems, including streaming pipelines, latency requirements, telephony integration, and compliance. This skill is vital for deploying voice-enabled AI solutions at scale."
+    },
+    {
+      "id": "SK.MUL.017",
+      "name": "Multimodal embeddings & cross-modal retrieval (CLIP, ImageBind)",
+      "domain": "D.MUL",
+      "level": 4,
+      "prerequisites": [],
+      "rubric_by_level": [
+        "Has not engaged with this skill",
+        "Explain how multimodal embedding models like CLIP and ImageBind create joint vector spaces where text and images share the same semantic dimensions",
+        "Apply a CLIP model to encode a text query and a set of images and retrieve the most semantically similar images using cosine similarity",
+        "Implement a cross-modal retrieval system that indexes image embeddings from CLIP and supports text-to-image and image-to-image search",
+        "Build a production multimodal embedding search service with index versioning, embedding refresh pipelines, ANN search, and query latency monitoring",
+        "Architect an enterprise cross-modal retrieval strategy covering embedding model selection, index infrastructure, governance, and fine-tuning policies"
+      ],
+      "description": "Knows how to use multimodal embeddings for cross-modal retrieval, such as searching images with text or vice versa, and can design enterprise strategies for model selection, infrastructure, and governance. This enables advanced search and analysis across different data types."
+    },
+    {
+      "id": "SK.SEC.013",
+      "name": "AI supply chain security & model provenance",
+      "domain": "D.SEC",
+      "level": 4,
+      "prerequisites": [],
+      "rubric_by_level": [
+        "Has not engaged with this skill",
+        "Explain AI supply chain security: risks from third-party models, datasets, and libraries used to build AI systems",
+        "Audit the third-party components in a sample AI system: list models, datasets, and ML libraries with their source and version",
+        "Implement model provenance verification in a CI/CD pipeline: hash check, signature validation, and source allowlist enforcement",
+        "Architect an AI artifact registry with signed model storage, provenance metadata, and access controls for production promotion",
+        "Define organizational AI supply chain security policy: approved sources, provenance requirements, scanning cadence, and governance"
+      ],
+      "description": "Understands the importance of securing the AI supply chain and tracking model provenance, including setting policies for approved sources, provenance verification, and regular security assessments. This skill protects organizations from risks associated with third-party AI components."
+    },
+    {
+      "id": "SK.OPS.023",
+      "name": "Local model deployment (Ollama, llama.cpp, GGUF)",
+      "domain": "D.OPS",
+      "level": 3,
+      "prerequisites": [],
+      "rubric_by_level": [
+        "Has not engaged with this skill",
+        "Explain local model deployment: running an open-source LLM on local hardware (laptop, server, edge device) without sending data to a cloud API",
+        "Install Ollama and run a small model (Llama 3 8B or Mistral 7B) locally using the CLI",
+        "Deploy a local model as an API server using Ollama's REST endpoint and connect an existing application to it",
+        "Build a local model deployment for a privacy-sensitive application: no external calls, encrypted model storage, and audit logging",
+        "Architect an enterprise local model deployment strategy: hardware selection, model governance, update management, and monitoring"
+      ],
+      "description": "Knows how to deploy AI models locally using tools like Ollama or llama.cpp, including hardware selection, governance, updates, and monitoring. This skill is essential for organizations that require on-premises AI solutions for privacy or compliance reasons."
+    },
+    {
+      "id": "SK.OPS.024",
+      "name": "Prompt caching strategies & latency/cost optimization",
+      "domain": "D.OPS",
+      "level": 3,
+      "prerequisites": [],
+      "rubric_by_level": [
+        "Has not engaged with this skill",
+        "Explain prompt caching: the API stores computed KV (key-value) cache for a repeated prompt prefix so subsequent calls skip recomputation",
+        "Configure a prompt cache on a static system prompt: mark the cache breakpoint and verify cache hit rate in API response metadata",
+        "Implement prompt cache management in an application: control cache breakpoint placement, monitor hit rate, and invalidate on prompt changes",
+        "Build a prompt caching strategy for a multi-feature application: different cache configs per endpoint based on prompt structure and call frequency",
+        "Architect prompt caching as a platform-level optimization across all AI products: shared caching infrastructure, governance, and measurement"
+      ],
+      "description": "Understands prompt caching strategies to optimize latency and cost in AI applications, and can design shared caching infrastructure and governance for enterprise use. This skill improves efficiency and scalability of AI-powered products."
+    },
+    {
+      "id": "SK.GOV.024",
+      "name": "NIST AI RMF & US AI policy landscape",
+      "domain": "D.GOV",
+      "level": 2,
+      "prerequisites": [],
+      "rubric_by_level": [
+        "Has not engaged with this skill",
+        "Explain that the NIST AI Risk Management Framework (AI RMF) is a voluntary US framework with four core functions: Govern, Map, Measure, and Manage",
+        "Describe the four functions of the NIST AI RMF and give a concrete example activity within each",
+        "Conduct NIST AI RMF-aligned risk assessments and map findings to the framework's outcome statements",
+        "Build AI risk management programs structured around NIST AI RMF functions with defined metrics for each outcome",
+        "Establish enterprise AI risk management strategies that use NIST AI RMF as a backbone while adapting to sector-specific requirements"
+      ],
+      "description": "Understands the NIST AI Risk Management Framework and the broader US AI policy environment, enabling organizations to align their AI risk management practices with recognized standards and regulatory expectations."
+    },
+    {
+      "id": "SK.GOV.025",
+      "name": "Model cards & AI transparency documentation",
+      "domain": "D.GOV",
+      "level": 2,
+      "prerequisites": [],
+      "rubric_by_level": [
+        "Has not engaged with this skill",
+        "Explain what a model card is: a structured document that describes an AI model's intended use, performance characteristics, limitations, and evaluation results",
+        "Read a model card and extract key information: intended use, out-of-scope uses, training data summary, and known limitations",
+        "Author comprehensive model cards that cover model details, intended use, factors, metrics, evaluation data, ethical considerations, and caveats",
+        "Build model registries that store, version, and surface model cards for all AI systems in production",
+        "Establish enterprise-wide AI transparency documentation standards covering model cards, system cards, and datasheets for datasets"
+      ],
+      "description": "Creates and maintains documentation that explains how AI models work, including model cards and datasheets, to promote transparency, accountability, and informed use of AI systems."
+    },
+    {
+      "id": "SK.RSN.006",
+      "name": "Long-context strategies (needle-in-haystack, retrieval at scale)",
+      "domain": "D.RSN",
+      "level": 4,
+      "prerequisites": [],
+      "rubric_by_level": [
+        "Has not engaged with this skill",
+        "Explain the accuracy and latency trade-offs of using a 1M+ token context window vs. a RAG-based approach",
+        "Run a needle-in-haystack test on a 100K+ token document and measure retrieval accuracy at different positions",
+        "Implement a hybrid strategy combining chunked long-context with RAG pre-filtering for a specific document type",
+        "Build a production long-context pipeline with prefill caching, quality benchmarks, and cost monitoring",
+        "Architect org strategy for long-context vs. RAG decisions across different document types and business domains"
+      ],
+      "description": "Designs strategies for handling tasks that require processing or retrieving information from large volumes of data, ensuring AI systems can efficiently find relevant details in complex or lengthy contexts."
+    },
+    {
+      "id": "SK.RSN.007",
+      "name": "Thinking budget control & cost/quality tradeoff analysis",
+      "domain": "D.RSN",
+      "level": 3,
+      "prerequisites": [],
+      "rubric_by_level": [
+        "Has not engaged with this skill",
+        "Explain what a thinking budget is and how setting it controls the depth and cost of model reasoning",
+        "Configure thinking token limits in three API calls and compare output quality and cost at each budget level",
+        "Implement dynamic thinking budget assignment based on a task complexity classifier or keyword heuristics",
+        "Build a production system with per-request thinking budget allocation driven by real-time complexity scoring",
+        "Define org thinking budget governance policy: which tasks get high budgets, approval process, and cost caps"
+      ],
+      "description": "Analyzes and manages the tradeoffs between computational cost and output quality in AI reasoning tasks, helping organizations allocate resources effectively and control expenses."
+    },
+    {
+      "id": "SK.ACODE.008",
+      "name": "AI pair programming & TDD with agentic tools",
+      "domain": "D.ACODE",
+      "level": 3,
+      "prerequisites": [],
+      "rubric_by_level": [
+        "Has not engaged with this skill",
+        "Explain TDD-with-AI: write the test spec, let AI implement to pass it, then critically review the solution",
+        "Write a failing test, prompt an agentic tool to make it pass, and evaluate solution quality and simplicity",
+        "Run a full TDD cycle using AI: spec → failing test → AI implementation → human review → refactor → repeat",
+        "Establish AI pair programming workflows for a team with defined driver/navigator roles and review checkpoints",
+        "Define org standards for TDD with AI: test ownership, coverage requirements, AI contribution attribution, and review rules"
+      ],
+      "description": "Collaborates with AI tools for pair programming and applies test-driven development practices, ensuring code quality and clear attribution of AI-generated contributions in software projects."
+    },
+    {
+      "id": "SK.COMP.005",
+      "name": "Stateful multi-step task orchestration",
+      "domain": "D.COMP",
+      "level": 4,
+      "prerequisites": [],
+      "rubric_by_level": [
+        "Has not engaged with this skill",
+        "Explain why multi-step tasks require state persistence: without it, any interruption loses task progress entirely",
+        "Trace a multi-step agent task execution and identify every point where state must be saved for safe resumption",
+        "Implement checkpointed task orchestration that resumes correctly from the last completed step after a process restart",
+        "Build a stateful orchestration system with human approval gates, partial rollback, and structured audit logging",
+        "Architect an enterprise orchestration platform supporting parallel task branches, cross-agent state sharing, and compliance audit trails"
+      ],
+      "description": "Designs and manages systems where AI agents coordinate multi-step tasks, maintain shared state, and support compliance requirements, enabling complex workflows to be automated reliably."
+    },
+    {
+      "id": "SK.PROTO.005",
+      "name": "MCP server authoring & tool publishing",
+      "domain": "D.PROTO",
+      "level": 4,
+      "prerequisites": [],
+      "rubric_by_level": [
+        "Has not engaged with this skill",
+        "Explain what an MCP server is: a process that exposes tools to LLM clients through a standardized JSON-RPC interface",
+        "Read an existing MCP server implementation and describe what tools it exposes, their schemas, and their behavior",
+        "Build a simple MCP server that wraps an existing REST API and exposes two tools with proper input/output schemas",
+        "Deploy a production MCP server with authentication (OAuth or API key), rate limiting, input validation, and observability",
+        "Define org MCP server standards: tool naming conventions, description quality requirements, versioning policy, and security review process"
+      ],
+      "description": "Develops and publishes tools for MCP (Multi-Agent Communication Protocol) servers, following organizational standards for naming, documentation, versioning, and security review."
+    },
+    {
+      "id": "SK.PROTO.006",
+      "name": "OpenAPI-to-MCP tool conversion",
+      "domain": "D.PROTO",
+      "level": 3,
+      "prerequisites": [],
+      "rubric_by_level": [
+        "Has not engaged with this skill",
+        "Explain why OpenAPI specifications are the natural source for MCP tool definitions: they document endpoints, parameters, and schemas",
+        "Read an OpenAPI spec and manually map one GET endpoint to an MCP tool schema with accurate description and parameters",
+        "Use or build a converter that generates MCP tool definitions from an OpenAPI spec with parameter mapping and description generation",
+        "Build a CI pipeline that auto-generates and validates MCP tools from OpenAPI specs on each API change",
+        "Architect org tooling standards for OpenAPI-to-MCP conversion: quality gates, manual review criteria, and deprecation handling"
+      ],
+      "description": "Converts OpenAPI specifications into MCP-compatible tools, establishing quality and review standards to ensure reliable integration and lifecycle management of agent tools."
+    },
+    {
+      "id": "SK.VOICE.000",
+      "name": "Real-time voice model concepts (GPT-4o RT, Gemini Live)",
+      "domain": "D.VOICE",
+      "level": 1,
+      "prerequisites": [],
+      "rubric_by_level": [
+        "Has not engaged with this skill",
+        "Explain real-time voice AI and how it fundamentally differs from a STT → LLM → TTS pipeline architecture",
+        "Experiment with the GPT-4o Realtime or Gemini Live API using a provided demo environment and describe the experience",
+        "Integrate a real-time voice API into a working web or mobile prototype with basic session management",
+        "Build a production real-time voice application with session lifecycle management, error recovery, and reconnect logic",
+        "Architect org voice AI platform strategy: API selection, latency SLAs, language coverage, compliance, and cost governance"
+      ],
+      "description": "Understands the architecture and operational considerations of real-time voice AI models, enabling informed decisions about platform selection, latency management, and compliance for voice-enabled applications."
+    },
+    {
+      "id": "SK.VOICE.001",
+      "name": "Voice pipeline design (VAD, STT, TTS integration)",
+      "domain": "D.VOICE",
+      "level": 3,
+      "prerequisites": [],
+      "rubric_by_level": [
+        "Has not engaged with this skill",
+        "Name the five stages of a traditional voice pipeline: VAD, STT, LLM processing, TTS, audio playback",
+        "Connect a VAD, STT API, LLM API, and TTS API in a simple sequential pipeline using provided starter code",
+        "Design a voice pipeline with configurable STT and TTS models, silence handling, and speaker diarization",
+        "Build a production voice pipeline with failover between STT providers, audio quality monitoring, and session logging",
+        "Architect a modular voice pipeline platform with hot-swappable component APIs and per-language model configurations"
+      ],
+      "description": "Designs modular voice processing pipelines that integrate voice activity detection, speech-to-text, and text-to-speech components, allowing flexible configuration for different languages and use cases."
+    },
+    {
+      "id": "SK.VOICE.002",
+      "name": "Latency & turn-taking optimization for voice apps",
+      "domain": "D.VOICE",
+      "level": 4,
+      "prerequisites": [],
+      "rubric_by_level": [
+        "Has not engaged with this skill",
+        "Explain why voice AI requires sub-500ms response latency to feel natural and how each pipeline stage contributes",
+        "Measure first-byte-to-audio latency in a sample voice pipeline across three different API configurations",
+        "Implement streaming response with early audio playback to reduce perceived latency to under one second",
+        "Build a turn-taking system with interrupt detection, barge-in handling, and configurable silence thresholds per use case",
+        "Architect a voice latency optimization strategy including infrastructure choices, CDN edge deployment, and regional model routing"
+      ],
+      "description": "Optimizes the responsiveness and conversational flow of voice applications by minimizing latency and managing turn-taking, using infrastructure and deployment strategies tailored to user needs."
+    },
+    {
+      "id": "SK.VOICE.003",
+      "name": "Multilingual voice robustness & accent handling",
+      "domain": "D.VOICE",
+      "level": 3,
+      "prerequisites": [],
+      "rubric_by_level": [
+        "Has not engaged with this skill",
+        "Explain common failure modes when voice models encounter non-native accents, code-switching, or low-resource languages",
+        "Test a voice pipeline against a multilingual and accented audio sample set and report word error rates by category",
+        "Configure automatic language detection with fallback to a default language for ambiguous speech inputs",
+        "Build a multilingual voice system with per-language model selection, quality benchmarks, and automatic language routing",
+        "Architect a global voice AI strategy covering language prioritization, regional compliance, and accent bias mitigation"
+      ],
+      "description": "Ensures voice AI systems perform well across multiple languages and accents, addressing regional compliance and reducing bias to support diverse user populations."
+    },
+    {
+      "id": "SK.VOICE.004",
+      "name": "Voice agent security & spoofing risk mitigation",
+      "domain": "D.VOICE",
+      "level": 3,
+      "prerequisites": [],
+      "rubric_by_level": [
+        "Has not engaged with this skill",
+        "Identify voice-specific security threats: speaker spoofing with cloned voices, audio injection, and session hijacking",
+        "Apply two spoofing mitigation techniques (liveness detection, challenge-response) and describe their trade-offs",
+        "Implement liveness detection in a voice authentication flow to distinguish real speech from cloned audio",
+        "Build a voice security layer with real-time anomaly detection, session recording, and automated escalation on suspicious patterns",
+        "Define org voice security standards: acceptable use policies, speaker verification SLAs, and prohibited voice agent actions"
+      ],
+      "description": "Implements security measures and risk mitigation strategies for voice agents, including speaker verification and usage policies, to prevent spoofing and unauthorized actions."
+    },
+    {
+      "id": "SK.SYNTH.000",
+      "name": "Synthetic data generation concepts & use cases",
+      "domain": "D.SYNTH",
+      "level": 2,
+      "prerequisites": [],
+      "rubric_by_level": [
+        "Has not engaged with this skill",
+        "Explain what synthetic data is and name three problems it solves: data scarcity, privacy constraints, and class imbalance",
+        "Use a prompt-based technique to generate 50 labeled examples for a classification task and evaluate quality",
+        "Design a synthetic data generation pipeline with prompt templates, quality filters, and human spot-check sampling",
+        "Build a production synthetic data pipeline with configurable templates, quality gates, and versioned dataset outputs",
+        "Architect an org synthetic data strategy: generation tooling, quality standards, governance, and integration with model training pipelines"
+      ],
+      "description": "Applies methods for generating synthetic data to augment training datasets, supporting model development while maintaining data quality and governance standards."
+    },
+    {
+      "id": "SK.SYNTH.001",
+      "name": "Data flywheel design & self-improvement loops",
+      "domain": "D.SYNTH",
+      "level": 3,
+      "prerequisites": [],
+      "rubric_by_level": [
+        "Has not engaged with this skill",
+        "Explain the data flywheel concept: production usage generates feedback that improves the model that serves production",
+        "Map the flywheel components in an existing AI product: where does production data flow, how is it labeled, what triggers retraining",
+        "Design a production error collection pipeline that captures failures, routes them for labeling, and tracks resolution",
+        "Build a complete flywheel system: collection, labeling workflow, training pipeline trigger, A/B deployment, and feedback capture",
+        "Architect an enterprise data flywheel platform that aligns collection incentives, labeling capacity, and model improvement KPIs"
+      ],
+      "description": "Designs systems that continuously collect, label, and use data to improve AI models, aligning incentives and processes to create self-reinforcing improvement loops."
+    },
+    {
+      "id": "SK.SYNTH.002",
+      "name": "Knowledge distillation & model compression",
+      "domain": "D.SYNTH",
+      "level": 4,
+      "prerequisites": [],
+      "rubric_by_level": [
+        "Has not engaged with this skill",
+        "Explain knowledge distillation: a large teacher model trains a smaller student model to match its outputs",
+        "Compare the output quality of a distilled model vs. its teacher on a defined benchmark task set",
+        "Run a distillation experiment: select a teacher and student model pair, generate training data, and measure quality gap",
+        "Build a distillation pipeline with output comparison across quality tiers, regression benchmarks, and deployment rollout controls",
+        "Architect org distillation strategy: which capabilities to preserve, acceptable quality floors, retraining cadence, and cost targets"
+      ],
+      "description": "This skill involves techniques for reducing the size and complexity of AI models while maintaining their performance, making them more efficient to deploy and operate. It is important for optimizing resource usage and cost when running AI systems at scale."
+    },
+    {
+      "id": "SK.SYNTH.003",
+      "name": "Benchmark contamination & eval data hygiene",
+      "domain": "D.SYNTH",
+      "level": 4,
+      "prerequisites": [],
+      "rubric_by_level": [
+        "Has not engaged with this skill",
+        "Explain benchmark contamination: a model scores well on a benchmark because its training data contained the test answers",
+        "Check a proposed eval dataset for overlap with a known training corpus using deduplication tools (MinHash, n-gram matching)",
+        "Design a held-out eval set using temporal splits, source diversity controls, and automated deduplication pipelines",
+        "Build an eval data governance pipeline with automated contamination scanning, versioning, and access control for eval sets",
+        "Define org eval data hygiene standards: creation, review, rotation schedule, and public disclosure policies"
+      ],
+      "description": "This skill covers methods for ensuring that evaluation datasets remain uncontaminated by training data and are properly maintained. Maintaining data hygiene is crucial for obtaining accurate, unbiased benchmarks of AI model performance."
+    },
+    {
+      "id": "SK.HRNS.000",
+      "name": "Agent harness concepts & scaffold patterns",
+      "domain": "D.HRNS",
+      "level": 2,
+      "prerequisites": [],
+      "rubric_by_level": [
+        "Has not engaged with this skill",
+        "Define what an agent harness is and explain how it differs from a raw LLM call",
+        "Use an existing harness framework (LangGraph, AutoGen, Claude Agent SDK) to run a simple agent loop",
+        "Design a harness that handles tool timeouts, partial failures, and step-level logging independently",
+        "Build a production harness with persistent state, replay capability, and structured audit logs",
+        "Architect an enterprise harness layer that supports hot-swappable agent versions and multi-tenant isolation"
+      ],
+      "description": "This skill focuses on understanding and applying patterns for building agent harnesses, which are frameworks that manage and coordinate AI agents. Mastery of these concepts enables scalable, maintainable deployment of multiple agent versions and configurations."
+    },
+    {
+      "id": "SK.HRNS.001",
+      "name": "Memory system design (working, episodic, semantic, procedural)",
+      "domain": "D.HRNS",
+      "level": 4,
+      "prerequisites": [],
+      "rubric_by_level": [
+        "Has not engaged with this skill",
+        "Distinguish working memory, episodic memory, semantic memory, and procedural memory in agent context",
+        "Map a given task description to the appropriate memory type for each sub-step",
+        "Implement an episodic memory layer that stores, retrieves, and expires agent experiences automatically",
+        "Build a multi-tier memory system that seamlessly promotes hot facts from working memory to long-term stores",
+        "Design an organization-wide memory architecture that spans agents, teams, and time horizons"
+      ],
+      "description": "This skill is about designing memory systems for AI agents, including working, episodic, semantic, and procedural memory types. Effective memory design allows agents to retain and utilize relevant information over time, improving their usefulness and reliability."
+    },
+    {
+      "id": "SK.HRNS.002",
+      "name": "State machine patterns for long-running agents",
+      "domain": "D.HRNS",
+      "level": 4,
+      "prerequisites": [],
+      "rubric_by_level": [
+        "Has not engaged with this skill",
+        "Explain what a finite state machine is and why agent workflows benefit from explicit state modeling",
+        "Model a simple agent workflow as a state diagram with labeled transitions and guard conditions",
+        "Design a state machine that handles concurrent tool calls, partial results, and rollback on failure",
+        "Build a graph-based state machine (LangGraph-style) supporting dynamic branching and conditional edges",
+        "Architect a hierarchical state machine system where sub-agents expose typed state interfaces to orchestrators"
+      ],
+      "description": "This skill involves using state machine patterns to manage the behavior of long-running AI agents, allowing for structured transitions and coordination among sub-agents. It is essential for building robust, predictable agent workflows that can handle complex tasks."
+    },
+    {
+      "id": "SK.HRNS.003",
+      "name": "Context compression & conversation compaction",
+      "domain": "D.HRNS",
+      "level": 3,
+      "prerequisites": [],
+      "rubric_by_level": [
+        "Has not engaged with this skill",
+        "Explain why long agent conversations hit context window limits and what information is lost",
+        "Apply a sliding-window truncation strategy to a sample conversation log using provided tooling",
+        "Implement a compaction pipeline that triggers automatically at a token threshold and preserves key facts",
+        "Build an adaptive compaction system that adjusts strategy based on task type and remaining budget",
+        "Architect an enterprise context lifecycle management system with configurable retention and audit"
+      ],
+      "description": "This skill covers techniques for compressing and managing the context and conversation history that AI agents use, ensuring relevant information is retained without exceeding system limits. Proper context management is key to maintaining agent performance and compliance."
+    },
+    {
+      "id": "SK.HRNS.004",
+      "name": "Hook-based agent middleware & interceptors",
+      "domain": "D.HRNS",
+      "level": 4,
+      "prerequisites": [],
+      "rubric_by_level": [
+        "Has not engaged with this skill",
+        "Explain what middleware hooks are and why they enable non-invasive harness customization",
+        "Add a logging hook to an existing agent run that records tool name, input, output, and latency",
+        "Implement a retry hook with exponential backoff that is transparent to the agent core logic",
+        "Build a pluggable hook registry where product teams can register hooks without modifying core harness code",
+        "Architect a hook framework that supports hot-reload, versioning, and per-tenant hook customization"
+      ],
+      "description": "This skill involves implementing middleware and interceptors using hooks, allowing developers to modify or extend agent behavior dynamically. It is important for enabling customization, monitoring, and integration of agents in diverse environments."
+    },
+    {
+      "id": "SK.HRNS.005",
+      "name": "Conversation thread & history management",
+      "domain": "D.HRNS",
+      "level": 3,
+      "prerequisites": [],
+      "rubric_by_level": [
+        "Has not engaged with this skill",
+        "Explain the difference between a conversation turn, a thread, and a session in agent systems",
+        "Apply message trimming and role-based filtering to a conversation history using a provided utility",
+        "Design a thread branching system that forks history at decision points and merges results back",
+        "Build a multi-thread coordinator that manages parallel agent sub-threads and synthesizes their outputs",
+        "Architect a distributed thread management layer that scales across agent fleets with consistency guarantees"
+      ],
+      "description": "This skill focuses on managing conversation threads and histories across distributed AI agents, ensuring consistency and scalability. Effective thread management is necessary for supporting multi-user, multi-agent interactions in enterprise settings."
+    },
+    {
+      "id": "SK.HRNS.006",
+      "name": "Agent SDK patterns (Claude Agent SDK, LangGraph, AutoGen)",
+      "domain": "D.HRNS",
+      "level": 4,
+      "prerequisites": [],
+      "rubric_by_level": [
+        "Has not engaged with this skill",
+        "Compare Claude Agent SDK, LangGraph, and AutoGen at a conceptual level (primitives, target use case)",
+        "Build a minimal agent loop using one of the three frameworks by following official documentation",
+        "Implement a multi-node LangGraph workflow with conditional edges and persistent checkpointing",
+        "Build a production agent system with one framework, including observability hooks, error handling, and CI tests",
+        "Architect a multi-framework agent platform where different business units use their preferred SDK against a shared harness layer"
+      ],
+      "description": "This skill is about applying patterns from various agent SDKs to build flexible agent platforms that support different frameworks. It enables organizations to standardize agent infrastructure while allowing teams to use their preferred development tools."
+    },
+    {
+      "id": "SK.HRNS.007",
+      "name": "Harness observability & step-level debugging",
+      "domain": "D.HRNS",
+      "level": 4,
+      "prerequisites": [],
+      "rubric_by_level": [
+        "Has not engaged with this skill",
+        "Explain what step-level observability means and why per-tool tracing is more actionable than end-to-end logs",
+        "Add structured logging to each tool call in an agent run that captures input, output, latency, and status",
+        "Instrument a full agent run with OpenTelemetry spans that nest tool calls under their parent step",
+        "Design a harness observability layer that auto-instruments all tools without requiring changes to tool code",
+        "Architect an organization-wide agent observability platform with centralized trace storage and RBAC dashboards"
+      ],
+      "description": "This skill covers implementing observability and debugging tools at the agent harness level, including step-by-step tracing and centralized monitoring. These capabilities are vital for diagnosing issues, ensuring reliability, and maintaining compliance in AI systems."
     }
   ],
   "roles": [
@@ -3492,6 +4243,13 @@
         "D.PROTO"
       ],
       "color": "#ec4899"
+    }
+  ],
+  "changelog": [
+    {
+      "version": "2.1",
+      "date": "2026-05-27",
+      "note": "Merged Vivek v3 (May 26 2026): +34 skills (now 220), +3 emerging domains (now 25). New skills carry placeholder rubric_by_level derived from SPECIFIC_OBJECTIVES; authored rubrics to follow."
     }
   ]
 }
