@@ -10,7 +10,7 @@ def test_build_status_shape():
     s = build_tbi_status()
     assert s["framework"] == "Trust Before Intelligence"
     inp = s["inpact"]
-    assert inp["total"] == 26 and inp["pct"] == 72 and len(inp["dimensions"]) == 6
+    assert inp["total"] == 27 and inp["pct"] == 75 and len(inp["dimensions"]) == 6
     assert len(s["layers"]) == 7
     g = s["goals"]
     # live governance signal reflects current config
@@ -31,7 +31,7 @@ def test_dimensions_are_within_scale():  # boundary
 def test_render_html_contains_key_signals():
     html = render_dashboard_html(build_tbi_status())
     assert html.startswith("<!doctype html>")
-    assert "Trust Before Intelligence" in html and "72%" in html
+    assert "Trust Before Intelligence" in html and "75%" in html
     for dim in ("Instant", "Natural", "Permitted", "Adaptive", "Contextual", "Transparent"):
         assert dim in html
     assert "7-layer architecture" in html and "Governance" in html

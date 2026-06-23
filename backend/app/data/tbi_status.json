@@ -2,13 +2,13 @@
   "as_of": "2026-06-23",
   "inpact": {
     "max_per": 6,
-    "total": 26,
+    "total": 27,
     "max": 36,
-    "pct": 72,
+    "pct": 75,
     "production_line": 80,
     "dimensions": [
       {"name": "Instant", "score": 3, "basis": "Batch analysis in seconds; real-time is not the use case. LLM timeouts make latency bounded."},
-      {"name": "Natural", "score": 4, "basis": "Judge pinned to gpt-4.1 (reads JDs correctly) + typed input contracts. Capped by missing per-skill ontology descriptions."},
+      {"name": "Natural", "score": 5, "basis": "Judge pinned to gpt-4.1 + typed input contracts + all 220 skills now carry descriptions (the lexicon + tooltips + judge context are grounded). -> 6 with multi-language / richer JD parsing."},
       {"name": "Permitted", "score": 4, "basis": "Calibrated deterministic judge gate in the prod path (shadow) + regeneration fallback. -> 5 on the enforce flip."},
       {"name": "Adaptive", "score": 5, "basis": "Pinned + calibrated, drift guard + recalibration trigger, ensemble fixes the temp-0 variance, self-correcting regeneration. -> 6 with an outcome-feedback loop."},
       {"name": "Contextual", "score": 4, "basis": "Verdict variance fixed; RAG no-op now observable (not silent). -> 5 when GCP credentials make retrieval real."},
