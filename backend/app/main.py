@@ -108,7 +108,12 @@ async def metrics_endpoint():
     return {"window_hours": 24, "metrics": snapshot()}
 
 
+# Both the root paths (internal / direct) and the /api/* aliases are registered:
+# the prod frontend nginx only proxies /api/, so the /api/tbi/* aliases are what
+# make the dashboard reachable externally (http://HOST/api/tbi/dashboard) with no
+# nginx change.
 @app.get("/tbi")
+@app.get("/api/tbi")
 async def tbi_status_endpoint():
     """Trust Before Intelligence status: INPACT scorecard, 7-layer health, and GOALS
     (governance/observability/availability/lexicon/solid), recorded + live signals."""
@@ -117,6 +122,7 @@ async def tbi_status_endpoint():
 
 
 @app.get("/tbi/dashboard", response_class=HTMLResponse)
+@app.get("/api/tbi/dashboard", response_class=HTMLResponse)
 async def tbi_dashboard_endpoint():
     """Self-contained TBI dashboard page (no external assets)."""
     from app.services.tbi import build_tbi_status, render_dashboard_html
