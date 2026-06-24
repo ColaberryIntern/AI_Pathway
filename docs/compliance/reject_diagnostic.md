@@ -53,3 +53,25 @@ counted as uncovered). Recommended order:
 Both are bounded changes I can implement once you confirm direction - but the recommender
 floor (1) touches the rubric and the judge lexicon (2) is a calibration change, so both
 want your / Luda's sign-off first (Strategic per the Autonomy Model).
+
+## Addendum (candidate-pool check): Fix 1 is INJECTION, not just a floor
+Checked whether the judge-named skills are even in the recommender's candidate pool for
+the reject goals:
+- **L&D** pool: COM.005, EDU.001, COM.003, FND.002, GOV.022, PRD.020, CTIC.006, PRM.020,
+  PRM.003, LRN.004 -> **PRD.022 / PRD.001 / PRD.002 absent**.
+- **AI Content Editor** pool -> the named skills **absent**.
+- **Director, Global Campaigns** (one variant) -> PRD.001 + PRD.002 **present** (here a
+  floor/pin would keep them in the top-5).
+
+A rubric FLOOR only reorders candidates - it cannot recover a skill that was never
+surfaced. So for L&D / Content Editor the gap is **upstream of the rubric**: the JD
+parser / candidate step does not surface measurement (ROI), workflow-mapping, or
+use-case skills for these verticals. The correct Fix 1 is therefore a **vertical-essence
+candidate INJECTION** (surface ROI / workflow / use-case for marketing + L&D *before*
+ranking, analogous to `inject_foundational_prm_if_missing`) **plus** the floor for the
+cases where the skill is already a candidate.
+
+This is a larger recommender change (it alters candidate surfacing for whole verticals),
+so it needs Luda's design direction before I build it - which vertical maps to which
+essence skills. Once she confirms the mapping, I implement the injection + floor, re-run
+`enforce_readiness_sweep.py`, and report the new reject rate.
