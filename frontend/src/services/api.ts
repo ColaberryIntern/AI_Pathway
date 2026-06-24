@@ -305,6 +305,27 @@ export const getDomains = async () => {
   return data
 }
 
+// ── Enterprise Base Curriculum (admin, MVP) ──────────────────────────
+
+export interface EnterpriseCurriculum {
+  skill_ids: string[]
+  skills: { skill_id: string; name: string; domain: string; level: number | null }[]
+  label: string
+  updated_at: string | null
+}
+
+export const getEnterpriseCurriculum = async (): Promise<EnterpriseCurriculum> => {
+  const { data } = await api.get('/admin/enterprise-base-curriculum/')
+  return data
+}
+
+export const updateEnterpriseCurriculum = async (
+  skill_ids: string[], label = '',
+): Promise<EnterpriseCurriculum> => {
+  const { data } = await api.put('/admin/enterprise-base-curriculum/', { skill_ids, label })
+  return data
+}
+
 // ── Learning Execution ───────────────────────────────────────────────
 
 export const activateLearningPath = async (pathId: string): Promise<ActivatePathResponse> => {

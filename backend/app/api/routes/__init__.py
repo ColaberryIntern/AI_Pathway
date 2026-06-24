@@ -5,6 +5,7 @@ from app.api.routes import deterministic_paths, learning, prompt_lab, mentor
 from app.api.routes import skill_genome, lesson_reactions, confusion_recovery
 from app.api.routes import curiosity_feed, personalization
 from app.api.routes import communication
+from app.api.routes import enterprise_base_curriculum
 
 api_router = APIRouter()
 
@@ -24,3 +25,4 @@ api_router.include_router(skill_genome.router, prefix="/genome", tags=["genome"]
 api_router.include_router(curiosity_feed.router, prefix="/genome", tags=["curiosity"])
 api_router.include_router(personalization.router, prefix="/personalization", tags=["personalization"])
 api_router.include_router(communication.router, prefix="/communication", tags=["communication"])
+api_router.include_router(enterprise_base_curriculum.router, prefix="/admin/enterprise-base-curriculum", tags=["admin"])

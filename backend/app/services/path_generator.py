@@ -29,6 +29,10 @@ from __future__ import annotations
 
 from typing import Any
 
+from app.services.enterprise_base_curriculum import (
+    get_base_curriculum_service,
+    merge_base_into_planned,
+)
 from app.services.gap_engine import SkillGapEngine
 from app.services.ontology import OntologyService, get_ontology_service
 from app.services.state_inference import expand_state_a
@@ -170,6 +174,20 @@ class LearningPathGenerator:
         # rubric-ranked skills. The top 5 from the gap engine should
         # be the 5 chapters directly.
         planned = primary_candidates
+
+        # ==============================================================
+        # Phase 2.5 — Enterprise base curriculum (B2B, Jun 23 sync)
+        # ==============================================================
+        # If an enterprise has defined a base curriculum, prepend those
+        # base skills (foundation everyone must know) ahead of the
+        # rubric-ranked personalized skills. No-op by default: the base
+        # list is empty until an admin sets it, so this does not change
+        # existing path generation.
+        base_skill_ids = get_base_curriculum_service().get_skill_ids()
+        planned = merge_base_into_planned(
+            planned, base_skill_ids, self._ontology.get_skill,
+            expanded_a, MAX_CHAPTERS,
+        )
 
         # ==============================================================
         # Phase 3 — Domain diversity (handled by gap engine now)
