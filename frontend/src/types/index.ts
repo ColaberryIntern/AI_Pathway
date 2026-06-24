@@ -339,6 +339,10 @@ export interface Lesson {
   status: 'not_started' | 'in_progress' | 'completed'
   quiz_score: number | null
   exercise_attempts: number
+  // 2026-06-03: true when this lesson's content was carried forward
+  // from a prior path the same learner generated. Surface as a
+  // "Previously Completed" badge in the UI.
+  preserved_from_prior_path?: boolean
 }
 
 export interface LessonContent {
