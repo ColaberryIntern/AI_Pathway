@@ -11,6 +11,7 @@ import logging
 from typing import Any
 
 from app.qa_agents.base import QAAgent
+from app.qa_agents.chapter_breadth_depth_judge import ChapterBreadthDepthJudge
 from app.qa_agents.chapter_reviewer import ChapterReviewerAgent
 from app.qa_agents.customer_voice import CustomerVoiceAgent
 from app.qa_agents.demo_gate import DemoGateAgent
@@ -28,6 +29,7 @@ DEFAULT_AGENTS: list[QAAgent] = [
     SkillCuratorAgent(),
     CustomerVoiceAgent(),
     ChapterReviewerAgent(),
+    ChapterBreadthDepthJudge(),
 ]
 
 

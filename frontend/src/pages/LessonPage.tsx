@@ -7,6 +7,7 @@ import {
   BookOpen, Code2, Dumbbell, Brain, Wrench,
 } from 'lucide-react'
 import { startLesson, completeLesson, getLearningDashboard } from '../services/api'
+import { getAdjacentLessons, type AdjacentLessons } from '../utils/lessonNav'
 import CodeBlock from '../components/learning/CodeBlock'
 import KnowledgeCheck from '../components/learning/KnowledgeCheck'
 import ConceptSnapshot from '../components/learning/ConceptSnapshot'
@@ -205,7 +206,7 @@ function ChapterDisclosure({ meta }: { meta: any }) {
 
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function ChapterFormatView({ content, pathId, lessonId, navigate, completeMutation, isLastLesson }: { content: any; pathId: string; lessonId: string; navigate: (path: string) => void; completeMutation: any; isLastLesson: boolean }) {
+function ChapterFormatView({ content, pathId, lessonId, navigate, completeMutation, isLastLesson, nav }: { content: any; pathId: string; lessonId: string; navigate: (path: string) => void; completeMutation: any; isLastLesson: boolean; nav: AdjacentLessons }) {
   const handleComplete = () => {
     completeMutation.mutate(undefined, {
       onSuccess: () => {
@@ -213,12 +214,54 @@ function ChapterFormatView({ content, pathId, lessonId, navigate, completeMutati
         // route to the path summary instead of back to the dashboard.
         if (isLastLesson) {
           navigate(`/learn/${pathId}/complete`)
+        } else if (nav.next) {
+          // Walk-through: advance straight to the next chapter on complete
+          // instead of dumping the learner back on the dashboard.
+          navigate(`/learn/${pathId}/lesson/${nav.next.lessonId}`)
         } else {
           navigate(`/learn/${pathId}`)
         }
       },
     })
   }
+
+  // Path-wide Prev/Next. Does NOT require completion - a learner can read
+  // straight through every chapter (Jun 23 sync ask).
+  const ChapterNav = ({ showComplete }: { showComplete: boolean }) => (
+    <div className="flex items-center justify-between gap-3 pt-2">
+      <button
+        onClick={() => nav.prev && navigate(`/learn/${pathId}/lesson/${nav.prev.lessonId}`)}
+        disabled={!nav.prev}
+        className="btn bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1"
+      >
+        <ArrowLeft className="h-4 w-4" /> Previous
+      </button>
+      {nav.total > 0 && (
+        <span className="text-xs text-gray-500">
+          Chapter {nav.position} of {nav.total}
+        </span>
+      )}
+      <div className="flex items-center gap-2">
+        {showComplete && (
+          <button
+            onClick={handleComplete}
+            disabled={completeMutation.isPending}
+            className="btn btn-primary flex items-center gap-2"
+          >
+            {completeMutation.isPending ? 'Completing...' : 'Mark Chapter Complete'}
+          </button>
+        )}
+        <button
+          onClick={() => nav.next
+            ? navigate(`/learn/${pathId}/lesson/${nav.next.lessonId}`)
+            : navigate(`/learn/${pathId}`)}
+          className="btn bg-gradient-to-r from-indigo-600 to-sky-600 text-white hover:from-indigo-700 hover:to-sky-700 flex items-center gap-1"
+        >
+          {nav.next ? 'Next' : 'Back to Dashboard'} <ChevronRight className="h-4 w-4" />
+        </button>
+      </div>
+    </div>
+  )
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
@@ -230,25 +273,12 @@ function ChapterFormatView({ content, pathId, lessonId, navigate, completeMutati
           &larr; Back to Dashboard
         </button>
       </div>
+      <ChapterNav showComplete={false} />
       <ChapterDisclosure meta={content?.meta} />
       <CoachIntro meta={content?.meta} />
       <ChapterRenderer chapter={content} pathId={pathId} lessonId={lessonId} />
       <CoachOutro meta={content?.meta} />
-      <div className="flex justify-center gap-4 pt-4">
-        <button
-          onClick={() => navigate(`/learn/${pathId}`)}
-          className="btn bg-gray-100 text-gray-700 hover:bg-gray-200"
-        >
-          Back to Dashboard
-        </button>
-        <button
-          onClick={handleComplete}
-          disabled={completeMutation.isPending}
-          className="btn btn-primary flex items-center gap-2"
-        >
-          {completeMutation.isPending ? 'Completing...' : 'Mark Chapter Complete'}
-        </button>
-      </div>
+      <ChapterNav showComplete />
     </div>
   )
 }
@@ -416,9 +446,12 @@ export default function LessonPage() {
   )
   const isLastLesson = totalAcrossPath > 0 && completedAcrossPath + 1 >= totalAcrossPath
 
+  // Path-wide Prev/Next navigation (does not require completion).
+  const nav = getAdjacentLessons(dashboard?.modules, lessonId)
+
   // Render Vivek's chapter format
   if (isChapterFormat && contentAny) {
-    return <ChapterFormatView content={contentAny} pathId={pathId!} lessonId={lessonId!} navigate={navigate} completeMutation={completeMutation} isLastLesson={isLastLesson} />
+    return <ChapterFormatView content={contentAny} pathId={pathId!} lessonId={lessonId!} navigate={navigate} completeMutation={completeMutation} isLastLesson={isLastLesson} nav={nav} />
   }
 
   return (
@@ -463,6 +496,15 @@ export default function LessonPage() {
             <span className="flex items-center gap-1 text-xs text-emerald-600 ml-auto">
               <CheckCircle2 className="h-3.5 w-3.5" />
               Completed
+            </span>
+          )}
+          {lesson.preserved_from_prior_path && !isCompleted && (
+            <span
+              className="flex items-center gap-1 text-xs text-sky-700 bg-sky-50 border border-sky-200 px-2 py-0.5 rounded-full ml-auto"
+              title="This chapter's content was carried forward from a path you generated earlier. We do not regenerate content you have already seen."
+            >
+              <CheckCircle2 className="h-3.5 w-3.5" />
+              Previously Generated
             </span>
           )}
         </div>
