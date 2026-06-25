@@ -21,6 +21,17 @@ async def lifespan(app: FastAPI):
     await init_db()
     logger.info("database_initialized")
 
+    # Multi-tenancy (increment 1): ensure the default org exists and backfill
+    # any user missing an org_id. Idempotent.
+    try:
+        from app.database import AsyncSessionLocal
+        from app.services.organization_service import ensure_default_org_and_backfill
+        async with AsyncSessionLocal() as db:
+            summary = await ensure_default_org_and_backfill(db)
+        logger.info("org_backfill_complete", extra=summary)
+    except Exception as e:
+        logger.warning("org_backfill_failed", extra={"error": str(e)})
+
     # Load the ontology into the vector store IFF RAG actually initialized. Keying
     # off real availability (get_rag_status) instead of an env-var heuristic makes
     # this turnkey: the moment GCP credentials are provided - by ANY ADC method

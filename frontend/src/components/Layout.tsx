@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { Outlet, Link, useLocation } from 'react-router-dom'
-import { Brain, Home, User, BookOpen, Building2 } from 'lucide-react'
+import { Brain, Home, User, BookOpen, Building2, Users } from 'lucide-react'
 import MentorChat from './learning/MentorChat'
 
 // Self-paced user-testing mode: when the URL has `?testlink=1` (or any
@@ -84,6 +84,13 @@ export default function Layout() {
                 >
                   <Building2 className="h-5 w-5" />
                   <span>Enterprise</span>
+                </Link>
+                <Link
+                  to="/admin/organizations"
+                  className="flex items-center gap-1 text-gray-600 hover:text-primary-600"
+                >
+                  <Users className="h-5 w-5" />
+                  <span>Orgs</span>
                 </Link>
               </div>
             </div>

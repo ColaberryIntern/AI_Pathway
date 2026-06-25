@@ -6,6 +6,25 @@ same entry.
 
 ---
 
+## 2026-06-25 - Multi-tenancy increment 1 (org model + enterprise dashboard)
+
+- [x] Multi-tenancy increment 1: Organization model, org_id on User, default-org backfill, enterprise dashboard
+  - Date: 2026-06-25
+  - What changed: First slice of the multi-tenancy build (design_multitenancy.md). DB is SQLite with no Alembic, so schema changes use the existing idempotent `_add_missing_columns()` ALTER pattern. Since User is the ownership root, org_id attaches to User ONLY (not all 14 child tables) - the dashboard joins through user_id. New `Organization` model (`models/organization.py`), `User.org_id` FK (nullable), idempotent `ALTER TABLE users ADD COLUMN org_id` in `database.py`, startup default-org creation + null-org backfill in `main.py` lifespan via `services/organization_service.py` (`ensure_default_org_and_backfill`, idempotent). Pure `summarize_learner_paths()` aggregator. Admin API `routes/organizations.py` (create/list orgs, assign member, org "who is doing what" dashboard) at `/api/admin/organizations`, with `schemas/organization.py` contracts (org/user existence validated, 404 on miss). Frontend `EnterpriseDashboardPage.tsx` (org selector + create + learners/progress table), api.ts functions, route + "Orgs" nav link.
+  - INPACT/layers: serves Permitted + Contextual (tenant grouping, enterprise visibility); touches Storage (org table + org_id) + Governance (tenant root) + Orchestration.
+  - Verification: `pytest backend/tests/test_organization.py` 9/9 (aggregator happy/failure/boundary/idempotency + backfill integration on a real throwaway SQLite: creates default org, assigns nulls, idempotent, preserves explicit org). Migration validated on the real dev DB: org_id column added, default org created, 5 users backfilled, 0 nulls. Full new-feature suite 72/72; `import app.main` clean; frontend `tsc --noEmit` exits 0.
+  - Notes: DEFERRED to increment 2 (needs auth/SSO): org_id on the other user-owned entities, request-level tenant enforcement on learner-facing routes, and per-tenant enterprise base curriculum. Backfill is safe + idempotent; existing single-tenant behavior unchanged (everyone lands in the default org).
+
+## 2026-06-24 - Deployed Jun 23 work to prod (PR #26) + both gates green
+
+- [x] Deploy PR #26 (merged main) to Hetzner prod and pass both demo gates
+  - Date: 2026-06-24
+  - What changed: Merged PR #26 into main (a766c21). Found prod was 3 PRs behind (at #22); PRs #23-25 were diagnostic scripts + docs only (no app runtime code). Fixed a build break first: committed `LessonPage.tsx` (#26) referenced `lesson.preserved_from_prior_path`, an optional field that lived only in the uncommitted working tree; committed the one-field addition to `frontend/src/types/index.ts` (2550011) so main is self-consistent. Deployed via `git reset --hard origin/main` + `docker compose build` + `up -d` on `/opt/ai-pathway`, PRESERVING the prod `backend/.env` (did NOT use deploy-hetzner.sh's scp-.env step, which would have overwritten prod's 21-line env with a local 20-line one).
+  - Verification: containers Up; new enterprise API live via public proxy (`GET /api/admin/enterprise-base-curriculum/` -> `{"skill_ids":[],...}`); backend imports clean with DEFAULT_AGENTS including "Chapter Breadth + Depth"; SPA serves. **Gate 1** (`sweep_integrity.py` on prod): SWEEP CLEAN, exit 0, 0 violations (220 skills / 199 paths / 309 modules / 713 lessons). **Gate 2** (`verify_profile_e2e.py` profile 4ed3c5cd...): PREFLIGHT PASSED, exit 0 (Top 5 + tooltips, dashboard canonical titles, 4/4 lessons chapter-identity match).
+  - Notes: Enterprise base curriculum ships empty (no-op) so path generation is unchanged in prod until an admin sets a base. Gate scripts are not in the Docker image (Dockerfile copies only `app/`), so they were `docker cp`-ed in per the runbook.
+
+---
+
 ## 2026-05-20 - Multi-agent QA team: convergence hardening (response to Ram's 16:57 ask)
 
 - [x] Make Customer Voice agent prompt adversarial (binding, not descriptive)
