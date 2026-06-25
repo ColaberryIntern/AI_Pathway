@@ -12,6 +12,7 @@ import PathSummaryPage from './pages/PathSummaryPage'
 import SkillGenomePage from './pages/SkillGenomePage'
 import CuriosityFeedPage from './pages/CuriosityFeedPage'
 import AdminEnterpriseCurriculumPage from './pages/AdminEnterpriseCurriculumPage'
+import EnterpriseDashboardPage from './pages/EnterpriseDashboardPage'
 
 function App() {
   return (
@@ -30,6 +31,7 @@ function App() {
           <Route path="curiosity/:userId" element={<CuriosityFeedPage />} />
           <Route path="jd-test" element={<JDTestPage />} />
           <Route path="admin/enterprise-base-curriculum" element={<AdminEnterpriseCurriculumPage />} />
+          <Route path="admin/organizations" element={<EnterpriseDashboardPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

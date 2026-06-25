@@ -326,6 +326,49 @@ export const updateEnterpriseCurriculum = async (
   return data
 }
 
+// ── Organizations (multi-tenancy increment 1) ────────────────────────
+
+export interface Organization {
+  id: string
+  name: string
+  domain: string | null
+  created_at: string
+  member_count: number
+}
+
+export interface LearnerSummary {
+  user_id: string
+  name: string | null
+  email: string | null
+  total_paths: number
+  active_paths: { id: string; title: string; total_chapters: number; completed_chapters: number; completion_percentage: number }[]
+  completed_paths: { id: string; title: string; total_chapters: number; completed_chapters: number; completion_percentage: number }[]
+  total_skills_learned: number
+  overall_completion_percentage: number
+}
+
+export interface OrgDashboard {
+  org_id: string
+  org_name: string
+  learner_count: number
+  learners: LearnerSummary[]
+}
+
+export const getOrganizations = async (): Promise<Organization[]> => {
+  const { data } = await api.get('/admin/organizations/')
+  return data
+}
+
+export const createOrganization = async (name: string, domain?: string): Promise<Organization> => {
+  const { data } = await api.post('/admin/organizations/', { name, domain: domain || null })
+  return data
+}
+
+export const getOrgDashboard = async (orgId: string): Promise<OrgDashboard> => {
+  const { data } = await api.get(`/admin/organizations/${orgId}/dashboard`)
+  return data
+}
+
 // ── Learning Execution ───────────────────────────────────────────────
 
 export const activateLearningPath = async (pathId: string): Promise<ActivatePathResponse> => {

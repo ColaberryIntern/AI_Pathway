@@ -60,6 +60,12 @@ def _add_missing_columns(conn):
                 "ALTER TABLE implementation_submissions ADD COLUMN generated_files JSON DEFAULT '{}'"
             ))
 
+    # Multi-tenancy (increment 1): org_id on users. Idempotent.
+    if inspector.has_table("users"):
+        columns = [c["name"] for c in inspector.get_columns("users")]
+        if "org_id" not in columns:
+            conn.execute(sa.text("ALTER TABLE users ADD COLUMN org_id VARCHAR(36)"))
+
 
 async def init_db():
     """Initialize database tables."""

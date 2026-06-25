@@ -1,4 +1,5 @@
 """Database models."""
+from app.models.organization import Organization
 from app.models.user import User
 from app.models.profile import Profile
 from app.models.goal import Goal
@@ -22,6 +23,7 @@ from app.models.communication_feedback import CommunicationFeedback
 from app.models.metrics_snapshot import MetricsSnapshot
 
 __all__ = [
+    "Organization",
     "User",
     "Profile",
     "Goal",
