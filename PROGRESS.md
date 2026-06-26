@@ -6,6 +6,22 @@ same entry.
 
 ---
 
+## 2026-06-26 - Deployed SSO foundation (PR #28) + PyJWT incident (resolved)
+
+- [x] Deploy PR #28 to prod; recover from a self-inflicted 502
+  - Date: 2026-06-26
+  - What changed: Provider chosen = Auth0; wrote `docs/jun23_weekly_sync/sso_auth0_golive.md` (Auth0 app settings + prod env block + go-live checklist; no secrets committed). Merged + deployed PR #28.
+  - INCIDENT: the deploy took prod down (502 Bad Gateway). Root cause: PR #28's auth module imports `jwt` (PyJWT), present in my LOCAL env but NOT declared in `backend/requirements.txt` (violating the Explicit-Dependencies rule), so the prod image lacked it and the backend crashed on import. Local tests/imports passed because PyJWT was incidentally installed locally, masking the gap. Fix: `Hotfix: declare PyJWT in requirements` (a0f9d9c, PyJWT==2.10.1), rebuilt + redeployed.
+  - Verification: post-fix `jwt 2.10.1` imports in the container; `/api/auth/status` -> `{"enabled": false}`; org API healthy. Gate 1 SWEEP CLEAN (0 violations); Gate 2 PREFLIGHT PASSED. Prod fully recovered.
+  - Hardening follow-up: add a CI/import smoke that `pip install -r requirements.txt` in a clean env + `import app.main`, so an undeclared dependency fails the build, not prod.
+  - GO-LIVE STILL BLOCKED on: (1) Auth0 app credentials (Ali creates the app), (2) HTTPS on prod (Auth0 rejects http callback URLs except localhost). SSO is deployed but inert (enabled=false) until both are resolved.
+
+- [x] Hardening: safe deploy script with build-time import smoke (incident fix)
+  - Date: 2026-06-26
+  - What changed: `scripts/deploy-prod.sh` encodes the validated safe deploy flow (reset to origin/main PRESERVING the untracked prod `.env`, build, then an IMPORT SMOKE on the freshly built backend image - `docker compose run --rm --no-deps backend python -c "import app.main"` - BEFORE swapping containers; aborts the deploy and leaves running containers untouched if the import fails). This is the guard that turns an undeclared-dependency outage (the PyJWT 502) into a failed deploy. Also `scripts/setup-https-caddy.sh`: ready-to-run Caddy/Let's-Encrypt HTTPS setup (reverse-proxy a domain to the frontend container) - the prerequisite for SSO go-live; needs a domain pointed at the box.
+  - Verification: import-smoke command validated non-destructively against the current prod image -> "IMPORT SMOKE OK" (a throwaway container imports app.main cleanly). The guard correctly exercises the built image, so a missing dep would have aborted the bad deploy.
+  - Notes: deploy-prod.sh is now the recommended deploy path over deploy-hetzner.sh (which overwrites prod .env). HTTPS script is prep; it cannot run until a domain's A record points at 95.216.199.47.
+
 ## 2026-06-26 - SSO foundation (increment 1: provider-agnostic OIDC, off by default)
 
 - [x] SSO / third-party auth foundation (increment 1)
