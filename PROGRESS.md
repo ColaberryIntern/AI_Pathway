@@ -6,6 +6,15 @@ same entry.
 
 ---
 
+## 2026-06-26 - SSO foundation (increment 1: provider-agnostic OIDC, off by default)
+
+- [x] SSO / third-party auth foundation (increment 1)
+  - Date: 2026-06-26
+  - What changed: First slice of the SSO ticket (design_sso_auth.md), built provider-agnostic so the choice of IdP (Okta/Auth0/Cognito/Google) is configuration, not code. OFF by default - no provider configured = no behavior change. Config (`config.py`): `oidc_enabled` + `oidc_issuer/client_id/client_secret/redirect_uri/post_login_redirect` + `session_secret` + `session_ttl_hours`, all empty/off. Pure helpers in `app/services/auth/`: `tokens.py` (PyJWT HS256 session issue/verify, never raises on bad input), `org_assign.py` (`email_domain`, `org_id_for_email` - email domain -> org via `Organization.domain`, default-org fallback). `oidc.py` provider-agnostic client (discovery + code->token->userinfo via httpx with explicit timeout; raises OIDCError). Routes `app/api/routes/auth.py`: `/api/auth/status|login|callback|logout|me` - login/callback 503 when unconfigured; callback does CSRF state check, finds/creates user by email, assigns org by domain, mints an httpOnly session cookie. Non-enforcing `get_optional_user` dep added to `deps.py` (NOT applied to any route yet). We store no passwords.
+  - INPACT/layers: serves Permitted + Trustworthy (delegated identity, no stored passwords); touches Governance (auth seam) + Security (CSRF state, httpOnly cookie, timeouts). Trust-Before-Intelligence: deterministic token verification, fail-closed (None) on any bad input.
+  - Verification: `pytest backend/tests/test_auth.py` 15/15 (token roundtrip/tamper/expired/wrong-secret/empty; domain extraction; org-by-domain match/case-insensitive/no-match/bad-email/custom-default; oidc off by default). TestClient smoke: status->{enabled:false}, login->503, me->{user:null}, callback->503 (no crash, existing flow preserved). 70/70 across new suites; app imports clean.
+  - Notes: PROVIDER DECISION NEEDED before this can go live (Okta vs Auth0 vs Cognito vs Google - a paid/strategic choice) + a real client_id/secret + session_secret. DEFERRED to the next increment: enforcing auth on learner-facing routes (a `require_user` 401 dep) and the frontend login UI - both would change the open/demo flow, so they wait until SSO is actually turned on. Pairs with multi-tenancy increment 2 (per-entity org scoping).
+
 ## 2026-06-25 - Multi-tenancy increment 1 (org model + enterprise dashboard)
 
 - [x] Multi-tenancy increment 1: Organization model, org_id on User, default-org backfill, enterprise dashboard
@@ -14,6 +23,11 @@ same entry.
   - INPACT/layers: serves Permitted + Contextual (tenant grouping, enterprise visibility); touches Storage (org table + org_id) + Governance (tenant root) + Orchestration.
   - Verification: `pytest backend/tests/test_organization.py` 9/9 (aggregator happy/failure/boundary/idempotency + backfill integration on a real throwaway SQLite: creates default org, assigns nulls, idempotent, preserves explicit org). Migration validated on the real dev DB: org_id column added, default org created, 5 users backfilled, 0 nulls. Full new-feature suite 72/72; `import app.main` clean; frontend `tsc --noEmit` exits 0.
   - Notes: DEFERRED to increment 2 (needs auth/SSO): org_id on the other user-owned entities, request-level tenant enforcement on learner-facing routes, and per-tenant enterprise base curriculum. Backfill is safe + idempotent; existing single-tenant behavior unchanged (everyone lands in the default org).
+
+- [x] Deploy multi-tenancy increment 1 to prod (PR #27) + gates green
+  - Date: 2026-06-25
+  - What changed: Merged PR #27 (5121b5b), deployed via `git reset --hard origin/main` + `docker compose build/up` on prod (preserving `.env`).
+  - Verification: startup clean (`database_initialized` then `org_backfill_complete` with `default_org_created:true, users_backfilled:200`); prod DB has 1 org (default-org) and 0 users with null org_id (200/200 backfilled); org API live via public proxy (`GET /api/admin/organizations/` returns default org, member_count 200). **Gate 1** SWEEP CLEAN (0 violations). **Gate 2** PREFLIGHT PASSED (profile 4ed3c5cd...). Learner-facing flow unaffected by the org change, as expected.
 
 ## 2026-06-24 - Deployed Jun 23 work to prod (PR #26) + both gates green
 

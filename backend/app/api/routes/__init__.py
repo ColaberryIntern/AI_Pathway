@@ -7,6 +7,7 @@ from app.api.routes import curiosity_feed, personalization
 from app.api.routes import communication
 from app.api.routes import enterprise_base_curriculum
 from app.api.routes import organizations
+from app.api.routes import auth
 
 api_router = APIRouter()
 
@@ -28,3 +29,4 @@ api_router.include_router(personalization.router, prefix="/personalization", tag
 api_router.include_router(communication.router, prefix="/communication", tags=["communication"])
 api_router.include_router(enterprise_base_curriculum.router, prefix="/admin/enterprise-base-curriculum", tags=["admin"])
 api_router.include_router(organizations.router, prefix="/admin/organizations", tags=["admin"])
+api_router.include_router(auth.router, prefix="/auth", tags=["auth"])
