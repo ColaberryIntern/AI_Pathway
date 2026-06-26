@@ -86,6 +86,21 @@ class Settings(BaseSettings):
     llm_max_retries: int = 2          # total attempts = 1 + llm_max_retries
     llm_retry_base_delay: float = 1.0  # seconds; doubled each retry, plus jitter
 
+    # Auth / SSO (multi-tenancy increment 2 foundation). Provider-agnostic OIDC,
+    # OFF by default so the current open flow + demo are unaffected. Wiring a real
+    # provider (Okta/Auth0/Cognito/Google - a paid/strategic choice) is just env:
+    # set oidc_* + session_secret and flip oidc_enabled. We store no passwords.
+    oidc_enabled: bool = False
+    oidc_issuer: str = ""            # e.g. https://your-tenant.okta.com
+    oidc_client_id: str = ""
+    oidc_client_secret: str = ""
+    oidc_redirect_uri: str = ""      # our /api/auth/callback URL
+    oidc_post_login_redirect: str = "/"   # where to send the browser after login
+    # HMAC secret for our own short-lived session token (PyJWT HS256). Sessions
+    # are disabled until this is set; never commit a real value.
+    session_secret: str = ""
+    session_ttl_hours: int = 12
+
     # Metrics persistence (Observability / Transparent). A background task snapshots
     # the in-process /metrics window to the DB every interval so the TBI dashboard
     # shows trends that survive restarts.
